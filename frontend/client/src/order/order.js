@@ -318,7 +318,7 @@
                                                         };
                                                         $scope.manage = function () {
                                                             models['19'].manageModal(response.data.entity.parent.key, function (buyerScope) {
-                                                                $scope.addresses = buyerScope.entity.addresses;
+                                                                $scope.addresses = buyerScope.args.addresses;
                                                             }, {
                                                                 inDirection: false,
                                                                 outDirection: false

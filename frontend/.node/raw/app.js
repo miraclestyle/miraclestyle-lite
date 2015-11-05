@@ -13488,7 +13488,7 @@ $(function () {
                         },
                         show = function () {
                             top().removeClass('ng-hide');
-                            slide().addClass('in');
+                            slide().removeClass('out').addClass('in');
                         };
                     scope.activitySpinner.hide.push(hide);
                     scope.activitySpinner.show.push(show);
@@ -20360,7 +20360,7 @@ angular.module('app')
                                                         };
                                                         $scope.manage = function () {
                                                             models['19'].manageModal(response.data.entity.parent.key, function (buyerScope) {
-                                                                $scope.addresses = buyerScope.entity.addresses;
+                                                                $scope.addresses = buyerScope.args.addresses;
                                                             }, {
                                                                 inDirection: false,
                                                                 outDirection: false

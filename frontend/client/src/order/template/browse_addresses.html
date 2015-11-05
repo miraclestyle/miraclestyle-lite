@@ -17,7 +17,7 @@
                           </div>
                     </button>
                     <div ng-repeat="ent in addresses" class="list-row no-padding clearfix">
-                          <button md-ink-ripple-list type="button" ng-click="select(ent)" class="list-row menu-item list-content-tile padding-sides-24 block list-row-three-lines list-row-is-clickable">
+                          <button md-ink-ripple-list type="button" ng-hide="ent._state == 'deleted'" ng-click="select(ent)" class="list-row menu-item list-content-tile padding-sides-24 block list-row-three-lines list-row-is-clickable">
                               <span buyer-address-list-view="ent"></span>
                           </button>
                     </div>
