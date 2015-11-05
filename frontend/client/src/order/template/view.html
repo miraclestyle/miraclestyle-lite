@@ -1,5 +1,6 @@
 <div fit-in-modal>
     <modal-loading toolbar="true"></modal-loading>
+    <activity-spinner toolbar="true"></activity-spinner>
     <form method="post" name="container.paypal" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
         <action-toolbar spec="dialog.toolbar"></action-toolbar>
         <div ng-if="$state.isCompleted()" class="modal-body">

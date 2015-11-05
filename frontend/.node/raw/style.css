@@ -3316,13 +3316,13 @@ div[disabled] .select-box {
         top: 0px;
     }
     100% {
-        top: 64px;
+        top: 72px;
     }
 }
 
 @keyframes top-slide-out {
     0% {
-        top: 64px;
+        top: 72px;
     }
     100% {
         top: 0px;

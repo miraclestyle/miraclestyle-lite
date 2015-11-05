@@ -685,6 +685,9 @@
                                                 _lines: $scope.order._lines
                                             };
                                             $.extend(data, extra);
+                                            if (!config.noLoader) {
+                                                $scope.activitySpinner.start();
+                                            }
                                             return models['34'].actions.update(data, {
                                                 ignoreErrors: 2
                                             }).then(function (response) {
@@ -700,6 +703,13 @@
                                                 $scope.carrier.available = response.data.carriers;
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
                                                 return response;
+                                            })['finally'](function () {
+                                                if (!config.noLoader) {
+                                                    $scope.activitySpinner.stop();
+                                                }
+                                                if ($scope.container.paypal) {
+                                                    $scope.container.paypal.$setPristine();
+                                                }
                                             });
                                         },
                                         showNetTotalAmount: function () {
@@ -728,6 +738,7 @@
                                         cancel: function () {
                                             if ($scope.order.state === 'checkout') {
                                                 modals.confirm('cancelOrder', function () {
+                                                    $scope.activitySpinner.start();
                                                     models['34'].actions.cancel({
                                                         key: $scope.order.key
                                                     }).then(function (response) {
@@ -735,6 +746,8 @@
                                                         locals.reactOnUpdate(true);
                                                         models['34'].removeCache('current' + seller.key);
                                                         $scope.close();
+                                                    })['finally'](function () {
+                                                        $scope.activitySpinner.stop();
                                                     });
                                                 });
                                             }
@@ -809,7 +822,8 @@
                                                         line._state = 'deleted';
                                                         ui.helper.hide();
                                                         $scope.cmd.order.scheduleUpdate(undefined, {
-                                                            noLines: true
+                                                            noLines: true,
+                                                            noLoader: true
                                                         }).then(function (response) {
                                                             if (!(response && response.then)) {
                                                                 snackbar.showK('cartUpdated');
