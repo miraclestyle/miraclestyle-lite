@@ -17620,6 +17620,7 @@ angular.module('app')
                                             $scope.hideClose = config ? config.hideClose : false;
                                             $scope.currentVariation = [];
                                             $scope.currentVariationPure = [];
+                                            $scope.notInitialLoad = false;
                                             angular.forEach($scope.product.variants, function (v, i) {
 
                                                 $scope.variants.push({
@@ -17707,7 +17708,7 @@ angular.module('app')
                                                         }
                                                     }
                                                 }, {
-                                                    activitySpinner: true,
+                                                    activitySpinner: this.notInitialLoad,
                                                     disableUI: disableUI === undefined ? true : disableUI
                                                 });
                                             };
@@ -18069,6 +18070,7 @@ angular.module('app')
                                     return promise;
                                 };
 
+                                $scope.notInitialLoad = true;
 
                                 $scope.$watch('product.id', function (neww, old) {
                                     shareWatch();
