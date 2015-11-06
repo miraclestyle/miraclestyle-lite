@@ -12,6 +12,7 @@ import urllib
 import urlparse
 import webapp2
 import datetime
+import json
 
 from google.appengine.ext import blobstore
 from google.appengine.api import taskqueue, mail, urlfetch, channel
@@ -23,15 +24,55 @@ import settings
 from .util import normalize
 
 __all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url', 'render_template',
-           'channel_create', 'mail_send', 'http_send', 'channel_send', 'secure_cookie']
+           'channel_create', 'json_dumps', 'mail_send', 'http_send', 'channel_send', 'secure_cookie']
+
+
+class JSONEncoder(json.JSONEncoder):
+
+  '''An encoder that produces JSON safe to embed in HTML.
+  To embed JSON content in, say, a script tag on a web page, the
+  characters &, < and > should be escaped. They cannot be escaped
+  with the usual entities (e.g. &amp;) because they are not expanded
+  within <script> tags.
+  Also its `default` function will properly format data that is usually not serialized by json standard.
+  '''
+
+  def default(self, obj):
+    if isinstance(obj, datetime.datetime):
+      return obj.strftime(settings.DATETIME_FORMAT)
+    if isinstance(obj, orm.Key):
+      return obj.urlsafe()
+    if hasattr(obj, 'get_output'):
+      try:
+        return obj.get_output()
+      except TypeError as e:
+        pass
+    if hasattr(obj, 'get_meta'):
+      try:
+        return obj.get_meta()
+      except TypeError as e:
+        pass
+    try:
+      return str(obj)
+    except TypeError as e:
+      pass
+    return json.JSONEncoder.default(self, obj)
+
+
+def json_dumps(s, **kwargs):
+  defaults = {'check_circular': False, 'cls': JSONEncoder}
+  defaults.update(kwargs)
+  return json.dumps(s, **defaults)
+
+json_loads = json.loads
 
 
 def _to_utf8(value):
-    """Encodes a unicode value to UTF-8 if not yet encoded."""
-    if isinstance(value, str):
-        return value
+  """Encodes a unicode value to UTF-8 if not yet encoded."""
+  if isinstance(value, str):
+    return value
 
-    return value.encode('utf-8')
+  return value.encode('utf-8')
 
 
 def rule_prepare(entities, **kwargs):
@@ -76,68 +117,70 @@ JINJA_ENV = Environment(loader=FileSystemLoader([os.path.join(os.path.dirname(os
 
 def _urlunsplit(scheme=None, netloc=None, path=None, query=None,
                 fragment=None):
-    """Like ``urlparse.urlunsplit``, but will escape values and urlencode and
-    sort query arguments.
-    :param scheme:
-        URI scheme, e.g., `http` or `https`.
-    :param netloc:
-        Network location, e.g., `localhost:8080` or `www.google.com`.
-    :param path:
-        URI path.
-    :param query:
-        URI query as an escaped string, or a dictionary or list of key-values
-        tuples to build a query.
-    :param fragment:
-        Fragment identifier, also known as "anchor".
-    :returns:
-        An assembled absolute or relative URI.
-    """
-    if not scheme or not netloc:
-        scheme = None
-        netloc = None
+  """Like ``urlparse.urlunsplit``, but will escape values and urlencode and
+  sort query arguments.
+  :param scheme:
+      URI scheme, e.g., `http` or `https`.
+  :param netloc:
+      Network location, e.g., `localhost:8080` or `www.google.com`.
+  :param path:
+      URI path.
+  :param query:
+      URI query as an escaped string, or a dictionary or list of key-values
+      tuples to build a query.
+  :param fragment:
+      Fragment identifier, also known as "anchor".
+  :returns:
+      An assembled absolute or relative URI.
+  """
+  if not scheme or not netloc:
+    scheme = None
+    netloc = None
 
-    if path:
-        path = urllib.quote(_to_utf8(path))
+  if path:
+    path = urllib.quote(_to_utf8(path))
 
-    if query and not isinstance(query, basestring):
-        if isinstance(query, dict):
-            query = query.iteritems()
+  if query and not isinstance(query, basestring):
+    if isinstance(query, dict):
+      query = query.iteritems()
 
-        # Sort args: commonly needed to build signatures for services.
-        query = urllib.urlencode(sorted(query))
+    # Sort args: commonly needed to build signatures for services.
+    query = urllib.urlencode(sorted(query))
 
-    if fragment:
-        fragment = urllib.quote(_to_utf8(fragment))
-    return urlparse.urlunsplit((scheme, netloc, path, query, fragment))
+  if fragment:
+    fragment = urllib.quote(_to_utf8(fragment))
+  return urlparse.urlunsplit((scheme, netloc, path, query, fragment))
 
 
 def absolute_url(path, query=None, kwargs=None):
-    """Returns a URI for this route.
-    .. seealso:: :meth:`Router.build`.
-    """
-    if kwargs is None:
-      kwargs = {}
-    request = webapp2.get_request()
-    scheme = kwargs.pop('_scheme', None)
-    netloc = kwargs.pop('_netloc', None)
-    anchor = kwargs.pop('_fragment', None)
-    full = kwargs.pop('_full', True) and not scheme and not netloc
+  """Returns a URI for this route.
+  .. seealso:: :meth:`Router.build`.
+  """
+  if kwargs is None:
+    kwargs = {}
+  request = webapp2.get_request()
+  scheme = kwargs.pop('_scheme', None)
+  netloc = kwargs.pop('_netloc', None)
+  anchor = kwargs.pop('_fragment', None)
+  full = kwargs.pop('_full', True) and not scheme and not netloc
 
-    if full or scheme or netloc:
-        netloc = netloc or request.host
-        scheme = scheme or request.scheme
-    return _urlunsplit(scheme, netloc, path, query, anchor)
+  if full or scheme or netloc:
+    netloc = netloc or request.host
+    scheme = scheme or request.scheme
+  return _urlunsplit(scheme, netloc, path, query, anchor)
 
 
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
+
 @evalcontextfilter
 def nl2br(eval_ctx, value):
-    result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', Markup('<br />\n'))
-                          for p in _paragraph_re.split(escape(value)))
-    if eval_ctx.autoescape:
-        result = Markup(result)
-    return result
+  result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', Markup('<br />\n'))
+                        for p in _paragraph_re.split(escape(value)))
+  if eval_ctx.autoescape:
+    result = Markup(result)
+  return result
+
 
 @evalcontextfilter
 def format_date(eval_ctx, value):
@@ -149,6 +192,7 @@ JINJA_ENV.filters['nl2br'] = nl2br
 JINJA_ENV.globals['absolute_url'] = absolute_url
 JINJA_ENV.globals['datetime_now'] = lambda: datetime.datetime.now()
 JINJA_ENV.filters['format_date'] = format_date
+
 
 def render_template(string_template, values={}):
   template = JINJA_ENV.from_string(string_template)

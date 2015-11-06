@@ -11,7 +11,18 @@ from .properties import *
 
 __all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 'FieldPermission',
            'ExecuteActionPermission', 'ReadFieldPermission', 'WriteFieldPermission', 'DenyWriteFieldPermission',
-           'Role', 'GlobalRole', 'Image']
+           'Role', 'GlobalRole', 'Image', 'CacheGroup']
+
+
+class CacheGroup(BaseModel):
+
+  _kind = 135
+
+  _use_record_engine = False
+  _use_rule_engine = False
+  _use_memcache = True
+
+  keys = SuperStringProperty(repeated=True, indexed=False)
 
 
 class Record(BaseExpando):

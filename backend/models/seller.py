@@ -145,6 +145,7 @@ class Seller(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': lambda context: 'seller_%s' % context.input['account']._urlsafe, 'cache': [lambda context: 'account' if context.account.key == context.input['account'] else None, 'all']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -188,6 +189,7 @@ class Seller(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
+                      DeleteCache(cfg={'group': lambda context: 'seller_%s' % context.input['account']._urlsafe}),
                       Set(cfg={'d': {'output.entity': '_seller'}})
                   ]
               )

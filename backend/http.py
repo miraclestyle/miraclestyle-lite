@@ -6,11 +6,11 @@ Created on Sep 22, 2014
 '''
 
 import webapp2
-import json
 import datetime
 import inspect
 import urllib
 import time
+import json
 
 import orm
 import iom
@@ -18,38 +18,6 @@ import settings
 import tools
 
 HTTP_PERFORMANCE_TEXT = 'HTTP.%s in %sms'
-
-
-class JSONEncoder(json.JSONEncoder):
-
-  '''An encoder that produces JSON safe to embed in HTML.
-  To embed JSON content in, say, a script tag on a web page, the
-  characters &, < and > should be escaped. They cannot be escaped
-  with the usual entities (e.g. &amp;) because they are not expanded
-  within <script> tags.
-  Also its `default` function will properly format data that is usually not serialized by json standard.
-  '''
-
-  def default(self, obj):
-    if isinstance(obj, datetime.datetime):
-      return obj.strftime(settings.DATETIME_FORMAT)
-    if isinstance(obj, orm.Key):
-      return obj.urlsafe()
-    if hasattr(obj, 'get_output'):
-      try:
-        return obj.get_output()
-      except TypeError as e:
-        pass
-    if hasattr(obj, 'get_meta'):
-      try:
-        return obj.get_meta()
-      except TypeError as e:
-        pass
-    try:
-      return str(obj)
-    except TypeError as e:
-      pass
-    return json.JSONEncoder.default(self, obj)
 
 
 class RequestHandler(webapp2.RequestHandler):
@@ -84,7 +52,7 @@ class RequestHandler(webapp2.RequestHandler):
       value = self.request.get(value_key)
       if value:
         try:
-          input = json.loads(value)
+          input = tools.json_loads(value)
         except Exception as e:
           input = {}
       else:
@@ -104,16 +72,16 @@ class RequestHandler(webapp2.RequestHandler):
   @tools.profile(HTTP_PERFORMANCE_TEXT)
   def json_output(self, obj, **kwargs):
     '''Wrapper for json output for self usage to avoid imports from backend http.'''
-    defaults = {'check_circular': False, 'cls': JSONEncoder}
-    defaults.update(kwargs)
-    return json.dumps(obj, **defaults)
+    return tools.json_dumps(obj, **kwargs)
 
-  def send_json(self, data):
+  def send_json(self, data, json=False):
     '''Sends `data` to be serialized in json format, and sets content type application/json utf8.'''
     content_type = 'application/json;charset=utf-8'
     if self.response.headers.get('Content-Type') != content_type:
       self.response.headers['Content-Type'] = content_type
-    self.response.write(self.json_output(data))
+    if not json:
+      data = self.json_output(data)
+    self.response.write(data)
 
   def before(self):
     '''This function is fired just before the handler logic is executed.'''
@@ -179,8 +147,8 @@ class RequestHandler(webapp2.RequestHandler):
 class Endpoint(RequestHandler):
 
   def respond(self):
-    output = iom.Engine.run(self.get_input())
-    self.send_json(output)
+    output = iom.Engine.run(self.get_input(), 'json')
+    self.send_json(output, True)
 
 
 class ModelMeta(RequestHandler):
@@ -266,8 +234,7 @@ class OrderComplete(RequestHandler):
     input = {'action_model': '34', 'payment_method': payment_method, 'action_id': 'complete', 'request': {}}
     for param in params:
       input['request'][param] = getattr(self.request, param)
-    output = iom.Engine.run(input)
-    return output
+    iom.Engine.run(input)
 
 
 ROUTES = [('/api/endpoint', Endpoint),

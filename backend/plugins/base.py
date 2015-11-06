@@ -17,6 +17,7 @@ class Context(orm.BaseModel):
   _kind = 86
 
   def run(self, context):
+    context.cache = None
     context.account = context.models['11'].current_account()
     caller_account_key = context.input.get('caller_account')
     if context.account._is_taskqueue:
@@ -127,7 +128,7 @@ class Write(orm.BaseModel):
       for key, value in condition_kwargs.iteritems():
         default_condition_kwargs[key] = tools.get_attr(context, value)
       if not condition(**default_condition_kwargs):
-        return # skip run if condition does not satisfy
+        return  # skip run if condition does not satisfy
     if entity and isinstance(entity, orm.Model):
       record_arguments = {'agent': context.account.key, 'action': context.action.key}
       record_arguments.update(static_record_arguments)
@@ -386,3 +387,97 @@ class Notify(orm.BaseModel):
         tools.http_send(values)
       if 'channel' in method:
         tools.channel_send(values)
+
+
+class BaseCache(orm.BaseModel):
+
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+
+  def run(self, context):
+    CacheGroup = context.models['135']
+    cache = self.cfg.get('cache', [])
+    group_id = self.cfg.get('group', None)
+    if callable(group_id):
+      group_id = group_id(context)
+    dgroup_id = self.cfg.get('dgroup', None)
+    dcache_driver = self.cfg.get('dcache', [])
+    cache_drivers = []
+    all_prequesits = ['auth', 'guest', context.account.key_id_str]
+    for driver in cache:
+      if callable(driver):
+        driver = driver(context)
+        if driver is None:
+          continue
+      user = driver == 'account'
+      if not context.account._is_guest:
+        if user and not context.account._is_guest:
+          cache_drivers.append(context.account.key_id_str)
+        if driver == 'auth':
+          cache_drivers.append('auth')
+      elif driver == 'guest':
+        cache_drivers.append('guest')
+      if driver == 'all' and not any(baddie in cache_drivers for baddie in all_prequesits):
+        cache_drivers.append('all')
+    for d in dcache_driver:
+      cache_drivers.append(tools.get_attr(context, d))
+    if dgroup_id:
+      group_id = tools.get_attr(context, dgroup_id)
+    cache_drivers = set(cache_drivers)
+    key = self.cfg.get('key')
+    dkey = self.cfg.get('dkey')
+    if dkey:
+      key = tools.get_attr(context, dkey)
+    if not key:
+      key = context.cache_key
+    data = None
+    def build_key(driver, key):
+      return '%s_%s' % (driver, key)
+    def do_save(data):
+      queue = {}
+      group = None
+      if group_id:
+        group = CacheGroup.build_key(group_id).get()
+        if not group:
+          group = CacheGroup(id=group_id, keys=[])
+      for driver in cache_drivers:
+        k = build_key(driver, key)
+        if group:
+          if k not in group.keys:
+            group.keys.append(k)
+        queue[k] = data
+      tools.mem_set_multi(queue)
+      if group:
+        group.put()
+    saver = {'do_save': do_save}
+    if self.getter:
+      for driver in cache_drivers:
+        k = build_key(driver, key)
+        data = tools.mem_get(k)
+        if data:
+          break
+      if data:
+        context.cache = {'value': data}
+        raise orm.TerminateAction('Got cache with key %s from %s drivers.' % (k, cache_drivers))
+      context.cache = saver
+    else:
+      delete_keys = [build_key(driver, key) for driver in cache_drivers]
+      group = None
+      if group_id:
+        group = CacheGroup.build_key(group_id).get()
+        if group:
+          delete_keys.extend(group.keys)
+          group.keys = []
+      tools.mem_delete_multi(delete_keys)
+      if group:
+        group.put()
+      
+
+
+class GetCache(BaseCache):
+
+  getter = True
+
+
+class DeleteCache(BaseCache):
+
+  getter = False

@@ -79,7 +79,8 @@ class Unit(orm.BaseExpando):
                       Read(),
                       RulePrepare(),
                       RuleExec(),
-                      UnitCurrencyUpdateWrite(cfg={'file': settings.CURRENCY_DATA_FILE})
+                      UnitCurrencyUpdateWrite(cfg={'file': settings.CURRENCY_DATA_FILE}),
+                      DeleteCache(cfg={'group': '17'})
                   ]
               )
           ]
@@ -94,7 +95,8 @@ class Unit(orm.BaseExpando):
                       Read(),
                       RulePrepare(),
                       RuleExec(),
-                      UnitUpdateWrite(cfg={'file': settings.UOM_DATA_FILE})
+                      UnitUpdateWrite(cfg={'file': settings.UOM_DATA_FILE}),
+                      DeleteCache(cfg={'group': '17'})
                   ]
               )
           ]
@@ -123,6 +125,7 @@ class Unit(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': '17', 'cache': ['auth']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),

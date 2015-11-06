@@ -61,7 +61,8 @@ class CatalogProductCategory(orm.BaseModel):
                       RulePrepare(),
                       RuleExec(),
                       CatalogProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE,
-                                                             'debug_environment': settings.DEBUG})
+                                                             'debug_environment': settings.DEBUG}),
+                      DeleteCache(cfg={'group': '24', 'cache': ['auth']})
                   ]
               )
           ]
@@ -89,6 +90,7 @@ class CatalogProductCategory(orm.BaseModel):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': '24', 'cache': ['auth']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -429,6 +431,12 @@ class Catalog(orm.BaseExpando):
   def condition_duplicate(action, **kwargs):
     return action.key_id_str in ("catalog_process_duplicate", "catalog_pricetag_process_duplicate")
 
+  def cache_read(context):
+    if context.input['key']._root == context.account.key or context.account._root_admin:
+      return 'account'
+    else:
+      return None
+
   _permissions = [
       orm.ExecuteActionPermission('prepare', condition_not_guest),
       orm.ExecuteActionPermission(('create', 'read'), condition_not_guest_and_owner_or_root),
@@ -528,6 +536,7 @@ class Catalog(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'dgroup': 'input.key._urlsafe', 'cache': [cache_read, 'all']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -563,6 +572,7 @@ class Catalog(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
+                      DeleteCache(cfg={'dgroup': '_catalog.key._urlsafe'}),
                       Set(cfg={'d': {'output.entity': '_catalog'}})
                   ]
               )

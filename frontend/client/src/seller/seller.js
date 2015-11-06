@@ -820,13 +820,14 @@
                         $scope.menu = {};
                         $scope.globalSellerStack.inCollection = false;
                         if (!currentAccount._is_guest) {
+                            /*
                             $scope.loadedCollection = models['18'].current().then(function (response) {
                                 var collection = response.data.entity;
                                 if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
                                     $scope.globalSellerStack.inCollection = true;
                                 }
                                 return collection;
-                            });
+                            });*/
                         }
 
                         helpers.sideNav.setup($scope.menu, 'right_seller_details');

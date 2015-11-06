@@ -133,6 +133,7 @@ class Account(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'dgroup': 'account.key._urlsafe', 'cache': ['account']}),
                       Read(cfg={'source': 'account.key'}),
                       RulePrepare(),
                       RuleExec(),
@@ -151,6 +152,7 @@ class Account(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'dgroup': 'account.key._urlsafe', 'cache': ['account']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -181,6 +183,7 @@ class Account(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
+                      DeleteCache(cfg={'dgroup': '_account.key._urlsafe'}),
                       Set(cfg={'d': {'output.entity': '_account'}}),
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'account_discontinue', 'action_model': '31'},
@@ -256,7 +259,8 @@ class Account(orm.BaseExpando):
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'account_discontinue', 'action_model': '31'},
                                          {'account': '_account.key_urlsafe', 'account_state': '_account.state'},
-                                         lambda account, account_state, **kwargs: account_state == 'suspended')])
+                                         lambda account, account_state, **kwargs: account_state == 'suspended')]),
+                      DeleteCache(cfg={'dgroup': '_account.key._urlsafe'})
                   ]
               )
           ]
@@ -280,6 +284,7 @@ class Account(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(cfg={'dra': {'ip_address': '_account.ip_address'}}),
+                      DeleteCache(cfg={'dgroup': '_account.key._urlsafe'}),
                       AccountLogoutOutput()
                   ]
               )

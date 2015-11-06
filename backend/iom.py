@@ -9,6 +9,8 @@ import cgi
 import cProfile
 import pstats
 import cStringIO
+import hashlib
+import json
 
 from google.appengine.ext import blobstore
 from google.appengine.ext.db import datastore_errors
@@ -217,11 +219,14 @@ class Engine:
         tools.log.debug('Completed action in %sms' % action_time.miliseconds)
 
   @classmethod
-  def run(cls, input):
+  def run(cls, input, format=None):
+    if format is None:
+      format = 'raw'
     if settings.PROFILING:
       pr = cProfile.Profile()
       pr.enable()
     context = Context()
+    context.cache_key = hashlib.md5(json.dumps(input)).hexdigest()
     cls.process_blob_input(input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
       cls.get_models(context)
@@ -229,6 +234,20 @@ class Engine:
       cls.get_action(context, input)
       cls.process_action_input(context, input)
       cls.execute_action(context, input)
+      if format == 'json':
+        cache = context.cache
+        do_save = None
+        if cache:
+          do_save = cache.get('do_save')
+          value = cache.get('value')
+          if value is not None:
+            context.output = value
+          else:
+            context.output = tools.json_dumps(context.output)
+            if do_save:
+              do_save(context.output)
+        else:
+          context.output = tools.json_dumps(context.output)
       cls.process_blob_state('success')  # Delete and/or save all blobs that have to be deleted and/or saved on success.
       tools.log.debug('Action Completed')
     except Exception as e:

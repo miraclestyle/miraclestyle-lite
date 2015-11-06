@@ -703,7 +703,7 @@
 
                                 // cache current user's cart
                                 if (!currentAccount._is_guest) {
-                                    models['34'].current($scope.catalog._seller.key);
+                                    //models['34'].current($scope.catalog._seller.key);
                                 }
 
                                 $scope.loadingProduct = false;

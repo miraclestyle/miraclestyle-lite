@@ -107,6 +107,7 @@ class Buyer(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
+                      DeleteCache(cfg={'key': 'buyer', 'cache': ['account']}),
                       Set(cfg={'d': {'output.entity': '_buyer'}})
                   ]
               )
@@ -122,6 +123,7 @@ class Buyer(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'key': 'buyer', 'cache': ['account']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
