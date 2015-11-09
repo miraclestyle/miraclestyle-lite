@@ -145,7 +145,7 @@ class Order(orm.BaseExpando):
 
   _kind = 34
 
-  _use_memcache = True
+  _use_memcache = False
 
   # key path account->buyer->order
   # 

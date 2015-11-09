@@ -66,7 +66,7 @@ class Buyer(orm.BaseExpando):
 
   _kind = 19
 
-  _use_memcache = True
+  _use_memcache = False
 
   '''
   read:

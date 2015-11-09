@@ -52,7 +52,7 @@
 .main-toolbar {
     display: block;
     position: absolute;
-    z-index: 11;
+    z-index: 18;
 }
 
 .ui-view-wrapper {

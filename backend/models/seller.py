@@ -33,7 +33,7 @@ class SellerContent(orm.BaseModel):
   _kind = 21
 
   _use_rule_engine = False
-  _use_memcache = True
+  _use_memcache = False
 
   documents = orm.SuperLocalStructuredProperty(SellerContentDocument, '1', repeated=True)
 
@@ -64,7 +64,7 @@ class SellerFeedback(orm.BaseModel):
 
   _use_record_engine = False
   _use_rule_engine = False
-  _use_memcache = True
+  _use_memcache = False
 
   feedbacks = orm.SuperLocalStructuredProperty(SellerFeedbackStats, '1', repeated=True)
 
@@ -81,7 +81,7 @@ class SellerPluginContainer(orm.BaseModel):
   _kind = 22
 
   _use_rule_engine = False
-  _use_memcache = True
+  _use_memcache = False
 
   plugins = orm.SuperPluginStorageProperty(('107', '113', '117', '126', '108', '109'), '1', required=True, default=[], compressed=False)
 
@@ -97,7 +97,7 @@ class Seller(orm.BaseExpando):
 
   _kind = 23
 
-  _use_memcache = True
+  _use_memcache = False
 
   name = orm.SuperStringProperty('1', required=True)
   logo = orm.SuperImageLocalStructuredProperty(orm.Image, '2', required=True)
@@ -109,8 +109,6 @@ class Seller(orm.BaseExpando):
       '_feedback': orm.SuperRemoteStructuredProperty(SellerFeedback),
       '_plugin_group': orm.SuperRemoteStructuredProperty(SellerPluginContainer),
       '_records': orm.SuperRecordProperty('23'),
-      '_follower_count': orm.SuperComputedProperty(lambda self: self.get_followers_count_callback()),
-      '_notified_followers_count': orm.SuperComputedProperty(lambda self: self.get_notified_followers_count_callback()),
       '_currency': orm.SuperReferenceProperty('17', callback=lambda self: self.get_currency_callback(),
                                               format_callback=lambda self, value: value)
   }
@@ -222,24 +220,6 @@ class Seller(orm.BaseExpando):
           ]
       )
   ]
-
-  def get_notified_followers_count_callback(self):
-    Collection = orm.Model._lookup_model('18')
-    key = 'get_notified_followers_count_%s' % self.key.urlsafe()
-    count = tools.mem_get(key)
-    if count is None:
-      count = Collection.query(Collection.sellers == self.key, Collection.notify == True).count()
-      tools.mem_set(key, count, settings.CACHE_TIME_NOTIFIED_FOLLOWERS_COUNT)
-    return count
-
-  def get_followers_count_callback(self):
-    Collection = orm.Model._lookup_model('18')
-    key = 'get_followers_count_%s' % self.key.urlsafe()
-    count = tools.mem_get(key)
-    if count is None:
-      count = Collection.query(Collection.sellers == self.key).count()
-      tools.mem_set(key, count, settings.CACHE_TIME_FOLLOWERS_COUNT)
-    return count
 
   def get_currency_callback(self):
     currency = None

@@ -19,7 +19,7 @@ class Unit(orm.BaseExpando):
 
   _use_record_engine = False
   _use_cache = True
-  _use_memcache = True
+  _use_memcache = False
 
   measurement = orm.SuperStringProperty('1', required=True)
   name = orm.SuperStringProperty('2', required=True)

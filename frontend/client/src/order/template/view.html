@@ -192,7 +192,6 @@
                           isYou = !message._agent || message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;
                           isSeller = message._agent.key === order._seller_reference.parent.key && !isYou;
-                          isToday = (today.getDay() === message.created.getDay() && today.getMonth() === message.created.getMonth());
                           " ng-class="{'leftside': isYou, 'rightside': !isYou}">
                         <div class="message">
                             <div class="message-inner">
@@ -203,7 +202,7 @@
                                   <span ng-if="message._action === 'report_feedback'">Feedback reported on</span>
                                   <span ng-if="message._action === 'sudo_feedback'">Feedback administered on</span>
                                   <span ng-if="message._action === 'complete'">Payment completed on</span>
-                                  <span ng-if="message._action === 'log_message'">Message left <span ng-if="!isToday">on</span> <span ng-if="isToday">at</span> </span>
+                                  <span ng-if="message._action === 'log_message'">Message left <span ng-if="!messages.isToday(message)">on</span> <span ng-if="messages.isToday(message)">at</span> </span>
                                   <span ng-if="!message._action">Sending message...</span>
                                     <span ng-if="message.created">{{message|output:'created'}}</span>
                                 </div>

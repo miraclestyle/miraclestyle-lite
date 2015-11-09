@@ -115,7 +115,7 @@ class Engine:
   @classmethod
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
-    from models import account, buyer, catalog, collection, location, order, seller, unit
+    from models import account, buyer, collection, catalog, location, order, seller, unit
     from plugins import account, base, catalog, location, order, seller, unit
     tools.log.debug('Initialize models...')
     kinds = []

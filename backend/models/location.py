@@ -20,7 +20,7 @@ class Country(orm.BaseModel):
 
   _use_record_engine = False
   _use_cache = True
-  _use_memcache = True
+  _use_memcache = False
 
   code = orm.SuperStringProperty('1', required=True, indexed=False)
   name = orm.SuperStringProperty('2', required=True)
@@ -78,7 +78,7 @@ class Country(orm.BaseModel):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'group': 'search_12'}),
+                      GetCache(cfg={'group': 'search_12', 'cache': ['auth']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -100,7 +100,7 @@ class CountrySubdivision(orm.BaseModel):
 
   _use_record_engine = False
   _use_cache = True
-  _use_memcache = True
+  _use_memcache = False
 
   parent_record = orm.SuperKeyProperty('1', kind='13', indexed=False)
   code = orm.SuperStringProperty('2', required=True, indexed=False)
@@ -142,7 +142,7 @@ class CountrySubdivision(orm.BaseModel):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'group': 'search_13'}),
+                      GetCache(cfg={'group': 'search_13', 'cache': ['auth']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),

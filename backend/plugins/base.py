@@ -482,16 +482,16 @@ class BaseCache(orm.BaseModel):
           if group_key:
             context._callbacks.append(('callback', {'action_id': 'update', 'keys': keys, 'ids': [group_key._id_str], 'action_model': '135'}))
         else:
-          tools.debug.info('No cache for group %s with cache drivers %s' % (group_key, cache_drivers))
+          tools.log.info('No cache for group %s with cache drivers %s' % (group_key, cache_drivers))
       context.cache = saver
     else:
       tools.mem_delete_multi([build_key(driver, key) for driver in cache_drivers])
       if group_id:
         keys = []
         group_keys = [CacheGroup.build_key(id) for id in group_id]
-        groups = orm.get_multi(group_keys) # this can cause operating on multiple groups
-        # however if that happens, just move the DeleteCache plugin away from the transaction
-        # eitherway 25 entity groups are now allowed
+        groups = orm.get_multi(group_keys) # this can cause operating on multiple groups error
+        # however if that happens, just move the DeleteCache plugin away from the transaction, since it does not need it
+        # anyway 25 entity groups is the limit and usually we operate on max 5 groups per flush
         for group in groups:
           if group:
             keys.extend(group.keys)

@@ -377,6 +377,9 @@
                                     }
 
                                     $scope.messages = {
+                                        isToday: function (message) {
+                                            return ($scope.today.getDay() === message.created.getDay() && $scope.today.getMonth() === message.created.getMonth());
+                                        },
                                         reader: $scope.order.id ? models['34'].reader({
                                             key: $scope.order.key,
                                             next: {
