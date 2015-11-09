@@ -561,10 +561,10 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
     order._messages = [new_order_message]
 
-    if (self.reciever_email != ipn['receiver_email']):
+    if (self.reciever_email.lower() != ipn['receiver_email'].lower()):
       mismatches.append('receiver_email')
     if 'business' in ipn:
-      if (self.business != ipn['business']):
+      if (self.business.lower() != ipn['business'].lower()):
         mismatches.append('business_email')
     if (order_currency.code != ipn['mc_currency']):
       mismatches.append('mc_currency')
