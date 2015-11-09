@@ -987,7 +987,7 @@ md-toolbar {
   -ms-flex-direction: column;
   flex-direction: column;
   position: relative;
-  z-index: 2;
+  z-index: 18;
   min-height: 56px;
   width: 100%;
   background-color: white;
