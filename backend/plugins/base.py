@@ -485,7 +485,7 @@ class BaseCache(orm.BaseModel):
           tools.log.info('No cache for group %s with cache drivers %s' % (group_key, cache_drivers))
       context.cache = saver
     else:
-      tools.mem_delete_multi([build_key(driver, key) for driver in cache_drivers])
+      tools.mem_delete_multi([build_key(driver, key, None) for driver in cache_drivers])
       if group_id:
         keys = []
         group_keys = [CacheGroup.build_key(id) for id in group_id]

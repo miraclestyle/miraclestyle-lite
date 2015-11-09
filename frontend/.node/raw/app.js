@@ -12548,8 +12548,8 @@ $(function () {
 
                     scope.$watch(function () {
                         return attrs.autoloadOnVerticalScrollEnd && config && config.loader;
-                    }, function (old, neww) {
-                        if (loaded || !attrs.autoloadOnVerticalScrollEnd || !config || !config.loader) {
+                    }, function (neww, old) {
+                        if (!neww) {
                             return;
                         }
                         loaded = true;
