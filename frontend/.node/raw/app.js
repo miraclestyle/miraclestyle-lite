@@ -18301,6 +18301,8 @@ angular.module('app')
                 },
                 manageModal: function (catalog, callback, modalConfig) { // modal dialog for managing the catalog
 
+                    callback = callback || angular.noop;
+
                     modalConfig = helpers.alwaysObject(modalConfig);
 
                     var fields = modelsMeta.getActionArguments('31', 'update'),
@@ -22097,6 +22099,9 @@ angular.module('app')
 
             try {
                 query = helpers.url.jsonFromUrlsafe($stateParams.query);
+                if (query.search.t) {
+                    delete query.search.t;
+                }
                 args = query;
             } catch (ignore) {}
 
