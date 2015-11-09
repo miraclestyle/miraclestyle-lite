@@ -6,7 +6,7 @@
         ])
         .directive('mdCheckbox', MdCheckboxDirective);
 
-    function MdCheckboxDirective(inputDirective, $mdAria, $mdConstant, $mdUtil) {
+    function MdCheckboxDirective(inputDirective, $mdAria, $mdConstant, $mdUtil, $timeout) {
         inputDirective = inputDirective[0];
         var CHECKED_CSS = 'md-checked';
 
@@ -29,13 +29,32 @@
         function compile(tElement, tAttrs) {
 
             tAttrs.type = 'checkbox';
-            tAttrs.tabIndex = 0;
+            tAttrs.tabindex = tAttrs.tabindex || '0';
             tElement.attr('role', tAttrs.type);
+
+            // Attach a click handler in compile in order to immediately stop propagation
+            // (especially for ng-click) when the checkbox is disabled.
+            tElement.on('click', function (event) {
+                if (this.hasAttribute('disabled')) {
+                    event.stopImmediatePropagation();
+                }
+            });
 
             return function postLink(scope, element, attr, ngModelCtrl) {
                 ngModelCtrl = ngModelCtrl || $mdUtil.fakeNgModel();
-                var checked = false;
-                $mdAria.expectWithText(element, 'aria-label');
+
+
+                if (attr.ngChecked) {
+                    scope.$watch(
+                        scope.$eval.bind(scope, attr.ngChecked),
+                        ngModelCtrl.$setViewValue.bind(ngModelCtrl)
+                    );
+                }
+
+                $$watchExpr('ngDisabled', 'tabindex', {
+                    true: '-1',
+                    false: attr.tabindex
+                });
 
                 // Reuse the original input[type=checkbox] directive from Angular core.
                 // This is a bit hacky as we need our own event listener and own render
@@ -45,30 +64,65 @@
                     0: {}
                 }, attr, [ngModelCtrl]);
 
+                scope.mouseActive = false;
                 element.on('click', listener)
-                    .on('keypress', keypressHandler);
+                    .on('keypress', keypressHandler)
+                    .on('mousedown', function () {
+                        scope.mouseActive = true;
+                        $timeout(function () {
+                            scope.mouseActive = false;
+                        }, 100);
+                    })
+                    .on('focus', function () {
+                        if (scope.mouseActive === false) {
+                            element.addClass('md-focused');
+                        }
+                    })
+                    .on('blur', function () {
+                        element.removeClass('md-focused');
+                    });
+
                 ngModelCtrl.$render = render;
 
+                function $$watchExpr(expr, htmlAttr, valueOpts) {
+                    if (attr[expr]) {
+                        scope.$watch(attr[expr], function (val) {
+                            if (valueOpts[val]) {
+                                element.attr(htmlAttr, valueOpts[val]);
+                            }
+                        });
+                    }
+                }
+
                 function keypressHandler(ev) {
-                    if (ev.which === $mdConstant.KEY_CODE.SPACE) {
+                    var keyCode = ev.which || ev.keyCode;
+                    if (keyCode === $mdConstant.KEY_CODE.SPACE || keyCode === $mdConstant.KEY_CODE.ENTER) {
                         ev.preventDefault();
+
+                        if (!element.hasClass('md-focused')) {
+                            element.addClass('md-focused');
+                        }
+
                         listener(ev);
                     }
                 }
 
                 function listener(ev) {
-                    if (element[0].hasAttribute('disabled')) return;
+                    if (element[0].hasAttribute('disabled')) {
+                        return;
+                    }
 
                     scope.$apply(function () {
-                        checked = !checked;
-                        ngModelCtrl.$setViewValue(checked, ev && ev.type);
+                        // Toggle the checkbox value...
+                        var viewValue = attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue;
+
+                        ngModelCtrl.$setViewValue(viewValue, ev && ev.type);
                         ngModelCtrl.$render();
                     });
                 }
 
                 function render() {
-                    checked = ngModelCtrl.$viewValue;
-                    if (checked) {
+                    if (ngModelCtrl.$viewValue) {
                         element.addClass(CHECKED_CSS);
                     } else {
                         element.removeClass(CHECKED_CSS);
@@ -77,6 +131,6 @@
             };
         }
     }
-    MdCheckboxDirective.$inject = ["inputDirective", "$mdAria", "$mdConstant", "$mdUtil"];
+    MdCheckboxDirective.$inject = ["inputDirective", "$mdAria", "$mdConstant", "$mdUtil", "$timeout"];
 
 })();

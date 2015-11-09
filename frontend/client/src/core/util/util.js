@@ -902,7 +902,7 @@
           };
 
           if (self.isHijackingClicks) {
-            var maxClickDistance = 6;
+            var maxClickDistance = 10;
             self.handler('click', {
               options: {
                 maxDistance: maxClickDistance
