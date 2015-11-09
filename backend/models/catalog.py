@@ -499,8 +499,7 @@ class Catalog(orm.BaseExpando):
                                'state', 'cover', '_images'), condition_published_or_discontinued),
       orm.ReadFieldPermission('_records', condition_root),
       orm.WriteFieldPermission('_records', condition_root),
-      orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._content', '_seller._feedback',
-                               '_seller._follower_count', '_seller._notified_followers_count', '_seller._currency'), condition_true),
+      orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._content', '_seller._currency'), condition_true),
       orm.WriteFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                 'state', 'cover', 'cost', '_images'), condition_duplicate)
   ]

@@ -115,7 +115,7 @@ class Engine:
   @classmethod
   def init(cls):
     '''This function initializes all models and its properties, so it must be called before executing anything!'''
-    from models import account, buyer, collection, catalog, location, order, seller, unit
+    from models import account, buyer, catalog, location, order, seller, unit
     from plugins import account, base, catalog, location, order, seller, unit
     tools.log.debug('Initialize models...')
     kinds = []
@@ -228,7 +228,8 @@ class Engine:
       pr = cProfile.Profile()
       pr.enable()
     context = Context()
-    context.cache_key = hashlib.md5(json.dumps(input)).hexdigest()
+    context.raw_input = input
+    format_run = True
     cls.process_blob_input(input)  # This is the most efficient strategy to handle blobs we can think of!
     try:
       cls.get_models(context)
@@ -243,14 +244,17 @@ class Engine:
         value = cache.get('value')
         if value is not None:
           if format == 'json':
+            format_run = False
             context.output = value
         else:
           value = tools.json_dumps(context.output)
           if do_save:
             do_save(value)
           if format == 'json':
+            format_run = False
             context.output = value
       elif format == 'json':
+        format_run = False
         context.output = tools.json_dumps(context.output)
       cls.process_blob_state('success')  # Delete and/or save all blobs that have to be deleted and/or saved on success.
       tools.log.debug('Action Completed')
@@ -287,6 +291,9 @@ class Engine:
         ps = pstats.Stats(pr, stream=s).sort_stats(*settings.PROFILING_SORT)
         ps.print_stats()
         tools.log.debug(s.getvalue())
+    if format_run:
+      if format == 'json':
+        context.output = tools.json_dumps(context.output)
     return context.output
 
 

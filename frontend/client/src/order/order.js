@@ -92,7 +92,6 @@
                                         }
                                     },
                                     _seller: {
-                                        _feedback: {},
                                         _content: {}
                                     },
                                     _messages: {
@@ -106,7 +105,6 @@
                                 seller: seller.key,
                                 read_arguments: {
                                     _seller: {
-                                        _feedback: {},
                                         _content: {}
                                     },
                                     _messages: {
@@ -136,7 +134,7 @@
                                             lines = null;
                                         },
                                         reactOnStateChange: function (response) {
-                                            helpers.update($scope.order, response.data.entity, ['state', 'feedback_adjustment', 'feedback', 'ui']);
+                                            helpers.update($scope.order, response.data.entity, ['state', 'ui']);
                                             locals.reactOnUpdate();
                                         },
                                         reactOnUpdate: function (skipCache) {
@@ -526,134 +524,6 @@
                                                     $scope.messages.open = !isOpen;
                                                 });
                                             });
-                                        }
-                                    };
-
-                                    $scope.feedback = {
-                                        canShowButton: function () {
-                                            var maybe = false;
-                                            angular.forEach(['leave_feedback', 'review_feedback', 'sudo_feedback'], function (k) {
-                                                if (!maybe) {
-                                                    maybe = $scope.order.ui.rule.action[k].executable;
-                                                }
-                                            });
-                                            return maybe;
-                                        },
-                                        isBuyer: function () {
-                                            return $scope.order.ui.rule.action.leave_feedback.executable || $scope.order.ui.rule.action.sudo_feedback.executable;
-                                        },
-                                        showAction: function () {
-                                            var parentScope = $scope,
-                                                leaveFeedbackArgs = modelsMeta.getActionArguments('34', 'leave_feedback');
-                                            $.extend(leaveFeedbackArgs.message.ui, {
-                                                writable: true,
-                                                parentArgs: 'feedback',
-                                                args: 'feedback.message',
-                                                label: false,
-                                                placeholder: 'Please, write a comment here. Comments appear in the messages feed.',
-                                                attrs: {
-                                                    'native-placeholder': '',
-                                                    'class': 'full-width'
-                                                }
-                                            });
-                                            if ($scope.feedback.isBuyer()) {
-                                                $modal.open({
-                                                    fullScreen: false,
-                                                    inDirection: false,
-                                                    outDirection: false,
-                                                    cantCloseWithBackdrop: true,
-                                                    templateUrl: 'order/leave_feedback.html',
-                                                    controller: ng(function ($scope) {
-                                                        $scope.config = {};
-                                                        $scope.feedback = {
-                                                            form: null,
-                                                            messageField: leaveFeedbackArgs.message,
-                                                            message: '',
-                                                            choice: 'neutral',
-                                                            choices: [{
-                                                                key: 'positive'
-                                                            }, {
-                                                                key: 'negative'
-                                                            }, {
-                                                                key: 'neutral'
-                                                            }]
-                                                        };
-                                                        $scope.config.dismiss = function () {
-                                                            return $scope.$close();
-                                                        };
-
-                                                        $scope.config.text = {
-                                                            primary: 'Ok'
-                                                        };
-
-                                                        $scope.config.confirm = function () {
-                                                            if ($scope.feedback.form.$valid) {
-                                                                models['34'].actions[parentScope.order.ui.rule.action.leave_feedback.executable ? 'leave_feedback' : 'sudo_feedback']({
-                                                                    key: parentScope.order.key,
-                                                                    message: $scope.feedback.message,
-                                                                    feedback: $scope.feedback.choice
-                                                                }).then(function (response) {
-                                                                    parentScope.order._messages.push(response.data.entity._messages[0]);
-                                                                    locals.reactOnStateChange(response);
-                                                                    $scope.config.dismiss();
-                                                                    snackbar.showK('feedbackLeft');
-                                                                });
-                                                            } else {
-                                                                helpers.form.wakeUp($scope.feedback.form);
-                                                            }
-                                                        };
-                                                    })
-                                                });
-                                            } else {
-                                                $modal.open({
-                                                    fullScreen: false,
-                                                    inDirection: false,
-                                                    outDirection: false,
-                                                    cantCloseWithBackdrop: true,
-                                                    templateUrl: 'order/seller_feedback.html',
-                                                    controller: ng(function ($scope) {
-                                                        $scope.config = {};
-                                                        $scope.feedback = {
-                                                            form: null,
-                                                            messageField: leaveFeedbackArgs.message,
-                                                            message: '',
-                                                            choice: 'review_feedback',
-                                                            choices: [{
-                                                                key: 'review_feedback',
-                                                                name: 'Ask the buyer to review feedback'
-                                                            }, {
-                                                                key: 'report_feedback',
-                                                                name: 'Ask the admin to intervene'
-                                                            }]
-                                                        };
-                                                        $scope.config.dismiss = function () {
-                                                            return $scope.$close();
-                                                        };
-
-                                                        $scope.config.text = {
-                                                            primary: 'Ok'
-                                                        };
-
-                                                        $scope.order = parentScope.order;
-
-                                                        $scope.config.confirm = function () {
-                                                            if ($scope.feedback.form.$valid) {
-                                                                models['34'].actions[$scope.feedback.choice]({
-                                                                    key: parentScope.order.key,
-                                                                    message: $scope.feedback.message
-                                                                }).then(function (response) {
-                                                                    parentScope.order._messages.push(response.data.entity._messages[0]);
-                                                                    locals.reactOnStateChange(response);
-                                                                    $scope.config.dismiss();
-                                                                    snackbar.showK('feedback' + ($scope.feedback.choice === 'report_feedback' ? 'Reported' : 'Reviewed'));
-                                                                });
-                                                            } else {
-                                                                helpers.form.wakeUp($scope.feedback.form);
-                                                            }
-                                                        };
-                                                    })
-                                                });
-                                            }
                                         }
                                     };
 

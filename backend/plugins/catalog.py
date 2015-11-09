@@ -207,7 +207,7 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
                       'parent_entity.key._root': orm.SuperKeyProperty(kind='23', search_document_field_name='seller_account_key'),
                       'parent_entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
                       'cover.value.serving_url': orm.SuperStringProperty(search_document_field_name='cover'),
-                      'cover.value.proportion': orm.SuperStringProperty(search_document_field_name='cover_proportion')}  # name='seller_feedback', value=context._catalog.namespace_entity.feedback
+                      'cover.value.proportion': orm.SuperStringProperty(search_document_field_name='cover_proportion')}
     product_fields = {'key_parent._parent.entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
                       'key_parent._parent._parent.entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
                       'key_parent._parent._parent.entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),

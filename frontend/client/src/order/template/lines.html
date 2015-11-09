@@ -27,20 +27,7 @@
                             </td>
                         </tr>
 
-                        <tr>
-                            <td class="secondary info">Feedback</td>
-                            <td class="secondary">
-                                <span ng-show="!order.feedback">N/A</span>
-                                <span ng-show="order.feedback">{{order.feedback|labelize:"order"}}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="secondary info">Feedback adjustment</td>
-                            <td class="secondary">
-                                <span ng-show="!order.feedback_adjustment">N/A</span>
-                                <span ng-show="order.feedback_adjustment">{{order.feedback_adjustment|labelize:"order"}}</span>
-                            </td>
-                        </tr>
+ 
                         <tr>
                             <td class="secondary info">Updated</td>
                             <td class="secondary">{{order|output:'updated'}}</td>

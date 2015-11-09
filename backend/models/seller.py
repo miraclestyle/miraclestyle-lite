@@ -14,7 +14,6 @@ from plugins.seller import *
 
 
 __all__ = ['SellerContentDocument', 'SellerContent',
-           'SellerFeedbackStats', 'SellerFeedback',
            'SellerPluginContainer', 'Seller']
 
 
@@ -40,37 +39,6 @@ class SellerContent(orm.BaseModel):
   @classmethod
   def prepare_key(cls, **kwargs):
     return cls.build_key('_content', parent=kwargs.get('parent'))
-
-  def prepare(self, **kwargs):
-    self.key = self.prepare_key(**kwargs)
-
-
-class SellerFeedbackStats(orm.BaseModel):
-
-  _kind = 36
-
-  _use_record_engine = False
-  _use_rule_engine = False
-
-  date = orm.SuperDateTimeProperty('1', required=True)
-  positive_count = orm.SuperIntegerProperty('2', required=True)
-  neutral_count = orm.SuperIntegerProperty('3', required=True)
-  negative_count = orm.SuperIntegerProperty('4', required=True)
-
-
-class SellerFeedback(orm.BaseModel):
-
-  _kind = 37
-
-  _use_record_engine = False
-  _use_rule_engine = False
-  _use_memcache = False
-
-  feedbacks = orm.SuperLocalStructuredProperty(SellerFeedbackStats, '1', repeated=True)
-
-  @classmethod
-  def prepare_key(cls, **kwargs):
-    return cls.build_key('_feedback', parent=kwargs.get('parent'))
 
   def prepare(self, **kwargs):
     self.key = self.prepare_key(**kwargs)
@@ -106,7 +74,6 @@ class Seller(orm.BaseExpando):
 
   _virtual_fields = {
       '_content': orm.SuperRemoteStructuredProperty(SellerContent),
-      '_feedback': orm.SuperRemoteStructuredProperty(SellerFeedback),
       '_plugin_group': orm.SuperRemoteStructuredProperty(SellerPluginContainer),
       '_records': orm.SuperRecordProperty('23'),
       '_currency': orm.SuperReferenceProperty('17', callback=lambda self: self.get_currency_callback(),
@@ -114,10 +81,10 @@ class Seller(orm.BaseExpando):
   }
 
   def condition_not_guest_and_owner(action, account, entity, **kwargs):
-    return action.key_id_str not in ("cron_generate_feedback_stats",) and not account._is_guest and entity._original.key_root == account.key
+    return not account._is_guest and entity._original.key_root == account.key
 
   def condition_owner_active(action, account, entity, **kwargs):
-    return action.key_id_str not in ("cron_generate_feedback_stats",) and entity._original.root_entity.state == "active"
+    return entity._original.root_entity.state == "active"
 
   def condition_taskqueue_or_cron_or_root(account, **kwargs):
     return account._is_taskqueue or account._is_cron or account._root_admin
@@ -125,10 +92,8 @@ class Seller(orm.BaseExpando):
   _permissions = [
       orm.ExecuteActionPermission(('create', 'update', 'prepare'), condition_not_guest_and_owner),
       orm.ExecuteActionPermission('read', condition_owner_active),
-      orm.ExecuteActionPermission('cron_generate_feedback_stats', condition_taskqueue_or_cron_or_root),
       orm.ReadFieldPermission(('_plugin_group'), condition_not_guest_and_owner),
-      orm.ReadFieldPermission(('name', 'logo', '_content', '_currency', '_feedback', '_follower_count', '_notified_followers_count'), condition_owner_active),
-      orm.WriteFieldPermission('_feedback', condition_taskqueue_or_cron_or_root),
+      orm.ReadFieldPermission(('name', 'logo', '_content', '_currency'), condition_owner_active),
       orm.WriteFieldPermission(('name', 'logo', '_content', '_plugin_group', '_records'), condition_not_guest_and_owner)
   ]
 
@@ -189,31 +154,6 @@ class Seller(orm.BaseExpando):
                   plugins=[
                       Write(),
                       DeleteCache(cfg={'group': lambda context: 'read_23_%s' % context.input['account']._id_str}),
-                      Set(cfg={'d': {'output.entity': '_seller'}})
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='cron_generate_feedback_stats',
-          arguments={
-              'cursor': orm.SuperStringProperty(),
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      RulePrepare(),
-                      RuleExec(),
-                      SellerCronGenerateFeedbackStats()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write(),
-                      CallbackExec(),
                       Set(cfg={'d': {'output.entity': '_seller'}})
                   ]
               )

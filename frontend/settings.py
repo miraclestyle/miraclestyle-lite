@@ -136,7 +136,6 @@ ANGULAR_ACTIVE_COMPONENTS = [
     'account',
     'buyer',
     'catalog',
-    'collection',
     'home',
     'location',
     'order',

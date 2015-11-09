@@ -783,16 +783,6 @@
                 globalSellerStack = {};
 
             $.extend(models['23'], {
-                decrementGlobalSellerStack: function (key, notified) {
-                    var gss = globalSellerStack[key];
-                    if (gss) {
-                        gss.follower_count -= 1;
-                        gss.inCollection = false;
-                        if (notified) {
-                            gss.notified_followers_count -= 1;
-                        }
-                    }
-                },
                 makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;
@@ -810,172 +800,48 @@
                             }),
                             sellerLogo = seller.logo.serving_url;
                         $scope.seller = seller;
-                        if (!globalSellerStack[seller.key]) {
-                            globalSellerStack[seller.key] = {
-                                follower_count: seller._follower_count,
-                                notified_followers_count: seller._notified_followers_count
-                            };
-                        }
-                        $scope.globalSellerStack = globalSellerStack[seller.key];
                         $scope.menu = {};
-                        $scope.globalSellerStack.inCollection = false;
-                        if (!currentAccount._is_guest) {
-                            /*
-                            $scope.loadedCollection = models['18'].current().then(function (response) {
-                                var collection = response.data.entity;
-                                if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
-                                    $scope.globalSellerStack.inCollection = true;
-                                }
-                                return collection;
-                            });*/
-                        }
-
                         helpers.sideNav.setup($scope.menu, 'right_seller_details');
 
                         chartData = [];
 
-                        if ($scope.seller._feedback) {
+                        $scope.socialMeta = {
+                            facebook: {
+                                'p[url]': sellerUrl,
+                                'p[images][0]': sellerLogo,
+                                'p[title]': $scope.seller.name
+                            },
+                            twitter: {
+                                url: sellerUrl,
+                                text: $scope.seller.name
+                            },
+                            pinterest: {
+                                url: sellerUrl,
+                                media: sellerLogo,
+                                description: $scope.seller.name
+                            },
+                            googleplus: {
+                                url: sellerUrl
+                            },
+                            reddit: {
+                                url: sellerUrl,
+                                title: $scope.seller.name
+                            },
+                            linkedin: {
+                                url: sellerUrl,
+                                title: $scope.seller.name
+                            },
+                            tumblr: {
+                                url: sellerUrl,
+                                name: $scope.seller.name
+                            }
+                        };
 
-                            angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
-                                feedback.positive_count = _.random(0, 100);
-                                feedback.negative_count = _.random(0, 100);
-                                feedback.neutral_count = _.random(0, 100);
-                                chartData.push({
-                                    c: [{
-                                        v: dateFilter(feedback.date, 'MMM')
-                                    }, {
-                                        v: feedback.positive_count
-                                    }, {
-                                        v: feedback.negative_count
-                                    }, {
-                                        v: feedback.neutral_count
-                                    }]
-                                });
-
+                        $scope.displayShare = function () {
+                            return social.share($scope.socialMeta, {
+                                src: embedSellerUrl
                             });
-
-                            $scope.chartConfig = {
-                                type: "ColumnChart",
-                                data: {
-                                    cols: [{
-                                        id: "months",
-                                        label: "Months",
-                                        type: "string"
-                                    }, {
-                                        id: "positive",
-                                        label: "Positive",
-                                        type: "number"
-                                    }, {
-                                        id: "negative",
-                                        label: "Negative",
-                                        type: "number"
-                                    }, {
-                                        id: "neutral",
-                                        label: "Neutral",
-                                        type: "number"
-                                    }],
-                                    rows: chartData
-                                },
-                                options: {
-                                    colors: ['green', 'red', 'gray'],
-                                    series: {
-                                        0: {
-                                            axis: 'positive'
-                                        },
-                                        1: {
-                                            axis: 'negative'
-                                        },
-                                        3: {
-                                            axis: 'neutral'
-                                        }
-                                    },
-                                    axes: {
-                                        y: {
-                                            positive: {
-                                                label: 'Positive'
-                                            },
-                                            negative: {
-                                                label: 'Negative',
-                                                side: 'right'
-                                            },
-                                            neutral: {
-                                                label: 'Neutral',
-                                                side: 'right'
-                                            }
-                                        }
-                                    }
-                                }
-                            };
-
-                            $scope.socialMeta = {
-                                facebook: {
-                                    'p[url]': sellerUrl,
-                                    'p[images][0]': sellerLogo,
-                                    'p[title]': $scope.seller.name
-                                },
-                                twitter: {
-                                    url: sellerUrl,
-                                    text: $scope.seller.name
-                                },
-                                pinterest: {
-                                    url: sellerUrl,
-                                    media: sellerLogo,
-                                    description: $scope.seller.name
-                                },
-                                googleplus: {
-                                    url: sellerUrl
-                                },
-                                reddit: {
-                                    url: sellerUrl,
-                                    title: $scope.seller.name
-                                },
-                                linkedin: {
-                                    url: sellerUrl,
-                                    title: $scope.seller.name
-                                },
-                                tumblr: {
-                                    url: sellerUrl,
-                                    name: $scope.seller.name
-                                }
-                            };
-
-                            $scope.displayShare = function () {
-                                return social.share($scope.socialMeta, {
-                                    src: embedSellerUrl
-                                });
-                            };
-
-
-                            $scope.feedbackStats = (function () {
-                                var positive_count = 0,
-                                    neutral_count = 0,
-                                    negative_count = 0,
-                                    positive_average,
-                                    negative_average,
-                                    neutral_average,
-                                    score,
-                                    values = [];
-
-                                positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
-                                negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
-                                neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
-
-                                if ((positive_count - negative_count) > 0) {
-                                    score = positive_count - negative_count;
-                                } else {
-                                    score = 0;
-                                }
-                                values[0] = isNaN(positive_count) ? 0 : positive_count;
-                                values[1] = isNaN(neutral_count) ? 0 : neutral_count;
-                                values[2] = isNaN(negative_count) ? 0 : negative_count;
-                                values[3] = isNaN(positive_average) ? 0 : positive_average;
-                                values[4] = isNaN(negative_average) ? 0 : negative_average;
-                                values[5] = isNaN(neutral_average) ? 0 : neutral_average;
-                                values[6] = score;
-                                return values;
-                            }());
-
-                        }
+                        };
 
 
                         $scope.viewContent = function (content) {
@@ -985,40 +851,6 @@
                                     $scope.plainText = true;
                                     $scope.content = content;
                                 })
-                            });
-                        };
-
-                        $scope.toggleCollection = function () {
-                            if (currentAccount._is_guest) {
-                                models['11'].login($state.href('home')); // must redirect to actual follow button >_>
-                                return;
-                            }
-                            $scope.loadedCollection.then(function (collection) {
-                                var loadedCollection = collection,
-                                    removed = false;
-                                if (!$scope.globalSellerStack.inCollection) {
-                                    removed = true;
-                                    loadedCollection.sellers.remove($scope.seller.key);
-                                } else {
-                                    loadedCollection.sellers.unshift($scope.seller.key);
-                                }
-                                models['18'].actions.update({
-                                    account: currentAccount.key,
-                                    sellers: loadedCollection.sellers,
-                                    notify: loadedCollection.notify
-                                }).then(function (newResponse) {
-                                    var updatedCollection = newResponse.data.entity;
-                                    if (removed) {
-                                        $scope.globalSellerStack.follower_count -= 1;
-                                    } else {
-                                        $scope.globalSellerStack.follower_count += 1;
-                                    }
-                                    // update cache
-                                    $.extend(loadedCollection, updatedCollection);
-                                    if (angular.isFunction(removedOrAdded)) {
-                                        removedOrAdded(updatedCollection, $scope.globalSellerStack.inCollection);
-                                    }
-                                });
                             });
                         };
 
@@ -1048,7 +880,6 @@
                                 return models['23'].actions.read({
                                     account: accountKey,
                                     read_arguments: {
-                                        _feedback: {},
                                         _content: {}
                                     }
                                 });

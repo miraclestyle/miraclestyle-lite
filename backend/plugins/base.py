@@ -437,7 +437,7 @@ class BaseCache(orm.BaseModel):
     if callable(key):
       key = key(context)
     if not key:
-      key = context.cache_key
+      key = hashlib.md5(tools.json_dumps(context.raw_input)).hexdigest()
     data = None
 
     def build_key(driver, key, group_key):

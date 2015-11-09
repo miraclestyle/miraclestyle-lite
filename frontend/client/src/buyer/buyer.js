@@ -10,13 +10,6 @@
                 });
             };
 
-            $scope.manageCollection = function () {
-                models['18'].manageModal(currentAccount.key, {
-                    inDirection: false,
-                    outDirection: false
-                });
-            };
-
         })).controller('BuyOrdersController', ng(function ($scope, $timeout, modals, snackbar, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
 
             var carts = $state.current.name === 'buy-carts',
@@ -39,7 +32,7 @@
                             key: $state.params.key
                         }, {disableUI: false}).then(function (response) {
                             if (gorder) {
-                                helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'feedback_adjustment', 'feedback', 'ui']);
+                                helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'ui']);
                             }
                             if (response.data.entity.state === 'completed') {
                                 snackbar.showK('orderPaymentSuccessProgress' + response.data.entity.state);

@@ -71,6 +71,7 @@ angular.module('app')
                     // }
                     var fn = attrs.ngUpload ? $parse(attrs.ngUpload) : angular.noop;
                     var startFn = attrs.ngUploadStart ? $parse(attrs.ngUploadStart) : angular.noop;
+                    var errorFn = attrs.ngUploadError ? $parse(attrs.ngUploadError) : angular.noop;
                     var endFn = attrs.ngUploadEnd ? $parse(attrs.ngUploadEnd) : angular.noop;
                     var loading = attrs.ngUploadLoading ? $parse(attrs.ngUploadLoading) : null;
                     var opts = scope.$eval(attrs.ngUploadOptions) || {};

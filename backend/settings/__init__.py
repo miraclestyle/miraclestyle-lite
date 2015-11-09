@@ -37,11 +37,6 @@ CATALOG_DISCONTINUED_LIFE = 1  # @note This will be something like 120-180 days
 CATALOG_INDEX = 'catalogs'
 CATALOG_DOCUMENTS_PER_INDEX = 200
 
-COLLECTION_CATALOG_AGE = 7
-
-# How many days does user have to leave feedback
-FEEDBACK_ALLOWED_DAYS = 7
-
 MAX_MESSAGE_SIZE = 1024
 
 HOST_URL = None

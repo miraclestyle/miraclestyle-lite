@@ -197,11 +197,8 @@
                             <div class="message-inner">
                                 <div ng-bind-html="message.body | escape | autobr" class="message-body second"></div>
                                 <div class="message-footer helper">
-                                  <span ng-if="message._action === 'leave_feedback'">Feedback left on</span>
-                                  <span ng-if="message._action === 'review_feedback'">Feedback reviewed on</span>
-                                  <span ng-if="message._action === 'report_feedback'">Feedback reported on</span>
-                                  <span ng-if="message._action === 'sudo_feedback'">Feedback administered on</span>
-                                  <span ng-if="message._action === 'complete'">Payment completed on</span>
+                                  
+                                  <span ng-if="message._action === 'complete'">Payment completed <span ng-if="!messages.isToday(message)">on</span> <span ng-if="messages.isToday(message)">at</span></span>
                                   <span ng-if="message._action === 'log_message'">Message left <span ng-if="!messages.isToday(message)">on</span> <span ng-if="messages.isToday(message)">at</span> </span>
                                   <span ng-if="!message._action">Sending message...</span>
                                     <span ng-if="message.created">{{message|output:'created'}}</span>

@@ -579,8 +579,7 @@
                                     // 5 rpcs
                                     read_arguments: {
                                         _seller: {
-                                            _content: {},
-                                            _feedback: {}
+                                            _content: {}
                                         },
                                         _images: {
                                             pricetags: {}

@@ -170,11 +170,9 @@ class Order(orm.BaseExpando):
   untaxed_amount = orm.SuperDecimalProperty('9', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
-  feedback = orm.SuperStringProperty('12', choices=('positive', 'neutral', 'negative'))
-  feedback_adjustment = orm.SuperStringProperty('13', choices=('revision', 'reported', 'sudo'))
-  payment_method = orm.SuperKeyProperty('14', required=False, indexed=False)
-  payment_status = orm.SuperStringProperty('15', required=False, indexed=False)
-  carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '16')
+  payment_method = orm.SuperKeyProperty('12', required=False, indexed=False)
+  payment_status = orm.SuperStringProperty('13', required=False, indexed=False)
+  carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '14')
 
   _default_indexed = False
 
@@ -248,30 +246,6 @@ class Order(orm.BaseExpando):
   def condition_complete(action, **kwargs):
     return action.key_id_str == "complete"
 
-  def condition_leave_feedback(account, entity, **kwargs):
-    return not account._is_guest and entity._original.key_root == account.key \
-        and entity._original.state == "completed" and entity._is_feedback_allowed \
-        and (entity._original.feedback is None or (entity._original.feedback is not None
-                                                   and entity._original.feedback_adjustment == "revision"))
-
-  def condition_review_feedback(account, entity, **kwargs):
-    return not account._is_guest and entity._original.seller_reference and \
-        entity._original.seller_reference._root == account.key \
-        and entity._original.state == "completed" and entity._is_feedback_allowed \
-        and entity._original.feedback == "negative" and entity._original.feedback_adjustment is None
-
-  def condition_report_feedback(account, entity, **kwargs):
-    return not account._is_guest and entity._original.seller_reference \
-        and entity._original.seller_reference._root == account.key \
-        and entity._original.state == "completed" \
-        and entity._is_feedback_allowed and entity._original.feedback == "negative" \
-        and entity._original.feedback_adjustment not in ("reported", "sudo")
-
-  def condition_sudo_feedback(account, entity, **kwargs):
-    return account._root_admin and entity._original.state == "completed" \
-        and entity._original.feedback_adjustment in ("reported", )\
-        and entity._is_feedback_allowed
-
   def condition_update_line(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "cart" and action.key_id_str == "update_line"
@@ -289,10 +263,6 @@ class Order(orm.BaseExpando):
   def condition_update_and_view_order(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "cart" and action.key_id_str in ("view_order", "update")
-
-  def condition_feedback(action, **kwargs):
-    return (action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
-        or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")
 
   def cache_search(context):
     _ancestor = context.input['search'].get('ancestor')
@@ -316,18 +286,14 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('cancel', condition_not_guest_and_owner_and_checkout),
       orm.ExecuteActionPermission('complete', condition_checkout),
-      orm.ExecuteActionPermission('leave_feedback', condition_leave_feedback),
-      orm.ExecuteActionPermission('review_feedback', condition_review_feedback),
-      orm.ExecuteActionPermission('report_feedback', condition_report_feedback),
-      orm.ExecuteActionPermission('sudo_feedback', condition_sudo_feedback),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
                                'billing_address', 'shipping_address', 'currency', 'untaxed_amount',
-                               'tax_amount', 'total_amount', 'feedback', 'carrier', '_seller_reference',
-                               'feedback_adjustment', 'payment_status', 'payment_method',
+                               'tax_amount', 'total_amount', 'carrier', '_seller_reference',
+                               'payment_status', 'payment_method',
                                '_lines', '_messages.created', '_messages.agent', '_messages.action', '_messages.body',
                                '_messages._action', '_payment_method', '_seller.name',
-                               '_seller.logo', '_seller._content', '_seller._feedback',
+                               '_seller.logo', '_seller._content',
                                '_seller.follower_count', '_seller._notified_followers_count',
                                '_seller._currency'), condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('date', 'seller_reference', 'billing_address', 'shipping_address',
@@ -339,7 +305,6 @@ class Order(orm.BaseExpando):
       orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('shipping_address', 'billing_address', '_lines', 'carrier',
                                 'untaxed_amount', 'tax_amount', 'total_amount'), condition_update_and_view_order),
-      orm.WriteFieldPermission(('feedback', 'feedback_adjustment'), condition_feedback),
       orm.DenyWriteFieldPermission(('_lines.taxes', '_lines.product.reference',
                                     '_lines.product.category', '_lines.product.name', '_lines.product.uom',
                                     '_lines.product.code', '_lines.product.unit_price', '_lines.product.variant_signature',
@@ -571,134 +536,6 @@ class Order(orm.BaseExpando):
           ]
       ),
       orm.Action(
-          id='leave_feedback',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='34', required=True),
-              'feedback': orm.SuperStringProperty(required=True, choices=('positive', 'neutral', 'negative')),
-              'message': orm.SuperTextProperty(required=True)
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      Set(cfg={'s': {'_order.feedback_adjustment': None},
-                               'd': {'_order.feedback': 'input.feedback'}}),
-                      OrderSetMessage(),
-                      RulePrepare(),
-                      RuleExec()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write(),
-                      RulePrepare(),
-                      Set(cfg={'d': {'output.entity': '_order'}}),
-                      # @todo cron to send buyer a message when he is ready to leave feedback because there is wait time
-                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_LEAVE_FEEDBACK_SUBJECT,
-                                        'body': notifications.ORDER_LEAVE_FEEDBACK_BODY},
-                                  'd': {'recipient': '_order.seller_email'}})
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='review_feedback',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='34', required=True),
-              'message': orm.SuperTextProperty(required=True, max_size=settings.MAX_MESSAGE_SIZE)
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      Set(cfg={'s': {'_order.feedback_adjustment': 'revision'}}),
-                      OrderSetMessage(),
-                      RulePrepare(),
-                      RuleExec()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write(),
-                      RulePrepare(),
-                      Set(cfg={'d': {'output.entity': '_order'}}),
-                      # buyer needs to get a message so he must leave feedback again
-                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_REVIEW_FEEDBACK_SUBJECT,
-                                        'body': notifications.ORDER_REVIEW_FEEDBACK_BODY},
-                                  'd': {'recipient': '_order.buyer_email'}})
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='report_feedback',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='34', required=True),
-              'message': orm.SuperTextProperty(required=True, max_size=settings.MAX_MESSAGE_SIZE)
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      Set(cfg={'s': {'_order.feedback_adjustment': 'reported'}}),
-                      OrderSetMessage(),
-                      RulePrepare(),
-                      RuleExec()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write(),
-                      # shock suprise
-                      RulePrepare(),
-                      Set(cfg={'d': {'output.entity': '_order'}})
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='sudo_feedback',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='34', required=True),
-              'feedback': orm.SuperStringProperty(required=True, choices=('positive', 'neutral', 'negative')),
-              'message': orm.SuperTextProperty(required=True, max_size=settings.MAX_MESSAGE_SIZE)
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      Set(cfg={'s': {'_order.feedback_adjustment': 'sudo'},
-                               'd': {'_order.feedback': 'input.feedback'}}),
-                      OrderSetMessage(),
-                      RulePrepare(),
-                      RuleExec()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write(),
-                      # buyer and seller get message
-                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_SUDO_FEEDBACK_SUBJECT,
-                                        'body': notifications.ORDER_SUDO_FEEDBACK_BODY},
-                                  'd': {'recipient': '_order.seller_and_buyer_emails'}}),
-                      RulePrepare(),
-                      Set(cfg={'d': {'output.entity': '_order'}})
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
           id='log_message',
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True),
@@ -761,13 +598,6 @@ class Order(orm.BaseExpando):
     emails.append(self.seller_email)
     emails.append(self.buyer_email)
     return emails
-
-  @property
-  def _is_feedback_allowed(self):
-    # if the order.date is not older than x days
-    if settings.DEBUG:
-      return True
-    return self.date > (datetime.datetime.now() - datetime.timedelta(days=settings.FEEDBACK_ALLOWED_DAYS))
 
   def _get_payment_method(self):
     self._seller.read()

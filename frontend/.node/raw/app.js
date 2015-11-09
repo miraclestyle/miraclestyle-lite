@@ -1471,9 +1471,6 @@ $(function () {
             },
             '23-update': {
                 logo: 'Seller logo'
-            },
-            '18-update': {
-                notify: 'Receive email notifications when a catalog is published or discontinued by the seller that you are following'
             }
         });
 
@@ -1613,7 +1610,6 @@ $(function () {
             productInstances: 'Variant configurations',
             catalogImages: 'Images',
             catalogProducts: 'Products',
-            collectionSeller: 'Sellers',
             history: 'History',
             record: 'Log Entry',
             sellerContents: 'Contents',
@@ -1628,7 +1624,6 @@ $(function () {
             catalogList: 'catalog/help/list.html',
             cart: 'order/help/empty.html',
             cartMessages: 'order/help/messages.html',
-            following: 'collection/help/sellers.html',
             sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
 
@@ -1646,9 +1641,6 @@ $(function () {
             provideProperValues: 'Provide proper values in the form fields first!',
             uploadImagesFirst: 'Navigate to the "Images" to upload and arrange catalog images first.',
             messangerDisabledWhenEmpty: 'Messenger is disabled for empty shopping carts!',
-            feedbackReviewed: 'Feedback reviewed.',
-            feedbackReported: 'Feedback reported.',
-            feedbackLeft: 'Feedback left.',
             accessDenied: 'Action denied! Your account is not authorized to perform this action.',
             noBuyer: 'No buyer address. You did not provide any buyer information.',
             sellerProfileNotFound: 'Navigate to the "Seller / Settings" to configure seller profile first.',
@@ -1693,7 +1685,6 @@ $(function () {
             orders: 'Orders',
             catalogs: 'Catalogs',
             addLines: 'Add Line',
-            edit18: 'Following',
             viewAddresses: 'Addresses',
             addAddresses: 'Add Address',
             editAddresses: 'Edit Address',
@@ -16740,6 +16731,7 @@ angular.module('app')
                     // }
                     var fn = attrs.ngUpload ? $parse(attrs.ngUpload) : angular.noop;
                     var startFn = attrs.ngUploadStart ? $parse(attrs.ngUploadStart) : angular.noop;
+                    var errorFn = attrs.ngUploadError ? $parse(attrs.ngUploadError) : angular.noop;
                     var endFn = attrs.ngUploadEnd ? $parse(attrs.ngUploadEnd) : angular.noop;
                     var loading = attrs.ngUploadLoading ? $parse(attrs.ngUploadLoading) : null;
                     var opts = scope.$eval(attrs.ngUploadOptions) || {};
@@ -17252,13 +17244,6 @@ angular.module('app')
                 });
             };
 
-            $scope.manageCollection = function () {
-                models['18'].manageModal(currentAccount.key, {
-                    inDirection: false,
-                    outDirection: false
-                });
-            };
-
         })).controller('BuyOrdersController', ng(function ($scope, $timeout, modals, snackbar, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
 
             var carts = $state.current.name === 'buy-carts',
@@ -17281,7 +17266,7 @@ angular.module('app')
                             key: $state.params.key
                         }, {disableUI: false}).then(function (response) {
                             if (gorder) {
-                                helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'feedback_adjustment', 'feedback', 'ui']);
+                                helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'ui']);
                             }
                             if (response.data.entity.state === 'completed') {
                                 snackbar.showK('orderPaymentSuccessProgress' + response.data.entity.state);
@@ -18104,8 +18089,7 @@ angular.module('app')
                                     // 5 rpcs
                                     read_arguments: {
                                         _seller: {
-                                            _content: {},
-                                            _feedback: {}
+                                            _content: {}
                                         },
                                         _images: {
                                             pricetags: {}
@@ -19608,162 +19592,6 @@ angular.module('app')
 }());
 (function () {
     'use strict';
-    angular.module('app').run(ng(function (modelsConfig, endpoint, $state, modals, currentAccount, modelsMeta, GLOBAL_CONFIG, modelsEditor, helpers, $timeout, snackbar) {
-        modelsConfig(function (models) {
-            var read_arguments = {
-                _sellers: {
-                    _content: {},
-                    _feedback: {}
-                }
-            };
-
-            $.extend(models['18'], {
-                current: function (args) {
-                    if (!args) {
-                        args = {};
-                    }
-                    args.account = currentAccount.key;
-                    return this.actions.read(args, {
-                        cache: this.getCacheKey('current'),
-                        cacheType: 'memory'
-                    });
-                },
-                manageModal: function (accountKey, modalConfig) {
-                    if (!modalConfig) {
-                        modalConfig = {};
-                    }
-                    var fields = modelsMeta.getActionArguments(this.kind, 'update'),
-                        config;
-                    config = {
-                        kind: this.kind,
-                        action: 'update',
-                        fields: _.toArray(fields),
-                        toolbar: {
-                            hideSave: true,
-                            titleEdit: 'buyer.edit18'
-                        },
-                        modalConfig: modalConfig,
-                        templateBodyUrl: 'collection/manage_body.html',
-                        excludeFields: ['account', 'read_arguments'],
-                        init: function ($scope) {
-                            $scope.$watch('args.notify', function (neww, old) {
-                                if (neww !== old) {
-                                    $scope.save().then(function () {
-                                        snackbar.showK('changesSaved');
-                                        $scope.entity._sellers.iremove(function (seller) {
-                                            return $.inArray(seller.key, $scope.entity.sellers) === -1;
-                                        });
-                                        models['18'].current().then(function (response) {
-                                            $.extend(response.data.entity, $scope.entity);
-                                        });
-                                    });
-                                }
-                            });
-
-                            $scope.collectionDrag = {
-                                options: {
-                                    disabled: false,
-                                    handle: '.sort-handle',
-                                    distance: 10,
-                                    stop: function (e, ui) {
-                                        $scope.$apply();
-                                    }
-                                },
-                                whatSortMeans: function () {
-                                    modals.alert('howToDeleteDragging');
-                                },
-                                onStart: function (e, ui, seller) {
-                                    $(ui.helper).find('.sort-handle').addClass('dragged');
-                                },
-                                onDrag: function (e, ui, seller) {
-                                    var deleteMode,
-                                        division,
-                                        helperWidth = ui.helper.width();
-                                    division = ui.offset.left + helperWidth;
-                                    if (division < (helperWidth / 2)) {
-                                        deleteMode = true;
-                                    }
-                                    if (seller) {
-                                        if (deleteMode) {
-                                            ui.helper.addClass('about-to-delete');
-                                        } else {
-                                            ui.helper.removeClass('about-to-delete');
-                                        }
-                                    }
-                                },
-                                onStop: function (e, ui, seller) {
-                                    if (ui.helper.hasClass('about-to-delete')) {
-                                        ui.helper.animate({
-                                            left: (ui.helper.width() * 2) * -1
-                                        }, function () {
-                                            $timeout(function () {
-                                                $scope.remove(seller);
-                                            });
-                                        });
-                                    } else {
-                                        ui.helper.animate(ui.originalPosition, function () {
-                                            ui.helper.attr('style', '');
-                                        });
-                                    }
-                                }
-                            };
-                        },
-                        scope: {
-                            remove: function (seller) {
-                                var scope = this,
-                                    sellers;
-                                scope.args.sellers.remove(seller.key);
-                                scope.entity._sellers.remove(seller);
-                                sellers = scope.entity._sellers.concat();
-                                scope.save().then(function () {
-                                    snackbar.showK('changesSaved');
-                                    scope.entity._sellers = sellers;
-                                    models['23'].decrementGlobalSellerStack(seller.key, scope.args.notify);
-                                    models['18'].current().then(function (response) {
-                                        var collection = response.data.entity;
-                                        collection.sellers.remove(seller.key);
-                                        return collection;
-                                    });
-                                });
-                            },
-                            view: function (seller, $event) {
-                                models['23'].viewProfileModal(seller.parent.key, {
-                                    popFrom: helpers.clicks.realEventTarget($event.target),
-                                    inDirection: false,
-                                    sellerDetails: {
-                                        removedOrAdded: function (updatedCollection, inCollection) {
-                                            if (!inCollection) {
-                                                seller._state = 'deleted';
-                                            } else {
-                                                seller._state = null;
-                                            }
-                                        }
-                                    },
-                                    outDirection: false
-                                });
-                            },
-                            layouts: {
-                                groups: [{
-                                    label: false
-                                }, {
-                                    label: GLOBAL_CONFIG.subheaders.collectionSeller
-                                }]
-                            }
-                        }
-                    };
-
-                    modelsEditor.create(config).read({}, {
-                        account: accountKey,
-                        read_arguments: read_arguments
-                    });
-
-                }
-            });
-
-        });
-    }));
-}());(function () {
-    'use strict';
     angular.module('app')
         .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
         .directive('closeMasterMenu', ng(function ($mdSidenav, $timeout, $parse) {
@@ -19945,7 +19773,6 @@ angular.module('app')
                 models['23'].actions.read({
                     account: $stateParams.key,
                     read_arguments: {
-                        _feedback: {},
                         _content: {}
                     }
                 }).then(function (response) {
@@ -19957,19 +19784,7 @@ angular.module('app')
                     $scope.sellerDetails.menu.open();
                 };
             }
-            if ($state.current.name === 'following') {
-                promise = models['18'].current();
-                promise.then(function (response) {
-                    var sids = response.data.entity.sellers;
-                    args.search.filters = [{
-                        field: 'ancestor',
-                        operator: 'IN',
-                        value: sids.length ? sids : ['nothing']
-                    }];
-                });
-            } else {
-                defer.resolve();
-            }
+            defer.resolve();
             $scope.search = {
                 results: [],
                 pagination: models['31'].paginate({
@@ -20106,7 +19921,6 @@ angular.module('app')
                                         }
                                     },
                                     _seller: {
-                                        _feedback: {},
                                         _content: {}
                                     },
                                     _messages: {
@@ -20120,7 +19934,6 @@ angular.module('app')
                                 seller: seller.key,
                                 read_arguments: {
                                     _seller: {
-                                        _feedback: {},
                                         _content: {}
                                     },
                                     _messages: {
@@ -20150,7 +19963,7 @@ angular.module('app')
                                             lines = null;
                                         },
                                         reactOnStateChange: function (response) {
-                                            helpers.update($scope.order, response.data.entity, ['state', 'feedback_adjustment', 'feedback', 'ui']);
+                                            helpers.update($scope.order, response.data.entity, ['state', 'ui']);
                                             locals.reactOnUpdate();
                                         },
                                         reactOnUpdate: function (skipCache) {
@@ -20540,134 +20353,6 @@ angular.module('app')
                                                     $scope.messages.open = !isOpen;
                                                 });
                                             });
-                                        }
-                                    };
-
-                                    $scope.feedback = {
-                                        canShowButton: function () {
-                                            var maybe = false;
-                                            angular.forEach(['leave_feedback', 'review_feedback', 'sudo_feedback'], function (k) {
-                                                if (!maybe) {
-                                                    maybe = $scope.order.ui.rule.action[k].executable;
-                                                }
-                                            });
-                                            return maybe;
-                                        },
-                                        isBuyer: function () {
-                                            return $scope.order.ui.rule.action.leave_feedback.executable || $scope.order.ui.rule.action.sudo_feedback.executable;
-                                        },
-                                        showAction: function () {
-                                            var parentScope = $scope,
-                                                leaveFeedbackArgs = modelsMeta.getActionArguments('34', 'leave_feedback');
-                                            $.extend(leaveFeedbackArgs.message.ui, {
-                                                writable: true,
-                                                parentArgs: 'feedback',
-                                                args: 'feedback.message',
-                                                label: false,
-                                                placeholder: 'Please, write a comment here. Comments appear in the messages feed.',
-                                                attrs: {
-                                                    'native-placeholder': '',
-                                                    'class': 'full-width'
-                                                }
-                                            });
-                                            if ($scope.feedback.isBuyer()) {
-                                                $modal.open({
-                                                    fullScreen: false,
-                                                    inDirection: false,
-                                                    outDirection: false,
-                                                    cantCloseWithBackdrop: true,
-                                                    templateUrl: 'order/leave_feedback.html',
-                                                    controller: ng(function ($scope) {
-                                                        $scope.config = {};
-                                                        $scope.feedback = {
-                                                            form: null,
-                                                            messageField: leaveFeedbackArgs.message,
-                                                            message: '',
-                                                            choice: 'neutral',
-                                                            choices: [{
-                                                                key: 'positive'
-                                                            }, {
-                                                                key: 'negative'
-                                                            }, {
-                                                                key: 'neutral'
-                                                            }]
-                                                        };
-                                                        $scope.config.dismiss = function () {
-                                                            return $scope.$close();
-                                                        };
-
-                                                        $scope.config.text = {
-                                                            primary: 'Ok'
-                                                        };
-
-                                                        $scope.config.confirm = function () {
-                                                            if ($scope.feedback.form.$valid) {
-                                                                models['34'].actions[parentScope.order.ui.rule.action.leave_feedback.executable ? 'leave_feedback' : 'sudo_feedback']({
-                                                                    key: parentScope.order.key,
-                                                                    message: $scope.feedback.message,
-                                                                    feedback: $scope.feedback.choice
-                                                                }).then(function (response) {
-                                                                    parentScope.order._messages.push(response.data.entity._messages[0]);
-                                                                    locals.reactOnStateChange(response);
-                                                                    $scope.config.dismiss();
-                                                                    snackbar.showK('feedbackLeft');
-                                                                });
-                                                            } else {
-                                                                helpers.form.wakeUp($scope.feedback.form);
-                                                            }
-                                                        };
-                                                    })
-                                                });
-                                            } else {
-                                                $modal.open({
-                                                    fullScreen: false,
-                                                    inDirection: false,
-                                                    outDirection: false,
-                                                    cantCloseWithBackdrop: true,
-                                                    templateUrl: 'order/seller_feedback.html',
-                                                    controller: ng(function ($scope) {
-                                                        $scope.config = {};
-                                                        $scope.feedback = {
-                                                            form: null,
-                                                            messageField: leaveFeedbackArgs.message,
-                                                            message: '',
-                                                            choice: 'review_feedback',
-                                                            choices: [{
-                                                                key: 'review_feedback',
-                                                                name: 'Ask the buyer to review feedback'
-                                                            }, {
-                                                                key: 'report_feedback',
-                                                                name: 'Ask the admin to intervene'
-                                                            }]
-                                                        };
-                                                        $scope.config.dismiss = function () {
-                                                            return $scope.$close();
-                                                        };
-
-                                                        $scope.config.text = {
-                                                            primary: 'Ok'
-                                                        };
-
-                                                        $scope.order = parentScope.order;
-
-                                                        $scope.config.confirm = function () {
-                                                            if ($scope.feedback.form.$valid) {
-                                                                models['34'].actions[$scope.feedback.choice]({
-                                                                    key: parentScope.order.key,
-                                                                    message: $scope.feedback.message
-                                                                }).then(function (response) {
-                                                                    parentScope.order._messages.push(response.data.entity._messages[0]);
-                                                                    locals.reactOnStateChange(response);
-                                                                    $scope.config.dismiss();
-                                                                    snackbar.showK('feedback' + ($scope.feedback.choice === 'report_feedback' ? 'Reported' : 'Reviewed'));
-                                                                });
-                                                            } else {
-                                                                helpers.form.wakeUp($scope.feedback.form);
-                                                            }
-                                                        };
-                                                    })
-                                                });
-                                            }
                                         }
                                     };
 
@@ -21690,16 +21375,6 @@ angular.module('app')
                 globalSellerStack = {};
 
             $.extend(models['23'], {
-                decrementGlobalSellerStack: function (key, notified) {
-                    var gss = globalSellerStack[key];
-                    if (gss) {
-                        gss.follower_count -= 1;
-                        gss.inCollection = false;
-                        if (notified) {
-                            gss.notified_followers_count -= 1;
-                        }
-                    }
-                },
                 makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;
@@ -21717,172 +21392,48 @@ angular.module('app')
                             }),
                             sellerLogo = seller.logo.serving_url;
                         $scope.seller = seller;
-                        if (!globalSellerStack[seller.key]) {
-                            globalSellerStack[seller.key] = {
-                                follower_count: seller._follower_count,
-                                notified_followers_count: seller._notified_followers_count
-                            };
-                        }
-                        $scope.globalSellerStack = globalSellerStack[seller.key];
                         $scope.menu = {};
-                        $scope.globalSellerStack.inCollection = false;
-                        if (!currentAccount._is_guest) {
-                            /*
-                            $scope.loadedCollection = models['18'].current().then(function (response) {
-                                var collection = response.data.entity;
-                                if ($.inArray($scope.seller.key, collection.sellers) !== -1) {
-                                    $scope.globalSellerStack.inCollection = true;
-                                }
-                                return collection;
-                            });*/
-                        }
-
                         helpers.sideNav.setup($scope.menu, 'right_seller_details');
 
                         chartData = [];
 
-                        if ($scope.seller._feedback) {
+                        $scope.socialMeta = {
+                            facebook: {
+                                'p[url]': sellerUrl,
+                                'p[images][0]': sellerLogo,
+                                'p[title]': $scope.seller.name
+                            },
+                            twitter: {
+                                url: sellerUrl,
+                                text: $scope.seller.name
+                            },
+                            pinterest: {
+                                url: sellerUrl,
+                                media: sellerLogo,
+                                description: $scope.seller.name
+                            },
+                            googleplus: {
+                                url: sellerUrl
+                            },
+                            reddit: {
+                                url: sellerUrl,
+                                title: $scope.seller.name
+                            },
+                            linkedin: {
+                                url: sellerUrl,
+                                title: $scope.seller.name
+                            },
+                            tumblr: {
+                                url: sellerUrl,
+                                name: $scope.seller.name
+                            }
+                        };
 
-                            angular.forEach($scope.seller._feedback.feedbacks, function (feedback) {
-                                feedback.positive_count = _.random(0, 100);
-                                feedback.negative_count = _.random(0, 100);
-                                feedback.neutral_count = _.random(0, 100);
-                                chartData.push({
-                                    c: [{
-                                        v: dateFilter(feedback.date, 'MMM')
-                                    }, {
-                                        v: feedback.positive_count
-                                    }, {
-                                        v: feedback.negative_count
-                                    }, {
-                                        v: feedback.neutral_count
-                                    }]
-                                });
-
+                        $scope.displayShare = function () {
+                            return social.share($scope.socialMeta, {
+                                src: embedSellerUrl
                             });
-
-                            $scope.chartConfig = {
-                                type: "ColumnChart",
-                                data: {
-                                    cols: [{
-                                        id: "months",
-                                        label: "Months",
-                                        type: "string"
-                                    }, {
-                                        id: "positive",
-                                        label: "Positive",
-                                        type: "number"
-                                    }, {
-                                        id: "negative",
-                                        label: "Negative",
-                                        type: "number"
-                                    }, {
-                                        id: "neutral",
-                                        label: "Neutral",
-                                        type: "number"
-                                    }],
-                                    rows: chartData
-                                },
-                                options: {
-                                    colors: ['green', 'red', 'gray'],
-                                    series: {
-                                        0: {
-                                            axis: 'positive'
-                                        },
-                                        1: {
-                                            axis: 'negative'
-                                        },
-                                        3: {
-                                            axis: 'neutral'
-                                        }
-                                    },
-                                    axes: {
-                                        y: {
-                                            positive: {
-                                                label: 'Positive'
-                                            },
-                                            negative: {
-                                                label: 'Negative',
-                                                side: 'right'
-                                            },
-                                            neutral: {
-                                                label: 'Neutral',
-                                                side: 'right'
-                                            }
-                                        }
-                                    }
-                                }
-                            };
-
-                            $scope.socialMeta = {
-                                facebook: {
-                                    'p[url]': sellerUrl,
-                                    'p[images][0]': sellerLogo,
-                                    'p[title]': $scope.seller.name
-                                },
-                                twitter: {
-                                    url: sellerUrl,
-                                    text: $scope.seller.name
-                                },
-                                pinterest: {
-                                    url: sellerUrl,
-                                    media: sellerLogo,
-                                    description: $scope.seller.name
-                                },
-                                googleplus: {
-                                    url: sellerUrl
-                                },
-                                reddit: {
-                                    url: sellerUrl,
-                                    title: $scope.seller.name
-                                },
-                                linkedin: {
-                                    url: sellerUrl,
-                                    title: $scope.seller.name
-                                },
-                                tumblr: {
-                                    url: sellerUrl,
-                                    name: $scope.seller.name
-                                }
-                            };
-
-                            $scope.displayShare = function () {
-                                return social.share($scope.socialMeta, {
-                                    src: embedSellerUrl
-                                });
-                            };
-
-
-                            $scope.feedbackStats = (function () {
-                                var positive_count = 0,
-                                    neutral_count = 0,
-                                    negative_count = 0,
-                                    positive_average,
-                                    negative_average,
-                                    neutral_average,
-                                    score,
-                                    values = [];
-
-                                positive_average = parseFloat((positive_count / (positive_count + negative_count)) * 100).toFixed(1);
-                                negative_average = parseFloat((negative_count / (negative_count + positive_count)) * 100).toFixed(1);
-                                neutral_average = parseFloat((neutral_count / (neutral_count + negative_count + positive_count)) * 100).toFixed(1);
-
-                                if ((positive_count - negative_count) > 0) {
-                                    score = positive_count - negative_count;
-                                } else {
-                                    score = 0;
-                                }
-                                values[0] = isNaN(positive_count) ? 0 : positive_count;
-                                values[1] = isNaN(neutral_count) ? 0 : neutral_count;
-                                values[2] = isNaN(negative_count) ? 0 : negative_count;
-                                values[3] = isNaN(positive_average) ? 0 : positive_average;
-                                values[4] = isNaN(negative_average) ? 0 : negative_average;
-                                values[5] = isNaN(neutral_average) ? 0 : neutral_average;
-                                values[6] = score;
-                                return values;
-                            }());
-
-                        }
+                        };
 
 
                         $scope.viewContent = function (content) {
@@ -21892,40 +21443,6 @@ angular.module('app')
                                     $scope.plainText = true;
                                     $scope.content = content;
                                 })
-                            });
-                        };
-
-                        $scope.toggleCollection = function () {
-                            if (currentAccount._is_guest) {
-                                models['11'].login($state.href('home')); // must redirect to actual follow button >_>
-                                return;
-                            }
-                            $scope.loadedCollection.then(function (collection) {
-                                var loadedCollection = collection,
-                                    removed = false;
-                                if (!$scope.globalSellerStack.inCollection) {
-                                    removed = true;
-                                    loadedCollection.sellers.remove($scope.seller.key);
-                                } else {
-                                    loadedCollection.sellers.unshift($scope.seller.key);
-                                }
-                                models['18'].actions.update({
-                                    account: currentAccount.key,
-                                    sellers: loadedCollection.sellers,
-                                    notify: loadedCollection.notify
-                                }).then(function (newResponse) {
-                                    var updatedCollection = newResponse.data.entity;
-                                    if (removed) {
-                                        $scope.globalSellerStack.follower_count -= 1;
-                                    } else {
-                                        $scope.globalSellerStack.follower_count += 1;
-                                    }
-                                    // update cache
-                                    $.extend(loadedCollection, updatedCollection);
-                                    if (angular.isFunction(removedOrAdded)) {
-                                        removedOrAdded(updatedCollection, $scope.globalSellerStack.inCollection);
-                                    }
-                                });
                             });
                         };
 
@@ -21955,7 +21472,6 @@ angular.module('app')
                                 return models['23'].actions.read({
                                     account: accountKey,
                                     read_arguments: {
-                                        _feedback: {},
                                         _content: {}
                                     }
                                 });

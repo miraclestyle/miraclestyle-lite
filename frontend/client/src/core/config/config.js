@@ -246,9 +246,6 @@
             },
             '23-update': {
                 logo: 'Seller logo'
-            },
-            '18-update': {
-                notify: 'Receive email notifications when a catalog is published or discontinued by the seller that you are following'
             }
         });
 
@@ -388,7 +385,6 @@
             productInstances: 'Variant configurations',
             catalogImages: 'Images',
             catalogProducts: 'Products',
-            collectionSeller: 'Sellers',
             history: 'History',
             record: 'Log Entry',
             sellerContents: 'Contents',
@@ -403,7 +399,6 @@
             catalogList: 'catalog/help/list.html',
             cart: 'order/help/empty.html',
             cartMessages: 'order/help/messages.html',
-            following: 'collection/help/sellers.html',
             sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
 
@@ -421,9 +416,6 @@
             provideProperValues: 'Provide proper values in the form fields first!',
             uploadImagesFirst: 'Navigate to the "Images" to upload and arrange catalog images first.',
             messangerDisabledWhenEmpty: 'Messenger is disabled for empty shopping carts!',
-            feedbackReviewed: 'Feedback reviewed.',
-            feedbackReported: 'Feedback reported.',
-            feedbackLeft: 'Feedback left.',
             accessDenied: 'Action denied! Your account is not authorized to perform this action.',
             noBuyer: 'No buyer address. You did not provide any buyer information.',
             sellerProfileNotFound: 'Navigate to the "Seller / Settings" to configure seller profile first.',
@@ -468,7 +460,6 @@
             orders: 'Orders',
             catalogs: 'Catalogs',
             addLines: 'Add Line',
-            edit18: 'Following',
             viewAddresses: 'Addresses',
             addAddresses: 'Add Address',
             editAddresses: 'Edit Address',

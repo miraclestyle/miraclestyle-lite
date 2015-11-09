@@ -33,21 +33,6 @@ CATALOG_SUDO_BODY = template('catalog/sudo_body.html')
 CATALOG_DISCONTINUE_SUBJECT = template('catalog/discontinue_subject.html')
 CATALOG_DISCONTINUE_BODY = template('catalog/discontinue_body.html')
 
-COLLECTION_CATALOG_PUBLISH_BODY = template('collection/catalog_publish_body.html')
-COLLECTION_CATALOG_PUBLISH_SUBJECT = template('collection/catalog_publish_subject.html')
-
-ORDER_REVIEW_FEEDBACK_SUBJECT = template('order/review_feedback_subject.html')
-ORDER_REVIEW_FEEDBACK_BODY = template('order/review_feedback_body.html')
-
-ORDER_LEAVE_FEEDBACK_SUBJECT = template('order/leave_feedback_subject.html')
-ORDER_LEAVE_FEEDBACK_BODY = template('order/leave_feedback_body.html')
-
-ORDER_REPORT_FEEDBACK_SUBJECT = template('order/report_feedback_subject.html')
-ORDER_REPORT_FEEDBACK_BODY = template('order/report_feedback_body.html')
-
-ORDER_SUDO_FEEDBACK_SUBJECT = template('order/sudo_feedback_subject.html')
-ORDER_SUDO_FEEDBACK_BODY = template('order/sudo_feedback_body.html')
-
 ORDER_LOG_MESSAGE_SUBJECT = template('order/log_message_subject.html')
 ORDER_LOG_MESSAGE_BODY = template('order/log_message_body.html')
 

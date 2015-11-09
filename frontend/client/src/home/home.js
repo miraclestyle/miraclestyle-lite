@@ -181,7 +181,6 @@
                 models['23'].actions.read({
                     account: $stateParams.key,
                     read_arguments: {
-                        _feedback: {},
                         _content: {}
                     }
                 }).then(function (response) {
@@ -193,19 +192,7 @@
                     $scope.sellerDetails.menu.open();
                 };
             }
-            if ($state.current.name === 'following') {
-                promise = models['18'].current();
-                promise.then(function (response) {
-                    var sids = response.data.entity.sellers;
-                    args.search.filters = [{
-                        field: 'ancestor',
-                        operator: 'IN',
-                        value: sids.length ? sids : ['nothing']
-                    }];
-                });
-            } else {
-                defer.resolve();
-            }
+            defer.resolve();
             $scope.search = {
                 results: [],
                 pagination: models['31'].paginate({
