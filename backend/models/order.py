@@ -148,6 +148,16 @@ class Order(orm.BaseExpando):
   _use_memcache = True
 
   # key path account->buyer->order
+  # 
+  
+  '''
+  read:
+    read_<order.account.id>
+  search:
+    search_34_<order.account.id>
+  '''
+
+  DELETE_CACHE_POLICY = {'group': [lambda context: 'read_34_%s' % context._order.key._root._id_str, 'search_34', lambda context: 'search_34_%s' % context._order.key._root._id_str]}
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
@@ -284,6 +294,19 @@ class Order(orm.BaseExpando):
     return (action.key_id_str == "leave_feedback") or (action.key_id_str == "review_feedback") \
         or (action.key_id_str == "report_feedback") or (action.key_id_str == "sudo_feedback")
 
+  def cache_search(context):
+    _ancestor = context.input['search'].get('ancestor')
+    if context.account._root_admin or (_ancestor and _ancestor._root == context.account.key):
+      return 'account'
+    return None
+
+  def cache_group_search(context):
+    key = 'search_34'
+    _ancestor = context.input['search'].get('ancestor')
+    if not context.account._root_admin and (_ancestor and _ancestor._root == context.account.key):
+      return '%s_%s' % (key, context.account.key_id_str)
+    return key
+
   _permissions = [
       #  action.key_id_str not in ["search"] and...
       # Included payment_status in field permissions, will have to further analyse exclusion...
@@ -353,6 +376,7 @@ class Order(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_order'}})
                   ]
               )
@@ -369,12 +393,14 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': lambda context: 'read_34_%s' % context.input['buyer']._root._id_str, 'cache': ['account']}),
                       OrderInit(),
                       OrderPluginExec(cfg={'kinds': ['117']}),  # order currency must be available for everyone
                       OrderProductSpecsFormat(),
                       RulePrepare(),
                       RuleExec(),
-                      Set(cfg={'d': {'output.entity': '_order'}})
+                      Set(cfg={'d': {'output.entity': '_order'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -389,10 +415,12 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': lambda context: 'read_34_%s' % context.input['key']._root._id_str, 'cache': ['account']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
-                      Set(cfg={'d': {'output.entity': '_order'}})
+                      Set(cfg={'d': {'output.entity': '_order'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -432,6 +460,7 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Write(),
                       RulePrepare(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_order'}})
                   ]
               )
@@ -463,6 +492,7 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': cache_group_search, 'cache': ['admin', cache_search, 'all']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -470,7 +500,8 @@ class Order(orm.BaseExpando):
                       RulePrepare(cfg={'path': '_entities'}),
                       Set(cfg={'d': {'output.entities': '_entities',
                                      'output.cursor': '_cursor',
-                                     'output.more': '_more'}})
+                                     'output.more': '_more'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -495,6 +526,7 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Write(),
                       RulePrepare(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_order'}})
                   ]
               )
@@ -532,7 +564,8 @@ class Order(orm.BaseExpando):
                                   's': {'sender': settings.NOTIFY_EMAIL,
                                         'subject': notifications.ORDER_COMPLETE_SELLER_SUBJECT,
                                         'body': notifications.ORDER_COMPLETE_SELLER_BODY},
-                                  'd': {'recipient': '_order.seller_email'}})
+                                  'd': {'recipient': '_order.seller_email'}}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
           ]
@@ -702,7 +735,8 @@ class Order(orm.BaseExpando):
                                         'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
                                         'body': notifications.ORDER_LOG_MESSAGE_BODY},
                                   'd': {'recipient': '_order.buyer_email'}}),
-                      Set(cfg={'d': {'output.entity': '_order'}})
+                      Set(cfg={'d': {'output.entity': '_order'}}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
           ]

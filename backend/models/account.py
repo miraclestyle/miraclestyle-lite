@@ -16,8 +16,50 @@ from plugins.base import *
 from plugins.account import *
 
 
-__all__ = ['AccountSession', 'AccountIdentity', 'Account']
+__all__ = ['AccountCacheGroup', 'AccountSession', 'AccountIdentity', 'Account']
 
+
+class AccountCacheGroup(orm.BaseModel):
+
+  _kind = 135
+
+  _use_record_engine = False
+  _use_rule_engine = False
+  _use_memcache = True
+
+  keys = orm.SuperStringProperty(repeated=True, indexed=False) # stores 128bit md5 = can hold aprox 22k items
+
+  
+  def condition_taskqueue_or_admin(account, **kwargs):
+    return account._is_taskqueue or account._root_admin
+
+  _permissions = [
+      orm.ExecuteActionPermission('update', condition_taskqueue_or_admin)
+  ]
+
+  _actions = [
+      orm.Action(
+          id='update',
+          arguments={
+              'ids': orm.SuperStringProperty(repeated=True),
+              'keys': orm.SuperTextProperty(), # compressed base64 encoded data
+              'delete': orm.SuperBooleanProperty(default=False)
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      AccountCacheGroupUpdate()
+                  ]
+              )
+          ]
+      ),
+  ]
 
 class AccountSession(orm.BaseModel):
 
@@ -46,6 +88,14 @@ class Account(orm.BaseExpando):
   _kind = 11
 
   _use_memcache = True
+
+  '''
+  Cache:
+  11_<account.id>
+  '''
+
+  READ_CACHE_POLICY = {'group': lambda context: '11_%s' % context.account.key_id_str, 'cache': ['account']}
+  DELETE_CACHE_POLICY = {'group': ['admin', lambda context: context._account.key_id_str, lambda context: context.account.key_id_str]}
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
@@ -133,11 +183,12 @@ class Account(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'dgroup': 'account.key._urlsafe', 'cache': ['account']}),
+                      GetCache(cfg=READ_CACHE_POLICY),
                       Read(cfg={'source': 'account.key'}),
                       RulePrepare(),
                       RuleExec(),
-                      Set(cfg={'d': {'output.entity': '_account'}})
+                      Set(cfg={'d': {'output.entity': '_account'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -152,11 +203,12 @@ class Account(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'dgroup': 'account.key._urlsafe', 'cache': ['account']}),
+                      GetCache(cfg=READ_CACHE_POLICY),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
-                      Set(cfg={'d': {'output.entity': '_account'}})
+                      Set(cfg={'d': {'output.entity': '_account'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -183,7 +235,7 @@ class Account(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
-                      DeleteCache(cfg={'dgroup': '_account.key._urlsafe'}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_account'}}),
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'account_discontinue', 'action_model': '31'},
@@ -216,6 +268,7 @@ class Account(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': 'admin', 'cache': ['admin']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -256,11 +309,11 @@ class Account(orm.BaseExpando):
                                         'body': notifications.ACCOUNT_SUDO_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_account._primary_email'}}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'account_discontinue', 'action_model': '31'},
                                          {'account': '_account.key_urlsafe', 'account_state': '_account.state'},
-                                         lambda account, account_state, **kwargs: account_state == 'suspended')]),
-                      DeleteCache(cfg={'dgroup': '_account.key._urlsafe'})
+                                         lambda account, account_state, **kwargs: account_state == 'suspended')])
                   ]
               )
           ]
@@ -284,7 +337,7 @@ class Account(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(cfg={'dra': {'ip_address': '_account.ip_address'}}),
-                      DeleteCache(cfg={'dgroup': '_account.key._urlsafe'}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       AccountLogoutOutput()
                   ]
               )

@@ -53,7 +53,8 @@ class Country(orm.BaseModel):
                       RulePrepare(),
                       RuleExec(),
                       CountryUpdateWrite(cfg={'file': settings.LOCATION_DATA_FILE,
-                                              'debug_environment': settings.DEBUG})
+                                              'debug_environment': settings.DEBUG}),
+                      DeleteCache(cfg={'group': ['search_12', 'search_13']})
                   ]
               )
           ]
@@ -77,6 +78,7 @@ class Country(orm.BaseModel):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': 'search_12'}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -140,6 +142,7 @@ class CountrySubdivision(orm.BaseModel):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': 'search_13'}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),

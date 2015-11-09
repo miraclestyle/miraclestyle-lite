@@ -10,6 +10,9 @@
 
             try {
                 query = helpers.url.jsonFromUrlsafe($stateParams.query);
+                if (query.search.t) {
+                    delete query.search.t;
+                }
                 args = query;
             } catch (ignore) {}
 

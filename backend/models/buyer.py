@@ -68,6 +68,13 @@ class Buyer(orm.BaseExpando):
 
   _use_memcache = True
 
+  '''
+  read:
+    buyer_<account.id>
+  '''
+
+  READ_CACHE_POLICY = {'key': 'buyer', 'cache': ['account']}
+
   addresses = orm.SuperLocalStructuredProperty(BuyerAddress, '1', repeated=True)
 
   _default_indexed = False
@@ -107,7 +114,7 @@ class Buyer(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
-                      DeleteCache(cfg={'key': 'buyer', 'cache': ['account']}),
+                      DeleteCache(cfg=READ_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_buyer'}})
                   ]
               )
@@ -123,7 +130,7 @@ class Buyer(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'key': 'buyer', 'cache': ['account']}),
+                      GetCache(cfg=READ_CACHE_POLICY),
                       Read(),
                       RulePrepare(),
                       RuleExec(),

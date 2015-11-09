@@ -11,18 +11,7 @@ from .properties import *
 
 __all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 'FieldPermission',
            'ExecuteActionPermission', 'ReadFieldPermission', 'WriteFieldPermission', 'DenyWriteFieldPermission',
-           'Role', 'GlobalRole', 'Image', 'CacheGroup']
-
-
-class CacheGroup(BaseModel):
-
-  _kind = 135
-
-  _use_record_engine = False
-  _use_rule_engine = False
-  _use_memcache = True
-
-  keys = SuperStringProperty(repeated=True, indexed=False)
+           'Role', 'GlobalRole', 'Image']
 
 
 class Record(BaseExpando):
@@ -86,8 +75,8 @@ class Record(BaseExpando):
           if entity.action == action.key:
             return '%s.%s' % (modelclass.__name__, action_id)
       return action_id
-    except Exception, e:
-     return e.message
+    except Exception as e:
+      return e.message
 
   def _if_properties_are_cloned(self):
     return not (self.__class__._properties is self._properties)

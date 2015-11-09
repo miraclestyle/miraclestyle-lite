@@ -776,6 +776,8 @@
                 },
                 manageModal: function (catalog, callback, modalConfig) { // modal dialog for managing the catalog
 
+                    callback = callback || angular.noop;
+
                     modalConfig = helpers.alwaysObject(modalConfig);
 
                     var fields = modelsMeta.getActionArguments('31', 'update'),

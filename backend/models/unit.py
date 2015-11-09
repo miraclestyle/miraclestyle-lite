@@ -80,7 +80,7 @@ class Unit(orm.BaseExpando):
                       RulePrepare(),
                       RuleExec(),
                       UnitCurrencyUpdateWrite(cfg={'file': settings.CURRENCY_DATA_FILE}),
-                      DeleteCache(cfg={'group': '17'})
+                      DeleteCache(cfg={'group': 'search_17'})
                   ]
               )
           ]
@@ -96,7 +96,7 @@ class Unit(orm.BaseExpando):
                       RulePrepare(),
                       RuleExec(),
                       UnitUpdateWrite(cfg={'file': settings.UOM_DATA_FILE}),
-                      DeleteCache(cfg={'group': '17'})
+                      DeleteCache(cfg={'group': 'search_17'})
                   ]
               )
           ]
@@ -125,7 +125,7 @@ class Unit(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'group': '17', 'cache': ['auth']}),
+                      GetCache(cfg={'group': 'search_17', 'cache': ['auth']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -133,7 +133,8 @@ class Unit(orm.BaseExpando):
                       RulePrepare(cfg={'path': '_entities'}),
                       Set(cfg={'d': {'output.entities': '_entities',
                                      'output.cursor': '_cursor',
-                                     'output.more': '_more'}})
+                                     'output.more': '_more'}}),
+                      CallbackExec()
                   ]
               )
           ]

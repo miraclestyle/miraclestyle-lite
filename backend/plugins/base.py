@@ -7,6 +7,9 @@ Created on Jun 14, 2014
 
 import copy
 import time
+import zlib
+import base64
+import hashlib
 
 import orm
 import tools
@@ -394,12 +397,19 @@ class BaseCache(orm.BaseModel):
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
-    CacheGroup = context.models['135']
+    CacheGroup = context.models[self.cfg.get('kind', '135')]
     cache = self.cfg.get('cache', [])
     group_id = self.cfg.get('group', None)
-    if callable(group_id):
-      group_id = group_id(context)
-    dgroup_id = self.cfg.get('dgroup', None)
+    if not isinstance(group_id, (list, tuple)) and group_id is not None:
+      group_id = [group_id]
+    if group_id is not None:
+      for i, g in enumerate(group_id[:]):
+        if callable(g):
+          thing = g(context)
+          if thing is not None:
+            group_id[i] = g(context)
+          else:
+            group_id.remove(g)
     dcache_driver = self.cfg.get('dcache', [])
     cache_drivers = []
     all_prequesits = ['auth', 'guest', context.account.key_id_str]
@@ -414,63 +424,83 @@ class BaseCache(orm.BaseModel):
           cache_drivers.append(context.account.key_id_str)
         if driver == 'auth':
           cache_drivers.append('auth')
+        if driver == 'admin' and context.account._root_admin:
+          cache_drivers.append('admin')
       elif driver == 'guest':
         cache_drivers.append('guest')
       if driver == 'all' and not any(baddie in cache_drivers for baddie in all_prequesits):
         cache_drivers.append('all')
     for d in dcache_driver:
       cache_drivers.append(tools.get_attr(context, d))
-    if dgroup_id:
-      group_id = tools.get_attr(context, dgroup_id)
     cache_drivers = set(cache_drivers)
     key = self.cfg.get('key')
-    dkey = self.cfg.get('dkey')
-    if dkey:
-      key = tools.get_attr(context, dkey)
+    if callable(key):
+      key = key(context)
     if not key:
       key = context.cache_key
     data = None
-    def build_key(driver, key):
-      return '%s_%s' % (driver, key)
-    def do_save(data):
-      queue = {}
-      group = None
-      if group_id:
-        group = CacheGroup.build_key(group_id).get()
-        if not group:
-          group = CacheGroup(id=group_id, keys=[])
-      for driver in cache_drivers:
-        k = build_key(driver, key)
-        if group:
-          if k not in group.keys:
-            group.keys.append(k)
-        queue[k] = data
-      tools.mem_set_multi(queue)
-      if group:
-        group.put()
-    saver = {'do_save': do_save}
+
+    def build_key(driver, key, group_key):
+      out = '%s_%s' % (driver, key)
+      if group_key:
+        out += '_%s' % group_key._id_str
+      return hashlib.md5(out).hexdigest()
+
     if self.getter:
+      group_key = None
+      if group_id:
+        first_group_id = group_id[0]
+        group_key = CacheGroup.build_key(first_group_id)
+
+      def do_save(data):
+        queue = {}
+        saved_keys = []
+        for driver in cache_drivers:
+          k = build_key(driver, key, group_key)
+          queue[k] = zlib.compress(data)
+        try:
+          tools.mem_set_multi(queue)
+        except ValueError as e:
+          tools.log.warn('Failed saving response because its over 1mb, with queue keys %s, using group %s, with drivers' % (queue, group_key, cache_drivers))
+          write = False  # failed writing this one, because size is over 1mb -- this can be fixed by chunking the `data`, but for now we dont need it
+      saver = {'do_save': do_save}
       for driver in cache_drivers:
-        k = build_key(driver, key)
-        data = tools.mem_get(k)
+        k = build_key(driver, key, group_key)
+        data = tools.mem_rpc_get(k)
         if data:
+          data = zlib.decompress(data)
           break
       if data:
         context.cache = {'value': data}
-        raise orm.TerminateAction('Got cache with key %s from %s drivers.' % (k, cache_drivers))
+        raise orm.TerminateAction('Got cache with key %s from %s drivers using group %s.' % (k, cache_drivers, group_key))
+      else:
+        keys = []
+        for driver in cache_drivers:
+          keys.append(build_key(driver, key, group_key))
+        if keys:
+          keys = base64.b64encode(zlib.compress(','.join(keys)))
+          if group_key:
+            context._callbacks.append(('callback', {'action_id': 'update', 'keys': keys, 'ids': [group_key._id_str], 'action_model': '135'}))
+        else:
+          tools.debug.info('No cache for group %s with cache drivers %s' % (group_key, cache_drivers))
       context.cache = saver
     else:
-      delete_keys = [build_key(driver, key) for driver in cache_drivers]
-      group = None
+      tools.mem_delete_multi([build_key(driver, key) for driver in cache_drivers])
       if group_id:
-        group = CacheGroup.build_key(group_id).get()
-        if group:
-          delete_keys.extend(group.keys)
-          group.keys = []
-      tools.mem_delete_multi(delete_keys)
-      if group:
-        group.put()
-      
+        keys = []
+        group_keys = [CacheGroup.build_key(id) for id in group_id]
+        groups = orm.get_multi(group_keys) # this can cause operating on multiple groups
+        # however if that happens, just move the DeleteCache plugin away from the transaction
+        # eitherway 25 entity groups are now allowed
+        for group in groups:
+          if group:
+            keys.extend(group.keys)
+        tools.mem_delete_multi(keys)
+        '''
+        # for now we do not need removal of keys with task queue
+        keys = base64.b64encode(zlib.compress(','.join(keys)))
+        context._callbacks.append(('callback', {'action_id': 'update', 'keys': keys, 'delete': True, 'ids': group_id, 'action_model': '135'}))
+        '''
 
 
 class GetCache(BaseCache):

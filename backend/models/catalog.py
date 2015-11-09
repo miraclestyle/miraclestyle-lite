@@ -62,7 +62,7 @@ class CatalogProductCategory(orm.BaseModel):
                       RuleExec(),
                       CatalogProductCategoryUpdateWrite(cfg={'file': settings.PRODUCT_CATEGORY_DATA_FILE,
                                                              'debug_environment': settings.DEBUG}),
-                      DeleteCache(cfg={'group': '24', 'cache': ['auth']})
+                      DeleteCache(cfg={'group': 'search_24'})
                   ]
               )
           ]
@@ -90,7 +90,7 @@ class CatalogProductCategory(orm.BaseModel):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'group': '24', 'cache': ['auth']}),
+                      GetCache(cfg={'group': 'search_24', 'cache': ['auth']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
@@ -98,7 +98,8 @@ class CatalogProductCategory(orm.BaseModel):
                       RulePrepare(cfg={'path': '_entities'}),
                       Set(cfg={'d': {'output.entities': '_entities',
                                      'output.cursor': '_cursor',
-                                     'output.more': '_more'}})
+                                     'output.more': '_more'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -313,6 +314,17 @@ class Catalog(orm.BaseExpando):
 
   _use_memcache = True
 
+  '''
+  Cache definitions:
+  search:
+    search_31: admin, all
+    search_31_<catalog.account.id>
+  read:
+    read_31_<catalog.id>
+  '''
+
+  DELETE_CACHE_POLICY = {'group': [lambda context: 'read_31_%s' % context._catalog.key._id_str, 'search_31', lambda context: 'search_31_%s' % context._catalog.key._root._id_str]}
+
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   name = orm.SuperStringProperty('3', required=True)
@@ -436,6 +448,19 @@ class Catalog(orm.BaseExpando):
       return 'account'
     else:
       return None
+  
+  def cache_search(context):
+    _ancestor = context.input['search'].get('ancestor')
+    if context.account._root_admin or (_ancestor and _ancestor._root == context.account.key):
+      return 'account'
+    return None
+
+  def cache_group_search(context):
+    key = 'search_31'
+    _ancestor = context.input['search'].get('ancestor')
+    if not context.account._root_admin and (_ancestor and _ancestor._root == context.account.key):
+      return '%s_%s' % (key, context.account.key_id_str)
+    return key
 
   _permissions = [
       orm.ExecuteActionPermission('prepare', condition_not_guest),
@@ -536,11 +561,12 @@ class Catalog(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'dgroup': 'input.key._urlsafe', 'cache': [cache_read, 'all']}),
+                      GetCache(cfg={'group': lambda context: 'read_31_%s' % context.input['key']._id_str, 'cache': [cache_read, 'all']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
-                      Set(cfg={'d': {'output.entity': '_catalog'}})
+                      Set(cfg={'d': {'output.entity': '_catalog'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -572,7 +598,7 @@ class Catalog(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
-                      DeleteCache(cfg={'dgroup': '_catalog.key._urlsafe'}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_catalog'}})
                   ]
               )
@@ -679,6 +705,7 @@ class Catalog(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Delete(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_catalog'}})
                   ]
               )
@@ -713,6 +740,7 @@ class Catalog(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
+                      GetCache(cfg={'group': cache_group_search, 'cache': ['admin', cache_search, 'all']}),
                       Read(),
                       RulePrepare(cfg={'d': {'input': 'input'}}),
                       RuleExec(),
@@ -720,7 +748,8 @@ class Catalog(orm.BaseExpando):
                       RulePrepare(cfg={'path': '_entities'}),
                       Set(cfg={'d': {'output.entities': '_entities',
                                      'output.cursor': '_cursor',
-                                     'output.more': '_more'}})
+                                     'output.more': '_more'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -752,7 +781,8 @@ class Catalog(orm.BaseExpando):
                       Notify(cfg={'s': {'subject': notifications.CATALOG_PUBLISH_SUBJECT,
                                         'body': notifications.CATALOG_PUBLISH_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
-                                  'd': {'recipient': '_catalog.root_entity._primary_email'}})
+                                  'd': {'recipient': '_catalog.root_entity._primary_email'}}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
           ]
@@ -782,6 +812,7 @@ class Catalog(orm.BaseExpando):
                       Notify(cfg={'s': {'subject': notifications.CATALOG_DISCONTINUE_SUBJECT,
                                         'body': notifications.CATALOG_DISCONTINUE_BODY, 'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       CallbackExec(cfg=[('callback',
                                          {'action_id': 'unindex', 'action_model': '31'},
                                          {'key': '_catalog.key_urlsafe'},
@@ -840,7 +871,8 @@ class Catalog(orm.BaseExpando):
                       # use 1 notify plugin with dynamic email
                       Notify(cfg={'s': {'subject': notifications.CATALOG_SUDO_SUBJECT,
                                         'body': notifications.CATALOG_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
-                                  'd': {'recipient': '_catalog.root_entity._primary_email'}})
+                                  'd': {'recipient': '_catalog.root_entity._primary_email'}}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
           ]

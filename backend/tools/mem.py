@@ -16,7 +16,7 @@ mem_storage = local.Local()
 __all__ = ['mem_get', 'mem_set', 'mem_delete_multi', 'mem_set_multi', 'mem_temp_get', 'mem_temp_set', 'mem_storage',
            'mem_temp_delete', 'mem_replace_multi', 'mem_add_multi', 'mem_forget_dead_hosts', 'mem_set_servers',
            'mem_debuglog', 'mem_temp_exists', 'mem_decr', 'mem_offset_multi', 'mem_disconnect_all',
-           'mem_replace', 'mem_incr', 'mem_flush_all', 'mem_delete', 'mem_add', 'mem_get_multi']
+           'mem_replace', 'mem_incr', 'mem_flush_all', 'mem_delete', 'mem_add', 'mem_get_multi', 'mem_rpc_get']
 
 
 def mem_get(key, default=None, callback=None, **kwargs):
@@ -92,3 +92,4 @@ mem_incr = memcache.incr
 mem_decr = memcache.decr
 mem_offset_multi = memcache.offset_multi
 mem_flush_all = memcache.flush_all
+mem_rpc_get = memcache.get

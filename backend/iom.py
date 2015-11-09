@@ -217,6 +217,8 @@ class Engine:
         raise
       finally:
         tools.log.debug('Completed action in %sms' % action_time.miliseconds)
+        if context._callbacks:
+          tools.log.warn('Unhandled callbacks: %s' % context._callbacks)
 
   @classmethod
   def run(cls, input, format=None):
@@ -234,20 +236,22 @@ class Engine:
       cls.get_action(context, input)
       cls.process_action_input(context, input)
       cls.execute_action(context, input)
-      if format == 'json':
-        cache = context.cache
-        do_save = None
-        if cache:
-          do_save = cache.get('do_save')
-          value = cache.get('value')
-          if value is not None:
+      cache = context.cache
+      do_save = None
+      if cache:
+        do_save = cache.get('do_save')
+        value = cache.get('value')
+        if value is not None:
+          if format == 'json':
             context.output = value
-          else:
-            context.output = tools.json_dumps(context.output)
-            if do_save:
-              do_save(context.output)
         else:
-          context.output = tools.json_dumps(context.output)
+          value = tools.json_dumps(context.output)
+          if do_save:
+            do_save(value)
+          if format == 'json':
+            context.output = value
+      elif format == 'json':
+        context.output = tools.json_dumps(context.output)
       cls.process_blob_state('success')  # Delete and/or save all blobs that have to be deleted and/or saved on success.
       tools.log.debug('Action Completed')
     except Exception as e:

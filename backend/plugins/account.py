@@ -5,6 +5,11 @@ Created on Apr 15, 2014
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
+import zlib
+import base64
+
+from google.appengine.runtime.apiproxy_errors import RequestTooLargeError
+
 import orm
 import tools
 
@@ -140,3 +145,47 @@ class AccountUpdateSet(orm.BaseModel):
     if no_identity:
       context._account.state = 'suspended'
       tools.del_attr(context, '_account.sessions')
+
+
+class AccountCacheGroupUpdate(orm.BaseModel):
+
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+
+  def run(self, context):
+    AccountCacheGroup = context.models['135']
+    delete = context.input.get('delete')
+    keys = context.input.get('keys')
+    if keys:
+      keys = context.input.get('keys')
+      if keys:
+        keys = zlib.decompress(base64.b64decode(keys)).split(',')
+    ids = [AccountCacheGroup.build_key(id) for id in context.input.get('ids')]
+    groups = orm.get_multi(ids)
+    save = []
+    for i, group in enumerate(groups):
+      changes = False
+      if not group:
+        changes = True
+        group = AccountCacheGroup(id=context.input.get('ids')[i], keys=[])
+      for k in keys:
+        if k in group.keys:
+          changes = True
+          if delete:
+            group.keys.remove(k)
+        else:
+          changes = True
+          group.keys.append(k)
+      if changes:
+        save.append(group)
+    try:
+      orm.put_multi(save)
+    except RequestTooLargeError as e: # size of entity exceeded
+      if not delete:
+        delete_keys = []
+        for s in save:
+          delete_keys.extend(s.keys)
+          s.keys = keys
+        orm.put_multi(save)
+        if delete_keys:
+          tools.mem_delete_multi(delete_keys)
+
