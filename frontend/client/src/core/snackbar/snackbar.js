@@ -65,7 +65,7 @@
                 snackbar.animating = false;
                 snackbar.hide = function () {
                     var defer = $q.defer();
-                    $scope.element.removeClass('in');
+                    $animate.removeClass($scope.element, 'in');
                     if (!$scope.element.hasClass('out')) {
                         $animate.addClass($scope.element, 'out').then(function () {
                             defer.resolve();
