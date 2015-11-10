@@ -632,6 +632,10 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         elif order.payment_status == 'Completed':
           if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
             update_paypal_payment_status = True
+        elif order.payment_status == 'Reversed':
+          #if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
+          update_paypal_payment_status = True
+
         if update_paypal_payment_status:
           if order.state in ('checkout', 'canceled') and ipn_payment_status == 'Completed':
             order.state = 'completed'
