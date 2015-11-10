@@ -12165,8 +12165,15 @@ $(function () {
         return {
             require: '^gridScale',
             link: function (scope, element, attrs, gridScaleCtrl) {
-                var appear = function () {
-                    element.addClass('visible');
+                var appear = function (event, img) {
+                    if (img) {
+                        var scale = img.parents('[grid-scale-item]:first');
+                        if (scale.length && scale.get(0) === element.get(0)) {
+                            element.addClass('visible');
+                        }
+                    } else {
+                        element.addClass('visible');
+                    }
                 }, config = scope.$eval(attrs.gridScaleItem) || {};
                 gridScaleCtrl.add(element);
                 if (config.image) {
@@ -13500,7 +13507,7 @@ $(function () {
                     });
                 }
             };
-        }).directive('activitySpinner', function () {
+        }).directive('activitySpinner', ng(function ($animate) {
             return {
                 scope: true,
                 templateUrl: 'core/misc/activity_spinner.html',
@@ -13510,6 +13517,11 @@ $(function () {
                     var top = function () {
                             return element.find(':first');
                         },
+                        digest = function () {
+                            if (!scope.$$phase) {
+                                scope.$digest();
+                            }
+                        },
                         slide = function () {
                             return top().find('.slide');
                         },
@@ -13518,15 +13530,16 @@ $(function () {
                                 return;
                             }
                             var s = slide();
-                            s.oneAnimationEnd(function () {
+                            $animate.addClass(s, 'out').then(function () {
                                 top().addClass('ng-hide');
-                                slide().removeClass('out');
+                                s.removeClass('in');
                             });
-                            s.removeClass('in').addClass('out');
                         },
                         show = function () {
                             top().removeClass('ng-hide');
-                            slide().removeClass('out').addClass('in');
+                            $animate.removeClass(slide(), 'out').then(function () {
+                                return $animate.addClass(slide(), 'in');
+                            });
                         };
                     scope.activitySpinner.hide.push(hide);
                     scope.activitySpinner.show.push(show);
@@ -13537,7 +13550,7 @@ $(function () {
                     });
                 }
             };
-        }).directive('collapse', ['$animate', function ($animate) {
+        })).directive('collapse', ['$animate', function ($animate) {
 
             return {
                 link: function (scope, element, attrs) {
@@ -19285,12 +19298,13 @@ angular.module('app')
 
                                             $scope.loadingSave = false;
 
-                                            $scope.save = function (hideSnackbar) {
+                                            $scope.save = function (hideSnackbar, timeoutDefer) {
                                                 var promise;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    timeout: timeoutDefer ? timeoutDefer.promise : null
                                                 });
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {
@@ -19337,13 +19351,19 @@ angular.module('app')
                                                 clearTimeout($scope.syncID);
                                             };
                                             $scope.syncStart = function (hideSnackbar) {
-                                                $scope.syncScheduleNext = true;
+                                                //$scope.syncScheduleNext = true;
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
-                                                    $scope.sync(true);
+                                                    $scope.sync(false);
                                                 }, 1000);
                                             };
                                             $scope.sync = function (hideSnackbar) {
+                                                if ($scope.syncScheduleNext) {
+                                                    $scope.syncScheduleNext.resolve();
+                                                }
+                                                $scope.syncScheduleNext = $q.defer();
+                                                $scope.save(true, $scope.syncScheduleNext);
+                                                return;
                                                 if ($scope.syncLoading) {
                                                     $scope.syncScheduleNext = true;
                                                     return;

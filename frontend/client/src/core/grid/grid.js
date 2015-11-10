@@ -273,8 +273,15 @@
         return {
             require: '^gridScale',
             link: function (scope, element, attrs, gridScaleCtrl) {
-                var appear = function () {
-                    element.addClass('visible');
+                var appear = function (event, img) {
+                    if (img) {
+                        var scale = img.parents('[grid-scale-item]:first');
+                        if (scale.length && scale.get(0) === element.get(0)) {
+                            element.addClass('visible');
+                        }
+                    } else {
+                        element.addClass('visible');
+                    }
                 }, config = scope.$eval(attrs.gridScaleItem) || {};
                 gridScaleCtrl.add(element);
                 if (config.image) {

@@ -1317,7 +1317,7 @@
                     });
                 }
             };
-        }).directive('activitySpinner', function () {
+        }).directive('activitySpinner', ng(function ($animate) {
             return {
                 scope: true,
                 templateUrl: 'core/misc/activity_spinner.html',
@@ -1327,6 +1327,11 @@
                     var top = function () {
                             return element.find(':first');
                         },
+                        digest = function () {
+                            if (!scope.$$phase) {
+                                scope.$digest();
+                            }
+                        },
                         slide = function () {
                             return top().find('.slide');
                         },
@@ -1335,15 +1340,16 @@
                                 return;
                             }
                             var s = slide();
-                            s.oneAnimationEnd(function () {
+                            $animate.addClass(s, 'out').then(function () {
                                 top().addClass('ng-hide');
-                                slide().removeClass('out');
+                                s.removeClass('in');
                             });
-                            s.removeClass('in').addClass('out');
                         },
                         show = function () {
                             top().removeClass('ng-hide');
-                            slide().removeClass('out').addClass('in');
+                            $animate.removeClass(slide(), 'out').then(function () {
+                                return $animate.addClass(slide(), 'in');
+                            });
                         };
                     scope.activitySpinner.hide.push(hide);
                     scope.activitySpinner.show.push(show);
@@ -1354,7 +1360,7 @@
                     });
                 }
             };
-        }).directive('collapse', ['$animate', function ($animate) {
+        })).directive('collapse', ['$animate', function ($animate) {
 
             return {
                 link: function (scope, element, attrs) {

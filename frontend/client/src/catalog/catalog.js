@@ -1721,12 +1721,13 @@
 
                                             $scope.loadingSave = false;
 
-                                            $scope.save = function (hideSnackbar) {
+                                            $scope.save = function (hideSnackbar, timeoutDefer) {
                                                 var promise;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    timeout: timeoutDefer ? timeoutDefer.promise : null
                                                 });
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {
@@ -1773,13 +1774,19 @@
                                                 clearTimeout($scope.syncID);
                                             };
                                             $scope.syncStart = function (hideSnackbar) {
-                                                $scope.syncScheduleNext = true;
+                                                //$scope.syncScheduleNext = true;
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
-                                                    $scope.sync(true);
+                                                    $scope.sync(false);
                                                 }, 1000);
                                             };
                                             $scope.sync = function (hideSnackbar) {
+                                                if ($scope.syncScheduleNext) {
+                                                    $scope.syncScheduleNext.resolve();
+                                                }
+                                                $scope.syncScheduleNext = $q.defer();
+                                                $scope.save(true, $scope.syncScheduleNext);
+                                                return;
                                                 if ($scope.syncLoading) {
                                                     $scope.syncScheduleNext = true;
                                                     return;
