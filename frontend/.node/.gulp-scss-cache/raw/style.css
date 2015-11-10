@@ -2757,7 +2757,7 @@ activity-spinner .progress-wrapper-loading .progress-wrapper.slide.out {
 
 activity-spinner .progress-wrapper .progress.circular.raised {
   transition-delay: 0s;
-  transition-duration: 0.2s;
+  transition-duration: 0.15s;
   transition-timing-function: cubic-bezier(0.8, 0, 1, 1);
   transition-property: transform;
   transform: scale(1, 1); }
