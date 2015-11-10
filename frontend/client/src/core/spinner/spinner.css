@@ -175,7 +175,7 @@
 
 @keyframes top-slide-in {
     0% {
-        top: 0px;
+        top: -100%;
     }
     100% {
         top: 72px;
@@ -187,7 +187,7 @@
         top: 72px;
     }
     100% {
-        top: 0px;
+        top: -100%;
     }
 }
 
@@ -210,7 +210,7 @@ content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-w
 }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper {
-    top: 0px;
+    top: -100%;
     height: auto;
 }
 

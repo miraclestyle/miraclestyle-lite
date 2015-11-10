@@ -2718,14 +2718,14 @@ div[disabled] .select-box {
 
 @keyframes top-slide-in {
   0% {
-    top: 0px; }
+    top: -100%; }
   100% {
     top: 72px; } }
 @keyframes top-slide-out {
   0% {
     top: 72px; }
   100% {
-    top: 0px; } }
+    top: -100%; } }
 .progress-wrapper-loading.first-load .progress-wrapper, activity-spinner .progress-wrapper-loading .progress-wrapper {
   position: absolute;
   text-align: center;
@@ -2742,7 +2742,7 @@ content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-w
   height: calc(100% - 56px); }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper {
-  top: 0px;
+  top: -100%;
   height: auto; }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.slide.in {
