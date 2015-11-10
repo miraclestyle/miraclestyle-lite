@@ -8,6 +8,7 @@ Created on Aug 25, 2014
 import datetime
 import copy
 from decimal import Decimal
+import os
 
 from google.appengine.api import urlfetch
 
@@ -372,9 +373,35 @@ class OrderProcessPayment(orm.BaseModel):
     payment_plugin.complete(context)
 
   def find_order_paypal(self, context):
-    ipn = context.input['request']['params']
+    request = context.input['request']
+    ipn = request['params']
+    # validate if the request came from ipn
+    ip_address = os.environ.get('REMOTE_ADDR')
+    result_content = None
+    valid = False
+    try:
+      result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
+                            payload='cmd=_notify-validate&%s' % request['body'],
+                            method=urlfetch.POST,
+                            headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
+      result_content = result.content
+      if result_content != 'VERIFIED':
+        tools.log.error('Paypal ipn message not valid ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
+      else:
+        valid = True
+    except Exception as e:
+      tools.log.error('Paypal unreachable with error %s - ipn: %s, content: %s, ip: %s' % (e, ipn, result_content, ip_address))
+    if not valid:
+      raise orm.TerminateAction('invalid_ipn')
+    if 'custom' not in ipn:
+      tools.log.error('Invalid order reference ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
+      raise orm.TerminateAction('no_order_id')
     order_key = orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
-    return order_key.get()
+    order = order_key.get()
+    if not order:
+      tools.log.error('Order not found ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
+      raise orm.TerminateAction('order_not_found')
+    return order
 
 
 # Not a plugin!
@@ -527,14 +554,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     request = context.input['request']
     ipn = request['params']
     order = context._order
-    # validate if the request came from ipn
-    result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
-                            payload='cmd=_notify-validate&%s' % request['body'],
-                            method=urlfetch.POST,
-                            headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
-    if result.content != 'VERIFIED':
-      raise PluginError('invalid_ipn_message')  # log somehow
-
+    ip_address = os.environ.get('REMOTE_ADDR')
     # begin ipn message validation
     mismatches = []
     shipping_address = order.shipping_address.value
@@ -561,45 +581,45 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
     order._messages = [new_order_message]
 
-    if (self.reciever_email.lower() != ipn['receiver_email'].lower()):
+    if self.reciever_email.lower() != ipn['receiver_email'].lower():
       mismatches.append('receiver_email')
     if 'business' in ipn:
       if (self.business.lower() != ipn['business'].lower()):
         mismatches.append('business_email')
-    if (order_currency.code != ipn['mc_currency']):
+    if order_currency.code != ipn['mc_currency']:
       mismatches.append('mc_currency')
-    if (order.total_amount != tools.format_value(ipn['mc_gross'], order_currency)):
+    if order.total_amount != tools.format_value(ipn['mc_gross'], order_currency):
       mismatches.append('mc_gross')
-    if (order.tax_amount != tools.format_value(ipn['tax'], order_currency)):
+    if order.tax_amount != tools.format_value(ipn['tax'], order_currency):
       mismatches.append('tax')
-    if (order.key.urlsafe() != ipn['invoice']):
+    if order.key.urlsafe() != ipn['invoice']:
       mismatches.append('invoice')
-    if (shipping_address.country != ipn['address_country']):
+    if shipping_address.country != ipn['address_country']:
       mismatches.append('address_country')
-    if (shipping_address.country_code != ipn['address_country_code']):
+    if shipping_address.country_code != ipn['address_country_code']:
       mismatches.append('address_country_code')
-    if (shipping_address.city.lower() != ipn['address_city'].lower()):
+    if shipping_address.city.lower() != ipn['address_city'].lower():
       mismatches.append('address_city')
-    if (shipping_address.name != ipn['address_name']):
+    if shipping_address.name != ipn['address_name']:
       mismatches.append('address_name')
     if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']:  # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
       mismatches.append('address_state')
-    if (shipping_address.street.lower() != ipn['address_street'].lower()):
+    if shipping_address.street.lower() != ipn['address_street'].lower():
       mismatches.append('address_street')
-    if (shipping_address.postal_code.lower() != ipn['address_zip'].lower()):
+    if shipping_address.postal_code.lower() != ipn['address_zip'].lower():
       mismatches.append('address_zip')
 
     for line in order._lines.value:
       product = line.product.value
       tools.log.debug('Order sequence %s' % line.sequence)
       # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
-      if (str(line.sequence) != ipn['item_number%s' % str(line.sequence)]):
+      if str(line.sequence) != ipn['item_number%s' % str(line.sequence)]:
         mismatches.append('item_number%s' % str(line.sequence))
-      if (product.name != ipn['item_name%s' % str(line.sequence)]):
+      if product.name != ipn['item_name%s' % str(line.sequence)]:
         mismatches.append('item_name%s' % str(line.sequence))
-      if (product.quantity != tools.format_value(ipn['quantity%s' % str(line.sequence)], product.uom.value)):
+      if product.quantity != tools.format_value(ipn['quantity%s' % str(line.sequence)], product.uom.value):
         mismatches.append('quantity%s' % str(line.sequence))
-      if (line.subtotal != tools.format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency)):
+      if line.subtotal != tools.format_value(ipn['mc_gross_%s' % str(line.sequence)], order_currency):
         mismatches.append('mc_gross_%s' % str(line.sequence))
     if not mismatches:
       if order.payment_status == ipn_payment_status:
@@ -613,20 +633,18 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
           if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
             update_paypal_payment_status = True
         if update_paypal_payment_status:
-          # ovo se verovatno treba jos doterati..
-          if order.state == 'checkout' and ipn_payment_status == 'Completed':
+          if order.state in ('checkout', 'canceled') and ipn_payment_status == 'Completed':
             order.state = 'completed'
             order.payment_status = ipn_payment_status
-          elif order.state == 'checkout' and ipn_payment_status == 'Denied':
+          elif order.state in ('checkout', 'canceled') and ipn_payment_status == 'Denied':
             order.state = 'canceled'
             order.payment_status = ipn_payment_status
           elif order.state == 'completed':
             order.payment_status = ipn_payment_status
     else:
       # log that there were missmatches, where we should log that?
-      tools.log.error('Found mismatches=%s with ipn=%s for order=%s' % (mismatches, ipn, order.key))
-    tools.log.info('Set Order state %s' % order.state)
-    tools.log.info('Set Order payment_status %s' % order.payment_status)
+      context.mismatches = mismatches
+      tools.log.error('Found mismatches: %s ipn: %s order: %s' % (mismatches, ipn, order.key))
 
 
 class OrderTaxPlugin(orm.BaseModel):
