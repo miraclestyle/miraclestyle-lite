@@ -343,7 +343,7 @@
                                 var listenNode = listen.get(0),
                                     listenScrollHeight = listenNode.scrollHeight,
                                     viewport = $(window).height() - 56,
-                                    maybe = config.reverse ? true : listenNode ? (viewport >= listenScrollHeight) : false,
+                                    maybe = config.reverse ? true : listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false,
                                     promise;
                                 if (!listen.length || !listenNode) {
                                     return;

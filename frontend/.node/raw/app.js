@@ -12526,7 +12526,7 @@ $(function () {
                                 var listenNode = listen.get(0),
                                     listenScrollHeight = listenNode.scrollHeight,
                                     viewport = $(window).height() - 56,
-                                    maybe = config.reverse ? true : listenNode ? (viewport >= listenScrollHeight) : false,
+                                    maybe = config.reverse ? true : listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false,
                                     promise;
                                 if (!listen.length || !listenNode) {
                                     return;
@@ -18736,7 +18736,7 @@ angular.module('app')
                                                 }
                                                 $scope.$broadcast('resizePricetags', pricetag);
 
-                                                //$scope.syncStart();
+                                                $scope.syncStart();
 
                                             };
 
@@ -18791,10 +18791,14 @@ angular.module('app')
                                             };
 
                                             $scope.loadingManageProduct = false;
+                                            $scope.lastManageProduct = null;
                                             $scope.manageProduct = function (image, pricetag, $event) {
                                                 var syncing = ($scope.syncScheduleNext || $scope.syncLoading),
                                                     dirty = $scope.container.form.$dirty;
                                                 if (syncing || dirty) {
+                                                    $scope.lastManageProduct = [image, pricetag, $event];
+                                                    return;
+                                                    /*
                                                     return (syncing ? $scope.saveDefer.promise : $scope.save(true)).then(function () {
                                                         image = _.findWhere($scope.args._images, {
                                                             key: image.key
@@ -18803,7 +18807,7 @@ angular.module('app')
                                                             key: pricetag.key
                                                         });
                                                         return $scope.realManageProduct(image, pricetag, $event);
-                                                    });
+                                                    });*/
                                                 }
                                                 return $scope.realManageProduct(image, pricetag, $event);
                                             };
@@ -19280,7 +19284,6 @@ angular.module('app')
                                             };
 
                                             $scope.loadingSave = false;
-                                            $scope.saveDefer = $q.defer();
 
                                             $scope.save = function (hideSnackbar) {
                                                 var promise;
@@ -19296,10 +19299,19 @@ angular.module('app')
                                                         $.extend(parentScope.args, angular.copy(newArgs));
                                                         $.extend($scope.args, angular.copy(newArgs));
                                                         $scope.formSetPristine();
-                                                        if ($scope.saveDefer) {
-                                                            $scope.saveDefer.resolve();
+                                                        if ($scope.lastManageProduct) {
+                                                            var image = $scope.lastManageProduct[0],
+                                                                pricetag = $scope.lastManageProduct[1],
+                                                                $event = $scope.lastManageProduct[2];
+                                                            image = _.findWhere($scope.args._images, {
+                                                                key: image.key
+                                                            });
+                                                            pricetag = _.findWhere(image.pricetags, {
+                                                                key: pricetag.key
+                                                            });
+                                                            $scope.realManageProduct(image, pricetag, $event);
+                                                            $scope.lastManageProduct = null;
                                                         }
-                                                        $scope.saveDefer = $q.defer();
                                                     }
                                                     if (!hideSnackbar) {
                                                         snackbar.showK('changesSaved');
@@ -19328,7 +19340,7 @@ angular.module('app')
                                                 $scope.syncScheduleNext = true;
                                                 $scope.syncStop();
                                                 $scope.syncID = setTimeout(function () {
-                                                    $scope.sync();
+                                                    $scope.sync(true);
                                                 }, 1000);
                                             };
                                             $scope.sync = function (hideSnackbar) {
