@@ -53,6 +53,11 @@
                 controller: 'CatalogProductViewController',
                 template: ''
             })
+            .state('catalog-product-variant-view', {
+                url: '/catalog/:key/product/:image_id/:pricetag_id/:variant',
+                controller: 'CatalogProductVariantViewController',
+                template: ''
+            })
             .state('embed-catalog-view', {
                 url: '/embed/catalog/:key',
                 controller: 'EmbedCatalogViewController',
@@ -61,6 +66,11 @@
             .state('embed-seller-view', {
                 url: '/embed/seller/:key',
                 controller: 'EmbedSellerViewController',
+                template: ''
+            })
+            .state('embed-catalog-product-variant-view', {
+                url: '/embed/catalog/:key/product/:image_id/:pricetag_id/:variant',
+                controller: 'EmbedCatalogProductVariantViewController',
                 template: ''
             })
             .state('embed-catalog-product-view', {

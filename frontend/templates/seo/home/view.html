@@ -30,7 +30,7 @@
     <a href="{{uri_for('catalog.view', key=catalog.key)}}" class="button-transparent button-block ripple-presence">
         <img alt="{{catalog.name}}" class="not-pointable" src="{{catalog.cover.serving_url}}=s240" style="visibility: visible;">
     </a>
-    <a href="{{uri_for('seller.view', key=catalog.parent.key)}}" class="button-transparent button-block seller-logo-bellow ng-scope ripple-presence">
+    <a href="{{uri_for('seller.view', key=catalog.parent.parent.key)}}" class="button-transparent button-block seller-logo-bellow ng-scope ripple-presence">
         <img class="not-pointable" src="{{catalog._seller.logo.serving_url}}=s240" style="visibility: visible;">
     </a>
 </div>

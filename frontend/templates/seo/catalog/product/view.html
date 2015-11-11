@@ -30,7 +30,9 @@
 #}
 
 <meta name="twitter:title" content="{{title}}">
+{% if image %}
 <meta name="twitter:image" content="{{image}}">
+{% endif %}
 <meta name="twitter:label1" content="Description">
 <meta name="twitter:data1" content="{{description}}">
 <meta name="twitter:label2" content="Category">
@@ -119,6 +121,9 @@
         </div>
 
         <div class="product-detail">
+          <link itemprop="availability" href="http://schema.org/InStock"/>In stock!
+          {# 
+
           {% if product.availability == 'in stock' %}
           <link itemprop="availability" href="http://schema.org/InStock"/>In stock!
           {% endif %}
@@ -130,6 +135,7 @@
           {% if product.availability == 'available for order' or product.availability == 'preorder' %}
           <link itemprop="availability" href="http://schema.org/PreOrder"/>Preorder
           {% endif %}
+          #}
         </div>
       </span>
   </div>

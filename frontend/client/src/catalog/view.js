@@ -130,6 +130,10 @@
                                                     $scope.currentVariation.push(d);
                                                 });
 
+                                                if (!buildVariantSignature.length) {
+                                                    skip = true;
+                                                }
+
                                                 if (skip || forceSkip) {
                                                     qdefer = $q.defer();
                                                     promise = qdefer.promise;
@@ -203,10 +207,11 @@
                                         $scope.socialMeta = {};
                                         return;
                                     }
-                                    var productUrl = $state.href('catalog-product-view', {
+                                    var productUrl = $state.href((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-variant-view', {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
-                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id
+                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id,
+                                            variant: helpers.url.jsonToUrlsafe($scope.currentVariation)
                                         }, {
                                             absolute: true
                                         }),
@@ -250,6 +255,7 @@
                                 };
 
                                 $scope.displayShare = function () {
+                                    shareWatch();
                                     return social.share($scope.socialMeta, false);
                                 };
 
@@ -697,7 +703,7 @@
                                         hideCloseCatalog: config.hideClose,
                                         noEscapeCatalog: config.noEscape,
                                         noEscape: config.noEscapeOnProduct,
-                                        autoAddToCart: config.variantSignatureAsDicts ? true : false,
+                                        autoAddToCart: (config.variantSignatureAsDicts && config.autoAddToCart) ? true : false,
                                         autoAddToCartQuantity: config.autoAddToCartQuantity,
                                         afterClose: config.afterCloseProduct
                                     })['finally'](function () {

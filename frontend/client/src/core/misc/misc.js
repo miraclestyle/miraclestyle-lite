@@ -51,10 +51,10 @@
                         return window.location.protocol + '//' + window.location.host + '/' + part;
                     },
                     urlsafe: function (str) {
-                        return window.btoa(str).replace('=', '-');
+                        return window.btoa(str).replace(new RegExp('=', 'g'), '-');
                     },
                     urlunsafe: function (str) {
-                        return window.atob(str.replace('-', '='));
+                        return window.atob(str.replace(new RegExp('-', 'g'), '='));
                     },
                     jsonFromUrlsafe: function (str) {
                         return angular.fromJson(helpers.url.urlunsafe(str));

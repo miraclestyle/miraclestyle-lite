@@ -12241,10 +12241,10 @@ $(function () {
                         return window.location.protocol + '//' + window.location.host + '/' + part;
                     },
                     urlsafe: function (str) {
-                        return window.btoa(str).replace('=', '-');
+                        return window.btoa(str).replace(new RegExp('=', 'g'), '-');
                     },
                     urlunsafe: function (str) {
-                        return window.atob(str.replace('-', '='));
+                        return window.atob(str.replace(new RegExp('-', 'g'), '='));
                     },
                     jsonFromUrlsafe: function (str) {
                         return angular.fromJson(helpers.url.urlunsafe(str));
@@ -17597,12 +17597,29 @@ angular.module('app')
                 inDirection: false,
                 outDirection: false,
                 hideClose: embed,
+                autoAddToCart: true,
                 noEscape: embed,
                 afterClose: embed ? undefined : function () {
                     $state.go('home');
                 },
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 autoAddToCartQuantity: $state.params.quantity,
+                loadProduct: {
+                    image: $state.params.image_id,
+                    id: $state.params.pricetag_id
+                }
+            });
+
+        })).controller('CatalogProductVariantViewController', ng(function ($scope, $state, helpers, models) {
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                inDirection: false,
+                outDirection: false,
+                variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
+                afterClose: function () {
+                    $state.go('home');
+                },
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
@@ -17658,6 +17675,22 @@ angular.module('app')
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
+                loadProduct: {
+                    image: $state.params.image_id,
+                    id: $state.params.pricetag_id
+                }
+            });
+
+        })).controller('EmbedCatalogProductVariantViewController', ng(function ($scope, $state, helpers, models) {
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                hideClose: true,
+                noEscape: true,
+                noEscapeOnProduct: true,
+                inDirection: false,
+                outDirection: false,
+                variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
@@ -19057,6 +19090,10 @@ angular.module('app')
                                                     $scope.currentVariation.push(d);
                                                 });
 
+                                                if (!buildVariantSignature.length) {
+                                                    skip = true;
+                                                }
+
                                                 if (skip || forceSkip) {
                                                     qdefer = $q.defer();
                                                     promise = qdefer.promise;
@@ -19130,10 +19167,11 @@ angular.module('app')
                                         $scope.socialMeta = {};
                                         return;
                                     }
-                                    var productUrl = $state.href('catalog-product-view', {
+                                    var productUrl = $state.href((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-variant-view', {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
-                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id
+                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id,
+                                            variant: helpers.url.jsonToUrlsafe($scope.currentVariation)
                                         }, {
                                             absolute: true
                                         }),
@@ -19177,6 +19215,7 @@ angular.module('app')
                                 };
 
                                 $scope.displayShare = function () {
+                                    shareWatch();
                                     return social.share($scope.socialMeta, false);
                                 };
 
@@ -19624,7 +19663,7 @@ angular.module('app')
                                         hideCloseCatalog: config.hideClose,
                                         noEscapeCatalog: config.noEscape,
                                         noEscape: config.noEscapeOnProduct,
-                                        autoAddToCart: config.variantSignatureAsDicts ? true : false,
+                                        autoAddToCart: (config.variantSignatureAsDicts && config.autoAddToCart) ? true : false,
                                         autoAddToCartQuantity: config.autoAddToCartQuantity,
                                         afterClose: config.afterCloseProduct
                                     })['finally'](function () {
@@ -21818,6 +21857,11 @@ angular.module('app')
                 controller: 'CatalogProductViewController',
                 template: ''
             })
+            .state('catalog-product-variant-view', {
+                url: '/catalog/:key/product/:image_id/:pricetag_id/:variant',
+                controller: 'CatalogProductVariantViewController',
+                template: ''
+            })
             .state('embed-catalog-view', {
                 url: '/embed/catalog/:key',
                 controller: 'EmbedCatalogViewController',
@@ -21826,6 +21870,11 @@ angular.module('app')
             .state('embed-seller-view', {
                 url: '/embed/seller/:key',
                 controller: 'EmbedSellerViewController',
+                template: ''
+            })
+            .state('embed-catalog-product-variant-view', {
+                url: '/embed/catalog/:key/product/:image_id/:pricetag_id/:variant',
+                controller: 'EmbedCatalogProductVariantViewController',
                 template: ''
             })
             .state('embed-catalog-product-view', {

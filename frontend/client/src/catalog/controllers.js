@@ -20,12 +20,29 @@
                 inDirection: false,
                 outDirection: false,
                 hideClose: embed,
+                autoAddToCart: true,
                 noEscape: embed,
                 afterClose: embed ? undefined : function () {
                     $state.go('home');
                 },
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 autoAddToCartQuantity: $state.params.quantity,
+                loadProduct: {
+                    image: $state.params.image_id,
+                    id: $state.params.pricetag_id
+                }
+            });
+
+        })).controller('CatalogProductVariantViewController', ng(function ($scope, $state, helpers, models) {
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                inDirection: false,
+                outDirection: false,
+                variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
+                afterClose: function () {
+                    $state.go('home');
+                },
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
@@ -81,6 +98,22 @@
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
+                loadProduct: {
+                    image: $state.params.image_id,
+                    id: $state.params.pricetag_id
+                }
+            });
+
+        })).controller('EmbedCatalogProductVariantViewController', ng(function ($scope, $state, helpers, models) {
+            $scope.site.toolbar.hidden = true;
+            models['31'].viewModal($state.params.key, {
+                popFrom: undefined,
+                hideClose: true,
+                noEscape: true,
+                noEscapeOnProduct: true,
+                inDirection: false,
+                outDirection: false,
+                variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
