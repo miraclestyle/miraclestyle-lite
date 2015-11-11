@@ -16,15 +16,19 @@ class SellerView(base.SeoOrAngular):
   def respond_seo(self, *args, **kwargs):
     data = {'action_id': 'read', 'action_model': '23', 'account': kwargs.get('key'), 'read_arguments': {}}
     data = self.api_endpoint(payload=data)
-    catalogs = {"action_model":"31","action_id":"public_search","search":{"filters":[{"field":"seller_account_key","operator":"IN","value": kwargs.get('key')}],"options":{"start_cursor": None}}}
+    catalogs = {"action_model": "31",
+                "action_id": "search",
+                "search": {"ancestor": kwargs.get('key'),
+                "filters": [{"field": "state", "operator": "IN", "value": ["published", "indexed"]}],
+                "orders": [{"field": "published_date", "operator": "desc"}, {"field": "key", "operator": "desc"}],
+                "options": {"start_cursor": None}}}
     catalogs = self.api_endpoint(payload=catalogs)
     seller = data['entity']
     tpl = {'seller': seller,
            'title': 'Seller %s' % seller['name'],
            'image': '%s=s360' % seller['logo']['serving_url'],
            'path': self.uri_for('seller.view', _full=True, key=seller['key']),
-           'catalogs': catalogs['entities'],
-           #'description': '%s Followers' % seller['_follower_count']
+           'catalogs': catalogs['entities']
            }
     self.render('seo/seller/view.html', tpl)
 
