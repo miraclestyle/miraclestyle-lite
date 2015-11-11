@@ -207,7 +207,8 @@
                                         $scope.socialMeta = {};
                                         return;
                                     }
-                                    var productUrl = $state.href((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-variant-view', {
+                                    var key = (config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-' + ($scope.currentVariation.length ? 'variant-' : '') + 'view',
+                                        productUrl = $state.href(key, {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
                                             pricetag_id: $scope.catalog._images[0].pricetags[0].id,

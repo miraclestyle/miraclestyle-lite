@@ -68,20 +68,6 @@ class CatalogProductView(base.SeoOrAngular):
     raw_variant = variant
     as_variant = False
     if variant:
-      '''
-        urlsafe: function (str) {
-            return window.btoa(str).replace('=', '-');
-        },
-        urlunsafe: function (str) {
-            return window.atob(str.replace('-', '='));
-        },
-        jsonFromUrlsafe: function (str) {
-            return angular.fromJson(helpers.url.urlunsafe(str));
-        },
-        jsonToUrlsafe: function (str) {
-            return helpers.url.urlsafe(angular.toJson(str));
-        }
-      '''
       variant = json.loads(base64.b64decode(variant.replace('-', '=')))
       if variant:
         as_variant = True
