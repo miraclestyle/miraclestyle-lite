@@ -420,7 +420,7 @@
                     scope.$watch(function () {
                         return attrs.autoloadOnVerticalScrollEnd && config && config.loader;
                     }, function (neww, old) {
-                        if (!neww) {
+                        if (!neww || loaded) {
                             return;
                         }
                         loaded = true;

@@ -14,6 +14,8 @@ from handler import base
 class HomeView(base.SeoOrAngular):
 
   def respond(self, *args, **kwargs):
+    import time
+    time.sleep(3)
     if self.request.get('toggle_seo'):
         if 'seo' in self.request.cookies:
             self.response.delete_cookie('seo')
