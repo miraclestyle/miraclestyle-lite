@@ -100,6 +100,18 @@
 
             $scope.scrollEnd = {loader: false};
 
+            $scope.$watch(function () {
+                var maybe = false;
+                $scope.search.results.iremove(function (ent) {
+                    var truth = ent.state === 'canceled';
+                    if (!maybe) {
+                        maybe = truth;
+                    }
+                    return truth;
+                });
+                return maybe;
+            }, angular.noop);
+
             $scope.view = function (order, $event) {
                 models['19'].current().then(function (response) {
                     return response.data.entity;
