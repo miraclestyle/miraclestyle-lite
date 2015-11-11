@@ -417,8 +417,10 @@ class BaseKeyProperty(_BaseProperty, KeyProperty):
           out = None
       return out
     except Exception as e:
+      if e.message == 'invalid_kind':
+        raise e # if kind is not ok raise
       if e.message == 'not_found':
-        raise FormatError('not_found')  # if its not found, its not found
+        raise e  # if its not found, its not found
       # Failed to build from urlsafe, proceed with KeyFromPath.
       value = self._property_value_format(value)
       if value is tools.Nonexistent:
@@ -428,7 +430,7 @@ class BaseKeyProperty(_BaseProperty, KeyProperty):
         for v in value:
           kwds = {}
           try:
-            kwds = v[1]
+            kwds = value[1]
           except IndexError:
             pass
           key = Key(*v[0], **kwds)

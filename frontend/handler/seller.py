@@ -16,14 +16,14 @@ class SellerView(base.SeoOrAngular):
   def respond_seo(self, *args, **kwargs):
     data = {'action_id': 'read', 'action_model': '23', 'account': kwargs.get('key'), 'read_arguments': {}}
     data = self.api_endpoint(payload=data)
+    seller = data['entity']
     catalogs = {"action_model": "31",
                 "action_id": "search",
-                "search": {"ancestor": kwargs.get('key'),
+                "search": {"ancestor": seller['key'],
                 "filters": [{"field": "state", "operator": "IN", "value": ["published", "indexed"]}],
                 "orders": [{"field": "published_date", "operator": "desc"}, {"field": "key", "operator": "desc"}],
                 "options": {"start_cursor": None}}}
     catalogs = self.api_endpoint(payload=catalogs)
-    seller = data['entity']
     tpl = {'seller': seller,
            'title': 'Seller %s' % seller['name'],
            'image': '%s=s360' % seller['logo']['serving_url'],
