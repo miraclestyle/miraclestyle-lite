@@ -19546,6 +19546,8 @@ angular.module('app')
                                             pricetags: {}
                                         }
                                     }
+                                }, {
+                                    disableUI: false
                                 });
                             }, function ($scope, response) {
                                 var entity = response.data.entity;
@@ -20049,8 +20051,7 @@ angular.module('app')
                             sellerMode = config.sellerMode,
                             openDefer = $q.defer(),
                             openPromise = openDefer.promise,
-                            modalOpen,
-                            rpc = {};
+                            modalOpen;
                         if (!cartMode) {
                             args = {
                                 key: order.key,
@@ -20087,7 +20088,9 @@ angular.module('app')
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {
                                 $scope.$state.promise(function () {
-                                    return models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc);
+                                    return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
+                                        disableUI: false
+                                    });
                                 }, function ($scope, response) {
                                     seller = response.data.entity._seller;
                                     var locals = {
@@ -21614,6 +21617,8 @@ angular.module('app')
                                     read_arguments: {
                                         _content: {}
                                     }
+                                }, {
+                                    disableUI: false
                                 });
                             }, function ($scope, response) {
                                 var seller = response.data.entity;

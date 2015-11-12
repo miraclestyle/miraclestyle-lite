@@ -882,6 +882,8 @@
                                     read_arguments: {
                                         _content: {}
                                     }
+                                }, {
+                                    disableUI: false
                                 });
                             }, function ($scope, response) {
                                 var seller = response.data.entity;

@@ -80,8 +80,7 @@
                             sellerMode = config.sellerMode,
                             openDefer = $q.defer(),
                             openPromise = openDefer.promise,
-                            modalOpen,
-                            rpc = {};
+                            modalOpen;
                         if (!cartMode) {
                             args = {
                                 key: order.key,
@@ -118,7 +117,9 @@
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {
                                 $scope.$state.promise(function () {
-                                    return models['34'].actions[cartMode ? 'view_order' : 'read'](args, rpc);
+                                    return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
+                                        disableUI: false
+                                    });
                                 }, function ($scope, response) {
                                     seller = response.data.entity._seller;
                                     var locals = {

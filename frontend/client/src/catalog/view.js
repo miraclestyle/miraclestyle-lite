@@ -574,6 +574,8 @@
                                             pricetags: {}
                                         }
                                     }
+                                }, {
+                                    disableUI: false
                                 });
                             }, function ($scope, response) {
                                 var entity = response.data.entity;
