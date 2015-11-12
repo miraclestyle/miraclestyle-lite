@@ -1037,3 +1037,6 @@ img.auto-width, .auto-width {
     height: 100%;
 }
 
+.no-decoration {
+    text-decoration: none;
+}

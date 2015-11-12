@@ -146,6 +146,11 @@
                 title: 'tos',
                 templateUrl: 'home/tos.html',
             })
+            .state('support', {
+                url: '/support',
+                title: 'support',
+                templateUrl: 'home/support.html',
+            })
             .state('acceptable_use_policy', {
                 url: '/acceptable_use_policy',
                 title: 'acceptable_use_policy',

@@ -1678,6 +1678,7 @@ $(function () {
             about: 'About',
             acceptable_use_policy: 'Acceptable Use Policy',
             tos: 'Terms of Service',
+            support: 'Support',
             copyright_policy: 'Copyright & Trademark',
             privacy_policy: 'Privacy Policy',
             buyer: 'Buyer',
@@ -19856,11 +19857,11 @@ angular.module('app')
             }, {
                 name: 'YouTube',
                 icon: 'youtube',
-                command: 'https://plus.google.com/b/117800240045842886424/',
+                command: 'https://www.youtube.com/channel/UCy8iFLR6b1NXX8mhCgv2toA',
             }, {
                 name: 'Google+',
                 icon: 'googleplus',
-                command: 'https://www.youtube.com/channel/UCy8iFLR6b1NXX8mhCgv2toA',
+                command: 'https://plus.google.com/b/117800240045842886424/',
             }, {
                 name: 'Tumblr',
                 key: 'tumblr',
@@ -21971,6 +21972,11 @@ angular.module('app')
                 url: '/tos',
                 title: 'tos',
                 templateUrl: 'home/tos.html',
+            })
+            .state('support', {
+                url: '/support',
+                title: 'support',
+                templateUrl: 'home/support.html',
             })
             .state('acceptable_use_policy', {
                 url: '/acceptable_use_policy',

@@ -45,7 +45,7 @@ class AcceptableUsePolicyPage(base.SeoOrAngular):
 class SupportPage(base.SeoOrAngular):
 
   def respond_seo(self):
-    pass
+    self.render('seo/misc/support.html', {'route_name': 'support', 'page_title': 'Support'})
 
 
 settings.ROUTES.extend(((r'/collections', base.AngularBlank),

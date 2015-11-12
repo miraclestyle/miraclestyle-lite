@@ -47,6 +47,7 @@
                           </div>
                           <div ng-if="helpers.models.isEntityListEmpty(order._lines)" help-render="GLOBAL_CONFIG.emptyHelp.cart"></div>
                         </div>
+                        
                         <div ng-if="!stage.checkout" class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
                             <div class="list list-padding seam-bottom">
                               <div class="list-subheader subheader">Billing info</div>
@@ -105,9 +106,8 @@
                                 </div>
                             </button>
                           </div>
- 
-                            
                         </div>
+
                         <div ng-if="!stage.checkout" class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
                               <div ng-form="carrier.form" class="list list-padding seam-bottom">
                                 <div class="list-subheader subheader">Delivery methods</div>
@@ -138,6 +138,7 @@
                               </button>
                             </div>
                         </div>
+
                         <div class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
                             <div ng-include="'order/lines.html'"></div>
                             <div ng-if="stage.canShowPay()" class="list">
@@ -158,10 +159,9 @@
                                   </button>
                                 </div>
                               </div>
-
-
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>

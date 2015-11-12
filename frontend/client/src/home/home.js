@@ -122,11 +122,11 @@
             }, {
                 name: 'YouTube',
                 icon: 'youtube',
-                command: 'https://plus.google.com/b/117800240045842886424/',
+                command: 'https://www.youtube.com/channel/UCy8iFLR6b1NXX8mhCgv2toA',
             }, {
                 name: 'Google+',
                 icon: 'googleplus',
-                command: 'https://www.youtube.com/channel/UCy8iFLR6b1NXX8mhCgv2toA',
+                command: 'https://plus.google.com/b/117800240045842886424/',
             }, {
                 name: 'Tumblr',
                 key: 'tumblr',
