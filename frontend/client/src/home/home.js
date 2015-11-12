@@ -102,27 +102,31 @@
             $scope.socials = [{
                 name: 'Facebook',
                 key: 'facebook',
-                command: 'https://www.facebook.com/fbpage'
+                command: 'https://www.facebook.com/themiraclestyle/'
             }, {
                 name: 'Twitter',
                 key: 'twitter',
-                command: 'https://twitter.com/twitteracc'
+                command: 'https://twitter.com/themiraclestyle'
             }, {
                 name: 'Pinterest',
                 key: 'pinterest',
-                command: 'https://www.pinterest.com/pinterestacc'
+                command: 'https://www.pinterest.com/themiraclestyle/'
             }, {
-                name: 'Reddit',
-                key: 'reddit',
-                command: 'https://www.reddit.com/subreddit'
+                name: 'Instagram',
+                key: 'instagram',
+                command: 'https://www.instagram.com/themiraclestyle/'
             }, {
                 name: 'Linkedin',
                 key: 'linkedin',
-                command: 'https://www.linkedin.com/profile'
+                command: 'https://www.linkedin.com/company/miraclestyle'
+            }, {
+                name: 'YouTube',
+                icon: 'youtube',
+                command: 'https://plus.google.com/b/117800240045842886424/',
             }, {
                 name: 'Google+',
                 icon: 'googleplus',
-                command: 'https://plus.google.com/pageid',
+                command: 'https://www.youtube.com/channel/UCy8iFLR6b1NXX8mhCgv2toA',
             }, {
                 name: 'Tumblr',
                 key: 'tumblr',
