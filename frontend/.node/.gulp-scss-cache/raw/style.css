@@ -3038,6 +3038,7 @@ body, html {
   overflow: hidden; }
 
 .order-stage {
+  top: 0px;
   width: 100%;
   transition-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
   transition-property: top;
