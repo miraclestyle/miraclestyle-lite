@@ -30,14 +30,15 @@ DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
 ACTIVE_HANDLERS = ('misc', 'seller', 'catalog', 'home', 'builder')
 
+def get_host_url():
+  http = 'http://'
+  if os.environ.get('HTTPS') == 'on':
+    http = 'https://'
+  return '%s%s' % (http, HOST_NAME)
+
 HOST_URL = None
 if HOST_URL is None:
-  def __discover_host_url():
-    http = 'http://'
-    if os.environ.get('HTTPS') == 'on':
-      http = 'https://'
-    return '%s%s' % (http, HOST_NAME)
-  HOST_URL = __discover_host_url()
+  HOST_URL = get_host_url()
 
 # api path configs
 API_ENDPOINT = HOST_URL + '/api/endpoint'

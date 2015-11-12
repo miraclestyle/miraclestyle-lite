@@ -705,7 +705,7 @@ class _ImagePropertyValue(object):
       new_gs_object_name = entity.generate_duplicated_string(gs_object_name)
       writable_blob = cloudstorage.open(new_gs_object_name[3:], 'w', content_type=entity.content_type)
       if settings.DEVELOPMENT_SERVER:  # gcs does not work on development server when using modules for some reason...
-        blob = urlfetch.fetch('%s/_ah/gcs%s' % (settings.HOST_URL, gs_object_name[3:]))
+        blob = urlfetch.fetch('%s/_ah/gcs%s' % (settings.get_host_url(), gs_object_name[3:]))
         writable_blob.write(blob.content)
       else:
         readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')

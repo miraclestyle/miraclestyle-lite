@@ -434,7 +434,7 @@ def to_json(s, **kwds):
 
 
 def _static_dir(file_path):
-  return '%s/client/%s' % (settings.HOST_URL, file_path)
+  return '%s/client/%s' % (settings.get_host_url(), file_path)
 
 
 def _angular_include_template(path):

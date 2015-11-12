@@ -39,14 +39,15 @@ CATALOG_DOCUMENTS_PER_INDEX = 200
 
 MAX_MESSAGE_SIZE = 1024
 
+def get_host_url():
+  http = 'http://'
+  if os.environ.get('HTTPS') == 'on':
+    http = 'https://'
+  return '%s%s' % (http, HOST_NAME)
+
 HOST_URL = None
 if HOST_URL is None:
-  def __discover_host_url():
-    http = 'http://'
-    if os.environ.get('HTTPS') == 'on':
-      http = 'https://'
-    return '%s%s' % (http, os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST')))
-  HOST_URL = __discover_host_url()
+  HOST_URL = get_host_url()
 
 # Configuration files
 ETC_DATA_DIR = os.path.join(ROOT_DIR, 'etc', 'data')

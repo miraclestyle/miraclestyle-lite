@@ -31,7 +31,7 @@
                         <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
                         <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
-                        <div ng-if="!stage.checkout" class="order-stage seam-bottom fixed-height" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
+                        <div ng-if="!stage.checkout" class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
                           <div ng-if="!helpers.models.isEntityListEmpty(order._lines)" ng-include="'order/lines.html'"></div>
                           <div ng-if="order.ui.rule.action.update.executable && !helpers.models.isEntityListEmpty(order._lines)" class="list">
 
