@@ -17151,7 +17151,7 @@ angular.module('app')
                                     }).then(function (response) {
                                         var data = response.data;
                                         if (data && !data.errors && data.authorization_url) {
-                                            window.location.href = data.authorization_url;
+                                            window.top.location.href = data.authorization_url;
                                         } else {
                                             modals.alert('failedGeneratingAuthorizaitonUrl');
                                         }
