@@ -1,6 +1,6 @@
 ﻿(function () {
     'use strict';
-    angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG) {
+    angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG, helpers) {
         var social = {
             share: function (meta, embed, link) {
                 $modal.open({
@@ -49,12 +49,7 @@
                         };
 
                         $scope.share = function (soc) {
-                            var w = $(window).width() / 1.3,
-                                h = $(window).height() / 1.3,
-                                left = (screen.width / 2) - (w / 2),
-                                top = (screen.height / 2) - (h / 2),
-                                cmd = soc.command,
-                                popup;
+                            var cmd = soc.command;
                             angular.forEach(soc.require, function (key) {
                                 var hasit = meta[soc.key][key];
                                 if (angular.isUndefined(hasit)) {
@@ -64,9 +59,7 @@
                                     cmd = cmd.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
                                 }
                             });
-                            popup = window.open(cmd, 'Share to ' + soc.name, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
-                            popup.focus();
-                            return popup;
+                            return helpers.window.openCentered(cmd, 'Share to ' + soc.name);
                         };
 
                         $scope.container = {};

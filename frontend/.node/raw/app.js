@@ -12237,6 +12237,18 @@ $(function () {
                     ratio = new_width / original_width; // get ratio for scaling image
                     return (original_height * ratio);
                 },
+                window: {
+                    openCentered: function (url, title) {
+                        var w = $(window).width() / 1.3,
+                            h = $(window).height() / 1.3,
+                            left = (screen.width / 2) - (w / 2),
+                            top = (screen.height / 2) - (h / 2),
+                            popup;
+                        popup = window.open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                        popup.focus();
+                        return popup;
+                    }
+                },
                 url: {
                     abs: function (part) {
                         return window.location.protocol + '//' + window.location.host + '/' + part;
@@ -16561,7 +16573,7 @@ $(function () {
 }());
 ﻿(function () {
     'use strict';
-    angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG) {
+    angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG, helpers) {
         var social = {
             share: function (meta, embed, link) {
                 $modal.open({
@@ -16610,12 +16622,7 @@ $(function () {
                         };
 
                         $scope.share = function (soc) {
-                            var w = $(window).width() / 1.3,
-                                h = $(window).height() / 1.3,
-                                left = (screen.width / 2) - (w / 2),
-                                top = (screen.height / 2) - (h / 2),
-                                cmd = soc.command,
-                                popup;
+                            var cmd = soc.command;
                             angular.forEach(soc.require, function (key) {
                                 var hasit = meta[soc.key][key];
                                 if (angular.isUndefined(hasit)) {
@@ -16625,9 +16632,7 @@ $(function () {
                                     cmd = cmd.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
                                 }
                             });
-                            popup = window.open(cmd, 'Share to ' + soc.name, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
-                            popup.focus();
-                            return popup;
+                            return helpers.window.openCentered(cmd, 'Share to ' + soc.name);
                         };
 
                         $scope.container = {};
@@ -17151,7 +17156,8 @@ angular.module('app')
                                     }).then(function (response) {
                                         var data = response.data;
                                         if (data && !data.errors && data.authorization_url) {
-                                            window.top.location.href = data.authorization_url;
+                                            //window.top.location.href = data.authorization_url;
+                                            helpers.window.openCentered(data.authorization_url, 'Login with ' + soc.name);
                                         } else {
                                             modals.alert('failedGeneratingAuthorizaitonUrl');
                                         }

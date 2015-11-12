@@ -159,7 +159,8 @@
                                     }).then(function (response) {
                                         var data = response.data;
                                         if (data && !data.errors && data.authorization_url) {
-                                            window.top.location.href = data.authorization_url;
+                                            //window.top.location.href = data.authorization_url;
+                                            helpers.window.openCentered(data.authorization_url, 'Login with ' + soc.name);
                                         } else {
                                             modals.alert('failedGeneratingAuthorizaitonUrl');
                                         }

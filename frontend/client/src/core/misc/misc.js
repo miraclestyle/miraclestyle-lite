@@ -46,6 +46,18 @@
                     ratio = new_width / original_width; // get ratio for scaling image
                     return (original_height * ratio);
                 },
+                window: {
+                    openCentered: function (url, title) {
+                        var w = $(window).width() / 1.3,
+                            h = $(window).height() / 1.3,
+                            left = (screen.width / 2) - (w / 2),
+                            top = (screen.height / 2) - (h / 2),
+                            popup;
+                        popup = window.open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                        popup.focus();
+                        return popup;
+                    }
+                },
                 url: {
                     abs: function (part) {
                         return window.location.protocol + '//' + window.location.host + '/' + part;
