@@ -12241,6 +12241,9 @@ $(function () {
                     abs: function (part) {
                         return window.location.protocol + '//' + window.location.host + '/' + part;
                     },
+                    handleProtocol: function (url) {
+                        return (document.location.protocol === 'https:' ? url.replace('http://', 'https://') : url);
+                    },
                     urlsafe: function (str) {
                         return window.btoa(str).replace(new RegExp('=', 'g'), '-');
                     },
@@ -12323,7 +12326,7 @@ $(function () {
                 }
             };
         })
-        .directive('displayImage', ng(function (GLOBAL_CONFIG) {
+        .directive('displayImage', ng(function (GLOBAL_CONFIG, helpers) {
             return {
                 scope: {
                     image: '=displayImage',
@@ -12358,7 +12361,7 @@ $(function () {
                             if (scope.image && scope.image.serving_url) {
                                 img.on('load', done)
                                     .on('error', error)
-                                    .attr('src', scope.image.serving_url + (scope.config.size === true ? '' : '=s' + scope.config.size));
+                                    .attr('src', helpers.url.handleProtocol(scope.image.serving_url) + (scope.config.size === true ? '' : '=s' + scope.config.size));
                             } else {
                                 setTimeout(function () {
                                     error();
@@ -16528,7 +16531,7 @@ $(function () {
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
                         element.bind('load', function () {
                             scope.$broadcast('readySingleImageSlider', reactingElement);
-                        }).attr('src', image.serving_url + '=s' + imageSize)
+                        }).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
 

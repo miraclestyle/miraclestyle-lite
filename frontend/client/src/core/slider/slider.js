@@ -106,7 +106,7 @@
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
                         element.bind('load', function () {
                             scope.$broadcast('readySingleImageSlider', reactingElement);
-                        }).attr('src', image.serving_url + '=s' + imageSize)
+                        }).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
 
