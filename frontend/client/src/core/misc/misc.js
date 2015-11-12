@@ -53,7 +53,8 @@
                             left = (screen.width / 2) - (w / 2),
                             top = (screen.height / 2) - (h / 2),
                             popup;
-                        popup = window.open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                        // toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, 
+                        popup = window.open(url, title, 'width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
                         popup.focus();
                         return popup;
                     }
