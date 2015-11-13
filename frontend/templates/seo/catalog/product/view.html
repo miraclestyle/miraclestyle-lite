@@ -47,7 +47,7 @@
 <meta property="og:type"                         content="product" /> 
 <meta property="og:url"                          content="{{path}}" /> 
 <meta property="og:title"                        content="{{title}}" /> 
-<meta property="og:image"                        content="{{image}}" /> 
+<meta property="og:image"                        content="{{image|autohttps}}" /> 
 <meta property="product:price:amount"   content="{{price}}" /> 
 <meta property="product:price:currency" content="{{currency.code}}" /> 
 <meta property="product:category"                content="{{category}}" />
@@ -91,7 +91,7 @@
     <div class="product-images">
       {% for img in product.images %}
       <div class="product-image">
-          <img itemprop="image" src="{{img.serving_url}}=s550" alt="{{product.name}} Image {{loop.index}}" />
+          <img itemprop="image" src="{{img.serving_url|autohttps}}=s550" alt="{{product.name}} Image {{loop.index}}" />
       </div>
       {% endfor %}
     </div>

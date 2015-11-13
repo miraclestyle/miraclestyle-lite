@@ -595,8 +595,13 @@ class SeoOrAngular(AngularBlank):
       super(SeoOrAngular, self).after()
 
 
+def autohttps(s):
+    if os.environ.get('HTTPS') == 'on':
+        return s.replace('http://', 'https://')
+    return s
+
 settings.JINJA_GLOBALS.update({'uri_for': webapp2.uri_for, 'ROUTES': settings.ROUTES, 'settings': settings})
-settings.JINJA_FILTERS.update({'json': lambda x: json.dumps(x, indent=2)})
+settings.JINJA_FILTERS.update({'json': lambda x: json.dumps(x, indent=2), 'autohttps': autohttps})
 
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 

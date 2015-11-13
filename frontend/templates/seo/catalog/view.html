@@ -63,7 +63,7 @@ facebook, pinterest and google + uses these
 <meta property="og:type"   content="article" /> 
 <meta property="og:url"    content="{{path}}" /> 
 <meta property="og:title"  content="{{title}}" /> 
-<meta property="og:image"  content="{{image}}" /> 
+<meta property="og:image"  content="{{image|autohttps}}" /> 
 
 
 {% endblock %}
@@ -98,7 +98,7 @@ facebook, pinterest and google + uses these
 
     {% for img in catalog._images %}
         <div class="catalog-image relative">
-           <div><img class="not-pointable" src="{{img.serving_url}}=s550"> </div>
+           <div><img class="not-pointable" src="{{img.serving_url|autohttps}}=s550"> </div>
            <ul>
            {% for pricetag in img.pricetags %}
                 <li>
