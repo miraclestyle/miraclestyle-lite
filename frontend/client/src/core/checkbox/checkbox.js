@@ -112,6 +112,8 @@
                         return;
                     }
 
+                    console.log(new Date().getTime(), attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue);
+
                     scope.$apply(function () {
                         // Toggle the checkbox value...
                         var viewValue = attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue;

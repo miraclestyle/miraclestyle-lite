@@ -148,9 +148,7 @@
         {% endfor %}
         <script type="text/javascript" src="/build/dynamics.js"></script>
     {% else %}
-        {% for js in settings.ANGULAR_VENDOR_JS %}
-        <script type="text/javascript" src="{{static_dir('%s' % js)}}"></script>
-        {% endfor %}
+        <script type="text/javascript" src="{{static_dir('dist/vendors.js')}}"></script>
         <script type="text/javascript" src="{{static_dir('dist/app.js')}}"></script>
         <script type="text/javascript" src="{{static_dir('dist/templates.js')}}"></script>
     {% endif %}

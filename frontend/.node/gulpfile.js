@@ -32,6 +32,11 @@ gulp.task('javascript', function () {
         .pipe(gulp.dest('../client/dist'));
 });
 
+gulp.task('javascript-vendors', function () {
+    return gulp.src('raw/vendors.js')
+        .pipe(gulp.dest('../client/dist'));
+});
+
 gulp.task('templates', function () {
     return gulp.src('raw/templates.js')
         .pipe(angularInjector())
@@ -81,4 +86,4 @@ gulp.task('watch', function () {
 });
 
 // The default task (called when you run `gulp` from cli)
-gulp.task('default', ['css', 'seo-css', 'javascript', 'templates']);
+gulp.task('default', ['css', 'seo-css', 'javascript', 'javascript-vendors', 'templates']);

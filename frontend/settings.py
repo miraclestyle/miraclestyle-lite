@@ -52,47 +52,51 @@ TEMPLATE_CACHE = 0
 WEBAPP2_EXTRAS = {}
 
 
-def env(dev, production=None):
-  if not production:
-    production = dev
-  if DEBUG:
-    return dev
-  else:
-    return production
+def _angular_vendor_js(debug):
 
-# Angular only configurations for user interface
-ANGULAR_VENDOR_JS = (
-    env('vendor/modernizr/modernizr.js'),
-    env('vendor/jquery/dist/jquery.js', 'vendor/jquery/dist/jquery.min.js'),
-    env('vendor/jquery-ui/ui/core.js', 'vendor/jquery-ui/ui/minified/core.min.js'),
-    env('vendor/jquery-ui/ui/widget.js', 'vendor/jquery-ui/ui/minified/widget.min.js'),
-    env('vendor/jquery-ui/ui/mouse.js', 'vendor/jquery-ui/ui/minified/mouse.min.js'),
-    env('vendor/jquery-ui/ui/position.js', 'vendor/jquery-ui/ui/minified/position.min.js'),
-    env('vendor/jquery-ui/ui/sortable.js', 'vendor/jquery-ui/ui/minified/sortable.min.js'),
-    env('vendor/jquery-ui/ui/draggable.js', 'vendor/jquery-ui/ui/minified/draggable.min.js'),
-    env('vendor/jquery-ui/ui/droppable.js', 'vendor/jquery-ui/ui/minified/droppable.min.js'),
-    env('vendor/showdown/src/showdown.js', 'vendor/showdown/compressed/Showdown.min.js'),
-    env('vendor/jquery.scrollTo/jquery.scrollTo.js', 'vendor/jquery.scrollTo/jquery.scrollTo.min.js'),
-    env('vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.js', 'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js'),
-    env('vendor/jquery-cookie/jquery.cookie.js'),
-    env('vendor/underscore/underscore.js', 'vendor/underscore/underscore-min.js'),
-    env('vendor/underscore.string/lib/underscore.string.js', 'vendor/underscore.string/dist/underscore.string.min.js'),
-    env('vendor/angular/angular.js', 'vendor/angular/angular.min.js'),
-    env('vendor/angular-ui-sortable/sortable.js', 'vendor/angular-ui-sortable/sortable.min.js'),
-    env('vendor/angular-ui-utils/ui-utils.js', 'vendor/angular-ui-utils/ui-utils.min.js'),
-    env('vendor/angular-sanitize/angular-sanitize.js', 'vendor/angular-sanitize/angular-sanitize.min.js'),
-    env('vendor/angular-ui-router/release/angular-ui-router.js', 'vendor/angular-ui-router/release/angular-ui-router.min.js'),
-    env('vendor/angular-cookie/angular-cookie.js', 'vendor/angular-cookie/angular-cookie.min.js'),
-    env('vendor/angular-animate/angular-animate.js', 'vendor/angular-animate/angular-animate.min.js'),
-    env('vendor/angular-aria/angular-aria.js', 'vendor/angular-aria/angular-aria.min.js'),
-    env('vendor/angular-messages/angular-messages.js', 'vendor/angular-messages/angular-messages.min.js'),
-    env('vendor/angular-dragdrop/src/angular-dragdrop.js', 'vendor/angular-dragdrop/src/angular-dragdrop.min.js'),
-    env('vendor/momentjs/moment.js', 'vendor/momentjs/min/moment.min.js'),
-    env('vendor/humanize-duration/humanize-duration.js'),
-    env('vendor/angular-timer/dist/angular-timer.js', 'vendor/angular-timer/dist/angular-timer.min.js'),
-    env('vendor/angular-google-chart/ng-google-chart.js'),
-    env('vendor/angular-markdown-directive/markdown.js')
-)
+  def env(dev, production=None):
+    if not production:
+      production = dev
+    if debug:
+      return dev
+    else:
+      return production
+
+  # Angular only configurations for user interface
+  return (
+      env('vendor/modernizr/modernizr.js'),
+      env('vendor/jquery/dist/jquery.js', 'vendor/jquery/dist/jquery.min.js'),
+      env('vendor/jquery-ui/ui/core.js', 'vendor/jquery-ui/ui/minified/core.min.js'),
+      env('vendor/jquery-ui/ui/widget.js', 'vendor/jquery-ui/ui/minified/widget.min.js'),
+      env('vendor/jquery-ui/ui/mouse.js', 'vendor/jquery-ui/ui/minified/mouse.min.js'),
+      env('vendor/jquery-ui/ui/position.js', 'vendor/jquery-ui/ui/minified/position.min.js'),
+      env('vendor/jquery-ui/ui/sortable.js', 'vendor/jquery-ui/ui/minified/sortable.min.js'),
+      env('vendor/jquery-ui/ui/draggable.js', 'vendor/jquery-ui/ui/minified/draggable.min.js'),
+      env('vendor/jquery-ui/ui/droppable.js', 'vendor/jquery-ui/ui/minified/droppable.min.js'),
+      env('vendor/showdown/src/showdown.js', 'vendor/showdown/compressed/Showdown.min.js'),
+      env('vendor/jquery.scrollTo/jquery.scrollTo.js', 'vendor/jquery.scrollTo/jquery.scrollTo.min.js'),
+      env('vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.js', 'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js'),
+      env('vendor/jquery-cookie/jquery.cookie.js'),
+      env('vendor/underscore/underscore.js', 'vendor/underscore/underscore-min.js'),
+      env('vendor/underscore.string/lib/underscore.string.js', 'vendor/underscore.string/dist/underscore.string.min.js'),
+      env('vendor/angular/angular.js', 'vendor/angular/angular.min.js'),
+      env('vendor/angular-ui-sortable/sortable.js', 'vendor/angular-ui-sortable/sortable.min.js'),
+      env('vendor/angular-ui-utils/ui-utils.js', 'vendor/angular-ui-utils/ui-utils.min.js'),
+      env('vendor/angular-sanitize/angular-sanitize.js', 'vendor/angular-sanitize/angular-sanitize.min.js'),
+      env('vendor/angular-ui-router/release/angular-ui-router.js', 'vendor/angular-ui-router/release/angular-ui-router.min.js'),
+      env('vendor/angular-cookie/angular-cookie.js', 'vendor/angular-cookie/angular-cookie.min.js'),
+      env('vendor/angular-animate/angular-animate.js', 'vendor/angular-animate/angular-animate.min.js'),
+      env('vendor/angular-aria/angular-aria.js', 'vendor/angular-aria/angular-aria.min.js'),
+      env('vendor/angular-messages/angular-messages.js', 'vendor/angular-messages/angular-messages.min.js'),
+      env('vendor/angular-dragdrop/src/angular-dragdrop.js', 'vendor/angular-dragdrop/src/angular-dragdrop.min.js'),
+      env('vendor/momentjs/moment.js', 'vendor/momentjs/min/moment.min.js'),
+      env('vendor/humanize-duration/humanize-duration.js'),
+      env('vendor/angular-timer/dist/angular-timer.js', 'vendor/angular-timer/dist/angular-timer.min.js'),
+      env('vendor/angular-google-chart/ng-google-chart.js'),
+      env('vendor/angular-markdown-directive/markdown.js')
+  )
+
+ANGULAR_VENDOR_JS = _angular_vendor_js(DEBUG)
 ANGULAR_VENDOR_CSS = ()
 ANGULAR_TEMPLATE_FILES = []
 ANGULAR_STATIC_FILES = []
@@ -197,7 +201,7 @@ def _empty_dir(d):
       shutil.rmtree(os.path.join(root, d))
 
 
-def build(templates=True, statics=True, js_and_css=True, write=False, inform=True):
+def build(templates=True, statics=True, js_and_css=True, write=False, vendors=True, inform=True):
   dist = os.path.join(CLIENT_DIR, 'dist')
   node = os.path.join(ROOT_DIR, '.node', 'raw')
   paths = {}
@@ -210,7 +214,7 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
   def read(f, m='r'):
     return codecs.open(f, m, 'utf-8')
 
-  for p in ['app.js', 'seo.css', 'style.css', 'templates.js']:
+  for p in ['vendors.js', 'app.js', 'seo.css', 'style.css', 'templates.js']:
     paths[p] = os.path.join(node, p)
     buff[p] = u''
   paths['static'] = os.path.join(dist, 'static')
@@ -221,6 +225,11 @@ def build(templates=True, statics=True, js_and_css=True, write=False, inform=Tru
       for files in globals().get('ANGULAR_%s_FILES' % t):
         with read(files) as f:
           buff[b] += f.read()
+    if vendors:
+      for v in _angular_vendor_js(False):
+        vd = os.path.join(CLIENT_DIR, v)
+        with read(vd) as f:
+          buff['vendors.js'] += '\n\n // %s \n\n %s' % (v, f.read())
     if write:
       for b, w in buff.iteritems():
         if w:

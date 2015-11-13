@@ -1931,6 +1931,8 @@ $(function () {
                         return;
                     }
 
+                    console.log(new Date().getTime(), attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue);
+
                     scope.$apply(function () {
                         // Toggle the checkbox value...
                         var viewValue = attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue;
@@ -4612,7 +4614,7 @@ $(function () {
         }
         InkRippleDirective.$inject = ["$mdInkRipple", "$parse"];
 
-        function InkRippleService($window, $timeout, $parse) {
+        function InkRippleService($window, $timeout, $parse, $$rAF) {
 
             return {
                 attachButtonBehavior: attachButtonBehavior,
@@ -4791,9 +4793,11 @@ $(function () {
                     ripple.css(worker.style);
 
                     $timeout(function () {
-                        ripple.addClass(cls);
-                        ripple.oneAnimationEnd(function () {
-                            ripple.remove();
+                        $$rAF(function () {
+                            ripple.addClass(cls);
+                            ripple.oneAnimationEnd(function () {
+                                ripple.remove();
+                            });
                         });
                     }, 0, false);
 
@@ -4821,7 +4825,7 @@ $(function () {
 
             }
         }
-        InkRippleService.$inject = ["$window", "$timeout", "$parse"];
+        InkRippleService.$inject = ["$window", "$timeout", "$parse", "$$rAF"];
 
         function attrNoDirective() {
             return function () {

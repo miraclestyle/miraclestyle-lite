@@ -2490,7 +2490,7 @@
         }
         InkRippleDirective.$inject = ["$mdInkRipple", "$parse"];
 
-        function InkRippleService($window, $timeout, $parse) {
+        function InkRippleService($window, $timeout, $parse, $$rAF) {
 
             return {
                 attachButtonBehavior: attachButtonBehavior,
@@ -2669,9 +2669,11 @@
                     ripple.css(worker.style);
 
                     $timeout(function () {
-                        ripple.addClass(cls);
-                        ripple.oneAnimationEnd(function () {
-                            ripple.remove();
+                        $$rAF(function () {
+                            ripple.addClass(cls);
+                            ripple.oneAnimationEnd(function () {
+                                ripple.remove();
+                            });
                         });
                     }, 0, false);
 
@@ -2699,7 +2701,7 @@
 
             }
         }
-        InkRippleService.$inject = ["$window", "$timeout", "$parse"];
+        InkRippleService.$inject = ["$window", "$timeout", "$parse", "$$rAF"];
 
         function attrNoDirective() {
             return function () {
