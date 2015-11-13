@@ -28,7 +28,8 @@ class SellerView(base.SeoOrAngular):
            'title': 'Seller %s' % seller['name'],
            'image': '%s=s360' % seller['logo']['serving_url'],
            'path': self.uri_for('seller.view', _full=True, key=seller['key']),
-           'catalogs': catalogs['entities']
+           'catalogs': catalogs['entities'],
+           'updated': seller['updated']
            }
     self.render('seo/seller/view.html', tpl)
 

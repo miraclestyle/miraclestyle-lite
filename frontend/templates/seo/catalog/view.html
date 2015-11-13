@@ -60,10 +60,11 @@ article: https://developers.facebook.com/docs/reference/opengraph/article
 facebook, pinterest and google + uses these
 
  #}
-<meta property="og:type"   content="article" /> 
-<meta property="og:url"    content="{{path}}" /> 
-<meta property="og:title"  content="{{title}}" /> 
-<meta property="og:image"  content="{{image|autohttps}}" /> 
+<meta property="og:type"                         content="article" /> 
+<meta property="og:url"                          content="{{path}}" /> 
+<meta property="og:title"                        content="{{title}}" /> 
+<meta property="og:image"                        content="{{image|autohttps}}" />
+<meta property="og:updated_time"                 content="{{updated}}" />
 
 
 {% endblock %}

@@ -23,6 +23,7 @@ class CatalogView(base.SeoOrAngular):
     catalog = data['entity']
     tpl = {'catalog': catalog,
            'title': 'Catalog %s' % catalog['name'],
+           'updated': catalog['updated'],
            'image': '%s=s360' % catalog['_images'][0]['serving_url'],
            'path': self.uri_for('catalog.view', _full=True, key=catalog['key'])
            }
@@ -129,6 +130,7 @@ class CatalogProductView(base.SeoOrAngular):
            'title': 'Product %s' % product['name'],
            'description': "\n".join([product['_category']['name'], product['description']]),
            'code': product['code'],
+           'updated': product['updated'],
            'raw_variant' : raw_variant,
            'price': product['unit_price'],
            'category': product['_category']['name'],
