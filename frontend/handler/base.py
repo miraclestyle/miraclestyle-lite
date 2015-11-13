@@ -433,8 +433,12 @@ def to_json(s, **kwds):
   return json.dumps(s, **kwds)
 
 
-def _static_dir(file_path):
-  return '%s/client/%s' % (settings.get_host_url(), file_path)
+def _static_dir(file_path, version=None):
+  if version:
+    version = '?v=%s' % os.environ.get('CURRENT_VERSION_ID')
+  else:
+    version = ''
+  return '%s/client/%s%s' % (settings.get_host_url(), file_path, version)
 
 
 def _angular_include_template(path):
@@ -457,12 +461,12 @@ class RequestHandler(webapp2.RequestHandler):
     self.data = {}
     self.template = {}
 
-  def send_json(self, data):
+  def send_json(self, data, serialize=True):
     ''' sends `data` to be serialized in json format, and sets content type application/json utf8'''
     ent = 'application/json;charset=utf-8'
     if self.response.headers.get('Content-Type') != ent:
       self.response.headers['Content-Type'] = ent
-    self.response.write(json.dumps(data))
+    self.response.write(json.dumps(data) if serialize else data)
 
   def before(self):
     '''

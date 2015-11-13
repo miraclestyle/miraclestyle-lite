@@ -93,3 +93,4 @@ mem_decr = memcache.decr
 mem_offset_multi = memcache.offset_multi
 mem_flush_all = memcache.flush_all
 mem_rpc_get = memcache.get
+mem_rpc_set = memcache.set

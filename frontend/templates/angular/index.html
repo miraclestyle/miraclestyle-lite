@@ -148,9 +148,9 @@
         {% endfor %}
         <script type="text/javascript" src="/build/dynamics.js"></script>
     {% else %}
-        <script type="text/javascript" src="{{static_dir('dist/vendors.js')}}"></script>
-        <script type="text/javascript" src="{{static_dir('dist/app.js')}}"></script>
-        <script type="text/javascript" src="{{static_dir('dist/templates.js')}}"></script>
+        <script type="text/javascript" src="{{static_dir('dist/vendors.js', True)}}"></script>
+        <script type="text/javascript" src="{{static_dir('dist/app.js', True)}}"></script>
+        <script type="text/javascript" src="{{static_dir('dist/templates.js', True)}}"></script>
     {% endif %}
 
 </body>

@@ -4,7 +4,7 @@ Created on Sep 22, 2014
 
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
-
+import os
 import webapp2
 import datetime
 import inspect
@@ -159,14 +159,29 @@ class ModelMeta(RequestHandler):
     output = {}
     kinds = []
     models = iom.Engine.get_schema()
-    for kind, model in models.iteritems():
-      if kind:
-        try:
-          int(kind)
-          output[kind] = model
-        except:
-          pass
-    self.send_json(output)
+    version_key = 'ModelMeta_CURRENT_VERSION_ID'
+    version = tools.mem_rpc_get(version_key)
+    real_version = str(os.environ.get('CURRENT_VERSION_ID'))
+    key = 'ModelMeta_%s' % real_version
+    current_key = 'ModelMeta_%s' % version
+    cached_output = tools.mem_get(key)
+    new_version = version != real_version
+    print(real_version, version)
+    if not cached_output or new_version:
+      for kind, model in models.iteritems():
+        if kind:
+          try:
+            int(kind)
+            output[kind] = model
+          except:
+            pass
+      output = self.json_output(output)
+      if new_version:
+        tools.mem_delete_multi([version_key, current_key])
+      tools.mem_set_multi({key: output, version_key: real_version})
+      self.send_json(output, True)
+    else:
+      self.send_json(cached_output, True)
 
 
 class Install(RequestHandler):
