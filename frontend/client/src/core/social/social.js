@@ -9,8 +9,8 @@
                         $scope.socials = [{
                             name: 'Facebook',
                             key: 'facebook',
-                            command: 'https://www.facebook.com/sharer.php?s=100&p[url]={p[url]}&p[images][0]={p[images][0]}&p[title]={p[title]}&p[summary]={p[summary]}',
-                            require: ['p[url]', 'p[images][0]', 'p[title]', 'p[summary]']
+                            command: 'https://www.facebook.com/sharer.php?u={u}',
+                            require: ['u']
                         }, {
                             name: 'Twitter',
                             key: 'twitter',

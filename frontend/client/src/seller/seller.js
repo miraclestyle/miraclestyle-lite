@@ -807,9 +807,7 @@
 
                         $scope.socialMeta = {
                             facebook: {
-                                'p[url]': sellerUrl,
-                                'p[images][0]': sellerLogo,
-                                'p[title]': $scope.seller.name
+                                'u': sellerUrl
                             },
                             twitter: {
                                 url: sellerUrl,

@@ -16590,8 +16590,8 @@ $(function () {
                         $scope.socials = [{
                             name: 'Facebook',
                             key: 'facebook',
-                            command: 'https://www.facebook.com/sharer.php?s=100&p[url]={p[url]}&p[images][0]={p[images][0]}&p[title]={p[title]}&p[summary]={p[summary]}',
-                            require: ['p[url]', 'p[images][0]', 'p[title]', 'p[summary]']
+                            command: 'https://www.facebook.com/sharer.php?u={u}',
+                            require: ['u']
                         }, {
                             name: 'Twitter',
                             key: 'twitter',
@@ -19285,9 +19285,7 @@ angular.module('app')
                                         };
                                     $scope.socialMeta = {
                                         facebook: {
-                                            'p[url]': productUrl,
-                                            'p[images][0]': image(600),
-                                            'p[title]': $scope.product.name
+                                            'u': productUrl
                                         },
                                         twitter: {
                                             url: productUrl,
@@ -19690,9 +19688,7 @@ angular.module('app')
 
                                 $scope.socialMeta = {
                                     facebook: {
-                                        'p[url]': catalogUrl,
-                                        'p[images][0]': helpers.url.handleProtocol($scope.catalog._images[0].serving_url + '=s600'),
-                                        'p[title]': $scope.catalog.name
+                                        'u': catalogUrl
                                     },
                                     twitter: {
                                         url: catalogUrl,
@@ -21640,9 +21636,7 @@ angular.module('app')
 
                         $scope.socialMeta = {
                             facebook: {
-                                'p[url]': sellerUrl,
-                                'p[images][0]': sellerLogo,
-                                'p[title]': $scope.seller.name
+                                'u': sellerUrl
                             },
                             twitter: {
                                 url: sellerUrl,
