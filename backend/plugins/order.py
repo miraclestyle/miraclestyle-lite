@@ -588,7 +588,9 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         mismatches.append('business_email')
     if order_currency.code != ipn['mc_currency']:
       mismatches.append('mc_currency')
-    if order.total_amount != tools.format_value(ipn['mc_gross'], order_currency):
+    if ipn_payment_status not in ['Refunded', 'Reversed'] and order.total_amount != tools.format_value(ipn['mc_gross'], order_currency):
+      mismatches.append('mc_gross')
+    elif order.total_amount != abs(tools.format_value(ipn['mc_gross'], order_currency)):
       mismatches.append('mc_gross')
     if 'tax' in ipn and order.tax_amount != tools.format_value(ipn['tax'], order_currency):
       mismatches.append('tax')
