@@ -57,6 +57,9 @@
                         noEscape: config.noEscape,
                         controller: ng(function ($scope) {
 
+                            $scope.hideAddToCart = false;
+                            $scope.hideClose = config ? config.hideClose : false;
+
                             deferOpen.resolve();
 
                             $scope.$state.promise(function () {
@@ -74,8 +77,6 @@
                                             $scope.catalog = catalog;
                                             $scope.variants = [];
                                             $scope.variantSelection = [];
-                                            $scope.hideAddToCart = false;
-                                            $scope.hideClose = config ? config.hideClose : false;
                                             $scope.currentVariation = [];
                                             $scope.currentVariationPure = [];
                                             $scope.notInitialLoad = false;
@@ -566,6 +567,9 @@
                         outDirection: config.outDirection,
                         noEscape: config.noEscape,
                         controller: ng(function ($scope) {
+
+
+                            $scope.hideClose = config.hideClose;
                             $scope.$state.promise(function () {
                                 return that.actions.read({
                                     key: key,
@@ -661,8 +665,6 @@
                                         src: embedCatalogUrl
                                     });
                                 };
-
-                                $scope.hideClose = config.hideClose;
 
                                 $scope.loadMoreImages = function (callback) {
                                     var promise = imagesReader.load();
