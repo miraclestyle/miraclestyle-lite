@@ -380,7 +380,11 @@
 
                                 loadProductInstance(productInstanceResponse);
 
-                                $scope.cartProductQuantity();
+                                $scope.$watch(function () {
+                                    return currentAccount._is_guest;
+                                }, function (neww, old) {
+                                    $scope.cartProductQuantity();
+                                });
 
                                 $scope.increaseQuantity = function () {
                                     $scope.disableUpdateCart = false;

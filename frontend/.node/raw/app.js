@@ -1657,10 +1657,10 @@ $(function () {
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
             saveInProgress: 'Save in progress. Please wait.',
-            loginSuccess: 'Logged in successfully',
-            loginFailed: 'Login failed',
-            loggedOut: 'Logged out',
-            loginCanceled: 'Login canceled'
+            loginSuccess: 'Signed in.',
+            loginFailed: 'Sign in failed!',
+            loggedOut: 'Signed out.',
+            loginCanceled: 'Sign in canceled.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -19441,7 +19441,11 @@ angular.module('app')
 
                                 loadProductInstance(productInstanceResponse);
 
-                                $scope.cartProductQuantity();
+                                $scope.$watch(function () {
+                                    return currentAccount._is_guest;
+                                }, function (neww, old) {
+                                    $scope.cartProductQuantity();
+                                });
 
                                 $scope.increaseQuantity = function () {
                                     $scope.disableUpdateCart = false;
