@@ -207,9 +207,9 @@ class AccountLogin(RequestHandler):
     if 'access_token' in output:
       self.secure_cookie_set(settings.COOKIE_AUTH_KEY, output.get('access_token'), httponly=True)
       redirect_to = self.secure_cookie_get(redirect_to_key)
-      if redirect_to and not redirect_to.startswith('http'):
+      if redirect_to and not redirect_to.startswith('http') and not redirect_to == 'popup':
         return self.redirect(redirect_to)
-      self.redirect('/login/status?success=true')  # we need to see how we can handle continue to link behaviour, generally this needs more work
+      self.redirect('/login/status?success=true%s' % ('&popup=true' if redirect_to == 'popup' else '',))
     elif 'errors' in output:
       self.redirect('/login/status?errors=%s' % urllib.quote(self.json_output(output['errors'])))
     self.send_json(output)

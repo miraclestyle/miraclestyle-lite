@@ -636,7 +636,10 @@ $(function () {
 (function () {
     'use strict';
     angular.element(document).ready(function () {
-        var failure = function () {
+        var failure = function (response) {
+                if (response.status === -1) {
+                  return; // this is canceled request
+                }
                 var choice = confirm('Could not start application. Reload your browser and try again?');
                 if (choice) {
                     window.location.reload(true);
@@ -1653,7 +1656,11 @@ $(function () {
             orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
-            saveInProgress: 'Save in progress. Please wait.'
+            saveInProgress: 'Save in progress. Please wait.',
+            loginSuccess: 'Logged in successfully',
+            loginFailed: 'Login failed',
+            loggedOut: 'Logged out',
+            loginCanceled: 'Login canceled'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -17029,6 +17036,10 @@ angular.module('app')
         .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, snackbar) {
             var data = $location.search(),
                 errors;
+            if (data.popup) {
+                $scope.contentSpinner.start();
+                return;
+            }
             if (data.success) {
                 $state.go('home');
             } else {
@@ -17119,51 +17130,104 @@ angular.module('app')
                             fullScreen: false,
                             backdrop: true,
                             controller: ng(function ($scope) {
-                                $scope.socials = [{
-                                    name: 'Facebook',
-                                    key: '2'
-                                }, {
-                                    name: 'Twitter',
-                                    key: '3'
-                                }, {
-                                    name: 'Pinterest',
-                                    key: '4'
-                                }, {
-                                    name: 'Reddit',
-                                    key: '5'
-                                }, {
-                                    name: 'Linkedin',
-                                    key: '6'
-                                }, {
-                                    name: 'Google+',
-                                    icon: 'googleplus',
-                                    key: '1'
-                                }, {
-                                    name: 'Tumblr',
-                                    key: '7'
-                                }];
-
-                                $scope.getIcon = function (soc) {
-                                    return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
-                                };
-
-                                $scope.login = function (soc) {
-                                    $http.post($state.href('login', {
-                                        provider: soc.key
+                                $scope.$state.promise(function () {
+                                    return $http.post($state.href('login', {
+                                        provider: '1'
+                                    }, {
+                                        disableUI: false
                                     }), {
                                         action_id: 'login',
                                         action_model: '11',
-                                        redirect_to: redirect_to
-                                    }).then(function (response) {
-                                        var data = response.data;
-                                        if (data && !data.errors && data.authorization_url) {
-                                            window.top.location.href = data.authorization_url;
-                                            //helpers.window.openCentered(data.authorization_url, 'Login with ' + soc.name);
-                                        } else {
-                                            modals.alert('failedGeneratingAuthorizaitonUrl');
-                                        }
+                                        redirect_to: 'popup'
                                     });
-                                };
+                                }, function ($scope, login) {
+                                    var MATCH_LOGIN_INSTRUCTION = $state.href('login-status');
+
+                                    $scope.socials = [{
+                                        name: 'Facebook',
+                                        key: '2'
+                                    }, {
+                                        name: 'Twitter',
+                                        key: '3'
+                                    }, {
+                                        name: 'Pinterest',
+                                        key: '4'
+                                    }, {
+                                        name: 'Reddit',
+                                        key: '5'
+                                    }, {
+                                        name: 'Linkedin',
+                                        key: '6'
+                                    }, {
+                                        name: 'Google+',
+                                        icon: 'googleplus',
+                                        key: '1'
+                                    }, {
+                                        name: 'Tumblr',
+                                        key: '7'
+                                    }];
+
+                                    $scope.getIcon = function (soc) {
+                                        return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                                    };
+
+                                    $scope.authorization_urls = login.data.authorization_urls;
+
+
+                                    $scope.loginPopup = function (soc) {
+                                        var popup = helpers.window.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
+                                            loggedIn = false,
+                                            pollTimer = window.setInterval(function () {
+                                                if (popup.closed) {
+                                                    clearInterval(pollTimer);
+                                                    if (!loggedIn) {
+                                                        snackbar.showK('loginCanceled');
+                                                    }
+                                                    return;
+                                                }
+                                                try {
+                                                    if (popup.document.URL.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
+                                                        clearInterval(pollTimer);
+                                                        models['11'].actions.current_account(undefined, {
+                                                            ignoreErrors: 2
+                                                        }).then(function (response) {
+                                                            var user = response.data.entity;
+                                                            if (!user._is_guest) {
+                                                                $.extend(currentAccount, response.data.entity);
+                                                                endpoint.removeCache();
+                                                                snackbar.showK('loginSuccess');
+                                                                loggedIn = true;
+                                                                popup.close();
+                                                                $scope.close();
+                                                            }
+                                                        }, function () {
+                                                            snackbar.showK('loginFailed');
+                                                        });
+                                                    }
+                                                } catch (ignore) {
+                                                    console.log(ignore);
+                                                }
+                                            }, 500);
+                                    };
+
+                                    $scope.login = function (soc) {
+                                        $http.post($state.href('login', {
+                                            provider: soc.key
+                                        }), {
+                                            action_id: 'login',
+                                            action_model: '11',
+                                            redirect_to: redirect_to
+                                        }).then(function (response) {
+                                            var data = response.data;
+                                            if (data && !data.errors && data.authorization_urls) {
+                                                window.top.location.href = data.authorization_url;
+                                                //helpers.window.openCentered(data.authorization_url, 'Login with ' + soc.name);
+                                            } else {
+                                                modals.alert('failedGeneratingAuthorizaitonUrl');
+                                            }
+                                        });
+                                    };
+                                });
                             })
                         });
                     },
@@ -17226,7 +17290,7 @@ angular.module('app')
                                         });
                                     } else {
                                         modals.confirm('connectSignInMethod', function () {
-                                            var redirect_to = $state.href('loginProviderConnected', {
+                                            var redirect_to = $state.href('login-provider-connected', {
                                                 provider: getProvider(identity)
                                             });
                                             $http.post($state.href('login', {
@@ -17300,6 +17364,7 @@ angular.module('app')
                             endpoint.removeCache();
                             $.extend(currentAccount, response.data.entity);
                             $state.go('home');
+                            snackbar.showK('loggedOut');
                         });
 
                     }
@@ -21944,7 +22009,7 @@ angular.module('app')
                 url: '/api/account/login/:provider',
                 template: ''
             })
-            .state('loginProviderConnected', {
+            .state('login-provider-connected', {
                 url: '/login_provider_connected/:provider',
                 controller: 'LoginProviderConnectedController',
                 template: ''

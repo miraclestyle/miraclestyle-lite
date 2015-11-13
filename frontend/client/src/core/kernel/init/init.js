@@ -107,7 +107,7 @@
                 url: '/api/account/login/:provider',
                 template: ''
             })
-            .state('loginProviderConnected', {
+            .state('login-provider-connected', {
                 url: '/login_provider_connected/:provider',
                 controller: 'LoginProviderConnectedController',
                 template: ''

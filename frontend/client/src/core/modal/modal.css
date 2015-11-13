@@ -185,3 +185,7 @@ modal-loading[toolbar="true"] .progress-wrapper {
     height: 100%;
     position: fixed;
 }
+
+modal-loading[absolute="true"] .modal-loading-wrapper {
+    position: absolute;
+}

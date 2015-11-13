@@ -2409,6 +2409,9 @@ modal-loading[toolbar="true"] .progress-wrapper {
   height: 100%;
   position: fixed; }
 
+modal-loading[absolute="true"] .modal-loading-wrapper {
+  position: absolute; }
+
 .structured-field-actions {
   padding-left: 16px;
   padding-right: 16px; }

@@ -2916,6 +2916,10 @@ modal-loading[toolbar="true"] .progress-wrapper {
     background: white;
     height: 100%;
     position: fixed;
+}
+
+modal-loading[absolute="true"] .modal-loading-wrapper {
+    position: absolute;
 }.structured-field-actions {
     padding-left: 16px;
     padding-right: 16px;

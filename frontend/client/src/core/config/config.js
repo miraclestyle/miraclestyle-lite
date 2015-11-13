@@ -428,7 +428,11 @@
             orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
-            saveInProgress: 'Save in progress. Please wait.'
+            saveInProgress: 'Save in progress. Please wait.',
+            loginSuccess: 'Logged in successfully',
+            loginFailed: 'Login failed',
+            loggedOut: 'Logged out',
+            loginCanceled: 'Login canceled'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

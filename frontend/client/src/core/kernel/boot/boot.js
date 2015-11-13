@@ -636,7 +636,10 @@ $(function () {
 (function () {
     'use strict';
     angular.element(document).ready(function () {
-        var failure = function () {
+        var failure = function (response) {
+                if (response.status === -1) {
+                  return; // this is canceled request
+                }
                 var choice = confirm('Could not start application. Reload your browser and try again?');
                 if (choice) {
                     window.location.reload(true);
