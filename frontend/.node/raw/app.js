@@ -17173,10 +17173,12 @@ angular.module('app')
 
                                     $scope.authorization_urls = login.data.authorization_urls;
 
+                                    $scope.onMessage = [];
 
                                     $scope.loginPopup = function (soc) {
                                         var popup = helpers.window.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
                                             loggedIn = false,
+                                            loading = false,
                                             pollTimer = window.setInterval(function () {
                                                 if (popup.closed) {
                                                     clearInterval(pollTimer);
@@ -17185,27 +17187,38 @@ angular.module('app')
                                                     }
                                                     return;
                                                 }
+                                                var check = function () {
+                                                    if (loading) {
+                                                        return;
+                                                    }
+                                                    loading = true;
+                                                    models['11'].actions.current_account(undefined, {
+                                                        ignoreErrors: 2
+                                                    }).then(function (response) {
+                                                        var user = response.data.entity;
+                                                        if (!user._is_guest) {
+                                                            $.extend(currentAccount, response.data.entity);
+                                                            endpoint.removeCache();
+                                                            snackbar.showK('loginSuccess');
+                                                            loggedIn = true;
+                                                            popup.close();
+                                                            $scope.close();
+                                                        }
+                                                    }, function () {
+                                                        snackbar.showK('loginFailed');
+                                                    })['finally'](function () {
+                                                        loading = false;
+                                                    });
+                                                };
                                                 try {
                                                     if (popup.document.URL.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
                                                         clearInterval(pollTimer);
-                                                        models['11'].actions.current_account(undefined, {
-                                                            ignoreErrors: 2
-                                                        }).then(function (response) {
-                                                            var user = response.data.entity;
-                                                            if (!user._is_guest) {
-                                                                $.extend(currentAccount, response.data.entity);
-                                                                endpoint.removeCache();
-                                                                snackbar.showK('loginSuccess');
-                                                                loggedIn = true;
-                                                                popup.close();
-                                                                $scope.close();
-                                                            }
-                                                        }, function () {
-                                                            snackbar.showK('loginFailed');
-                                                        });
+                                                        check();
                                                     }
                                                 } catch (ignore) {
-                                                    console.log(ignore);
+                                                    if (ignore instanceof DOMException) {
+                                                        check();
+                                                    }
                                                 }
                                             }, 500);
                                     };
