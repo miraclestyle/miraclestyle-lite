@@ -590,7 +590,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       mismatches.append('mc_currency')
     if order.total_amount != tools.format_value(ipn['mc_gross'], order_currency):
       mismatches.append('mc_gross')
-    if order.tax_amount != tools.format_value(ipn['tax'], order_currency):
+    if 'tax' in ipn and order.tax_amount != tools.format_value(ipn['tax'], order_currency):
       mismatches.append('tax')
     if order.key.urlsafe() != ipn['invoice']:
       mismatches.append('invoice')
