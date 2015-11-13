@@ -241,7 +241,7 @@ class Order(orm.BaseExpando):
         and entity._original.state == "checkout"
 
   def condition_checkout(entity, **kwargs):
-    return entity._original.state == "checkout"
+    return entity._original.state in ["checkout", "completed", "canceled"]
 
   def condition_complete(action, **kwargs):
     return action.key_id_str == "complete"
