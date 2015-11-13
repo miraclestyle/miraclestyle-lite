@@ -46,7 +46,7 @@
                     ratio = new_width / original_width; // get ratio for scaling image
                     return (original_height * ratio);
                 },
-                window: {
+                popup: {
                     openCentered: function (url, title) {
                         var w = $(window).width() / 1.3,
                             h = $(window).height() / 1.3,

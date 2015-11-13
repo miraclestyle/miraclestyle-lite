@@ -798,7 +798,7 @@
                             }, {
                                 absolute: true
                             }),
-                            sellerLogo = seller.logo.serving_url;
+                            sellerLogo = helpers.url.handleProtocol(seller.logo.serving_url);
                         $scope.seller = seller;
                         $scope.menu = {};
                         helpers.sideNav.setup($scope.menu, 'right_seller_details');

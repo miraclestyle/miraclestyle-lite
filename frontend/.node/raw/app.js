@@ -12244,7 +12244,7 @@ $(function () {
                     ratio = new_width / original_width; // get ratio for scaling image
                     return (original_height * ratio);
                 },
-                window: {
+                popup: {
                     openCentered: function (url, title) {
                         var w = $(window).width() / 1.3,
                             h = $(window).height() / 1.3,
@@ -16591,7 +16591,7 @@ $(function () {
                             name: 'Facebook',
                             key: 'facebook',
                             command: 'https://www.facebook.com/sharer.php?s=100&p[url]={p[url]}&p[images][0]={p[images][0]}&p[title]={p[title]}&p[summary]={p[summary]}',
-                            require: ['href']
+                            require: ['p[url]', 'p[images][0]', 'p[title]', 'p[summary]']
                         }, {
                             name: 'Twitter',
                             key: 'twitter',
@@ -16640,7 +16640,7 @@ $(function () {
                                     cmd = cmd.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
                                 }
                             });
-                            return helpers.window.openCentered(cmd, 'Share to ' + soc.name);
+                            return helpers.popup.openCentered(cmd, 'Share to ' + soc.name);
                         };
 
                         $scope.container = {};
@@ -17176,7 +17176,7 @@ angular.module('app')
                                     $scope.onMessage = [];
 
                                     $scope.loginPopup = function (soc) {
-                                        var popup = helpers.window.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
+                                        var popup = helpers.popup.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
                                             loggedIn = false,
                                             loading = false,
                                             pollTimer = window.setInterval(function () {
@@ -17234,7 +17234,6 @@ angular.module('app')
                                             var data = response.data;
                                             if (data && !data.errors && data.authorization_urls) {
                                                 window.top.location.href = data.authorization_url;
-                                                //helpers.window.openCentered(data.authorization_url, 'Login with ' + soc.name);
                                             } else {
                                                 modals.alert('failedGeneratingAuthorizaitonUrl');
                                             }
@@ -19280,7 +19279,7 @@ angular.module('app')
                                         }),
                                         image = function (size) {
                                             if ($scope.product.images && $scope.product.images.length) {
-                                                return $scope.product.images[0].serving_url + '=s' + (size || '600');
+                                                return helpers.url.handleProtocol($scope.product.images[0].serving_url + '=s' + (size || '600'));
                                             }
                                             return undefined;
                                         };
@@ -19692,7 +19691,7 @@ angular.module('app')
                                 $scope.socialMeta = {
                                     facebook: {
                                         'p[url]': catalogUrl,
-                                        'p[images][0]': $scope.catalog._images[0].serving_url + '=s600',
+                                        'p[images][0]': helpers.url.handleProtocol($scope.catalog._images[0].serving_url + '=s600'),
                                         'p[title]': $scope.catalog.name
                                     },
                                     twitter: {
@@ -19701,7 +19700,7 @@ angular.module('app')
                                     },
                                     pinterest: {
                                         url: catalogUrl,
-                                        media: $scope.catalog._images[0].serving_url + '=s600',
+                                        media: helpers.url.handleProtocol($scope.catalog._images[0].serving_url + '=s600'),
                                         description: 'Share on pinterest'
                                     },
                                     googleplus: {
@@ -21632,7 +21631,7 @@ angular.module('app')
                             }, {
                                 absolute: true
                             }),
-                            sellerLogo = seller.logo.serving_url;
+                            sellerLogo = helpers.url.handleProtocol(seller.logo.serving_url);
                         $scope.seller = seller;
                         $scope.menu = {};
                         helpers.sideNav.setup($scope.menu, 'right_seller_details');

@@ -219,7 +219,7 @@
                                         }),
                                         image = function (size) {
                                             if ($scope.product.images && $scope.product.images.length) {
-                                                return $scope.product.images[0].serving_url + '=s' + (size || '600');
+                                                return helpers.url.handleProtocol($scope.product.images[0].serving_url + '=s' + (size || '600'));
                                             }
                                             return undefined;
                                         };
@@ -631,7 +631,7 @@
                                 $scope.socialMeta = {
                                     facebook: {
                                         'p[url]': catalogUrl,
-                                        'p[images][0]': $scope.catalog._images[0].serving_url + '=s600',
+                                        'p[images][0]': helpers.url.handleProtocol($scope.catalog._images[0].serving_url + '=s600'),
                                         'p[title]': $scope.catalog.name
                                     },
                                     twitter: {
@@ -640,7 +640,7 @@
                                     },
                                     pinterest: {
                                         url: catalogUrl,
-                                        media: $scope.catalog._images[0].serving_url + '=s600',
+                                        media: helpers.url.handleProtocol($scope.catalog._images[0].serving_url + '=s600'),
                                         description: 'Share on pinterest'
                                     },
                                     googleplus: {

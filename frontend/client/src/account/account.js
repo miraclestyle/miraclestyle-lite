@@ -171,7 +171,7 @@
                                     $scope.onMessage = [];
 
                                     $scope.loginPopup = function (soc) {
-                                        var popup = helpers.window.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
+                                        var popup = helpers.popup.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
                                             loggedIn = false,
                                             loading = false,
                                             pollTimer = window.setInterval(function () {
@@ -229,7 +229,6 @@
                                             var data = response.data;
                                             if (data && !data.errors && data.authorization_urls) {
                                                 window.top.location.href = data.authorization_url;
-                                                //helpers.window.openCentered(data.authorization_url, 'Login with ' + soc.name);
                                             } else {
                                                 modals.alert('failedGeneratingAuthorizaitonUrl');
                                             }

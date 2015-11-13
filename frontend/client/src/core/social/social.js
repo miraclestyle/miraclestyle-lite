@@ -10,7 +10,7 @@
                             name: 'Facebook',
                             key: 'facebook',
                             command: 'https://www.facebook.com/sharer.php?s=100&p[url]={p[url]}&p[images][0]={p[images][0]}&p[title]={p[title]}&p[summary]={p[summary]}',
-                            require: ['href']
+                            require: ['p[url]', 'p[images][0]', 'p[title]', 'p[summary]']
                         }, {
                             name: 'Twitter',
                             key: 'twitter',
@@ -59,7 +59,7 @@
                                     cmd = cmd.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
                                 }
                             });
-                            return helpers.window.openCentered(cmd, 'Share to ' + soc.name);
+                            return helpers.popup.openCentered(cmd, 'Share to ' + soc.name);
                         };
 
                         $scope.container = {};
