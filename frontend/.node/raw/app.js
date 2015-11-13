@@ -6160,7 +6160,7 @@ $(function () {
                     }
                     $scope.message = config.message;
                     if (!config.hideAfter) {
-                        config.hideAfter = (($scope.message.length / 16) * 1000) + 500;
+                        config.hideAfter = (($scope.message.length / 16) * 2000) + 500;
                     }
                     $scope.size = config.size;
                     $scope.calculateSize = function () {
