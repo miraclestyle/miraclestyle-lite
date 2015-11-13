@@ -93,7 +93,7 @@ class Seller(orm.BaseExpando):
       orm.ExecuteActionPermission(('create', 'update', 'prepare'), condition_not_guest_and_owner),
       orm.ExecuteActionPermission('read', condition_owner_active),
       orm.ReadFieldPermission(('_plugin_group'), condition_not_guest_and_owner),
-      orm.ReadFieldPermission(('name', 'logo', '_content', '_currency'), condition_owner_active),
+      orm.ReadFieldPermission(('name', 'logo', 'updated', '_content', '_currency'), condition_owner_active),
       orm.WriteFieldPermission(('name', 'logo', '_content', '_plugin_group', '_records'), condition_not_guest_and_owner)
   ]
 

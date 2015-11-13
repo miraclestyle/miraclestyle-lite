@@ -130,7 +130,7 @@ class CatalogProductView(base.SeoOrAngular):
            'title': 'Product %s' % product['name'],
            'description': "\n".join([product['_category']['name'], product['description']]),
            'code': product['code'],
-           'updated': product['updated'],
+           'updated': catalog['updated'],
            'raw_variant' : raw_variant,
            'price': product['unit_price'],
            'category': product['_category']['name'],

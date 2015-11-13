@@ -495,7 +495,7 @@ class Catalog(orm.BaseExpando):
       orm.WriteFieldPermission(('_images'), condition_write_images),
       orm.WriteFieldPermission(('_records', '_images.pricetags._product._stock'), condition_not_guest_and_owner_and_published),
       orm.WriteFieldPermission('state', condition_write_state),
-      orm.ReadFieldPermission(('name', 'published_date', 'discontinue_date',
+      orm.ReadFieldPermission(('name', 'published_date', 'discontinue_date', 'updated',
                                'state', 'cover', '_images'), condition_published_or_discontinued),
       orm.ReadFieldPermission('_records', condition_root),
       orm.WriteFieldPermission('_records', condition_root),
