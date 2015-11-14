@@ -246,13 +246,6 @@
                     that.getColumns();
                     angular.forEach(that.items, function (item) {
                         that.calculate(item);
-                        if (doAll) {
-                            if (that.config.square) {
-                                //item.height(item.width());
-                            } else {
-                                //item.height(helpers.newHeightByWidth(that.config.maxWidth, that.config.maxHeight, item.width()));
-                            }
-                        }
                     });
                 };
 

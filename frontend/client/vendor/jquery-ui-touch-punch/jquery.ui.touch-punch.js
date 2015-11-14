@@ -102,6 +102,8 @@
       return;
     }
 
+    console.log(event);
+
     // Interaction was not a click
     this._touchMoved = true;
 

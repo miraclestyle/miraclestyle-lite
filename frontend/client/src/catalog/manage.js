@@ -180,7 +180,6 @@
                                             $scope.dialog = {
                                                 templateBodyUrl: 'catalog/manage_products.html',
                                                 toolbar: {
-                                                    hideSave: true
                                                 }
                                             };
                                             $scope.imagesLoaded = false;
@@ -423,7 +422,7 @@
                                                 }
                                                 $scope.$broadcast('resizePricetags', pricetag);
 
-                                                $scope.syncStart();
+                                                //$scope.syncStart();
 
                                             };
 
@@ -483,7 +482,8 @@
                                                 var syncing = ($scope.syncScheduleNext || $scope.syncLoading),
                                                     dirty = $scope.container.form.$dirty;
                                                 if (syncing || dirty) {
-                                                    $scope.lastManageProduct = [image, pricetag, $event];
+                                                    //$scope.lastManageProduct = [image, pricetag, $event];
+                                                    snackbar.showK('saveChangesFirst');
                                                     return;
                                                     /*
                                                     return (syncing ? $scope.saveDefer.promise : $scope.save(true)).then(function () {
@@ -988,6 +988,7 @@
                                                         $.extend(parentScope.args, angular.copy(newArgs));
                                                         $.extend($scope.args, angular.copy(newArgs));
                                                         $scope.formSetPristine();
+                                                        /*
                                                         if ($scope.lastManageProduct) {
                                                             var image = $scope.lastManageProduct[0],
                                                                 pricetag = $scope.lastManageProduct[1],
@@ -1000,7 +1001,7 @@
                                                             });
                                                             $scope.realManageProduct(image, pricetag, $event);
                                                             $scope.lastManageProduct = null;
-                                                        }
+                                                        }*/
                                                     }
                                                     if (!hideSnackbar) {
                                                         snackbar.showK('changesSaved');
@@ -1011,7 +1012,7 @@
                                                 });
                                                 return promise;
                                             };
-
+                                            /*
                                             $scope.close = function () {
                                                 if ($scope.container.form.$dirty) {
                                                     $scope.syncStop();
@@ -1019,6 +1020,10 @@
                                                 }
                                                 return $scope.$close();
                                             };
+                                            */
+                                            $scope.close = angular.bind($scope, helpers.form.leave, function () {
+                                                $scope.$close();
+                                            });
                                             $scope.syncLoading = false;
                                             $scope.syncID = null;
                                             $scope.syncScheduleNext = false;
