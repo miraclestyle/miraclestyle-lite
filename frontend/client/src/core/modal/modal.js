@@ -659,7 +659,7 @@
                 scope.$on('$destroy', function () {
                     $(window).unbind('resize modal.open', fn);
                 });
-                scope.$watch('$state.completed', function (newValue, oldValue) {
+                scope.$watch('$state.completed', function watchStateCompleted(newValue, oldValue) {
                     if (newValue === true && newValue !== oldValue) {
                         rawFn();
                     }

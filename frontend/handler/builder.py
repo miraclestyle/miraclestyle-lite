@@ -19,15 +19,22 @@ class BuildAngularIndexHTML(base.Angular):
   def after(self):
     pass
 
-  def _static_dir(self, file_path):
+  def _static_dir(self, file_path, version=None):
+    if version is not None:
+      version = '?v=%s' % os.environ.get('CURRENT_VERSION_ID')
+    else:
+      version = ''
     static_dir = '%s/' % settings.HOST_URL
     if self.request.get('static_dir') is not None:
       static_dir = self.request.get('static_dir')
-    return '%sclient/%s' % (static_dir, file_path)
+    return '%sclient/%s%s' % (static_dir, file_path, version)
 
   def respond(self):
+    init = settings.DEBUG
+    settings.DEBUG = False
     self.response.headers['Content-Type'] = 'text/plain; charset=utf8'
     self.render(self.base_template, {'static_dir': self._static_dir})
+    settings.DEBUG = init
 
 
 class BuildAngularDynamics(base.Angular):

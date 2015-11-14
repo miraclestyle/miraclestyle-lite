@@ -4,220 +4,243 @@ if (!window.ng) {
     };
 }
 
+window.isChromeApp = window.chrome && chrome.app && chrome.app.runtime;
+window._chromeLocalStorage = null;
+window.getLocalStorage = function () {
+    if (!window.isChromeApp) {
+        return window.localStorage;
+    }
+    if (window.isChromeApp) {
+        if (!window._chromeLocalStorage) {
+            window._chromeLocalStorage = {
+                _data       : {},
+                setItem     : function(id, val) { return this._data[id] = String(val); },
+                getItem     : function(id) { return this._data.hasOwnProperty(id) ? this._data[id] : undefined; },
+                removeItem  : function(id) { return delete this._data[id]; },
+                clear       : function() { return this._data = {}; }
+            };
+        }
+        return window._chromeLocalStorage;
+    }
+};
+
 function Steady(opts) {
-  if ( !opts ) throw new Error('missing options');
-  if ( !opts.handler ) throw new Error('missing handler parameter');
+    if (!opts) throw new Error('missing options');
+    if (!opts.handler) throw new Error('missing handler parameter');
 
 
-  this.scrollElement = opts.scrollElement || window;
-  this.conditions = opts.conditions || {};
-  this.handler   = opts.handler;
-  this.values    = {};
-  this.tracked   = {};
-  this.success   = false;
-  this.throttleVal = opts.throttle || 100;
-  this.processing = false;
-  this.stopped = false;
+    this.scrollElement = opts.scrollElement || window;
+    this.conditions = opts.conditions || {};
+    this.handler = opts.handler;
+    this.values = {};
+    this.tracked = {};
+    this.success = false;
+    this.throttleVal = opts.throttle || 100;
+    this.processing = false;
+    this.stopped = false;
 
 
-  this._parse();
+    this._parse();
 
-  if ( 'pageYOffset' in this.scrollElement ) {
-    this._addBottom();
-    this._addTop();
-  } else {
-    this._addBottomEl();
-    this._addTopEl();
-    this._addScrollLeft();
-  }
+    if ('pageYOffset' in this.scrollElement) {
+        this._addBottom();
+        this._addTop();
+    } else {
+        this._addBottomEl();
+        this._addTopEl();
+        this._addScrollLeft();
+    }
 
-  this._addWidth();
-  this._onScroll();
+    this._addWidth();
+    this._onScroll();
 
 }
 
 
-Steady.prototype.addCondition = function(name, value) {
-  this.conditions[name] = value;
-  this._parse();
+Steady.prototype.addCondition = function (name, value) {
+    this.conditions[name] = value;
+    this._parse();
 };
-Steady.prototype.removeCondition = function(name) {
-  delete this.conditions[name];
-  this._parse();
+Steady.prototype.removeCondition = function (name) {
+    delete this.conditions[name];
+    this._parse();
 };
-Steady.prototype.addTracker  = function(name, fn) {
-  this.tracked[name] = { cb: fn, name: name};
-};
-
-Steady.prototype._addBottom = function() {
-  this.addTracker('bottom', function(scrollable) {
-    var height = Math.max(
-      document.body.scrollHeight,
-      document.body.offsetHeight, 
-      document.documentElement.clientHeight,
-      document.documentElement.scrollHeight,
-      document.documentElement.offsetHeight
-    );
-    return height - (scrollable.pageYOffset + scrollable.innerHeight);
-  });
+Steady.prototype.addTracker = function (name, fn) {
+    this.tracked[name] = {
+        cb: fn,
+        name: name
+    };
 };
 
-Steady.prototype._addTop = function() {
-  this.addTracker('top', function(scrollable) {
-    return scrollable.pageYOffset;
-  });
+Steady.prototype._addBottom = function () {
+    this.addTracker('bottom', function (scrollable) {
+        var height = Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.clientHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+        );
+        return height - (scrollable.pageYOffset + scrollable.innerHeight);
+    });
 };
 
-Steady.prototype._addBottomEl = function() {
-  var self = this;
-  this.addTracker('bottom', function(scrollable) {
-    var height = Math.max(
-      scrollable.scrollHeight,
-      scrollable.offsetHeight
-    );
-    return height - ( scrollable.scrollTop + scrollable.offsetHeight);
-  });
+Steady.prototype._addTop = function () {
+    this.addTracker('top', function (scrollable) {
+        return scrollable.pageYOffset;
+    });
 };
 
-Steady.prototype._addTopEl = function() {
-  this.addTracker('top', function(scrollable) {
-    return scrollable.scrollTop;
-  });
+Steady.prototype._addBottomEl = function () {
+    var self = this;
+    this.addTracker('bottom', function (scrollable) {
+        var height = Math.max(
+            scrollable.scrollHeight,
+            scrollable.offsetHeight
+        );
+        return height - (scrollable.scrollTop + scrollable.offsetHeight);
+    });
 };
 
-Steady.prototype._addScrollLeft = function() {
-  var self = this;
-  this.addTracker('scrollLeft', function(scrollable) {
-    return scrollable.scrollLeft;
-  });
+Steady.prototype._addTopEl = function () {
+    this.addTracker('top', function (scrollable) {
+        return scrollable.scrollTop;
+    });
 };
 
-Steady.prototype._addWidth = function() {
-  this.addTracker('width', function(scrollable) {
-    return scrollable.innerWidth;
-  });
+Steady.prototype._addScrollLeft = function () {
+    var self = this;
+    this.addTracker('scrollLeft', function (scrollable) {
+        return scrollable.scrollLeft;
+    });
+};
+
+Steady.prototype._addWidth = function () {
+    this.addTracker('width', function (scrollable) {
+        return scrollable.innerWidth;
+    });
 };
 
 
-Steady.prototype._parse = function() {
-  this._parsed = {};
-  this._wantedTrackers = [];
-  this._parsedMax = {};
-  this._parsedMin = {};
+Steady.prototype._parse = function () {
+    this._parsed = {};
+    this._wantedTrackers = [];
+    this._parsedMax = {};
+    this._parsedMin = {};
 
-  for ( var condition in this.conditions ) {
-    if( !this.conditions.hasOwnProperty(condition) ) continue;
-    
-    var operator = condition.substr(0, 4);
+    for (var condition in this.conditions) {
+        if (!this.conditions.hasOwnProperty(condition)) continue;
 
-    switch(operator) {
-      case 'min-':
-        this._wantedTrackers.push(condition.substr(4, condition.length));
-        this._parsedMin[condition.substr(4, condition.length)] = this.conditions[condition];
-        break;
-      case 'max-':
-        this._wantedTrackers.push(condition.substr(4, condition.length));
-        this._parsedMax[condition.substr(4, condition.length)] = this.conditions[condition];
-        break;
-      default:
-        this._wantedTrackers.push(condition);
-        this._parsed[condition] = this.conditions[condition];
+        var operator = condition.substr(0, 4);
+
+        switch (operator) {
+        case 'min-':
+            this._wantedTrackers.push(condition.substr(4, condition.length));
+            this._parsedMin[condition.substr(4, condition.length)] = this.conditions[condition];
+            break;
+        case 'max-':
+            this._wantedTrackers.push(condition.substr(4, condition.length));
+            this._parsedMax[condition.substr(4, condition.length)] = this.conditions[condition];
+            break;
+        default:
+            this._wantedTrackers.push(condition);
+            this._parsed[condition] = this.conditions[condition];
+        }
+
+    }
+};
+
+Steady.prototype._check = function () {
+    var results = [];
+
+    for (var name in this.values) {
+        if (this._parsed.hasOwnProperty(name)) {
+            results.push(this._parsed[name] == this.values[name]);
+        }
+        if (this._parsedMin.hasOwnProperty(name)) {
+            results.push(this._parsedMin[name] <= this.values[name]);
+        }
+
+        if (this._parsedMax.hasOwnProperty(name)) {
+            results.push(this._parsedMax[name] >= this.values[name]);
+        }
     }
 
-  }
-};
+    if (results.length && results.indexOf(false) == -1) {
+        this.processing = true;
 
-Steady.prototype._check = function() {
-  var results = [];
-  
-  for( var name in this.values ) {
-    if ( this._parsed.hasOwnProperty(name) ) {
-      results.push( this._parsed[name] == this.values[name] );
+        var cb = this._done.bind(this);
+        window.requestAnimationFrame(this.handler.bind(this, this.values, cb));
     }
-    if ( this._parsedMin.hasOwnProperty(name) ) {
-      results.push( this._parsedMin[name] <= this.values[name] ); 
+};
+
+Steady.prototype._done = function () {
+    this.processing = false;
+};
+
+Steady.prototype._onScroll = function () {
+    this._onScrollHandler = this._throttledHandler();
+    this.scrollElement.addEventListener('scroll', this._onScrollHandler, false);
+};
+
+Steady.prototype._throttledHandler = function () {
+    var self = this;
+    return this.throttle(function (e) {
+
+        if (!self._wantedTrackers.length || self.processing) return;
+
+        for (var i = 0; i < self._wantedTrackers.length; i++) {
+
+            if (!self.tracked[self._wantedTrackers[i]]) continue;
+
+            self.values[self._wantedTrackers[i]] = self.tracked[self._wantedTrackers[i]].cb(self.scrollElement || window);
+        }
+
+        window.requestAnimationFrame(self._check.bind(self));
+    }, this.throttleVal);
+};
+
+Steady.prototype.stop = function () {
+    if (!this.stopped) {
+        this.scrollElement.removeEventListener('scroll', this._onScrollHandler, false);
+        this.stopped = true;
     }
-
-    if ( this._parsedMax.hasOwnProperty(name) ) {
-      results.push( this._parsedMax[name] >= this.values[name] );
-    }
-  }
-
-  if ( results.length && results.indexOf(false) == -1 ) {
-    this.processing = true;
-
-    var cb = this._done.bind(this);
-    window.requestAnimationFrame(this.handler.bind(this, this.values, cb));
-  }
 };
 
-Steady.prototype._done = function() {
-  this.processing = false;
-};
-
-Steady.prototype._onScroll = function() {
-  this._onScrollHandler = this._throttledHandler();
-  this.scrollElement.addEventListener('scroll', this._onScrollHandler, false);
-};
-
-Steady.prototype._throttledHandler = function() {
-  var self = this;
-  return this.throttle(function(e) {
-
-    if ( !self._wantedTrackers.length || self.processing ) return;
-    
-    for (var i = 0; i < self._wantedTrackers.length; i++) {
-
-      if ( !self.tracked[self._wantedTrackers[i]] ) continue;
-
-      self.values[self._wantedTrackers[i]] = self.tracked[self._wantedTrackers[i]].cb(self.scrollElement || window);
-    }
-    
-    window.requestAnimationFrame(self._check.bind(self));
-  }, this.throttleVal);
-};
-
-Steady.prototype.stop = function() {
-  if ( ! this.stopped  ) {
-    this.scrollElement.removeEventListener('scroll', this._onScrollHandler, false);
-    this.stopped = true;
-  }
-};
-
-Steady.prototype.resume = function() {
-  if ( this.stopped  ) 
-    this._onScroll();
+Steady.prototype.resume = function () {
+    if (this.stopped)
+        this._onScroll();
     this.stopped = false;
 };
 
 
 // i use it to avoid calling the onscroll function many times.
-Steady.prototype.throttle = function(fn, delay) {
-  var timer;
-  var isFirstTime = true;
-  return function () {
-    var context = this;
-    var args = arguments;
+Steady.prototype.throttle = function (fn, delay) {
+    var timer;
+    var isFirstTime = true;
+    return function () {
+        var context = this;
+        var args = arguments;
 
-    if ( isFirstTime ) {
-      fn.apply(context, args);
-      isFirstTime = false;
-      return;
-    }
+        if (isFirstTime) {
+            fn.apply(context, args);
+            isFirstTime = false;
+            return;
+        }
 
-    if ( timer ) return;
+        if (timer) return;
 
-    timer = true;
-    setTimeout(function () {
-      fn.apply(context, args);
-      timer = false;
-    }, delay);
-  };
+        timer = true;
+        setTimeout(function () {
+            fn.apply(context, args);
+            timer = false;
+        }, delay);
+    };
 };
 
 
 if (typeof module === 'object' && module.exports) {
-  module.exports = Steady;
+    module.exports = Steady;
 }
 
 (function () {
@@ -327,67 +350,67 @@ if (typeof module === 'object' && module.exports) {
 // Production steps of ECMA-262, Edition 5, 15.4.4.14
 // Reference: http://es5.github.io/#x15.4.4.14
 if (!Array.prototype.indexOf) {
-  Array.prototype.indexOf = function(searchElement, fromIndex) {
+    Array.prototype.indexOf = function (searchElement, fromIndex) {
 
-    var k;
+        var k;
 
-    // 1. Let O be the result of calling ToObject passing
-    //    the this value as the argument.
-    if (this == null) {
-      throw new TypeError('"this" is null or not defined');
-    }
+        // 1. Let O be the result of calling ToObject passing
+        //    the this value as the argument.
+        if (this == null) {
+            throw new TypeError('"this" is null or not defined');
+        }
 
-    var O = Object(this);
+        var O = Object(this);
 
-    // 2. Let lenValue be the result of calling the Get
-    //    internal method of O with the argument "length".
-    // 3. Let len be ToUint32(lenValue).
-    var len = O.length >>> 0;
+        // 2. Let lenValue be the result of calling the Get
+        //    internal method of O with the argument "length".
+        // 3. Let len be ToUint32(lenValue).
+        var len = O.length >>> 0;
 
-    // 4. If len is 0, return -1.
-    if (len === 0) {
-      return -1;
-    }
+        // 4. If len is 0, return -1.
+        if (len === 0) {
+            return -1;
+        }
 
-    // 5. If argument fromIndex was passed let n be
-    //    ToInteger(fromIndex); else let n be 0.
-    var n = +fromIndex || 0;
+        // 5. If argument fromIndex was passed let n be
+        //    ToInteger(fromIndex); else let n be 0.
+        var n = +fromIndex || 0;
 
-    if (Math.abs(n) === Infinity) {
-      n = 0;
-    }
+        if (Math.abs(n) === Infinity) {
+            n = 0;
+        }
 
-    // 6. If n >= len, return -1.
-    if (n >= len) {
-      return -1;
-    }
+        // 6. If n >= len, return -1.
+        if (n >= len) {
+            return -1;
+        }
 
-    // 7. If n >= 0, then Let k be n.
-    // 8. Else, n<0, Let k be len - abs(n).
-    //    If k is less than 0, then let k be 0.
-    k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+        // 7. If n >= 0, then Let k be n.
+        // 8. Else, n<0, Let k be len - abs(n).
+        //    If k is less than 0, then let k be 0.
+        k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
 
-    // 9. Repeat, while k < len
-    while (k < len) {
-      // a. Let Pk be ToString(k).
-      //   This is implicit for LHS operands of the in operator
-      // b. Let kPresent be the result of calling the
-      //    HasProperty internal method of O with argument Pk.
-      //   This step can be combined with c
-      // c. If kPresent is true, then
-      //    i.  Let elementK be the result of calling the Get
-      //        internal method of O with the argument ToString(k).
-      //   ii.  Let same be the result of applying the
-      //        Strict Equality Comparison Algorithm to
-      //        searchElement and elementK.
-      //  iii.  If same is true, return k.
-      if (k in O && O[k] === searchElement) {
-        return k;
-      }
-      k++;
-    }
-    return -1;
-  };
+        // 9. Repeat, while k < len
+        while (k < len) {
+            // a. Let Pk be ToString(k).
+            //   This is implicit for LHS operands of the in operator
+            // b. Let kPresent be the result of calling the
+            //    HasProperty internal method of O with argument Pk.
+            //   This step can be combined with c
+            // c. If kPresent is true, then
+            //    i.  Let elementK be the result of calling the Get
+            //        internal method of O with the argument ToString(k).
+            //   ii.  Let same be the result of applying the
+            //        Strict Equality Comparison Algorithm to
+            //        searchElement and elementK.
+            //  iii.  If same is true, return k.
+            if (k in O && O[k] === searchElement) {
+                return k;
+            }
+            k++;
+        }
+        return -1;
+    };
 }
 /**
  *
@@ -444,19 +467,18 @@ if (!Array.prototype.indexOf) {
             return false;
         }
 
-        for (var i = 0, l=this.length; i < l; i++) {
+        for (var i = 0, l = this.length; i < l; i++) {
             // Check if we have nested arrays
             if (this[i] instanceof Array && array[i] instanceof Array) {
                 // recurse into the nested arrays
                 if (!this[i].equals(array[i])) {
                     return false;
-                }        
-            }           
-            else if (this[i] !== array[i]) { 
+                }
+            } else if (this[i] !== array[i]) {
                 // Warning - two different object instances will never be equal: {x:20} != {x:20}
-                return false;   
-            }           
-        }       
+                return false;
+            }
+        }
         return true;
     };
 
@@ -517,39 +539,40 @@ if (!Array.prototype.indexOf) {
         }
     });
 
-    var host = window.location.protocol + '//' + window.location.host,
+    var host = (window.isChromeApp ? 'https://x-arcanum-801.appspot.com' : window.location.protocol + '//' + window.location.host),
         // global configuration for the application
         // this config file will expand
         GLOBAL_CONFIG = {
             debug: true, // debug mode
             host: host,
-            modules: ['config', 
-                      'ngAnimate', 
-                      'ngMessages', 
-                      'ui.router', 
-                      'ui.sortable', 
-                      'ui.inflector', 'ngSanitize',
-                      'ngDragDrop',
-                      'timer', 
-                      'googlechart',
-                      'btford.markdown',
-                      'material.core',
-                      'material.core.gestures',
-                      'material.components.button',
-                      'material.components.checkbox',
-                      'material.components.content',
-                      'material.components.simpledialog',
-                      'material.components.input',
-                      'material.components.radioButton',
-                      'material.components.sidenav',
-                      'material.components.swipe',
-                      'material.components.textField',
-                      'material.components.toolbar'], // this will be changed accordingly
+            modules: ['config',
+                'ngAnimate',
+                'ngMessages',
+                'ui.router',
+                'ui.sortable',
+                'ui.inflector', 'ngSanitize',
+                'ngDragDrop',
+                'timer',
+                'googlechart',
+                'btford.markdown',
+                'material.core',
+                'material.core.gestures',
+                'material.components.button',
+                'material.components.checkbox',
+                'material.components.content',
+                'material.components.simpledialog',
+                'material.components.input',
+                'material.components.radioButton',
+                'material.components.sidenav',
+                'material.components.swipe',
+                'material.components.textField',
+                'material.components.toolbar'
+            ], // this will be changed accordingly
             api: {
                 endpoint: {
                     path: host + '/api/endpoint'
                 },
-                modelsMeta: '/api/model_meta'
+                modelsMeta: host + '/api/model_meta'
             },
             date: {
                 format: 'd MMM yyyy, HH:mm'
@@ -561,7 +584,7 @@ if (!Array.prototype.indexOf) {
                 messages: {}
             },
             misc: {
-              text: {}
+                text: {}
             },
             subheaders: {},
             fields: {
@@ -594,7 +617,16 @@ if (!Array.prototype.indexOf) {
             },
             admin: {
                 listTemplates: {},
-                menu: [{name: 'Accounts', kind: 11}, {name: 'Catalogs', kind: 31}, {name: 'Orders', kind: '34'}], // admin paths shown in the menu
+                menu: [{
+                    name: 'Accounts',
+                    kind: 11
+                }, {
+                    name: 'Catalogs',
+                    kind: 31
+                }, {
+                    name: 'Orders',
+                    kind: '34'
+                }], // admin paths shown in the menu
                 listViewDirective: {
                     31: true,
                     11: true,
@@ -611,21 +643,30 @@ if (!Array.prototype.indexOf) {
     if (GLOBAL_CONFIG.debug) {
         window._GLOBAL_CONFIG = GLOBAL_CONFIG;
     }
- 
+
     angular.module('config', ['ng'])
         .constant('GLOBAL_CONFIG', GLOBAL_CONFIG)
-        .config(ng(function ($httpProvider, $locationProvider) {
+        .config(ng(function ($httpProvider, $locationProvider, $compileProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
-            $locationProvider.html5Mode(true);
+            $locationProvider.html5Mode(!window.isChromeApp);
+            if (window.isChromeApp) {
+                $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|chrome-extension):/);
+            }
         }));
     angular.module('app', GLOBAL_CONFIG.modules);
+
 }());
 
 $(function () {
     'use strict';
-    var container = $('<div>').css({ height: 1, overflow: 'scroll' }).appendTo('body'),
-        child = $('<div>').css({ height: 2 }).appendTo(container);
+    var container = $('<div>').css({
+            height: 1,
+            overflow: 'scroll'
+        }).appendTo('body'),
+        child = $('<div>').css({
+            height: 2
+        }).appendTo(container);
     window.SCROLLBAR_WIDTH = container.width() - child.width();
     if (Modernizr.touch) {
         window.SCROLLBAR_WIDTH = 0;
@@ -638,7 +679,7 @@ $(function () {
     angular.element(document).ready(function () {
         var failure = function (response) {
                 if (response.status === -1) {
-                  return; // this is canceled request
+                    return; // this is canceled request
                 }
                 var choice = confirm('Could not start application. Reload your browser and try again?');
                 if (choice) {
@@ -652,15 +693,16 @@ $(function () {
             promises = [$http.get(GLOBAL_CONFIG.api.modelsMeta), $http.get(GLOBAL_CONFIG.api.endpoint.path + '?action_id=current_account&action_model=11')];
 
         $q.all(promises).then(function (response) {
-            var d1 = response[0].data, d2 = response[1].data;
+            var d1 = response[0].data,
+                d2 = response[1].data;
             window.MODELS_META = d1;
             window.CURRENT_ACCOUNT = d2.entity;
             if ((d1 && d1.errors) || (d2 && d2.errors)) {
                 failure();
             } else {
                 angular.bootstrap(document, ['app'], {
-                      strictDi: !window.DEBUG
-                    });
+                    strictDi: false
+                });
             }
         }, failure);
 

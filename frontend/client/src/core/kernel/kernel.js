@@ -365,7 +365,8 @@
             nothing = '___undefined___',
             memory_only = '___in_memory_only___',
             localStoragePolyfill,
-            generalLocalCache;
+            generalLocalCache,
+            localStorage = window.getLocalStorage();
 
         function prepare(key, val) {
             if (val && ((val.value && angular.isFunction(val.value.then)) || (angular.isObject(val.value) && val.value[memory_only] !== undefined))) {

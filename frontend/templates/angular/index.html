@@ -33,7 +33,7 @@
       rel="stylesheet">
     {% if settings.DEBUG %}
         {% for style in settings.ANGULAR_CSS_PATHS %}
-        <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
+        <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style, True)}}" /> {% endfor %}
     {% else %}
     {% for style in settings.ANGULAR_VENDOR_CSS %}
      <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}

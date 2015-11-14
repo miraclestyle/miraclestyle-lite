@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     'use strict';
     angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG, helpers) {
         var social = {

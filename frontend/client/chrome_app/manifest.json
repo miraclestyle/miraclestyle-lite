@@ -1,0 +1,19 @@
+{
+  "name": "MiracleStyle App",
+  "version": "0.0.5",
+  "manifest_version": 2,
+  "minimum_chrome_version": "29",
+  "icons": {
+    "128": "icon_128.png"
+  },
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+  "permissions": [
+    "identity",
+    "storage",
+    "<all_urls>"
+  ]
+}

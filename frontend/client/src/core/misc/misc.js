@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(ng(function (helpers, $mdConstant) {
+        .run(ng(function (helpers, $mdConstant, GLOBAL_CONFIG) {
             $.extend(helpers, {
                 clicks: {
                     realEventTarget: function (target) {
@@ -61,10 +61,10 @@
                 },
                 url: {
                     abs: function (part) {
-                        return window.location.protocol + '//' + window.location.host + '/' + part;
+                        return GLOBAL_CONFIG.host + '/' + part;
                     },
                     handleProtocol: function (url) {
-                        return (document.location.protocol === 'https:' ? url.replace('http://', 'https://') : url);
+                        return ((document.location.protocol === 'https:' || document.location.protocol === 'chrome-extension:') ? url.replace('http://', 'https://') : url);
                     },
                     urlsafe: function (str) {
                         return window.btoa(str).replace(new RegExp('=', 'g'), '-');
@@ -148,13 +148,15 @@
                 }
             };
         })
-        .directive('displayImage', ng(function (GLOBAL_CONFIG, helpers) {
+        .directive('displayImage', ng(function (GLOBAL_CONFIG, helpers, $http) {
             return {
                 scope: {
                     image: '=displayImage',
                     config: '=displayImageConfig'
                 },
                 link: function (scope, element, attrs) {
+
+                    var path, fn;
 
                     if (!scope.config) {
                         scope.config = {};
@@ -164,8 +166,11 @@
                         scope.config.size = 240;
                     }
 
-                    var fn = function (nv, ov) {
+                    fn = function watchServingUrl(nv, ov) {
                         if (nv !== ov) {
+                            if (window.isChromeApp && path) {
+                                URL.revokeObjectURL(path);
+                            }
                             var img = element,
                                 done = function () {
                                     img.css('visibility', 'inherit');
@@ -181,9 +186,19 @@
                                 };
 
                             if (scope.image && scope.image.serving_url) {
+                                path = helpers.url.handleProtocol(scope.image.serving_url) + (scope.config.size === true ? '' : '=s' + scope.config.size);
                                 img.on('load', done)
-                                    .on('error', error)
-                                    .attr('src', helpers.url.handleProtocol(scope.image.serving_url) + (scope.config.size === true ? '' : '=s' + scope.config.size));
+                                    .on('error', error);
+                                if (!window.isChromeApp) {
+                                    img.attr('src', path);
+                                } else {
+                                    $http.get(path, {
+                                        responseType: 'blob'
+                                    }).success(function (response) {
+                                        path = URL.createObjectURL(response.data);
+                                        img.attr('src', path);
+                                    }).error(error);
+                                }
                             } else {
                                 setTimeout(function () {
                                     error();

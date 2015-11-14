@@ -411,6 +411,9 @@
             return {
                 require: '^form',
                 link: function (scope, element, attrs, ngFormController) {
+                    if (window.isChromeApp) {
+                        return; // chrome does not have this
+                    }
                     var cb;
                     if (!windowBound) {
                         windowBound = true;

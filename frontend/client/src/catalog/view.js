@@ -379,7 +379,7 @@
 
                                 loadProductInstance(productInstanceResponse);
 
-                                $scope.$watch(function () {
+                                $scope.$watch(function currentAccountIsGuestWatch() {
                                     return currentAccount._is_guest;
                                 }, function (neww, old) {
                                     $scope.cartProductQuantity();
@@ -539,11 +539,11 @@
 
                                 $scope.notInitialLoad = true;
 
-                                $scope.$watch('product.id', function (neww, old) {
+                                $scope.$watch('product.id', function productIdWatch(neww, old) {
                                     shareWatch();
                                 });
 
-                                $scope.$on('modalOpen', function () {
+                                $scope.$on('modalOpen', function modalOpenWatch() {
                                     deferOpen.resolve();
                                 });
 

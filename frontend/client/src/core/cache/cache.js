@@ -452,6 +452,8 @@
                 throw angular.$$minErr('ng')('areq', 'Expected storageMode to be "memory", "localStorage" or "sessionStorage"! Found: {0}.', storageMode);
             }
 
+            var localStorage = window.getLocalStorage();
+
             this.$$storageMode = storageMode;
 
             if (storageImpl) {

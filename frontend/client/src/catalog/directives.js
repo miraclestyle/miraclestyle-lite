@@ -5,7 +5,7 @@
             restrict: 'A',
             link: function (scope, element, attrs) {
                 var fired;
-                scope.$watch(attrs.trackIfProductView, function (neww, old) {
+                scope.$watch(attrs.trackIfProductView, function trackIfProductView(neww, old) {
                     if (fired) {
                         return;
                     }

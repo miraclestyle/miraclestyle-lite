@@ -100,7 +100,7 @@
 
             $scope.scrollEnd = {loader: false};
 
-            $scope.$watch(function () {
+            $scope.$watch(function maybeRemoveSearchResult() {
                 var maybe = false;
                 $scope.search.results.iremove(function (ent) {
                     var truth = ent.state === 'canceled';

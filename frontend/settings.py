@@ -266,7 +266,12 @@ def build(templates=True, statics=True, js_and_css=True, write=False, vendors=Tr
       cmd.extend(sys.argv[:][1:])
     proc = subprocess.Popen(cmd, cwd=node)
     while proc.wait():
+      break
+    out('Finalize chrome app')
+    proc = subprocess.Popen(['gulp', 'finalize'], cwd=node)
+    while proc.wait():
       exit()
+
   return buff
 
 if __name__ == '__main__':
