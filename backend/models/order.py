@@ -240,7 +240,7 @@ class Order(orm.BaseExpando):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "checkout"
 
-  def condition_complete(action, **kwargs):
+  def condition_complete(action, entity, **kwargs):
     return action.key_id_str == "complete" and entity._original.state in ["checkout", "completed", "canceled"]
 
   def condition_update_line(account, entity, action, **kwargs):
