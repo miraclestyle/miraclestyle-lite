@@ -254,8 +254,7 @@ class Order(orm.BaseExpando):
   def condition_state(action, entity, **kwargs):
     return (action.key_id_str == "update_line" and entity.state == "cart") \
         or (action.key_id_str == "update" and entity.state == "checkout") \
-        or (action.key_id_str == "cancel" and entity.state == "canceled") \
-        or (action.key_id_str == "complete" and entity.state == "completed")
+        or (action.key_id_str == "cancel" and entity.state == "canceled")
 
   def condition_update_and_view_order(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
