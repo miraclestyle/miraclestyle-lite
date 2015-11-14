@@ -240,11 +240,8 @@ class Order(orm.BaseExpando):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "checkout"
 
-  def condition_checkout(entity, **kwargs):
-    return entity._original.state in ["checkout", "completed", "canceled"]
-
   def condition_complete(action, **kwargs):
-    return action.key_id_str == "complete"
+    return action.key_id_str == "complete" and entity._original.state in ["checkout", "completed", "canceled"]
 
   def condition_update_line(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -285,7 +282,7 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('cancel', condition_not_guest_and_owner_and_checkout),
-      orm.ExecuteActionPermission('complete', condition_checkout),
+      orm.ExecuteActionPermission('complete', condition_complete),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
                                'billing_address', 'shipping_address', 'currency', 'untaxed_amount',
