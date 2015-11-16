@@ -112,15 +112,15 @@
                         return;
                     }
 
-                    console.log(new Date().getTime(), attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue);
-
-                    scope.$apply(function () {
+                    (function () {
                         // Toggle the checkbox value...
                         var viewValue = attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue;
 
                         ngModelCtrl.$setViewValue(viewValue, ev && ev.type);
                         ngModelCtrl.$render();
-                    });
+                    }());
+
+                    scope.$digest();
                 }
 
                 function render() {

@@ -344,7 +344,9 @@
                         model = models[config.kind],
                         search = {},
                         args,
-                        opts = {},
+                        opts = {
+                            activitySpinner: true
+                        },
                         override = config.ui.specifics.override || {},
                         repackMemory = function () {
                             config.ui.specifics._mapEntities = {};

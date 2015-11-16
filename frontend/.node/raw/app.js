@@ -1976,15 +1976,15 @@ $(function () {
                         return;
                     }
 
-                    console.log(new Date().getTime(), attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue);
-
-                    scope.$apply(function () {
+                    (function () {
                         // Toggle the checkbox value...
                         var viewValue = attr.ngChecked ? attr.checked : !ngModelCtrl.$viewValue;
 
                         ngModelCtrl.$setViewValue(viewValue, ev && ev.type);
                         ngModelCtrl.$render();
-                    });
+                    }());
+
+                    scope.$digest();
                 }
 
                 function render() {
@@ -10965,7 +10965,9 @@ function msieversion() {
                         model = models[config.kind],
                         search = {},
                         args,
-                        opts = {},
+                        opts = {
+                            activitySpinner: true
+                        },
                         override = config.ui.specifics.override || {},
                         repackMemory = function () {
                             config.ui.specifics._mapEntities = {};
