@@ -2215,8 +2215,7 @@ function msieversion() {
       _mouseInit = mouseProto._mouseInit,
       _mouseDestroy = mouseProto._mouseDestroy,
       startX, startY,
-      touchHandled,
-      touchMoved;
+      touchHandled;
 
   /**
    * Simulate a mouse event based on a corresponding touch event
@@ -2285,8 +2284,10 @@ function msieversion() {
     // Set the flag to prevent other widgets from inheriting the touch event
     touchHandled = true;
 
+    self._startedMove = event.timeStamp;
+
     // Track movement to determine if interaction was a click
-    touchMoved = false;
+    self._touchMoved = false;
 
     // Track starting event
     startX = event.originalEvent.touches[0].screenX;
@@ -2308,6 +2309,8 @@ function msieversion() {
    */
   mouseProto._touchMove = function (event) {
 
+    var self = this;
+
     // Ignore event if not handled
     if (!touchHandled) {
       return;
@@ -2318,12 +2321,12 @@ function msieversion() {
         endY = event.originalEvent.touches[0].screenY;
 
     if (startX === endX && startY === endY) {
-      touchMoved = false;
+      self._touchMoved = false;
       return;
     }
-
+ 
     // Interaction was not a click
-    touchMoved = true;
+    self._touchMoved = true;
 
     // Simulate the mousemove event
     simulateMouseEvent(event, 'mousemove');
@@ -2335,7 +2338,7 @@ function msieversion() {
    */
   mouseProto._touchEnd = function (event) {
 
-    var theEvent;
+    var theEvent, self = this;
 
     // Ignore event if not handled
     if (!touchHandled) {
@@ -2348,12 +2351,16 @@ function msieversion() {
     // Simulate the mouseout event
     theEvent = simulateMouseEvent(event, 'mouseout') || event;
 
-    // If the touch interaction did not move, it should trigger a click
-    if (!this._touchMoved || !(this._mouseDistanceMet(theEvent) && this._mouseDelayMet(theEvent))) {
+    var timeMoving = event.timeStamp - self._startedMove;
+    console.log(timeMoving, self._touchMoved, (self._mouseDistanceMet(theEvent) && self._mouseDelayMet(theEvent)));
+    // If the touch interaction did not move, it should trigger a click timeMoving < 500 &&
+    if (!self._touchMoved || (!(self._mouseDistanceMet(theEvent) && self._mouseDelayMet(theEvent)))) {
 
       // Simulate the click event
       simulateMouseEvent(event, 'click');
     }
+
+    self._touchMoved = false;
 
     // Unset the flag to allow other widgets to inherit the touch event
     touchHandled = false;
@@ -2390,6 +2397,8 @@ function msieversion() {
   mouseProto._mouseDestroy = function () {
     
     var self = this;
+
+    self._touchMoved = false;
 
     // Delegate the touch handlers to the widget's element
     self.element.unbind({
@@ -18812,6 +18821,13 @@ function msieversion() {
                                                 modals.alert('howToDropPricetag');
                                             };
 
+                                            $scope.droppableOnStart = function ($event) {
+                                                if ($scope.container.form.$dirty) {
+                                                    $event.preventDefault();
+                                                    snackbar.showK('saveChangesFirst');
+                                                }
+                                            };
+
                                             $scope.createProduct = function (image, config, target) {
                                                 var ii = $scope.args._images.indexOf(image),
                                                     newPricetag = {
@@ -18844,6 +18860,14 @@ function msieversion() {
                                             };
 
                                             $.extend($scope.fieldProduct.ui, {
+                                                init: function (field) {
+                                                    field.config.ui.specifics.remove = function (product, close) {
+                                                        // removing the actual product removes the pricetag actually
+                                                        $scope.pricetag._state = 'deleted';
+                                                        $scope.formSetDirty();
+                                                        close();
+                                                    };
+                                                },
                                                 args: 'pricetag._product',
                                                 parentArgs: 'pricetag',
                                                 path: ['_images', 'pricetags', '_product'],

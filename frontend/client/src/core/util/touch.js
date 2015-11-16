@@ -22,8 +22,7 @@
       _mouseInit = mouseProto._mouseInit,
       _mouseDestroy = mouseProto._mouseDestroy,
       startX, startY,
-      touchHandled,
-      touchMoved;
+      touchHandled;
 
   /**
    * Simulate a mouse event based on a corresponding touch event
@@ -92,8 +91,10 @@
     // Set the flag to prevent other widgets from inheriting the touch event
     touchHandled = true;
 
+    self._startedMove = event.timeStamp;
+
     // Track movement to determine if interaction was a click
-    touchMoved = false;
+    self._touchMoved = false;
 
     // Track starting event
     startX = event.originalEvent.touches[0].screenX;
@@ -115,6 +116,8 @@
    */
   mouseProto._touchMove = function (event) {
 
+    var self = this;
+
     // Ignore event if not handled
     if (!touchHandled) {
       return;
@@ -125,12 +128,12 @@
         endY = event.originalEvent.touches[0].screenY;
 
     if (startX === endX && startY === endY) {
-      touchMoved = false;
+      self._touchMoved = false;
       return;
     }
-
+ 
     // Interaction was not a click
-    touchMoved = true;
+    self._touchMoved = true;
 
     // Simulate the mousemove event
     simulateMouseEvent(event, 'mousemove');
@@ -142,7 +145,7 @@
    */
   mouseProto._touchEnd = function (event) {
 
-    var theEvent;
+    var theEvent, self = this;
 
     // Ignore event if not handled
     if (!touchHandled) {
@@ -155,12 +158,16 @@
     // Simulate the mouseout event
     theEvent = simulateMouseEvent(event, 'mouseout') || event;
 
-    // If the touch interaction did not move, it should trigger a click
-    if (!this._touchMoved || !(this._mouseDistanceMet(theEvent) && this._mouseDelayMet(theEvent))) {
+    var timeMoving = event.timeStamp - self._startedMove;
+    console.log(timeMoving, self._touchMoved, (self._mouseDistanceMet(theEvent) && self._mouseDelayMet(theEvent)));
+    // If the touch interaction did not move, it should trigger a click timeMoving < 500 &&
+    if (!self._touchMoved || (!(self._mouseDistanceMet(theEvent) && self._mouseDelayMet(theEvent)))) {
 
       // Simulate the click event
       simulateMouseEvent(event, 'click');
     }
+
+    self._touchMoved = false;
 
     // Unset the flag to allow other widgets to inherit the touch event
     touchHandled = false;
@@ -197,6 +204,8 @@
   mouseProto._mouseDestroy = function () {
     
     var self = this;
+
+    self._touchMoved = false;
 
     // Delegate the touch handlers to the widget's element
     self.element.unbind({

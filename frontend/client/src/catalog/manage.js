@@ -566,6 +566,13 @@
                                                 modals.alert('howToDropPricetag');
                                             };
 
+                                            $scope.droppableOnStart = function ($event) {
+                                                if ($scope.container.form.$dirty) {
+                                                    $event.preventDefault();
+                                                    snackbar.showK('saveChangesFirst');
+                                                }
+                                            };
+
                                             $scope.createProduct = function (image, config, target) {
                                                 var ii = $scope.args._images.indexOf(image),
                                                     newPricetag = {
@@ -598,6 +605,14 @@
                                             };
 
                                             $.extend($scope.fieldProduct.ui, {
+                                                init: function (field) {
+                                                    field.config.ui.specifics.remove = function (product, close) {
+                                                        // removing the actual product removes the pricetag actually
+                                                        $scope.pricetag._state = 'deleted';
+                                                        $scope.formSetDirty();
+                                                        close();
+                                                    };
+                                                },
                                                 args: 'pricetag._product',
                                                 parentArgs: 'pricetag',
                                                 path: ['_images', 'pricetags', '_product'],
