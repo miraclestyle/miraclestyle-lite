@@ -386,7 +386,7 @@ class OrderProcessPayment(orm.BaseModel):
                             headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
       result_content = result.content
       if result_content != 'VERIFIED':
-        tools.log.error('Paypal ipn message not valid ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
+        tools.log.error('Paypal ipn message not valid ipn: %s, content: %s, ip: %s' % (request['body'], result_content, ip_address))
       else:
         valid = True
     except Exception as e:
