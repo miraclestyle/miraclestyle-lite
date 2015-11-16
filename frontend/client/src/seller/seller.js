@@ -317,6 +317,7 @@
                                 start: function (e, ui) {
                                     info.scope.$broadcast('itemOrderStarted');
                                 },
+                                distance: 6,
                                 axis: false,
                                 containment: false,
                                 whatSortMeans: function () {

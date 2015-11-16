@@ -306,7 +306,7 @@
 
                                             $scope.draggableOptions = {
                                                 containment: '.image-slider-outer',
-                                                distance: 10
+                                                distance: 6
                                             };
 
                                             $scope.onStop = function (event, ui, image, pricetag) {

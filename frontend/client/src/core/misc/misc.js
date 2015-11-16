@@ -283,6 +283,7 @@
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.draggableClick),
                         click = function (event, tap) {
+                            console.trace('draggableClick', event);
                             if (element.hasClass('dragged') && !tap) {
                                 element.removeClass('dragged');
                                 return;

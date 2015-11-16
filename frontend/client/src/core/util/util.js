@@ -902,7 +902,7 @@
           };
 
           if (self.isHijackingClicks) {
-            var maxClickDistance = 10;
+            var maxClickDistance = 8;
             self.handler('click', {
               options: {
                 maxDistance: maxClickDistance
@@ -949,7 +949,7 @@
 
           function checkDistanceAndEmit(eventName) {
             return function(ev, pointer) {
-              if (pointer.distance < this.state.options.maxDistance) {
+              if (pointer.distance < this.state.options.maxDistance && !ev.jqueryui) {
                 this.dispatchEvent(ev, eventName, pointer);
               }
             };
@@ -983,6 +983,13 @@
 
             return self;
           }
+          if (!window.touchHelpers) {
+            window.touchHelpers = {};
+          }
+          window.touchHelpers.getEventPoint = getEventPoint;
+          window.touchHelpers.updatePointerState = updatePointerState;
+          window.touchHelpers.makeStartPointer = makeStartPointer;
+          window.touchHelpers.typesMatch = typesMatch;
 
           /*
            * Register handlers. These listen to touch/start/move events, interpret them,
@@ -1244,6 +1251,7 @@
             eventObj.$material = true;
             eventObj.pointer = eventPointer;
             eventObj.srcEvent = srcEvent;
+            eventObj.jqueryui = srcEvent.jqueryui;
 
             angular.extend(eventObj, {
               clientX: eventPointer.x,
@@ -1286,6 +1294,7 @@
             eventObj.$material = true;
             eventObj.pointer = eventPointer;
             eventObj.srcEvent = srcEvent;
+            eventObj.jqueryui = srcEvent.jqueryui;
             eventPointer.target.dispatchEvent(eventObj);
           }
 
@@ -1320,6 +1329,8 @@
             document.addEventListener('mousedown', mouseInputHijacker, true);
             document.addEventListener('focus'    , mouseInputHijacker, true);
 
+            console.log('clickHijacker');
+
             isInitialized = true;
           }
 
@@ -1334,7 +1345,7 @@
 
           function clickHijacker(ev) {
             var isKeyClick = ev.clientX === 0 && ev.clientY === 0;
-            if (!isKeyClick && !ev.$material && !ev.isIonicTap
+            if (!isKeyClick && !ev.$material && !ev.isIonicTap && !ev.jqueryui
               && !isInputEventFromLabelClick(ev)) {
               ev.preventDefault();
               ev.stopPropagation();

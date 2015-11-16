@@ -2215,7 +2215,13 @@ function msieversion() {
       _mouseInit = mouseProto._mouseInit,
       _mouseDestroy = mouseProto._mouseDestroy,
       startX, startY,
-      touchHandled;
+      touchHandled,
+      pointer,
+      lastPointer,
+      getEventPoint,
+      updatePointerState,
+      makeStartPointer,
+      typesMatch;
 
   /**
    * Simulate a mouse event based on a corresponding touch event
@@ -2252,11 +2258,9 @@ function msieversion() {
       0,                // button                     
       null              // relatedTarget              
     );
-
+    simulatedEvent.jqueryui = true;
     // Dispatch the simulated event to the target element
-    event.target.dispatchEvent(simulatedEvent);
     var target = event.target;
-
     // Dispatch the simulated event to the target element
     if (simulatedType === 'mousemove') {
       // Special handling for mouse move: fire on element at the current location instead:
@@ -2265,14 +2269,24 @@ function msieversion() {
           target = elementAtPoint;
       }
     }
+
     target.dispatchEvent(simulatedEvent);
   }
+
+  mouseProto.state = {};
 
   /**
    * Handle the jQuery UI widget's touchstart events
    * @param {Object} event The widget element's touchstart event
    */
   mouseProto._touchStart = function (event) {
+
+    if (!getEventPoint) {
+      getEventPoint = window.touchHelpers.getEventPoint;
+      updatePointerState = window.touchHelpers.updatePointerState;
+      makeStartPointer = window.touchHelpers.makeStartPointer;
+      typesMatch = window.touchHelpers.typesMatch;
+    }
 
     var self = this;
 
@@ -2301,6 +2315,27 @@ function msieversion() {
 
     // Simulate the mousedown event
     simulateMouseEvent(event, 'mousedown');
+
+    if (pointer || self.state.isRunning) {
+      return;
+    }
+
+
+    self.state.isRunning = true;
+
+    var now = +Date.now();
+
+    // iOS & old android bug: after a touch event, a click event is sent 350 ms later.
+    // If <400ms have passed, don't allow an event of a different type than the previous event
+    if (lastPointer && !typesMatch(event, lastPointer) && (now - lastPointer.endTime < 1500)) {
+      return;
+    }
+
+    pointer = makeStartPointer(event);
+  };
+
+  mouseProto._touchDistanceMet = function (pointer) {
+    return pointer.distance >= this.options.distance;
   };
 
   /**
@@ -2310,6 +2345,10 @@ function msieversion() {
   mouseProto._touchMove = function (event) {
 
     var self = this;
+
+    if (!(!pointer || !typesMatch(event, pointer))) {
+      updatePointerState(event, pointer);
+    }
 
     // Ignore event if not handled
     if (!touchHandled) {
@@ -2338,10 +2377,18 @@ function msieversion() {
    */
   mouseProto._touchEnd = function (event) {
 
-    var theEvent, self = this;
+    var self = this;
+
+    if (!(!pointer || !typesMatch(event, pointer))) {
+        updatePointerState(event, pointer);
+        pointer.endTime = +Date.now();
+    }
+
 
     // Ignore event if not handled
     if (!touchHandled) {
+      lastPointer = pointer;
+      pointer = null;
       return;
     }
 
@@ -2349,13 +2396,9 @@ function msieversion() {
     simulateMouseEvent(event, 'mouseup');
 
     // Simulate the mouseout event
-    theEvent = simulateMouseEvent(event, 'mouseout') || event;
+    simulateMouseEvent(event, 'mouseout') || event;
 
-    var timeMoving = event.timeStamp - self._startedMove;
-    console.log(timeMoving, self._touchMoved, (self._mouseDistanceMet(theEvent) && self._mouseDelayMet(theEvent)));
-    // If the touch interaction did not move, it should trigger a click timeMoving < 500 &&
-    if (!self._touchMoved || (!(self._mouseDistanceMet(theEvent) && self._mouseDelayMet(theEvent)))) {
-
+    if (!self._touchMoved || !self._touchDistanceMet(pointer) && self.state.isRunning) {
       // Simulate the click event
       simulateMouseEvent(event, 'click');
     }
@@ -2364,6 +2407,11 @@ function msieversion() {
 
     // Unset the flag to allow other widgets to inherit the touch event
     touchHandled = false;
+
+    lastPointer = pointer;
+    pointer = null;
+
+    self.state.isRunning = false;
   };
 
   /**
@@ -3315,7 +3363,7 @@ function msieversion() {
           };
 
           if (self.isHijackingClicks) {
-            var maxClickDistance = 10;
+            var maxClickDistance = 8;
             self.handler('click', {
               options: {
                 maxDistance: maxClickDistance
@@ -3362,7 +3410,7 @@ function msieversion() {
 
           function checkDistanceAndEmit(eventName) {
             return function(ev, pointer) {
-              if (pointer.distance < this.state.options.maxDistance) {
+              if (pointer.distance < this.state.options.maxDistance && !ev.jqueryui) {
                 this.dispatchEvent(ev, eventName, pointer);
               }
             };
@@ -3396,6 +3444,13 @@ function msieversion() {
 
             return self;
           }
+          if (!window.touchHelpers) {
+            window.touchHelpers = {};
+          }
+          window.touchHelpers.getEventPoint = getEventPoint;
+          window.touchHelpers.updatePointerState = updatePointerState;
+          window.touchHelpers.makeStartPointer = makeStartPointer;
+          window.touchHelpers.typesMatch = typesMatch;
 
           /*
            * Register handlers. These listen to touch/start/move events, interpret them,
@@ -3657,6 +3712,7 @@ function msieversion() {
             eventObj.$material = true;
             eventObj.pointer = eventPointer;
             eventObj.srcEvent = srcEvent;
+            eventObj.jqueryui = srcEvent.jqueryui;
 
             angular.extend(eventObj, {
               clientX: eventPointer.x,
@@ -3699,6 +3755,7 @@ function msieversion() {
             eventObj.$material = true;
             eventObj.pointer = eventPointer;
             eventObj.srcEvent = srcEvent;
+            eventObj.jqueryui = srcEvent.jqueryui;
             eventPointer.target.dispatchEvent(eventObj);
           }
 
@@ -3733,6 +3790,8 @@ function msieversion() {
             document.addEventListener('mousedown', mouseInputHijacker, true);
             document.addEventListener('focus'    , mouseInputHijacker, true);
 
+            console.log('clickHijacker');
+
             isInitialized = true;
           }
 
@@ -3747,7 +3806,7 @@ function msieversion() {
 
           function clickHijacker(ev) {
             var isKeyClick = ev.clientX === 0 && ev.clientY === 0;
-            if (!isKeyClick && !ev.$material && !ev.isIonicTap
+            if (!isKeyClick && !ev.$material && !ev.isIonicTap && !ev.jqueryui
               && !isInputEventFromLabelClick(ev)) {
               ev.preventDefault();
               ev.stopPropagation();
@@ -11410,6 +11469,7 @@ function msieversion() {
                             info.scope.$broadcast('itemOrderStarted');
                         },
                         axis: false,
+                        distance: 6,
                         containment: false,
                         whatSortMeans: function () {
                             modals.alert('howToSort');
@@ -12777,6 +12837,7 @@ function msieversion() {
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.draggableClick),
                         click = function (event, tap) {
+                            console.trace('draggableClick', event);
                             if (element.hasClass('dragged') && !tap) {
                                 element.removeClass('dragged');
                                 return;
@@ -18563,7 +18624,7 @@ function msieversion() {
 
                                             $scope.draggableOptions = {
                                                 containment: '.image-slider-outer',
-                                                distance: 10
+                                                distance: 6
                                             };
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
@@ -21478,6 +21539,7 @@ function msieversion() {
                                 start: function (e, ui) {
                                     info.scope.$broadcast('itemOrderStarted');
                                 },
+                                distance: 6,
                                 axis: false,
                                 containment: false,
                                 whatSortMeans: function () {

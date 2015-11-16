@@ -176,6 +176,7 @@
                             info.scope.$broadcast('itemOrderStarted');
                         },
                         axis: false,
+                        distance: 6,
                         containment: false,
                         whatSortMeans: function () {
                             modals.alert('howToSort');
