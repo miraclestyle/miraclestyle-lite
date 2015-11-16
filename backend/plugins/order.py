@@ -390,7 +390,7 @@ class OrderProcessPayment(orm.BaseModel):
       else:
         valid = True
     except Exception as e:
-      tools.log.error('Paypal unreachable with error %s - ipn: %s, content: %s, ip: %s' % (e, ipn, result_content, ip_address))
+      tools.log.error('%s - ipn: %s, content: %s, ip: %s' % (e, ipn, result_content, ip_address))
     if not valid:
       raise orm.TerminateAction('invalid_ipn')
     if 'custom' not in ipn:
