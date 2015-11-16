@@ -380,8 +380,8 @@ class OrderProcessPayment(orm.BaseModel):
     result_content = None
     valid = False
     try:
-      result = urlfetch.fetch(url='https://www.sandbox.paypalll.com/cgi-bin/webscr',
-                            payload='cmd=_notify-validate&%s' % request['body'], #'cmd=_notify-validate&mc_gross=19.95',
+      result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
+                            payload='cmd=_notify-validate&mc_gross=19.95', #'cmd=_notify-validate&%s' % request['body'],
                             method=urlfetch.POST,
                             headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
       result_content = result.content
