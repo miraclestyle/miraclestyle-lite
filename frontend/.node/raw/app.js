@@ -2167,7 +2167,31 @@ $(function () {
     // Server-side export
     if (typeof module !== 'undefined') module.exports = demo;
 }());
-/*!
+function msieversion() {
+   var ua = window.navigator.userAgent;
+
+    var msie = ua.indexOf('MSIE ');
+    if (msie > 0) {
+        // IE 10 or older => return version number
+        return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+    }
+
+    var trident = ua.indexOf('Trident/');
+    if (trident > 0) {
+        // IE 11 => return version number
+        var rv = ua.indexOf('rv:');
+        return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+    }
+
+    var edge = ua.indexOf('Edge/');
+    if (edge > 0) {
+       // IE 12 => return version number
+       return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+    }
+
+    // other browser
+    return false;
+}/*!
  * jQuery UI Touch Punch 0.2.3
  *
  * Copyright 2011–2014, Dave Furfero
@@ -2352,7 +2376,7 @@ $(function () {
       touchend: $.proxy(self, '_touchEnd')
     });
 
-  if($.browser.msie){
+  if(msieversion()){
     self.element.css('-ms-touch-action', 'none'); //This will be required only in case of the IE
   }
 
@@ -18506,7 +18530,9 @@ $(function () {
                                                 });
                                             };
 
-                                            imagesReader.load();
+                                            $scope.$on('modalOpened', function () {
+                                                imagesReader.load();
+                                            });
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
                                                 $(ui.helper).addClass('dragged');
@@ -18530,7 +18556,6 @@ $(function () {
                                             };
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
-                                                console.log(ui);
                                                 setTimeout(function () {
                                                     $(ui.helper).removeClass('dragged');
                                                     $(ui.helper).find('a').removeClass('dragged');

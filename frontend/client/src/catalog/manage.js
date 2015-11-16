@@ -284,7 +284,9 @@
                                                 });
                                             };
 
-                                            imagesReader.load();
+                                            $scope.$on('modalOpened', function () {
+                                                imagesReader.load();
+                                            });
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
                                                 $(ui.helper).addClass('dragged');
@@ -308,7 +310,6 @@
                                             };
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
-                                                console.log(ui);
                                                 setTimeout(function () {
                                                     $(ui.helper).removeClass('dragged');
                                                     $(ui.helper).find('a').removeClass('dragged');

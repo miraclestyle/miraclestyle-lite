@@ -1197,6 +1197,9 @@ span.first.month-part {
 .time-inputs .choicer .time-control button .md-icon {
   display: block; }
 
+.datepicker-pop .modal-dialog {
+  min-width: 300px; }
+
 .ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
   border-color: rgba(255, 0, 0, 0.87); }
 

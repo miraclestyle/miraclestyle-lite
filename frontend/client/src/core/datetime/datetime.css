@@ -148,3 +148,7 @@ span.first.month-part {
 .time-inputs .choicer .time-control button .md-icon {
     display:block;
 }
+
+.datepicker-pop .modal-dialog {
+    min-width: 300px;
+}

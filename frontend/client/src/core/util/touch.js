@@ -183,7 +183,7 @@
       touchend: $.proxy(self, '_touchEnd')
     });
 
-  if($.browser.msie){
+  if(msieversion()){
     self.element.css('-ms-touch-action', 'none'); //This will be required only in case of the IE
   }
 
