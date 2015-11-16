@@ -86,7 +86,8 @@ class Country(orm.BaseModel):
                       RulePrepare(cfg={'path': '_entities'}),
                       Set(cfg={'d': {'output.entities': '_entities',
                                      'output.cursor': '_cursor',
-                                     'output.more': '_more'}})
+                                     'output.more': '_more'}}),
+                      CallbackExec()
                   ]
               )
           ]
@@ -150,7 +151,8 @@ class CountrySubdivision(orm.BaseModel):
                       RulePrepare(cfg={'path': '_entities'}),
                       Set(cfg={'d': {'output.entities': '_entities',
                                      'output.cursor': '_cursor',
-                                     'output.more': '_more'}})
+                                     'output.more': '_more'}}),
+                      CallbackExec()
                   ]
               )
           ]
