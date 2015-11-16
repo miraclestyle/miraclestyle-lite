@@ -1870,7 +1870,7 @@ $(function () {
         ])
         .directive('mdCheckbox', MdCheckboxDirective);
 
-    function MdCheckboxDirective(inputDirective, $mdAria, $mdConstant, $mdUtil, $timeout) {
+    function MdCheckboxDirective(inputDirective, $mdAria, $mdConstant, $mdUtil, $timeout, $animate) {
         inputDirective = inputDirective[0];
         var CHECKED_CSS = 'md-checked';
 
@@ -1989,15 +1989,15 @@ $(function () {
 
                 function render() {
                     if (ngModelCtrl.$viewValue) {
-                        element.addClass(CHECKED_CSS);
+                        $animate.addClass(element, CHECKED_CSS);
                     } else {
-                        element.removeClass(CHECKED_CSS);
+                        $animate.removeClass(element, CHECKED_CSS);
                     }
                 }
             };
         }
     }
-    MdCheckboxDirective.$inject = ["inputDirective", "$mdAria", "$mdConstant", "$mdUtil", "$timeout"];
+    MdCheckboxDirective.$inject = ["inputDirective", "$mdAria", "$mdConstant", "$mdUtil", "$timeout", "$animate"];
 
 })();
 (function () {
