@@ -403,7 +403,8 @@ class BaseCache(orm.BaseModel):
     if not isinstance(group_id, (list, tuple)) and group_id is not None:
       group_id = [group_id]
     if group_id is not None:
-      for i, g in enumerate(group_id[:]):
+      group_id = group_id[:]
+      for i, g in enumerate(group_id):
         if callable(g):
           thing = g(context)
           if thing is not None:
