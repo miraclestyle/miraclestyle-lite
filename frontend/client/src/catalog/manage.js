@@ -308,6 +308,7 @@
                                             };
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
+                                                console.log(ui);
                                                 setTimeout(function () {
                                                     $(ui.helper).removeClass('dragged');
                                                     $(ui.helper).find('a').removeClass('dragged');
