@@ -169,7 +169,8 @@ class Account(orm.BaseExpando):
               orm.PluginGroup(
                   transactional=True,
                   plugins=[
-                      AccountLoginWrite()
+                      AccountLoginWrite(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
           ]

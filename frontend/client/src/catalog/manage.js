@@ -547,8 +547,7 @@
                                                         recomputeRealPath($scope.fieldProduct);
                                                         return {
                                                             arg: product,
-                                                            defaultArgs: undefined,
-                                                            modalSettings: $event
+                                                            defaultArgs: undefined
                                                         };
 
                                                     })['finally'](function () {
@@ -556,7 +555,9 @@
                                                     });
                                                 };
 
-                                                $scope.fieldProduct.ui.specifics.manage(open, undefined, $event);
+                                                $scope.fieldProduct.ui.specifics.manage(open, undefined, {
+                                                    target: (!$($event.target).hasClass('catalog-pricetag') ? $($event.target).parents('.catalog-pricetag:first').get(0) : $event.target)
+                                                });
                                             };
 
                                             $scope.howToDrag = function ($event) {
