@@ -60,6 +60,8 @@
 
     // Dispatch the simulated event to the target element
     event.target.dispatchEvent(simulatedEvent);
+
+    return simulatedEvent;
   }
 
   /**
@@ -117,6 +119,8 @@
    */
   mouseProto._touchEnd = function (event) {
 
+    var theEvent;
+
     // Ignore event if not handled
     if (!touchHandled) {
       return;
@@ -126,10 +130,10 @@
     simulateMouseEvent(event, 'mouseup');
 
     // Simulate the mouseout event
-    simulateMouseEvent(event, 'mouseout');
+    theEvent = simulateMouseEvent(event, 'mouseout') || event;
 
     // If the touch interaction did not move, it should trigger a click
-    if (!this._touchMoved) {
+    if (!this._touchMoved || !(this._mouseDistanceMet(theEvent) && this._mouseDelayMet(theEvent))) {
 
       // Simulate the click event
       simulateMouseEvent(event, 'click');

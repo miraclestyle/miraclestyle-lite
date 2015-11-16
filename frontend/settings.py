@@ -16,7 +16,7 @@ SITE_META_TITLE = 'Miraclestyle.com'
 SITE_META_DESCRIPTION = 'Description'
 SITE_META_KEYWORDS = 'miraclestyle,thing'
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
-DEBUG_HOST_NAMES = ['localhost:9982', 'universal-trail-608.appspot.com']
+DEBUG_HOST_NAMES = ['localhost:9982', '192.168.0.100:9982', '0.0.0.0:9982', 'universal-trail-608.appspot.com']
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 DEBUG = False
 if HOST_NAME in DEBUG_HOST_NAMES:
@@ -75,7 +75,6 @@ def _angular_vendor_js(debug):
       env('vendor/jquery-ui/ui/droppable.js', 'vendor/jquery-ui/ui/minified/droppable.min.js'),
       env('vendor/showdown/src/showdown.js', 'vendor/showdown/compressed/Showdown.min.js'),
       env('vendor/jquery.scrollTo/jquery.scrollTo.js', 'vendor/jquery.scrollTo/jquery.scrollTo.min.js'),
-      env('vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.js', 'vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js'),
       env('vendor/jquery-cookie/jquery.cookie.js'),
       env('vendor/underscore/underscore.js', 'vendor/underscore/underscore-min.js'),
       env('vendor/underscore.string/lib/underscore.string.js', 'vendor/underscore.string/dist/underscore.string.min.js'),
