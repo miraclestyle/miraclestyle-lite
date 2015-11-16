@@ -1448,5 +1448,36 @@
                     });
                 }
             };
-        }]);
+        }]).directive('nonBlockingNgClass', ng(function ($animate, $timeout, $$rAF) {
+            return {
+                link: function (scope, element, attrs) {
+                    var changed = {},
+                        now = $.now();
+                    scope.$watch(function () {
+                        var run = false,
+                            parser = scope.$eval(attrs.nonBlockingNgClass);
+                        if (changed) {
+                            angular.forEach(parser, function (value, key) {
+                                if (changed[key] !== value && !run) {
+                                    run = $.now();
+                                }
+                                changed[key] = value;
+                            });
+                        }
+                        return (run || now);
+                    }, function (neww, old) {
+                        console.log(neww, old);
+                        if (neww !== old) {
+                            angular.forEach(scope.$eval(attrs.nonBlockingNgClass), function (value, key) {
+                                $timeout(function () {
+                                    $$rAF(function () {
+                                        element[value ? 'addClass' : 'removeClass'](key);
+                                    });
+                                }, 3000, false);
+                            });
+                        }
+                    });
+                }
+            };
+        }));
 }());

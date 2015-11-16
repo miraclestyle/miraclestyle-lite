@@ -160,7 +160,7 @@
     <script type="text/javascript" src="/_ah/channel/jsapi"></script>
     {% if settings.DEBUG %}
         {% for js in settings.ANGULAR_JAVASCRIPT_PATHS %}
-        <script type="text/javascript" src="{{static_dir('%s' % js)}}"></script>
+        <script type="text/javascript" src="{{static_dir('%s' % js, True)}}"></script>
         {% endfor %}
         <script type="text/javascript" src="/build/dynamics.js"></script>
     {% else %}

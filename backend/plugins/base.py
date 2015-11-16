@@ -487,6 +487,7 @@ class BaseCache(orm.BaseModel):
     else:
       tools.mem_delete_multi([build_key(driver, key, None) for driver in cache_drivers])
       if group_id:
+        tools.log.info('Delete cache for group %s' % group_id)
         keys = []
         group_keys = [CacheGroup.build_key(id) for id in group_id]
         groups = orm.get_multi(group_keys) # this can cause operating on multiple groups error
