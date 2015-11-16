@@ -379,7 +379,7 @@ class OrderProcessPayment(orm.BaseModel):
     ip_address = os.environ.get('REMOTE_ADDR')
     result_content = None
     valid = False
-    tools.log.error('Log ipn: %s, ip: %s' % (ipn, ip_address))
+    tools.log.error('Log ipn: %s, ip: %s' % (request['body'], ip_address))
     try:
       result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
                             payload='cmd=_notify-validate&%s' % request['body'],
