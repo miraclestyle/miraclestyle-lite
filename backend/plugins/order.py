@@ -380,13 +380,13 @@ class OrderProcessPayment(orm.BaseModel):
     result_content = None
     valid = False
     try:
-      result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
-                            payload='cmd=_notify-validate&mc_gross=19.95', #'cmd=_notify-validate&%s' % request['body'],
+      result = urlfetch.fetch(url='https://www.sandbox.paypalll.com/cgi-bin/webscr',
+                            payload='cmd=_notify-validate&%s' % request['body'], #'cmd=_notify-validate&mc_gross=19.95',
                             method=urlfetch.POST,
                             headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
       result_content = result.content
       if result_content != 'VERIFIED':
-        tools.log.error('Paypal ipn message not valid ipn: %s, content: %s, ip: %s' % (request['body'], result_content, ip_address))
+        tools.log.error('Paypal ipn message not valid ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
       else:
         valid = True
     except Exception as e:
