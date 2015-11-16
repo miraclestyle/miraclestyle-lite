@@ -429,6 +429,11 @@
                                             };
 
                                             $scope.onDrop = function (event, ui, image) {
+                                                if ($scope.container.form.$dirty) {
+                                                    event.preventDefault();
+                                                    snackbar.showK('saveChangesFirst');
+                                                    return;
+                                                }
                                                 var target_drop = $(event.target),
                                                     posi = target_drop.offset(),
                                                     posi2 = ui.offset,
@@ -564,13 +569,6 @@
 
                                             $scope.howToDrag = function ($event) {
                                                 modals.alert('howToDropPricetag');
-                                            };
-
-                                            $scope.droppableOnStart = function ($event) {
-                                                if ($scope.container.form.$dirty) {
-                                                    $event.preventDefault();
-                                                    snackbar.showK('saveChangesFirst');
-                                                }
                                             };
 
                                             $scope.createProduct = function (image, config, target) {

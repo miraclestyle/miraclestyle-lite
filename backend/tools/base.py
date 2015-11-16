@@ -192,6 +192,8 @@ JINJA_ENV.filters['nl2br'] = nl2br
 JINJA_ENV.globals['absolute_url'] = absolute_url
 JINJA_ENV.globals['datetime_now'] = lambda: datetime.datetime.now()
 JINJA_ENV.filters['format_date'] = format_date
+JINJA_ENV.globals['is_list'] = lambda x: isinstance(x, (list, tuple))
+JINJA_ENV.globals['is_str'] = lambda x: isinstance(x, basestring)
 
 
 def render_template(string_template, values={}):

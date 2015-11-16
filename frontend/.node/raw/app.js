@@ -12837,7 +12837,6 @@ function msieversion() {
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.draggableClick),
                         click = function (event, tap) {
-                            console.trace('draggableClick', event);
                             if (element.hasClass('dragged') && !tap) {
                                 element.removeClass('dragged');
                                 return;
@@ -18747,6 +18746,11 @@ function msieversion() {
                                             };
 
                                             $scope.onDrop = function (event, ui, image) {
+                                                if ($scope.container.form.$dirty) {
+                                                    event.preventDefault();
+                                                    snackbar.showK('saveChangesFirst');
+                                                    return;
+                                                }
                                                 var target_drop = $(event.target),
                                                     posi = target_drop.offset(),
                                                     posi2 = ui.offset,
@@ -18882,13 +18886,6 @@ function msieversion() {
 
                                             $scope.howToDrag = function ($event) {
                                                 modals.alert('howToDropPricetag');
-                                            };
-
-                                            $scope.droppableOnStart = function ($event) {
-                                                if ($scope.container.form.$dirty) {
-                                                    $event.preventDefault();
-                                                    snackbar.showK('saveChangesFirst');
-                                                }
                                             };
 
                                             $scope.createProduct = function (image, config, target) {
