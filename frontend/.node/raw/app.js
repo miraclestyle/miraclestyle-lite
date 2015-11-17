@@ -708,7 +708,17 @@ $(function () {
 
     });
 }());
-(function () {
+if (window.DEBUG) {
+    function injector(a) {
+        return $(document).injector().get(a);
+    }
+    function $apply() {
+        console.time('$apply');
+        var $rootScope = injector('$rootScope');
+        $rootScope.$apply();
+        console.timeEnd('$apply');
+    }
+}(function () {
     'use strict';
     angular.module('app').factory('errorHandling', ng(function ($modal, snackbar, GLOBAL_CONFIG, modals) {
         var translations = GLOBAL_CONFIG.backendErrorHandling,
