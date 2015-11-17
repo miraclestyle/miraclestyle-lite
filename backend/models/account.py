@@ -399,6 +399,10 @@ class Account(orm.BaseExpando):
     return tools.mem_temp_get('current_request_is_cron')
 
   @property
+  def _is_system(self):
+    return self.key_id == 'system'
+
+  @property
   def _is_guest(self):
     return self.key is None
 
