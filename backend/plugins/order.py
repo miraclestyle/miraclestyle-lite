@@ -574,12 +574,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         # ipn will be called again until it reaches 200 status response code
         # ipn will retry for x amount of times till it gives up
         # so we might as well use `return` statement to exit silently
-    body = 'Paypal Payment action %s' % ipn_payment_status
-    new_order_message = OrderMessage(ipn_txn_id=ipn['txn_id'], action=context.action.key, ancestor=order.key, agent=Account.build_key('system'), body=body, payment_status=ipn_payment_status)
-    new_order_message._clone_properties()
-    new_order_message._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
-    new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
-    order._messages = [new_order_message]
 
     if self.reciever_email.lower() != ipn['receiver_email'].lower():
       mismatches.append('receiver_email')
@@ -650,7 +644,15 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     else:
       # log that there were missmatches, where we should log that?
       context.mismatches = mismatches
-      tools.log.error('Found mismatches: %s ipn: %s order: %s' % (mismatches, ipn, order.key))
+      ipn_payment_status = 'Mismatched'
+      order.payment_status = ipn_payment_status # Here we have to devise a plan how to mark order as mismatched (perhaps via order.state), and use filtering in Admin / Orders to investigate mismatched orders.
+      tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (mismatches, ipn, order.key))
+    body = 'PayPal payment %s' % ipn_payment_status
+    new_order_message = OrderMessage(ipn_txn_id=ipn['txn_id'], action=context.action.key, ancestor=order.key, agent=Account.build_key('system'), body=body, payment_status=ipn_payment_status)
+    new_order_message._clone_properties()
+    new_order_message._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
+    new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
+    order._messages = [new_order_message]
 
 
 class OrderTaxPlugin(orm.BaseModel):
