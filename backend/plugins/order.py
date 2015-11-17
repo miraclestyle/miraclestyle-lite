@@ -650,6 +650,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     else:
       # log that there were missmatches, where we should log that?
       context.mismatches = mismatches
+      order.payment_status = 'Mismatched' # Here we have to devise a plan how to mark order as mismatched (perhaps via order.state), and use filtering in Admin / Orders to investigate mismatched orders.
       tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (mismatches, ipn, order.key))
 
 
