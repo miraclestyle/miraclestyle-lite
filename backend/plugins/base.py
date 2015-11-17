@@ -403,14 +403,15 @@ class BaseCache(orm.BaseModel):
     if not isinstance(group_id, (list, tuple)) and group_id is not None:
       group_id = [group_id]
     if group_id is not None:
-      group_id = group_id[:]
-      for i, g in enumerate(group_id):
+      group_ids = group_id[:]
+      for i, g in enumerate(group_ids):
         if callable(g):
           thing = g(context)
           if thing is not None:
-            group_id[i] = g(context)
+            group_ids[i] = g(context)
           else:
-            group_id.remove(g)
+            group_ids.remove(g)
+      group_id = group_ids
     dcache_driver = self.cfg.get('dcache', [])
     cache_drivers = []
     all_prequesits = ['auth', 'guest', context.account.key_id_str]

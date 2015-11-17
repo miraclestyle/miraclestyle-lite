@@ -95,7 +95,7 @@ class Account(orm.BaseExpando):
   '''
 
   READ_CACHE_POLICY = {'group': lambda context: '11_%s' % context.account.key_id_str, 'cache': ['account']}
-  DELETE_CACHE_POLICY = {'group': ['admin', lambda context: context._account.key_id_str, lambda context: context.account.key_id_str]}
+  DELETE_CACHE_POLICY = {'group': ['admin', lambda context: '11_%s' % context._account.key_id_str, lambda context: '11_%s' % context.account.key_id_str]}
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)

@@ -18516,6 +18516,7 @@ function msieversion() {
                                                 setupCurrentPricetag,
                                                 variantOptions,
                                                 addNewPricetag,
+                                                savefirsttimeout,
                                                 removePricetag,
                                                 getTitle = function () {
                                                     return 'viewProducts';
@@ -18649,6 +18650,17 @@ function msieversion() {
 
                                             $scope.droppableOptions = {
                                                 accept: '.catalog-new-pricetag',
+                                                accept2: function (dom) {
+                                                    clearTimeout(savefirsttimeout);
+                                                    var truth = dom.hasClass('catalog-new-pricetag');
+                                                    if (truth && $scope.container.form.$dirty) {
+                                                        savefirsttimeout = setTimeout(function () {
+                                                            snackbar.showK('saveChangesFirst');
+                                                        }, 600);
+                                                        return false;
+                                                    }
+                                                    return truth;
+                                                },
                                                 tolerance: 'pointer'
                                             };
 
@@ -18656,6 +18668,17 @@ function msieversion() {
                                                 containment: '.image-slider-outer',
                                                 distance: 6
                                             };
+
+                                            $scope.newPricetagDraggableOptions = {revert: function (element) {
+                                                if (!element) {
+                                                    return true;
+                                                }
+                                                var truth = $scope.container.form.$dirty;
+                                                if (truth) {
+                                                    snackbar.showK('saveChangesFirst');
+                                                }
+                                                return truth;
+                                            }, distance: 10, helper: 'clone'};
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
                                                 setTimeout(function () {
@@ -18778,8 +18801,7 @@ function msieversion() {
 
                                             $scope.onDrop = function (event, ui, image) {
                                                 if ($scope.container.form.$dirty) {
-                                                    event.preventDefault();
-                                                    snackbar.showK('saveChangesFirst');
+                                                    //snackbar.showK('saveChangesFirst');
                                                     return;
                                                 }
                                                 var target_drop = $(event.target),
