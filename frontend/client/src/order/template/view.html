@@ -205,6 +205,7 @@
                                 <span ng-if="isBuyer">Buyer</span>
                                 <span ng-if="isSeller">Seller</span>
                                 <span ng-if="message._agent._root_admin && !isYou && !isSeller">Admin</span>
+                                <span ng-if="message._agent._is_system && !isYou && !isSeller && !message._agent._root_admin">System</span>
                             </div>
                         </div>
                     </div>
