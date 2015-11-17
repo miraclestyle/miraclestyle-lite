@@ -195,8 +195,7 @@
                                 <div ng-bind-html="message.body | escape | autobr" class="message-body second"></div>
                                 <div class="message-footer helper">
                                   
-                                  <span ng-if="message._action === 'complete'">Payment completed <span ng-if="!messages.isToday(message)">on</span> <span ng-if="messages.isToday(message)">at</span></span>
-                                  <span ng-if="message._action === 'log_message'">Message left <span ng-if="!messages.isToday(message)">on</span> <span ng-if="messages.isToday(message)">at</span> </span>
+                                  <span>Message left <span ng-if="!messages.isToday(message)">on</span> <span ng-if="messages.isToday(message)">at</span> </span>
                                   <span ng-if="!message._action">Sending message...</span>
                                     <span ng-if="message.created">{{message|output:'created'}}</span>
                                 </div>
