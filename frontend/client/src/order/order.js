@@ -467,6 +467,20 @@
                                             return $mdSidenav($scope.messages.sidebarID);
                                         },
                                         sent: false,
+                                        resendMaybe: function (message) {
+                                            message._failed = false;
+                                            return models['34'].actions.log_message(message, {
+                                                disableUI: false
+                                            }).then(function (response) {
+                                                $scope.messages.forceReflow();
+                                                //$scope.order._messages.push(response.data.entity._messages[0]);
+                                                $.extend(message, response.data.entity._messages[0]);
+                                                locals.reactOnStateChange(response);
+                                                return response;
+                                            }, function () {
+                                                message._failed = true;
+                                            });
+                                        },
                                         send: function (action) {
                                             var copydraft = angular.copy($scope.messages.draft),
                                                 newMessage = {
@@ -482,6 +496,8 @@
                                                 $.extend(newMessage, response.data.entity._messages[0]);
                                                 locals.reactOnStateChange(response);
                                                 return response;
+                                            }, function () {
+                                                newMessage._failed = true;
                                             });
                                         },
                                         forceReflow: function () {

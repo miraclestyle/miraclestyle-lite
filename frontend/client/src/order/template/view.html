@@ -185,7 +185,7 @@
                 <div ng-if="helpers.models.isEntityListEmpty(order._messages)" help-render="GLOBAL_CONFIG.emptyHelp.cartMessages"></div>
                 <div class="messages-list">
                     
-                    <div class="message-row clearfix" ng-repeat="message in order._messages" ng-init="
+                    <div ng-click="messages.resendMaybe(message)" ng-class="{'pointable': message._failed}" class="message-row clearfix" ng-repeat="message in order._messages" ng-init="
                           isYou = !message._agent || message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;
                           isSeller = message._agent.key === order._seller_reference.parent.key && !isYou;
@@ -197,7 +197,8 @@
                                   
                                   <span ng-if="message._action === 'complete'">Payment completed <span ng-if="!messages.isToday(message)">on</span> <span ng-if="messages.isToday(message)">at</span></span>
                                   <span ng-if="message._action === 'log_message'">Message left <span ng-if="!messages.isToday(message)">on</span> <span ng-if="messages.isToday(message)">at</span> </span>
-                                  <span ng-if="!message._action">Sending message...</span>
+                                  <span ng-if="!message._action && !message._failed">Sending message...</span>
+                                  <span ng-if="message._failed">Failed sending... tap to resend</span>
                                     <span ng-if="message.created">{{message|output:'created'}}</span>
                                 </div>
                             </div>
