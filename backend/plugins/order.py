@@ -650,7 +650,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     else:
       # log that there were missmatches, where we should log that?
       context.mismatches = mismatches
-      tools.log.error('Found mismatches: %s ipn: %s order: %s' % (mismatches, ipn, order.key))
+      tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (mismatches, ipn, order.key))
 
 
 class OrderTaxPlugin(orm.BaseModel):
