@@ -302,17 +302,6 @@
 
                                             $scope.droppableOptions = {
                                                 accept: '.catalog-new-pricetag',
-                                                accept2: function (dom) {
-                                                    clearTimeout(savefirsttimeout);
-                                                    var truth = dom.hasClass('catalog-new-pricetag');
-                                                    if (truth && $scope.container.form.$dirty) {
-                                                        savefirsttimeout = setTimeout(function () {
-                                                            snackbar.showK('saveChangesFirst');
-                                                        }, 600);
-                                                        return false;
-                                                    }
-                                                    return truth;
-                                                },
                                                 tolerance: 'pointer'
                                             };
 

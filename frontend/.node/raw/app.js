@@ -14002,7 +14002,7 @@ function msieversion() {
                     });
                 }
             };
-        }]).directive('nonBlockingNgClass', ng(function ($animate, $timeout, $$rAF) {
+        }]).directive('nonBlockingNgClass', ng(function ($animate, $rootScope, $$rAF) {
             return {
                 link: function (scope, element, attrs) {
                     var changed = {},
@@ -14020,14 +14020,13 @@ function msieversion() {
                         }
                         return (run || now);
                     }, function (neww, old) {
-                        console.log(neww, old);
                         if (neww !== old) {
                             angular.forEach(scope.$eval(attrs.nonBlockingNgClass), function (value, key) {
-                                $timeout(function () {
+                                $rootScope.$$postDigest(function () {
                                     $$rAF(function () {
                                         element[value ? 'addClass' : 'removeClass'](key);
                                     });
-                                }, 3000, false);
+                                });
                             });
                         }
                     });
@@ -18650,17 +18649,6 @@ function msieversion() {
 
                                             $scope.droppableOptions = {
                                                 accept: '.catalog-new-pricetag',
-                                                accept2: function (dom) {
-                                                    clearTimeout(savefirsttimeout);
-                                                    var truth = dom.hasClass('catalog-new-pricetag');
-                                                    if (truth && $scope.container.form.$dirty) {
-                                                        savefirsttimeout = setTimeout(function () {
-                                                            snackbar.showK('saveChangesFirst');
-                                                        }, 600);
-                                                        return false;
-                                                    }
-                                                    return truth;
-                                                },
                                                 tolerance: 'pointer'
                                             };
 
