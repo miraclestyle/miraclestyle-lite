@@ -359,8 +359,8 @@ class OrderSetMessage(orm.BaseModel):
     }
     data = {}
     data_config = self.cfg.get('data', {})
-    for k, v in defaults.iteritems():
-      data[k] = tools.get_attr(context, v)
+    for key, value in defaults.iteritems():
+      data[key] = tools.get_attr(context, value)
     for key, value in self.cfg.get('additional', {}).iteritems():
       data[key] = tools.get_attr(context, value)
     later = {}
