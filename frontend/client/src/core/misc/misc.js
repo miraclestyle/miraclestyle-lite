@@ -339,6 +339,7 @@
                         loaded = false,
                         steadyOpts,
                         maybeMore,
+                        startInterval,
                         timeoutid,
                         run;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
@@ -370,12 +371,18 @@
 
 
                         maybeMore = function () {
+                            $timeout.cancel(timeoutid);
                             timeoutid = $timeout(function () {
                                 var listenNode = listen.get(0),
                                     listenScrollHeight = listenNode.scrollHeight,
                                     viewport = $(window).height() - 56,
-                                    maybe = config.reverse ? true : listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false,
+                                    maybe,
                                     promise;
+                                if (config.reverse) {
+                                    maybe = (listenNode ? (listen.scrollTop() < (config.top || 40)) : false);
+                                } else {
+                                    maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
+                                }
                                 if (!listen.length || !listenNode) {
                                     return;
                                 }
@@ -383,10 +390,11 @@
                                     promise = loadMore({}, angular.noop);
                                     if (promise) {
                                         promise.then(function () {
-                                            waitinterval = false;
                                             if (!config.reverse) {
                                                 maybeMore();
                                             }
+                                        })['finally'](function () {
+                                            waitinterval = false;
                                         });
                                     }
                                 } else {
@@ -397,13 +405,16 @@
 
                         };
 
-                        intervalid = setInterval(function () {
-                            if (waitinterval) {
-                                return true;
-                            }
-                            waitinterval = true;
-                            maybeMore();
-                        }, 2000);
+                        startInterval = function () {
+                            clearInterval(intervalid);
+                            intervalid = setInterval(function () {
+                                if (waitinterval) {
+                                    return true;
+                                }
+                                waitinterval = true;
+                                maybeMore();
+                            }, 2000);
+                        };
 
                         loadMore = function (values, done) {
                             if (!config.loader || !angular.isFunction(config.loader.load)) {
@@ -434,7 +445,7 @@
                         steady = new Steady(steadyOpts);
                         if (config.reverse) {
                             steady.addTracker('checkTop', function () {
-                                return listen.scrollTop() < 100;
+                                return listen.scrollTop() < (config.top || 40);
                             });
                             steady.addCondition('checkTop', true);
                         }
@@ -445,7 +456,17 @@
                             $timeout.cancel(timeoutid);
                         });
 
-                        maybeMore();
+                        if (config.watch) {
+                            scope.$watchGroup(angular.isArray(config.watch) ? config.watch : [config.watch], function (neww, old) {
+                                if (JSON.stringify(neww) !== JSON.stringify(old)) {
+                                    maybeMore();
+                                    startInterval();
+                                }
+                            });
+                        } else {
+                            maybeMore();
+                            startInterval();
+                        }
                     };
 
                     scope.$watch(function () {

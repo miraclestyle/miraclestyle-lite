@@ -35,7 +35,7 @@
                     };
 
                     scope.$watchGroup(scope.$eval(attrs.alwaysScrollToBottom), function (neww, old) {
-                        if (neww !== old) {
+                        if (JSON.stringify(neww) !== JSON.stringify(old)) {
                             $timeout(cb, 100, 0);
                         }
                     });
@@ -748,7 +748,9 @@
                                     };
 
 
-                                    $scope.notifyUrl = $state.href('paypal-ipn', {}, {
+                                    $scope.notifyUrl = $state.href('order-notify', {
+                                        method: 'paypal'
+                                    }, {
                                         absolute: true
                                     });
 

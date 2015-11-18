@@ -132,8 +132,8 @@
                 template: '',
                 controller: 'AccountLoginStatusController'
             })
-            .state('paypal-ipn', {
-                url: '/api/order/complete/paypal',
+            .state('order-notify', {
+                url: '/api/order/notify/:method',
                 template: '',
             })
             .state('about', {

@@ -12903,6 +12903,7 @@ function msieversion() {
                         loaded = false,
                         steadyOpts,
                         maybeMore,
+                        startInterval,
                         timeoutid,
                         run;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
@@ -12934,12 +12935,18 @@ function msieversion() {
 
 
                         maybeMore = function () {
+                            $timeout.cancel(timeoutid);
                             timeoutid = $timeout(function () {
                                 var listenNode = listen.get(0),
                                     listenScrollHeight = listenNode.scrollHeight,
                                     viewport = $(window).height() - 56,
-                                    maybe = config.reverse ? true : listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false,
+                                    maybe,
                                     promise;
+                                if (config.reverse) {
+                                    maybe = (listenNode ? (listen.scrollTop() < (config.top || 40)) : false);
+                                } else {
+                                    maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
+                                }
                                 if (!listen.length || !listenNode) {
                                     return;
                                 }
@@ -12947,10 +12954,11 @@ function msieversion() {
                                     promise = loadMore({}, angular.noop);
                                     if (promise) {
                                         promise.then(function () {
-                                            waitinterval = false;
                                             if (!config.reverse) {
                                                 maybeMore();
                                             }
+                                        })['finally'](function () {
+                                            waitinterval = false;
                                         });
                                     }
                                 } else {
@@ -12961,13 +12969,16 @@ function msieversion() {
 
                         };
 
-                        intervalid = setInterval(function () {
-                            if (waitinterval) {
-                                return true;
-                            }
-                            waitinterval = true;
-                            maybeMore();
-                        }, 2000);
+                        startInterval = function () {
+                            clearInterval(intervalid);
+                            intervalid = setInterval(function () {
+                                if (waitinterval) {
+                                    return true;
+                                }
+                                waitinterval = true;
+                                maybeMore();
+                            }, 2000);
+                        };
 
                         loadMore = function (values, done) {
                             if (!config.loader || !angular.isFunction(config.loader.load)) {
@@ -12998,7 +13009,7 @@ function msieversion() {
                         steady = new Steady(steadyOpts);
                         if (config.reverse) {
                             steady.addTracker('checkTop', function () {
-                                return listen.scrollTop() < 100;
+                                return listen.scrollTop() < (config.top || 40);
                             });
                             steady.addCondition('checkTop', true);
                         }
@@ -13009,7 +13020,17 @@ function msieversion() {
                             $timeout.cancel(timeoutid);
                         });
 
-                        maybeMore();
+                        if (config.watch) {
+                            scope.$watchGroup(angular.isArray(config.watch) ? config.watch : [config.watch], function (neww, old) {
+                                if (JSON.stringify(neww) !== JSON.stringify(old)) {
+                                    maybeMore();
+                                    startInterval();
+                                }
+                            });
+                        } else {
+                            maybeMore();
+                            startInterval();
+                        }
                     };
 
                     scope.$watch(function () {
@@ -20541,7 +20562,7 @@ function msieversion() {
                     };
 
                     scope.$watchGroup(scope.$eval(attrs.alwaysScrollToBottom), function (neww, old) {
-                        if (neww !== old) {
+                        if (JSON.stringify(neww) !== JSON.stringify(old)) {
                             $timeout(cb, 100, 0);
                         }
                     });
@@ -21254,7 +21275,9 @@ function msieversion() {
                                     };
 
 
-                                    $scope.notifyUrl = $state.href('paypal-ipn', {}, {
+                                    $scope.notifyUrl = $state.href('order-notify', {
+                                        method: 'paypal'
+                                    }, {
                                         absolute: true
                                     });
 
@@ -22514,8 +22537,8 @@ function msieversion() {
                 template: '',
                 controller: 'AccountLoginStatusController'
             })
-            .state('paypal-ipn', {
-                url: '/api/order/complete/paypal',
+            .state('order-notify', {
+                url: '/api/order/notify/:method',
                 template: '',
             })
             .state('about', {

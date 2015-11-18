@@ -173,7 +173,7 @@
 <md-sidenav ng-if="$state.isCompleted()" md-state-changed="messages.stateChanged" md-swipe-right="messages.close()" layout="column" class="right md-closed" md-component-id="messages.sidebarID">
     <md-content>
         <div class="list">
-            <div autoload-on-vertical-scroll-end="{loader: messages.reader, reverse: true}"
+            <div autoload-on-vertical-scroll-end="{loader: messages.reader, watch: 'messages.open', reverse: true}"
                  always-scroll-to-bottom="['messages.open', 'messages.sent']"
                  class="messages overflow-auto-y">
                 

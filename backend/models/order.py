@@ -240,8 +240,8 @@ class Order(orm.BaseExpando):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "checkout"
 
-  def condition_complete(action, entity, **kwargs):
-    return action.key_id_str == "complete" and entity._original.state in ["checkout", "completed", "canceled"]
+  def condition_notify(action, entity, **kwargs):
+    return action.key_id_str == "notify" and entity._original.state in ["checkout", "completed", "canceled"]
 
   def condition_update_line(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -281,7 +281,7 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('cancel', condition_not_guest_and_owner_and_checkout),
-      orm.ExecuteActionPermission('complete', condition_complete),
+      orm.ExecuteActionPermission('notify', condition_notify),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
                                'billing_address', 'shipping_address', 'currency', 'untaxed_amount',
@@ -297,7 +297,7 @@ class Order(orm.BaseExpando):
                                 'payment_method', '_lines', 'carrier', '_records'), condition_update_line),
       orm.WriteFieldPermission('payment_method', condition_payment_method),
       orm.WriteFieldPermission('state', condition_state),
-      orm.WriteFieldPermission(('payment_status', 'state', '_messages'), condition_complete),
+      orm.WriteFieldPermission(('payment_status', 'state', '_messages'), condition_notify),
       orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('shipping_address', 'billing_address', '_lines', 'carrier',
                                 'untaxed_amount', 'tax_amount', 'total_amount'), condition_update_and_view_order),
@@ -494,7 +494,7 @@ class Order(orm.BaseExpando):
           ]
       ),
       orm.Action(
-          id='complete',
+          id='notify',
           arguments={
               'payment_method': orm.SuperStringProperty(required=True, choices=settings.AVAILABLE_PAYMENT_METHODS),
               'request': orm.SuperPickleProperty(),
@@ -504,18 +504,11 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(),
-                      OrderProcessPayment(),
+                      OrderNotify(),
                       OrderSetMessage(cfg={
-                        'fields': {'ipn': 'new_message_fields.ipn'},
-                        'additional': {
-                           'ipn_txn_id': 'new_message.ipn_txn_id',
-                           'action': 'new_message.action',
-                           'ancestor': 'new_message.ancestor',
-                           'agent': 'new_message.agent',
-                           'body': 'new_message.body',
-                           'payment_status': 'new_message.payment_status',
-                           'ipn': 'new_message.ipn'
-                        }}),
+                        'fields': 'new_message_fields',
+                        'additional': 'new_message'
+                      }),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -527,20 +520,18 @@ class Order(orm.BaseExpando):
                       RulePrepare(),
                       Set(cfg={'d': {'output.entity': '_order'}}),
                       # both seller and buyer must get the message
-                      Notify(cfg={'condition': lambda entity, **kwargs: entity.state == "completed",
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_COMPLETE_SUBJECT,
-                                        'body': notifications.ORDER_COMPLETE_BODY},
+                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                                        'subject': notifications.ORDER_NOTIFY_SUBJECT,
+                                        'body': notifications.ORDER_NOTIFY_BODY},
                                   'd': {'recipient': '_order.buyer_email'}}),
-                      Notify(cfg={'condition': lambda entity, **kwargs: entity.state == "completed",
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_COMPLETE_SELLER_SUBJECT,
-                                        'body': notifications.ORDER_COMPLETE_SELLER_BODY},
+                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                                        'subject': notifications.ORDER_NOTIFY_SUBJECT,
+                                        'body': notifications.ORDER_NOTIFY_BODY},
                                   'd': {'recipient': '_order.seller_email'}}),
                       Notify(cfg={'condition': lambda mismatches, **kwargs: mismatches,
                                   's': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_MISMATCH_SUBJECT,
-                                        'body': notifications.ORDER_MISMATCH_BODY},
+                                        'subject': notifications.ORDER_NOTIFY_MISMATCH_SUBJECT,
+                                        'body': notifications.ORDER_NOTIFY_MISMATCH_BODY},
                                   'd': {'recipient': '_order.seller_email', 'mismatches': 'mismatches'}}),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
@@ -564,7 +555,7 @@ class Order(orm.BaseExpando):
                   ]
               ),
               orm.PluginGroup(
-                  transactional=True,
+                  transactional=False,
                   plugins=[
                       Write(),
                       # send message to either seller or buyer depending on who sent it

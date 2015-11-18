@@ -36,11 +36,8 @@ CATALOG_DISCONTINUE_BODY = template('catalog/discontinue_body.html')
 ORDER_LOG_MESSAGE_SUBJECT = template('order/log_message_subject.html')
 ORDER_LOG_MESSAGE_BODY = template('order/log_message_body.html')
 
-ORDER_COMPLETE_SUBJECT = template('order/complete_subject.html')
-ORDER_COMPLETE_BODY = template('order/complete_body.html')
+ORDER_NOTIFY_SUBJECT = template('order/notify_subject.html')
+ORDER_NOTIFY_BODY = template('order/notify_body.html')
 
-ORDER_COMPLETE_SELLER_SUBJECT = template('order/complete_seller_subject.html')
-ORDER_COMPLETE_SELLER_BODY = template('order/complete_seller_body.html')
-
-ORDER_MISMATCH_SUBJECT = template('order/mismatch_subject.html')
-ORDER_MISMATCH_BODY = template('order/mismatch_body.html')
+ORDER_NOTIFY_MISMATCH_SUBJECT = template('order/mismatch_subject.html')
+ORDER_NOTIFY_MISMATCH_BODY = template('order/mismatch_body.html')

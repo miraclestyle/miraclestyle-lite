@@ -241,12 +241,12 @@ class AccountLogout(RequestHandler):
     self.redirect('/')
 
 
-class OrderComplete(RequestHandler):
+class OrderNotify(RequestHandler):
 
   def respond(self, payment_method):
     params = ['body', 'content_type', 'method', 'url', 'scheme', 'host', 'host_url', 'path_url',
               'path', 'path_qs', 'query_string', 'headers', 'GET', 'POST', 'params', 'cookies']
-    input = {'action_model': '34', 'payment_method': payment_method, 'action_id': 'complete', 'request': {}}
+    input = {'action_model': '34', 'payment_method': payment_method, 'action_id': 'notify', 'request': {}}
     for param in params:
       input['request'][param] = getattr(self.request, param)
     iom.Engine.run(input)
@@ -260,7 +260,7 @@ ROUTES = [('/api/endpoint', Endpoint),
           ('/api/account/login', AccountLogin),
           ('/api/account/login/<provider>', AccountLogin),
           ('/api/account/logout', AccountLogout),
-          ('/api/order/complete/<payment_method>', OrderComplete)]  # this will be the path on which all orders are marked complete
+          ('/api/order/notify/<payment_method>', OrderNotify)]
 
 
 # Test Handlers
