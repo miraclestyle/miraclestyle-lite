@@ -401,7 +401,7 @@ class Account(orm.BaseExpando):
 
   @property
   def _is_system(self):
-    return self.key_id == 'system'
+    return self.key_id_str == 'system'
 
   @property
   def _is_guest(self):
