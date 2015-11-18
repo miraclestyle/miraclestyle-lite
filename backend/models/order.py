@@ -505,6 +505,17 @@ class Order(orm.BaseExpando):
                       Context(),
                       Read(),
                       OrderProcessPayment(),
+                      OrderSetMessage(cfg={
+                        'fields': {'ipn': 'new_message_fields.ipn'},
+                        'additional': {
+                           'ipn_txn_id': 'new_message.ipn_txn_id',
+                           'action': 'new_message.action',
+                           'ancestor': 'new_message.ancestor',
+                           'agent': 'new_message.agent',
+                           'body': 'new_message.body',
+                           'payment_status': 'new_message.payment_status',
+                           'ipn': 'new_message.ipn'
+                        }}),
                       RulePrepare(),
                       RuleExec()
                   ]

@@ -377,6 +377,9 @@
 
                                     $scope.messages = {
                                         isToday: function (message) {
+                                            if (!message.created) {
+                                                return false;
+                                            }
                                             return ($scope.today.getDay() === message.created.getDay() && $scope.today.getMonth() === message.created.getMonth());
                                         },
                                         reader: $scope.order.id ? models['34'].reader({
@@ -469,11 +472,16 @@
                                         sent: false,
                                         resendMaybe: function (message) {
                                             message._failed = false;
-                                            return models['34'].actions.log_message(message, {
+                                            var newMessage = angular.copy(message);
+                                            newMessage.key = $scope.order.key;
+                                            newMessage.message = newMessage.body;
+                                            return models['34'].actions.log_message(newMessage, {
                                                 disableUI: false
                                             }).then(function (response) {
                                                 $scope.messages.forceReflow();
-                                                //$scope.order._messages.push(response.data.entity._messages[0]);
+                                                if (!response.data.entity) {
+                                                    return;
+                                                }
                                                 $.extend(message, response.data.entity._messages[0]);
                                                 locals.reactOnStateChange(response);
                                                 return response;
@@ -492,7 +500,9 @@
                                                 disableUI: false
                                             }).then(function (response) {
                                                 $scope.messages.forceReflow();
-                                                //$scope.order._messages.push(response.data.entity._messages[0]);
+                                                if (!response.data.entity) {
+                                                    return;
+                                                }
                                                 $.extend(newMessage, response.data.entity._messages[0]);
                                                 locals.reactOnStateChange(response);
                                                 return response;

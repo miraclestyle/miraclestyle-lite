@@ -351,10 +351,30 @@ class OrderSetMessage(orm.BaseModel):
   def run(self, context):
     OrderMessage = context.models['35']
     # this could be extended to allow params
-    data = dict(agent=context.account.key, _agent=context.account, body=context.input['message'], action=context.action.key)
+    defaults = {
+      'agent': 'account.key',
+      '_agent': 'account',
+      'body': 'input.message',
+      'action': 'action.key'
+    }
+    data = {}
+    data_config = self.cfg.get('data', {})
+    for k, v in defaults.iteritems():
+      data[k] = tools.get_attr(context, v)
     for key, value in self.cfg.get('additional', {}).iteritems():
       data[key] = tools.get_attr(context, value)
-    context._order._messages = [OrderMessage(**data)]
+    later = {}
+    extra_fields = {}
+    if 'fields' in self.cfg:
+      for key, value in self.cfg['fields'].iteritems():
+        later[key] = data.pop(key, None)
+        extra_fields[key] = tools.get_attr(context, value)
+    new_order_message = OrderMessage(**data)
+    if 'fields' in self.cfg:
+      new_order_message._clone_properties()
+      new_order_message._properties.update(extra_fields)
+      new_order.populate(later)
+    context._order._messages = [new_order_message]
 
 
 # This is system plugin, which means end user can not use it!
@@ -648,11 +668,14 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       order.payment_status = ipn_payment_status # Here we have to devise a plan how to mark order as mismatched (perhaps via order.state), and use filtering in Admin / Orders to investigate mismatched orders.
       tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (mismatches, ipn, order.key))
     body = 'PayPal payment %s' % ipn_payment_status
-    new_order_message = OrderMessage(ipn_txn_id=ipn['txn_id'], action=context.action.key, ancestor=order.key, agent=Account.build_key('system'), body=body, payment_status=ipn_payment_status)
-    new_order_message._clone_properties()
-    new_order_message._properties['ipn'] = orm.SuperTextProperty(name='ipn', compressed=True)
-    new_order_message._properties['ipn']._set_value(new_order_message, request['body'])
-    order._messages = [new_order_message]
+    context.new_message = dict(ipn_txn_id=ipn['txn_id'],
+                               action=context.action.key,
+                               ancestor=order.key,
+                               agent=Account.build_key('system'),
+                               body=body,
+                               payment_status=ipn_payment_status,
+                               ipn=request['body'])
+    context.new_message_fields = dict(ipn=orm.SuperTextProperty(name='ipn', compressed=True))
 
 
 class OrderTaxPlugin(orm.BaseModel):
