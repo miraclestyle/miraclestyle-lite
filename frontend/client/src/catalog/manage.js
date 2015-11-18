@@ -168,7 +168,6 @@
                                                 setupCurrentPricetag,
                                                 variantOptions,
                                                 addNewPricetag,
-                                                savefirsttimeout,
                                                 removePricetag,
                                                 getTitle = function () {
                                                     return 'viewProducts';
@@ -181,6 +180,7 @@
                                             $scope.dialog = {
                                                 templateBodyUrl: 'catalog/manage_products.html',
                                                 toolbar: {
+                                                    hideSave: true
                                                 }
                                             };
                                             $scope.imagesLoaded = false;
@@ -285,8 +285,13 @@
                                                 });
                                             };
 
+                                            $scope.$stateHiddenLoading = true;
+
                                             $scope.$on('modalOpened', function () {
-                                                imagesReader.load();
+                                                imagesReader.load()['finally'](function () {
+                                                    $scope.$stateHiddenLoading = false;
+                                                    $scope.dialog.toolbar.hideSave = false;
+                                                });
                                             });
 
                                             $scope.onStart = function (event, ui, image, pricetag) {

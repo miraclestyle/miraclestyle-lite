@@ -577,13 +577,50 @@
                                 completePromise = defer.promise,
                                 ctrl;
                             ctrl = function ($scope) {
+                                var editTitle = 'edit' + config.kind,
+                                    addTitle = 'add' + config.kind,
+                                    rootTitle,
+                                    process;
                                 $scope.container = {
                                     action: endpoint.url
                                 };
-                                var process = function ($scope) {
+                                $scope.dialog = {
+                                    toolbar: config.toolbar,
+                                    templateBodyUrl: config.templateBodyUrl
+                                };
+                                $scope.entity = entity;
+                                rootTitle = function () {
+                                    var toolbar = $scope.dialog.toolbar,
+                                        out;
+                                    if ($scope.entity.id) {
+                                        if (angular.isDefined(toolbar.titleEdit)) {
+                                            toolbar.title = helpers.toolbar.title(toolbar.titleEdit);
+                                        }
+                                        out = toolbar.titleEdit;
+                                    } else {
+                                        if (angular.isDefined(toolbar.titleAdd)) {
+                                            toolbar.title = helpers.toolbar.title(toolbar.titleAdd);
+                                        }
+                                        out = toolbar.titleAdd;
+                                    }
+                                    return out;
+                                };
+                                config._title_ = [rootTitle];
+                                $scope.$watch('entity.id', rootTitle);
+                                if (!config.toolbar) {
+                                    config.toolbar = {};
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleEdit)) {
+                                    config.toolbar.titleEdit = editTitle;
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleAdd)) {
+                                    config.toolbar.titleAdd = addTitle;
+                                }
+                                process = function ($scope) {
                                     var field,
                                         done = {},
-                                        rootTitle,
                                         madeHistory = false,
                                         makeHistory = function () {
                                             if (madeHistory || !$scope.entity.id) {
@@ -608,32 +645,13 @@
                                             if (rule && rule.visible) {
                                                 $scope.layouts.groups.push(recordBrowser.attach($scope.historyConfig));
                                             }
-                                        },
-                                        editTitle = 'edit' + config.kind,
-                                        addTitle = 'add' + config.kind;
+                                        };
                                     config.getScope = function () {
                                         return $scope;
                                     };
                                     modelsUtil.normalize(entity);
-
-                                    if (!config.toolbar) {
-                                        config.toolbar = {};
-                                    }
-
-                                    if (angular.isUndefined(config.toolbar.titleEdit)) {
-                                        config.toolbar.titleEdit = editTitle;
-                                    }
-
-                                    if (angular.isUndefined(config.toolbar.titleAdd)) {
-                                        config.toolbar.titleAdd = addTitle;
-                                    }
                                     $scope.withArgs = args;
                                     $scope.config = config;
-                                    $scope.dialog = {
-                                        toolbar: config.toolbar,
-                                        templateBodyUrl: config.templateBodyUrl
-                                    };
-                                    $scope.entity = entity;
                                     $scope.args = config.argumentLoader($scope);
                                     $scope.rootScope = $scope;
 
@@ -723,25 +741,6 @@
                                     });
 
                                     $scope._close_ = $scope.close;
-
-                                    rootTitle = function () {
-                                        var toolbar = $scope.dialog.toolbar,
-                                            out;
-                                        if ($scope.entity.id) {
-                                            if (angular.isDefined(toolbar.titleEdit)) {
-                                                toolbar.title = helpers.toolbar.title(toolbar.titleEdit);
-                                            }
-                                            out = toolbar.titleEdit;
-                                        } else {
-                                            if (angular.isDefined(toolbar.titleAdd)) {
-                                                toolbar.title = helpers.toolbar.title(toolbar.titleAdd);
-                                            }
-                                            out = toolbar.titleAdd;
-                                        }
-                                        return out;
-                                    };
-                                    config._title_ = [rootTitle];
-                                    $scope.$watch('entity.id', rootTitle);
 
                                     angular.forEach(config.fields, function (field) {
                                         field._title_ = config._title_.concat();

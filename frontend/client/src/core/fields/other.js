@@ -475,8 +475,10 @@
                                 }
                                 return model.actions.search(args, opts).then(response);
                             };
-                            config.ui.specifics.initial().then(function () {
-                                initialDefer.resolve();
+                            $timeout(function () {
+                                config.ui.specifics.initial().then(function () {
+                                    initialDefer.resolve();
+                                });
                             });
                         }
                     }

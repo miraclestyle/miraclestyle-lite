@@ -13,7 +13,7 @@
       <content-spinner toolbar="true"></content-spinner>
       <div class="fixed-height relative overflow-auto-y has-toolbar">
             <div class="modal-body-inner">
-                <div ng-if="$state.isCompleted()" ng-include="dialog.templateBodyUrl"></div>
+                <div ng-if="$state.isCompleted()" ng-hide="$stateHiddenLoading" ng-include="dialog.templateBodyUrl"></div>
             </div>
       </div>
     </div>

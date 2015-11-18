@@ -116,6 +116,12 @@
                         modalOpen = {
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {
+                                $scope.dialog = {
+                                    toolbar: {
+                                        title: 'Cart',
+                                        templateRight: 'order/toolbar_actions.html'
+                                    }
+                                };
                                 $scope.$state.promise(function () {
                                     return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
                                         disableUI: false
@@ -142,11 +148,7 @@
                                             if (order) {
                                                 $.extend(order, $scope.order);
                                             }
-                                            if (!skipCache && that.getCache('current' + seller.key)) {
-                                                that.current(seller.key).then(function (response) {
-                                                    $.extend(response.data.entity, $scope.order);
-                                                });
-                                            }
+                                            that.removeCache('current' + seller.key);
                                         },
                                         logMessageAction: modelsMeta.getActionArguments('34', 'log_message'),
                                         orderUpdateFields: modelsMeta.getActionArguments('34', 'update'),

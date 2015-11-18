@@ -11165,8 +11165,10 @@ function msieversion() {
                                 }
                                 return model.actions.search(args, opts).then(response);
                             };
-                            config.ui.specifics.initial().then(function () {
-                                initialDefer.resolve();
+                            $timeout(function () {
+                                config.ui.specifics.initial().then(function () {
+                                    initialDefer.resolve();
+                                });
                             });
                         }
                     }
@@ -11304,7 +11306,7 @@ function msieversion() {
 (function () {
     'use strict';
     angular.module('app')
-        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
+        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG, $q) {
             $.extend(modals, {
                 fields: {
                     remote: function (scope, field, config) {
@@ -11319,10 +11321,18 @@ function msieversion() {
                                 getTitle = function () {
                                     return 'view' + helpers.toolbar.makeTitle(field.code_name);
                                 };
+                                $scope.$stateHiddenLoading = true;
+                                field.ui.specifics.readerDefer = $q.defer();
+                                field.ui.specifics.readerDefer.promise.then(function () {
+                                    $scope.$stateHiddenLoading = false;
+                                    $scope.dialog.toolbar.hideSave = false;
+                                });
                                 field._title_.push(getTitle);
                                 $scope.dialog = {
                                     templateBodyUrl: 'core/models/manage_body_default.html',
-                                    toolbar: {}
+                                    toolbar: {
+                                        hideSave: true
+                                    }
                                 };
                                 $scope.parentContainer = $scope.container;
                                 $scope.container = {};
@@ -11607,7 +11617,11 @@ function msieversion() {
                                     config.ui.specifics.parentArgs.empty();
                                 }
                                 $timeout(function () {
-                                    config.ui.specifics.reader.load();
+                                    config.ui.specifics.reader.load()['finally'](function () {
+                                        if (config.ui.specifics.readerDefer) {
+                                            config.ui.specifics.readerDefer.resolve();
+                                        }
+                                    });
                                 }, 100, false);
                             }
 
@@ -11661,10 +11675,22 @@ function msieversion() {
                                 inDirection: modalSettings.inDirection,
                                 outDirection: modalSettings.outDirection,
                                 controller: ng(function ($scope, modelsUtil) {
+                                    var process, getTitle;
+
+                                    $scope.isNew = (arg ? true : false);
                                     $scope.container = {
                                         action: endpoint.url
                                     };
-                                    var process = function ($scope) {
+                                    getTitle = function () {
+                                        return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
+                                    };
+
+                                    config._title_.push(getTitle);
+
+                                    $scope.$watch('isNew', function () {
+                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
+                                    });
+                                    process = function ($scope) {
                                         var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
                                             formBuilder = {
                                                 '0': []
@@ -11672,7 +11698,6 @@ function msieversion() {
                                             fieldsMap = {},
                                             groupBysIndx = [],
                                             groupBysMap = {},
-                                            getTitle,
                                             getResult = function (response, access) {
                                                 var accessPath = [],
                                                     value,
@@ -11705,8 +11730,6 @@ function msieversion() {
                                             return $scope;
                                         };
 
-                                        $scope.isNew = false;
-
                                         $scope.rootFormSetDirty = rootFormSetDirty;
                                         $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                         $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
@@ -11724,7 +11747,6 @@ function msieversion() {
                                             if (angular.isDefined(defaultArgs)) {
                                                 $.extend(arg, defaultArgs);
                                             }
-                                            $scope.isNew = true;
                                         } else if (!config.ui.specifics.modal && arg.ui) {
                                             length = _.last(arg.ui.access);
                                         }
@@ -12175,16 +12197,6 @@ function msieversion() {
                                         if (angular.isFunction(config.ui.specifics.init)) {
                                             config.ui.specifics.init($scope);
                                         }
-
-                                        getTitle = function () {
-                                            return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
-                                        };
-
-                                        config._title_.push(getTitle);
-
-                                        $scope.$watch('isNew', function () {
-                                            config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
-                                        });
 
                                         angular.forEach(config.ui.specifics.fields, function (field) {
                                             field._title_ = config._title_.concat();
@@ -12945,6 +12957,7 @@ function msieversion() {
                                 if (config.reverse) {
                                     maybe = (listenNode ? (listen.scrollTop() < (config.top || 40)) : false);
                                 } else {
+                                    console.log(viewport, viewport - listenScrollHeight);
                                     maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
                                 }
                                 if (!listen.length || !listenNode) {
@@ -15410,13 +15423,50 @@ function msieversion() {
                                 completePromise = defer.promise,
                                 ctrl;
                             ctrl = function ($scope) {
+                                var editTitle = 'edit' + config.kind,
+                                    addTitle = 'add' + config.kind,
+                                    rootTitle,
+                                    process;
                                 $scope.container = {
                                     action: endpoint.url
                                 };
-                                var process = function ($scope) {
+                                $scope.dialog = {
+                                    toolbar: config.toolbar,
+                                    templateBodyUrl: config.templateBodyUrl
+                                };
+                                $scope.entity = entity;
+                                rootTitle = function () {
+                                    var toolbar = $scope.dialog.toolbar,
+                                        out;
+                                    if ($scope.entity.id) {
+                                        if (angular.isDefined(toolbar.titleEdit)) {
+                                            toolbar.title = helpers.toolbar.title(toolbar.titleEdit);
+                                        }
+                                        out = toolbar.titleEdit;
+                                    } else {
+                                        if (angular.isDefined(toolbar.titleAdd)) {
+                                            toolbar.title = helpers.toolbar.title(toolbar.titleAdd);
+                                        }
+                                        out = toolbar.titleAdd;
+                                    }
+                                    return out;
+                                };
+                                config._title_ = [rootTitle];
+                                $scope.$watch('entity.id', rootTitle);
+                                if (!config.toolbar) {
+                                    config.toolbar = {};
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleEdit)) {
+                                    config.toolbar.titleEdit = editTitle;
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleAdd)) {
+                                    config.toolbar.titleAdd = addTitle;
+                                }
+                                process = function ($scope) {
                                     var field,
                                         done = {},
-                                        rootTitle,
                                         madeHistory = false,
                                         makeHistory = function () {
                                             if (madeHistory || !$scope.entity.id) {
@@ -15441,32 +15491,13 @@ function msieversion() {
                                             if (rule && rule.visible) {
                                                 $scope.layouts.groups.push(recordBrowser.attach($scope.historyConfig));
                                             }
-                                        },
-                                        editTitle = 'edit' + config.kind,
-                                        addTitle = 'add' + config.kind;
+                                        };
                                     config.getScope = function () {
                                         return $scope;
                                     };
                                     modelsUtil.normalize(entity);
-
-                                    if (!config.toolbar) {
-                                        config.toolbar = {};
-                                    }
-
-                                    if (angular.isUndefined(config.toolbar.titleEdit)) {
-                                        config.toolbar.titleEdit = editTitle;
-                                    }
-
-                                    if (angular.isUndefined(config.toolbar.titleAdd)) {
-                                        config.toolbar.titleAdd = addTitle;
-                                    }
                                     $scope.withArgs = args;
                                     $scope.config = config;
-                                    $scope.dialog = {
-                                        toolbar: config.toolbar,
-                                        templateBodyUrl: config.templateBodyUrl
-                                    };
-                                    $scope.entity = entity;
                                     $scope.args = config.argumentLoader($scope);
                                     $scope.rootScope = $scope;
 
@@ -15556,25 +15587,6 @@ function msieversion() {
                                     });
 
                                     $scope._close_ = $scope.close;
-
-                                    rootTitle = function () {
-                                        var toolbar = $scope.dialog.toolbar,
-                                            out;
-                                        if ($scope.entity.id) {
-                                            if (angular.isDefined(toolbar.titleEdit)) {
-                                                toolbar.title = helpers.toolbar.title(toolbar.titleEdit);
-                                            }
-                                            out = toolbar.titleEdit;
-                                        } else {
-                                            if (angular.isDefined(toolbar.titleAdd)) {
-                                                toolbar.title = helpers.toolbar.title(toolbar.titleAdd);
-                                            }
-                                            out = toolbar.titleAdd;
-                                        }
-                                        return out;
-                                    };
-                                    config._title_ = [rootTitle];
-                                    $scope.$watch('entity.id', rootTitle);
 
                                     angular.forEach(config.fields, function (field) {
                                         field._title_ = config._title_.concat();
@@ -18550,7 +18562,6 @@ function msieversion() {
                                                 setupCurrentPricetag,
                                                 variantOptions,
                                                 addNewPricetag,
-                                                savefirsttimeout,
                                                 removePricetag,
                                                 getTitle = function () {
                                                     return 'viewProducts';
@@ -18563,6 +18574,7 @@ function msieversion() {
                                             $scope.dialog = {
                                                 templateBodyUrl: 'catalog/manage_products.html',
                                                 toolbar: {
+                                                    hideSave: true
                                                 }
                                             };
                                             $scope.imagesLoaded = false;
@@ -18667,8 +18679,13 @@ function msieversion() {
                                                 });
                                             };
 
+                                            $scope.$stateHiddenLoading = true;
+
                                             $scope.$on('modalOpened', function () {
-                                                imagesReader.load();
+                                                imagesReader.load()['finally'](function () {
+                                                    $scope.$stateHiddenLoading = false;
+                                                    $scope.dialog.toolbar.hideSave = false;
+                                                });
                                             });
 
                                             $scope.onStart = function (event, ui, image, pricetag) {
@@ -20650,6 +20667,12 @@ function msieversion() {
                         modalOpen = {
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {
+                                $scope.dialog = {
+                                    toolbar: {
+                                        title: 'Cart',
+                                        templateRight: 'order/toolbar_actions.html'
+                                    }
+                                };
                                 $scope.$state.promise(function () {
                                     return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
                                         disableUI: false
@@ -20676,11 +20699,7 @@ function msieversion() {
                                             if (order) {
                                                 $.extend(order, $scope.order);
                                             }
-                                            if (!skipCache && that.getCache('current' + seller.key)) {
-                                                that.current(seller.key).then(function (response) {
-                                                    $.extend(response.data.entity, $scope.order);
-                                                });
-                                            }
+                                            that.removeCache('current' + seller.key);
                                         },
                                         logMessageAction: modelsMeta.getActionArguments('34', 'log_message'),
                                         orderUpdateFields: modelsMeta.getActionArguments('34', 'update'),

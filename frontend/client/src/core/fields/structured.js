@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG) {
+        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG, $q) {
             $.extend(modals, {
                 fields: {
                     remote: function (scope, field, config) {
@@ -16,10 +16,18 @@
                                 getTitle = function () {
                                     return 'view' + helpers.toolbar.makeTitle(field.code_name);
                                 };
+                                $scope.$stateHiddenLoading = true;
+                                field.ui.specifics.readerDefer = $q.defer();
+                                field.ui.specifics.readerDefer.promise.then(function () {
+                                    $scope.$stateHiddenLoading = false;
+                                    $scope.dialog.toolbar.hideSave = false;
+                                });
                                 field._title_.push(getTitle);
                                 $scope.dialog = {
                                     templateBodyUrl: 'core/models/manage_body_default.html',
-                                    toolbar: {}
+                                    toolbar: {
+                                        hideSave: true
+                                    }
                                 };
                                 $scope.parentContainer = $scope.container;
                                 $scope.container = {};
@@ -304,7 +312,11 @@
                                     config.ui.specifics.parentArgs.empty();
                                 }
                                 $timeout(function () {
-                                    config.ui.specifics.reader.load();
+                                    config.ui.specifics.reader.load()['finally'](function () {
+                                        if (config.ui.specifics.readerDefer) {
+                                            config.ui.specifics.readerDefer.resolve();
+                                        }
+                                    });
                                 }, 100, false);
                             }
 
@@ -358,10 +370,22 @@
                                 inDirection: modalSettings.inDirection,
                                 outDirection: modalSettings.outDirection,
                                 controller: ng(function ($scope, modelsUtil) {
+                                    var process, getTitle;
+
+                                    $scope.isNew = (arg ? true : false);
                                     $scope.container = {
                                         action: endpoint.url
                                     };
-                                    var process = function ($scope) {
+                                    getTitle = function () {
+                                        return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
+                                    };
+
+                                    config._title_.push(getTitle);
+
+                                    $scope.$watch('isNew', function () {
+                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
+                                    });
+                                    process = function ($scope) {
                                         var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
                                             formBuilder = {
                                                 '0': []
@@ -369,7 +393,6 @@
                                             fieldsMap = {},
                                             groupBysIndx = [],
                                             groupBysMap = {},
-                                            getTitle,
                                             getResult = function (response, access) {
                                                 var accessPath = [],
                                                     value,
@@ -402,8 +425,6 @@
                                             return $scope;
                                         };
 
-                                        $scope.isNew = false;
-
                                         $scope.rootFormSetDirty = rootFormSetDirty;
                                         $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
                                         $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
@@ -421,7 +442,6 @@
                                             if (angular.isDefined(defaultArgs)) {
                                                 $.extend(arg, defaultArgs);
                                             }
-                                            $scope.isNew = true;
                                         } else if (!config.ui.specifics.modal && arg.ui) {
                                             length = _.last(arg.ui.access);
                                         }
@@ -872,16 +892,6 @@
                                         if (angular.isFunction(config.ui.specifics.init)) {
                                             config.ui.specifics.init($scope);
                                         }
-
-                                        getTitle = function () {
-                                            return config.ui.specifics.toolbar['title' + ($scope.isNew ? 'Add' : 'Edit')];
-                                        };
-
-                                        config._title_.push(getTitle);
-
-                                        $scope.$watch('isNew', function () {
-                                            config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
-                                        });
 
                                         angular.forEach(config.ui.specifics.fields, function (field) {
                                             field._title_ = config._title_.concat();

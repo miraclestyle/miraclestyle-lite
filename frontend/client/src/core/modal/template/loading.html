@@ -1,3 +1,3 @@
-<div ng-if="!$state.isCompleted()" class="modal-loading-wrapper">
+<div ng-if="!$state.isCompleted() || $stateHiddenLoading" class="modal-loading-wrapper">
     <div ng-include="'core/spinner/spinner.html'"></div>
 </div>
