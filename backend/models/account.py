@@ -383,6 +383,7 @@ class Account(orm.BaseExpando):
   def get_output(self):
     dic = super(Account, self).get_output()
     dic.update({'_is_guest': self._is_guest,
+                '_is_system': self._is_system,
                 '_root_admin': self._root_admin})
     return dic
 
@@ -400,7 +401,7 @@ class Account(orm.BaseExpando):
 
   @property
   def _is_system(self):
-    return self.key_id == 'system'
+    return self.key_id_str == 'system'
 
   @property
   def _is_guest(self):
