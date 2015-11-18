@@ -13956,16 +13956,20 @@ function msieversion() {
                                 return;
                             }
                             var s = slide();
-                            $animate.addClass(s, 'out').then(function () {
-                                top().addClass('ng-hide');
-                                s.removeClass('in');
-                            });
+                            if (s.length) {
+                                $animate.addClass(s, 'out').then(function () {
+                                    top().addClass('ng-hide');
+                                    s.removeClass('in');
+                                });
+                            }
                         },
                         show = function () {
                             top().removeClass('ng-hide');
-                            $animate.removeClass(slide(), 'out').then(function () {
-                                return $animate.addClass(slide(), 'in');
-                            });
+                            if (slide().length) {
+                                $animate.removeClass(slide(), 'out').then(function () {
+                                    return $animate.addClass(slide(), 'in');
+                                });
+                            }
                         };
                     scope.activitySpinner.hide.push(hide);
                     scope.activitySpinner.show.push(show);
@@ -20354,7 +20358,10 @@ function msieversion() {
                         cb();
                     });
                     if (this.show) {
-                        _.last(this.show)();
+                        var last = _.last(this.show);
+                        if (last) {
+                            last();
+                        }
                     }
                 }
             };

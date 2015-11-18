@@ -68,7 +68,10 @@
                         cb();
                     });
                     if (this.show) {
-                        _.last(this.show)();
+                        var last = _.last(this.show);
+                        if (last) {
+                            last();
+                        }
                     }
                 }
             };
