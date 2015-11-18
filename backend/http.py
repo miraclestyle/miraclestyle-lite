@@ -166,7 +166,6 @@ class ModelMeta(RequestHandler):
     current_key = 'ModelMeta_%s' % version
     cached_output = tools.mem_get(key)
     new_version = version != real_version
-    print(real_version, version)
     if not cached_output or new_version:
       for kind, model in models.iteritems():
         if kind:

@@ -176,7 +176,6 @@ class OrderUpdateLine(orm.BaseModel):
       order_product.code = product.code
       order_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
       order_product.uom = copy.deepcopy(product.uom.get())
-      print('product_instance', product_instance)
       if product_instance is not None:
         if hasattr(product_instance, 'unit_price') and product_instance.unit_price is not None:
           order_product.unit_price = product_instance.unit_price
@@ -383,7 +382,7 @@ class OrderSetMessage(orm.BaseModel):
     if 'fields' in self.cfg:
       new_order_message._clone_properties()
       new_order_message._properties.update(extra_fields)
-      new_order.populate(later)
+      new_order_message.populate(later)
     context._order._messages = [new_order_message]
 
 
