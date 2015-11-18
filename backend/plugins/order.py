@@ -365,9 +365,10 @@ class OrderSetMessage(orm.BaseModel):
     if 'additional' in self.cfg:
       additional = self.cfg.get('additional')
       if not isinstance(additional, dict):
-        additional = tools.get_attr(context, additional)
-    for key, value in additional.iteritems():
-      data[key] = tools.get_attr(context, value)
+        data = tools.get_attr(context, additional)
+      else:
+        for key, value in additional.iteritems():
+          data[key] = tools.get_attr(context, value)
     later = {}
     extra_fields = {}
     fields = {}
