@@ -382,7 +382,7 @@ class OrderSetMessage(orm.BaseModel):
     if 'fields' in self.cfg:
       new_order_message._clone_properties()
       new_order_message._properties.update(extra_fields)
-      new_order_message.populate(later)
+      new_order_message.populate(**later)
     context._order._messages = [new_order_message]
 
 
