@@ -117,7 +117,7 @@ class OrderUpdateLine(orm.BaseModel):
       product.read({'_category': {}})  # more fields probably need to be specified
       stocks = None
       out_of_stock = False
-      if product._stock.value and product._stock.value.stocks.value: # if user defined any stocks
+      if product._stock.value and product._stock.value.stocks.value:  # if user defined any stocks
         stocks = product._stock.value.stocks.value
       if variant_signature:
         plucked_variant_signature = variant_signature[:]
@@ -132,15 +132,15 @@ class OrderUpdateLine(orm.BaseModel):
             if stock.variant_signature == plucked_variant_signature:
               out_of_stock = stock.availability == 'out of stock'
               skip_additional_stock_checks = True
-              break # we found complete match, this product combination is definitely out of stock
-          if not skip_additional_stock_checks: # no matches for out of stock found
+              break  # we found complete match, this product combination is definitely out of stock
+          if not skip_additional_stock_checks:  # no matches for out of stock found
             # try to find those with ***Any*** because they might match out of stock
             for stock in stocks:
               maybe = []
-              for i, part in enumerate(plucked_variant_signature): # [{'Color': 'Red'}, {'Size': 'XL'}]
-                part = part.iteritems().next() # ('Color', 'Red')
+              for i, part in enumerate(plucked_variant_signature):  # [{'Color': 'Red'}, {'Size': 'XL'}]
+                part = part.iteritems().next()  # ('Color', 'Red')
                 try:
-                  item = stock.variant_signature[i].iteritems().next() # ('Color', 'Red')
+                  item = stock.variant_signature[i].iteritems().next()  # ('Color', 'Red')
                   passes = item == part or item[1] == '***Any***'
                 except IndexError as e:
                   # this is when user did not configure stock improperly
@@ -153,13 +153,13 @@ class OrderUpdateLine(orm.BaseModel):
                 out_of_stock = True
                 break
         if out_of_stock:
-          raise PluginError('product_out_of_stock') # stop the code so it doesnt issue another query for no reason
+          raise PluginError('product_out_of_stock')  # stop the code so it doesnt issue another query for no reason
         q = ProductInstance.query(ancestor=product.key)
         for variant in plucked_variant_signature:
           item = variant.iteritems().next()
           q = q.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
         product_instance = q.get()
-      else: # if the product did not specify any product signature, find stock without variant_signature and see if there's any that has no stock
+      else:  # if the product did not specify any product signature, find stock without variant_signature and see if there's any that has no stock
         if stocks:
           for stock in stocks:
             if not stock.variant_signature and stock.availability == 'out of stock':
@@ -352,10 +352,10 @@ class OrderSetMessage(orm.BaseModel):
     OrderMessage = context.models['35']
     # this could be extended to allow params
     defaults = {
-      'agent': 'account.key',
-      '_agent': 'account',
-      'body': 'input.message',
-      'action': 'action.key'
+        'agent': 'account.key',
+        '_agent': 'account',
+        'body': 'input.message',
+        'action': 'action.key'
     }
     data = {}
     data_config = self.cfg.get('data', {})
@@ -401,9 +401,9 @@ class OrderProcessPayment(orm.BaseModel):
     valid = False
     try:
       result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
-                            payload='cmd=_notify-validate&%s' % request['body'],
-                            method=urlfetch.POST,
-                            headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
+                              payload='cmd=_notify-validate&%s' % request['body'],
+                              method=urlfetch.POST,
+                              headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
       result_content = result.content
       if result_content != 'VERIFIED':
         tools.log.error('Paypal ipn message not valid, ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
@@ -649,7 +649,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
           if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
             update_paypal_payment_status = True
         elif order.payment_status == 'Reversed':
-          #if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
+          # if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
           update_paypal_payment_status = True
 
         if update_paypal_payment_status:
@@ -665,17 +665,16 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       # log that there were missmatches, where we should log that?
       context.mismatches = mismatches
       ipn_payment_status = 'Mismatched'
-      order.payment_status = ipn_payment_status # Here we have to devise a plan how to mark order as mismatched (perhaps via order.state), and use filtering in Admin / Orders to investigate mismatched orders.
+      order.payment_status = ipn_payment_status  # Here we have to devise a plan how to mark order as mismatched (perhaps via order.state), and use filtering in Admin / Orders to investigate mismatched orders.
       tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (mismatches, ipn, order.key))
-    body = 'PayPal payment %s' % ipn_payment_status
-    context.new_message = dict(ipn_txn_id=ipn['txn_id'],
-                               action=context.action.key,
-                               ancestor=order.key,
-                               agent=Account.build_key('system'),
-                               body=body,
-                               payment_status=ipn_payment_status,
-                               ipn=request['body'])
-    context.new_message_fields = dict(ipn=orm.SuperTextProperty(name='ipn', compressed=True))
+    context.new_message = {'ipn_txn_id': ipn['txn_id'],
+                           'action': context.action.key,
+                           'ancestor': order.key,
+                           'agent': Account.build_key('system'),
+                           'body': 'PayPal payment %s' % ipn_payment_status,
+                           'payment_status': ipn_payment_status,
+                           'ipn': request['body']}
+    context.new_message_fields = {'ipn': orm.SuperTextProperty(name='ipn', compressed=True)}
 
 
 class OrderTaxPlugin(orm.BaseModel):
