@@ -927,6 +927,9 @@
                                             }
                                             theConfig.args.search.options.start_cursor = this.cursor;
                                             this.loading = true;
+                                            $.extend(theConfig.config, {
+                                                disableUI: false
+                                            });
                                             promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
                                             promise.error(function (response) {
                                                 paginate.more = false;
@@ -1086,6 +1089,12 @@
                                         if (loadConfig.runLast) {
                                             readArgsRpc = reader.previous || readArgsRpc;
                                         }
+                                        if (!loadConfig.rpcOptions) {
+                                            loadConfig.rpcOptions = {};
+                                        }
+                                        $.extend(loadConfig.rpcOptions, {
+                                            disableUI: false
+                                        });
 
                                         promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc, loadConfig.rpcOptions));
 
