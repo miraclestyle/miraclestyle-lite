@@ -476,8 +476,10 @@
                         if (!neww || loaded) {
                             return;
                         }
-                        loaded = true;
-                        run();
+                        $timeout(function () {
+                            loaded = true;
+                            run();
+                        });
                     });
 
                 }
