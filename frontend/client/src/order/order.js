@@ -657,6 +657,7 @@
                                                 path.parent.parent.key, path.pricetag.key,
                                                 line.product.variant_signature, {
                                                     popFrom: helpers.clicks.realEventTarget($event.target),
+                                                    orderKey: $scope.order.key,
                                                     events: {
                                                         addToCart: locals.updateLiveEntity
                                                     }
