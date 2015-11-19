@@ -137,6 +137,8 @@
                                                             read_arguments: {
                                                                 cover: {}
                                                             }
+                                                        }, {
+                                                            disableUI: false
                                                         }).then(function (response) {
                                                             snackbar.showK('catalogDuplicated');
                                                             callback(response.data.entity);
@@ -706,6 +708,8 @@
                                                                                     }
                                                                                 }
                                                                             }
+                                                                        }, {
+                                                                            disableUI: false
                                                                         }).then(function (response2) {
 
                                                                             var image = _.findWhere($scope.args._images, {
@@ -739,6 +743,8 @@
                                                                                 }
                                                                             }
                                                                         }
+                                                                    }, {
+                                                                        activitySpinner: true
                                                                     });
                                                                 });
                                                             });
@@ -1010,6 +1016,9 @@
                                             $scope.loadingSave = false;
 
                                             $scope.save = function (hideSnackbar, timeoutDefer, hideSpinner) {
+                                                if ($scope.loadingSave) {
+                                                    snackbar.showK('saveInProgress');
+                                                }
                                                 var promise,
                                                     timeout = timeoutDefer ? timeoutDefer.promise : undefined;
                                                 $scope.syncCancelDefer = timeoutDefer;

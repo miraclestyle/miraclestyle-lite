@@ -568,6 +568,10 @@
                                     };
                                     $scope.container = {};
                                     $scope.config = config;
+                                    $scope.$on('$destroy', function () {
+                                        config._title_.remove(getTitle);
+                                        config.ui.specifics.getScope = undefined;
+                                    });
                                     $scope.$state.instant(function () {
                                         $scope.setNewArg = function () {
                                             if ($scope.info.kind !== 0 && $scope.args.kind !== $scope.info.kind) {
@@ -742,10 +746,6 @@
                                             return saveCompletePromise;
 
                                         };
-                                        $scope.$on('$destroy', function () {
-                                            config._title_.remove(getTitle);
-                                            config.ui.specifics.getScope = undefined;
-                                        });
                                     });
                                 })
                             });

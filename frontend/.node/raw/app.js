@@ -1757,7 +1757,8 @@ if (window.DEBUG) {
             loginFailed: 'Sign in failed!',
             loggedOut: 'Signed out.',
             loginCanceled: 'Sign in canceled.',
-            youAreNotSignedIn: 'You are not signed in.'
+            youAreNotSignedIn: 'You are not signed in.',
+            saveInProgress: 'Please wait save in progress.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -11752,6 +11753,11 @@ function msieversion() {
                                             hideSave: true
                                         });
                                     }
+                                    $scope.$on('$destroy', function () {
+                                        config._title_.remove(getTitle);
+                                        config.ui.specifics.remoteOpts = {};
+                                        config.ui.additionalRealPaths = null;
+                                    });
                                     process = function ($scope) {
                                         var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
                                             formBuilder = {
@@ -12257,12 +12263,6 @@ function msieversion() {
 
                                         angular.forEach(config.ui.specifics.fields, function (field) {
                                             field._title_ = config._title_.concat();
-                                        });
-
-                                        $scope.$on('$destroy', function () {
-                                            config._title_.remove(getTitle);
-                                            config.ui.specifics.remoteOpts = {};
-                                            config.ui.additionalRealPaths = null;
                                         });
 
                                     };
@@ -14027,17 +14027,21 @@ function msieversion() {
                         slide = function () {
                             return top().find('.slide');
                         },
-                        hide = function () {
+                        hide = function (fast) {
                             requests -= 1;
                             if (top().hasClass('ng-hide')) {
                                 return;
                             }
-                            // if we show() 3 times, and hide 2 times, there is no need to hide the spinner...
                             if (!(requests < 1)) {
                                 return;
                             }
                             var s = slide();
                             if (s.length) {
+                                if (fast) {
+                                    s.removeClass('in').addClass('out');
+                                    top().addClass('ng-hide');
+                                    return;
+                                }
                                 $animate.addClass(s, 'out').then(function () {
                                     top().addClass('ng-hide');
                                     s.removeClass('in');
@@ -18700,6 +18704,8 @@ function msieversion() {
                                                             read_arguments: {
                                                                 cover: {}
                                                             }
+                                                        }, {
+                                                            disableUI: false
                                                         }).then(function (response) {
                                                             snackbar.showK('catalogDuplicated');
                                                             callback(response.data.entity);
@@ -19269,6 +19275,8 @@ function msieversion() {
                                                                                     }
                                                                                 }
                                                                             }
+                                                                        }, {
+                                                                            disableUI: false
                                                                         }).then(function (response2) {
 
                                                                             var image = _.findWhere($scope.args._images, {
@@ -19302,6 +19310,8 @@ function msieversion() {
                                                                                 }
                                                                             }
                                                                         }
+                                                                    }, {
+                                                                        activitySpinner: true
                                                                     });
                                                                 });
                                                             });
@@ -19573,6 +19583,9 @@ function msieversion() {
                                             $scope.loadingSave = false;
 
                                             $scope.save = function (hideSnackbar, timeoutDefer, hideSpinner) {
+                                                if ($scope.loadingSave) {
+                                                    snackbar.showK('saveInProgress');
+                                                }
                                                 var promise,
                                                     timeout = timeoutDefer ? timeoutDefer.promise : undefined;
                                                 $scope.syncCancelDefer = timeoutDefer;
@@ -20032,7 +20045,9 @@ function msieversion() {
                                                     }
                                                 }
                                             }
-                                        }) : models['34'].current(sellerKey)).then(function (response) {
+                                        }, {
+                                            disableUI: false
+                                        }) : models['34'].current(sellerKey, {disableUI: false})).then(function (response) {
                                             var order = response.data.entity;
                                             if (order.id) {
                                                 angular.forEach(order._lines, function (line) {
@@ -20551,7 +20566,14 @@ function msieversion() {
                 last: null,
                 stop: function () {
                     if (this.hide) {
-                        (_.last(this.hide) || angular.noop)();
+                        var length = this.hide.length - 1;
+                        angular.forEach(this.hide, function (cb, i) {
+                            if (i === length) {
+                                cb();
+                            } else {
+                                cb(true);
+                            }
+                        });
                     }
                 },
                 start: function () {
@@ -20790,17 +20812,17 @@ function msieversion() {
         })).run(ng(function (modelsMeta, modelsConfig, $modal, modals, snackbar, $state, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
             modelsConfig(function (models) {
                 $.extend(models['34'], {
-                    current: function (sellerKey) {
+                    current: function (sellerKey, opts) {
                         var that = this;
                         return models['19'].current().then(function (response) {
                             var buyer = response.data.entity;
                             return that.actions.view_order({
                                 buyer: buyer.key,
                                 seller: sellerKey
-                            }, {
+                            }, $.extend({
                                 cache: that.getCacheKey('current' + sellerKey),
                                 cacheType: 'memory'
-                            });
+                            }, opts));
                         });
                     },
                     adminManageModal: function (order, extraConfig) {
@@ -22099,6 +22121,10 @@ function msieversion() {
                                     };
                                     $scope.container = {};
                                     $scope.config = config;
+                                    $scope.$on('$destroy', function () {
+                                        config._title_.remove(getTitle);
+                                        config.ui.specifics.getScope = undefined;
+                                    });
                                     $scope.$state.instant(function () {
                                         $scope.setNewArg = function () {
                                             if ($scope.info.kind !== 0 && $scope.args.kind !== $scope.info.kind) {
@@ -22273,10 +22299,6 @@ function msieversion() {
                                             return saveCompletePromise;
 
                                         };
-                                        $scope.$on('$destroy', function () {
-                                            config._title_.remove(getTitle);
-                                            config.ui.specifics.getScope = undefined;
-                                        });
                                     });
                                 })
                             });

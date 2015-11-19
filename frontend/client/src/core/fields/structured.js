@@ -399,6 +399,11 @@
                                             hideSave: true
                                         });
                                     }
+                                    $scope.$on('$destroy', function () {
+                                        config._title_.remove(getTitle);
+                                        config.ui.specifics.remoteOpts = {};
+                                        config.ui.additionalRealPaths = null;
+                                    });
                                     process = function ($scope) {
                                         var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
                                             formBuilder = {
@@ -904,12 +909,6 @@
 
                                         angular.forEach(config.ui.specifics.fields, function (field) {
                                             field._title_ = config._title_.concat();
-                                        });
-
-                                        $scope.$on('$destroy', function () {
-                                            config._title_.remove(getTitle);
-                                            config.ui.specifics.remoteOpts = {};
-                                            config.ui.additionalRealPaths = null;
                                         });
 
                                     };

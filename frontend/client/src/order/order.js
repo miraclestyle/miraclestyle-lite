@@ -54,17 +54,17 @@
         })).run(ng(function (modelsMeta, modelsConfig, $modal, modals, snackbar, $state, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
             modelsConfig(function (models) {
                 $.extend(models['34'], {
-                    current: function (sellerKey) {
+                    current: function (sellerKey, opts) {
                         var that = this;
                         return models['19'].current().then(function (response) {
                             var buyer = response.data.entity;
                             return that.actions.view_order({
                                 buyer: buyer.key,
                                 seller: sellerKey
-                            }, {
+                            }, $.extend({
                                 cache: that.getCacheKey('current' + sellerKey),
                                 cacheType: 'memory'
-                            });
+                            }, opts));
                         });
                     },
                     adminManageModal: function (order, extraConfig) {

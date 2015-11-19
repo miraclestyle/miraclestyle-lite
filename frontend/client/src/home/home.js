@@ -57,7 +57,14 @@
                 last: null,
                 stop: function () {
                     if (this.hide) {
-                        (_.last(this.hide) || angular.noop)();
+                        var length = this.hide.length - 1;
+                        angular.forEach(this.hide, function (cb, i) {
+                            if (i === length) {
+                                cb();
+                            } else {
+                                cb(true);
+                            }
+                        });
                     }
                 },
                 start: function () {

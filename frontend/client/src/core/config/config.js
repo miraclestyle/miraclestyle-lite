@@ -434,7 +434,8 @@
             loginFailed: 'Sign in failed!',
             loggedOut: 'Signed out.',
             loginCanceled: 'Sign in canceled.',
-            youAreNotSignedIn: 'You are not signed in.'
+            youAreNotSignedIn: 'You are not signed in.',
+            saveInProgress: 'Please wait save in progress.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
