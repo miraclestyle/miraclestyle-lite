@@ -20023,7 +20023,16 @@ function msieversion() {
                                     $scope.hasThisProduct = false;
                                     $scope.disableUpdateCart = false;
                                     if (!currentAccount._is_guest) {
-                                        models['34'].current(sellerKey).then(function (response) {
+                                        (config.orderKey ? models['34'].actions.read({
+                                            key: config.orderKey,
+                                            read_arguments: {
+                                                _lines: {
+                                                    config: {
+                                                        limit: 0
+                                                    }
+                                                }
+                                            }
+                                        }) : models['34'].current(sellerKey)).then(function (response) {
                                             var order = response.data.entity;
                                             if (order.id) {
                                                 angular.forEach(order._lines, function (line) {
@@ -20218,11 +20227,13 @@ function msieversion() {
                                         if (config.events && config.events.addToCart) {
                                             config.events.addToCart.call(this, response);
                                         }
+                                        /*
                                         if (models['34'].getCache('current' + sellerKey)) {
                                             models['34'].current(sellerKey).then(function (cached) {
                                                 $.extend(cached.data.entity, response.data.entity);
                                             });
-                                        }
+                                        }*/
+                                        models['34'].removeCache('current' + sellerKey);
 
                                         if ($scope.productQuantity < 1) {
                                             $scope.hasThisProduct = false;
@@ -20480,7 +20491,8 @@ function msieversion() {
 
         });
     }));
-}());(function () {
+}());
+(function () {
     'use strict';
     angular.module('app')
         .controller('RootController', ng(function ($scope, $mdSidenav, $timeout) {}))
@@ -21381,6 +21393,7 @@ function msieversion() {
                                                 path.parent.parent.key, path.pricetag.key,
                                                 line.product.variant_signature, {
                                                     popFrom: helpers.clicks.realEventTarget($event.target),
+                                                    orderKey: $scope.order.key,
                                                     events: {
                                                         addToCart: locals.updateLiveEntity
                                                     }
