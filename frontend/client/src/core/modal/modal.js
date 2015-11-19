@@ -192,12 +192,14 @@
                         }
 
                         element.oneAnimationEnd(function () {
-                            $(window).triggerHandler('modal.visible', [element]);
-                            scope.modalOptions.opened = true;
-                            scope.$emit('modalOpened');
-                            scope.$broadcast('modalOpened');
-                            scope.$apply();
-                            $rootScope.$broadcast('disableUI', false);
+                            setTimeout(function () {
+                                $(window).triggerHandler('modal.visible', [element]);
+                                scope.modalOptions.opened = true;
+                                scope.$emit('modalOpened');
+                                scope.$broadcast('modalOpened');
+                                scope.$apply();
+                                $rootScope.$broadcast('disableUI', false);
+                            }, 100);
                         });
 
                         $(window).triggerHandler('modal.open', [element]);
