@@ -1357,10 +1357,16 @@
                     var top = function () {
                             return element.find(':first');
                         },
+                        requests = 0,
                         hide = function () {
+                            requests -= 1;
+                            if (!(requests < 1)) {
+                                return;
+                            }
                             top().addClass('ng-hide');
                         },
                         show = function () {
+                            requests += 1;
                             top().removeClass('ng-hide');
                         };
                     scope.contentSpinner.hide.push(hide);
@@ -1382,11 +1388,17 @@
                     var top = function () {
                             return element.find(':first');
                         },
+                        requests = 0,
                         slide = function () {
                             return top().find('.slide');
                         },
                         hide = function () {
+                            requests -= 1;
                             if (top().hasClass('ng-hide')) {
+                                return;
+                            }
+                            // if we show() 3 times, and hide 2 times, there is no need to hide the spinner...
+                            if (!(requests < 1)) {
                                 return;
                             }
                             var s = slide();
@@ -1400,6 +1412,7 @@
                         show = function () {
                             top().removeClass('ng-hide');
                             if (slide().length) {
+                                requests += 1;
                                 $animate.removeClass(slide(), 'out').then(function () {
                                     return $animate.addClass(slide(), 'in');
                                 });

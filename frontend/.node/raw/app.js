@@ -13992,10 +13992,16 @@ function msieversion() {
                     var top = function () {
                             return element.find(':first');
                         },
+                        requests = 0,
                         hide = function () {
+                            requests -= 1;
+                            if (!(requests < 1)) {
+                                return;
+                            }
                             top().addClass('ng-hide');
                         },
                         show = function () {
+                            requests += 1;
                             top().removeClass('ng-hide');
                         };
                     scope.contentSpinner.hide.push(hide);
@@ -14017,11 +14023,17 @@ function msieversion() {
                     var top = function () {
                             return element.find(':first');
                         },
+                        requests = 0,
                         slide = function () {
                             return top().find('.slide');
                         },
                         hide = function () {
+                            requests -= 1;
                             if (top().hasClass('ng-hide')) {
+                                return;
+                            }
+                            // if we show() 3 times, and hide 2 times, there is no need to hide the spinner...
+                            if (!(requests < 1)) {
                                 return;
                             }
                             var s = slide();
@@ -14035,6 +14047,7 @@ function msieversion() {
                         show = function () {
                             top().removeClass('ng-hide');
                             if (slide().length) {
+                                requests += 1;
                                 $animate.removeClass(slide(), 'out').then(function () {
                                     return $animate.addClass(slide(), 'in');
                                 });
@@ -17694,6 +17707,8 @@ function msieversion() {
                         var promise = this.actions.create_channel(undefined, {
                             cache: 'accountChannel',
                             cacheType: 'memory'
+                        }, {
+                            activitySpinner: true
                         });
                         return promise.then(function (response) {
                             var token = response.data.token;
@@ -18654,6 +18669,8 @@ function msieversion() {
                                             function () {
                                                 models['31'].actions.publish({
                                                     key: $scope.entity.key
+                                                }, {
+                                                    activitySpinner: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogPublished');
                                                     updateState(response.data.entity);
@@ -18665,6 +18682,8 @@ function msieversion() {
                                             function () {
                                                 models['31'].actions.discontinue({
                                                     key: $scope.entity.key
+                                                }, {
+                                                    activitySpinner: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogDiscontinued');
                                                     updateState(response.data.entity);
@@ -18690,6 +18709,8 @@ function msieversion() {
                                                     models['31'].actions.catalog_duplicate({
                                                         key: $scope.entity.key,
                                                         channel: response.token
+                                                    }, {
+                                                        activitySpinner: true
                                                     });
                                                 });
                                             });
@@ -20515,6 +20536,7 @@ function msieversion() {
             $rootScope.contentSpinner = {
                 hide: [],
                 show: [],
+                last: null,
                 stop: function () {
                     if (this.hide) {
                         (_.last(this.hide) || angular.noop)();

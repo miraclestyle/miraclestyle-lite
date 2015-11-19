@@ -157,7 +157,7 @@ class Order(orm.BaseExpando):
     search_34_<order.account.id>
   '''
 
-  DELETE_CACHE_POLICY = {'group': [lambda context: 'read_34_%s' % context._order.key._root._id_str, 'search_34', lambda context: 'search_34_%s' % context._order.key._root._id_str]}
+  DELETE_CACHE_POLICY = {'group': [lambda context: 'read_34_%s' % context._order.key._root._id_str, 'search_34_admin', lambda context: 'search_34_%s' % context._order.key._root._id_str]}
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
@@ -269,7 +269,9 @@ class Order(orm.BaseExpando):
   def cache_group_search(context):
     key = 'search_34'
     _ancestor = context.input['search'].get('ancestor')
-    if not context.account._root_admin and (_ancestor and _ancestor._root == context.account.key):
+    if context.account._root_admin:
+      return '%s_admin' % key
+    if _ancestor and _ancestor._root == context.account.key:
       return '%s_%s' % (key, context.account.key_id_str)
     return key
 

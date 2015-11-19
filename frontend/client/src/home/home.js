@@ -54,6 +54,7 @@
             $rootScope.contentSpinner = {
                 hide: [],
                 show: [],
+                last: null,
                 stop: function () {
                     if (this.hide) {
                         (_.last(this.hide) || angular.noop)();

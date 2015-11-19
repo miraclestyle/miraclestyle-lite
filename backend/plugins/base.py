@@ -464,14 +464,19 @@ class BaseCache(orm.BaseModel):
         try:
           tools.mem_set_multi(queue)
         except ValueError as e:
-          tools.log.warn('Failed saving response because its over 1mb, with queue keys %s, using group %s, with drivers' % (queue, group_key, cache_drivers))
+          tools.log.error('Failed saving response because it\'s over 1mb, with queue keys %s, using group %s, with drivers %s. With input %s' % (queue, group_key, cache_drivers, context.input))
           write = False  # failed writing this one, because size is over 1mb -- this can be fixed by chunking the `data`, but for now we dont need it
       saver = {'do_save': do_save}
       for driver in cache_drivers:
         k = build_key(driver, key, group_key)
         data = tools.mem_rpc_get(k)
         if data:
-          data = zlib.decompress(data)
+          try:
+            data = zlib.decompress(data)
+          except Exception as e:
+            data = None
+            tools.log.warn('Failed upacking memcache data for key %s in context of: using group %s, with driver %s. With input %s. Memory key deleted.' % (k, group_key, driver, context.input))
+            tools.mem_delete(k)
           break
       if data:
         context.cache = {'value': data}
@@ -481,17 +486,24 @@ class BaseCache(orm.BaseModel):
         for driver in cache_drivers:
           keys.append(build_key(driver, key, group_key))
         if keys:
-          keys = base64.b64encode(zlib.compress(','.join(keys)))
+          keys = base64.b64encode(zlib.compress(','.join(keys))) # we compress keys because of taskqueues limit of 100k request payload
           if group_key:
+            tools.log.info('Scheduling group cache storage for group %s and cache drivers %s' % (group_key, cache_drivers))
             context._callbacks.append(('callback', {'action_id': 'update', 'keys': keys, 'ids': [group_key._id_str], 'action_model': '135'}))
         else:
-          tools.log.info('No cache for group %s with cache drivers %s' % (group_key, cache_drivers))
+          tools.log.warn('No cache for group %s with cache drivers %s' % (group_key, cache_drivers))
       context.cache = saver
     else:
       tools.mem_delete_multi([build_key(driver, key, None) for driver in cache_drivers])
       if group_id:
-        tools.log.info('Delete cache for group %s' % group_id)
         keys = []
+        satisfy = self.cfg.get('satisfy', {})
+        for spec in satisfy:
+          groups, callback = spec
+          for group in group_id[:]:
+            if group in groups:
+              if not callback(context, group):
+                group_id.remove(group)
         group_keys = [CacheGroup.build_key(id) for id in group_id]
         groups = orm.get_multi(group_keys) # this can cause operating on multiple groups error
         # however if that happens, just move the DeleteCache plugin away from the transaction, since it does not need it
@@ -500,6 +512,7 @@ class BaseCache(orm.BaseModel):
           if group:
             keys.extend(group.keys)
         tools.mem_delete_multi(keys)
+        tools.log.info('Deleted cache for group %s' % group_id)
         '''
         # for now we do not need removal of keys with task queue
         keys = base64.b64encode(zlib.compress(','.join(keys)))

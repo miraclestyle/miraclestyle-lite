@@ -74,6 +74,8 @@
                         var promise = this.actions.create_channel(undefined, {
                             cache: 'accountChannel',
                             cacheType: 'memory'
+                        }, {
+                            activitySpinner: true
                         });
                         return promise.then(function (response) {
                             var token = response.data.token;

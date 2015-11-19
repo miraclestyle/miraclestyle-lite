@@ -106,6 +106,8 @@
                                             function () {
                                                 models['31'].actions.publish({
                                                     key: $scope.entity.key
+                                                }, {
+                                                    activitySpinner: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogPublished');
                                                     updateState(response.data.entity);
@@ -117,6 +119,8 @@
                                             function () {
                                                 models['31'].actions.discontinue({
                                                     key: $scope.entity.key
+                                                }, {
+                                                    activitySpinner: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogDiscontinued');
                                                     updateState(response.data.entity);
@@ -142,6 +146,8 @@
                                                     models['31'].actions.catalog_duplicate({
                                                         key: $scope.entity.key,
                                                         channel: response.token
+                                                    }, {
+                                                        activitySpinner: true
                                                     });
                                                 });
                                             });
