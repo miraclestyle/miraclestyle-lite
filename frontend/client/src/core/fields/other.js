@@ -228,10 +228,14 @@
                                     '17': true
                                 },
                                 type: {
-                                    '12': 'local',
+                                    /*'12': 'local',
                                     '17': 'local',
                                     '24': 'local',
-                                    '13': 'local',
+                                    '13': 'local',*/
+                                    '12': 'memory',
+                                    '17': 'memory',
+                                    '24': 'memory',
+                                    '13': 'memory',
                                     'default': 'memory'
                                 }
                             },
