@@ -568,7 +568,7 @@
                                     };
                                     $scope.container = {};
                                     $scope.config = config;
-                                    $scope.$state.ready = function () {
+                                    $scope.$state.instant(function () {
                                         $scope.setNewArg = function () {
                                             if ($scope.info.kind !== 0 && $scope.args.kind !== $scope.info.kind) {
                                                 arg = {
@@ -746,7 +746,7 @@
                                             config._title_.remove(getTitle);
                                             config.ui.specifics.getScope = undefined;
                                         });
-                                    };
+                                    });
                                 })
                             });
                         }

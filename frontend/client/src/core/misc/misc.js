@@ -1382,11 +1382,6 @@
                     var top = function () {
                             return element.find(':first');
                         },
-                        digest = function () {
-                            if (!scope.$$phase) {
-                                scope.$digest();
-                            }
-                        },
                         slide = function () {
                             return top().find('.slide');
                         },

@@ -199,7 +199,7 @@
                                 scope.$broadcast('modalOpened');
                                 scope.$apply();
                                 $rootScope.$broadcast('disableUI', false);
-                            }, 100);
+                            });
                         });
 
                         $(window).triggerHandler('modal.open', [element]);
@@ -530,6 +530,15 @@
                                 complete: function () {
                                     modalScope.$state.completed = true;
                                     modalScope.$broadcast('modalStateComplete');
+                                },
+                                instant: function (callback, failure) {
+                                    return this.promise(function () {
+                                        var defer = $q.defer();
+                                        setTimeout(function () {
+                                            defer.resolve();
+                                        }, 100);
+                                        return defer.promise;
+                                    }, callback, failure);
                                 },
                                 promise: function (promise, callback, failure) {
                                     modalScope.$state.using = true;

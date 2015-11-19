@@ -921,9 +921,9 @@
                                             process($scope);
                                         });
                                     } else {
-                                        $scope.$state.ready = function () {
+                                        $scope.$state.instant(function () {
                                             process($scope);
-                                        };
+                                        });
                                     }
                                 })
                             });
