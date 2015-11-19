@@ -433,7 +433,11 @@ class BaseKeyProperty(_BaseProperty, KeyProperty):
             kwds = value[1]
           except IndexError:
             pass
-          key = Key(*v[0], **kwds)
+          try:
+            key = Key(*v[0], **kwds)
+          except Exception as e:
+            tools.log.error('Failed discovering key from %s for field %s' % (v, self), exc_info=e)
+            raise FormatError('malformed_key')
           if self._kind and key.kind() != self._kind:
             raise FormatError('invalid_kind')
           out.append(key)
@@ -448,7 +452,11 @@ class BaseKeyProperty(_BaseProperty, KeyProperty):
           kwds = value[1]
         except IndexError:
           pass
-        out = Key(*value[0], **kwds)
+        try:
+          out = Key(*value[0], **kwds)
+        except Exception as e:
+          tools.log.error('Failed discovering key from %s for field %s' % (v, self), exc_info=e)
+          raise FormatError('malformed_key')
         if self._kind and out.kind() != self._kind:
           raise FormatError('invalid_kind')
         entity = out.get()

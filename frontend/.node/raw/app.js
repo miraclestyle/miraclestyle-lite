@@ -19585,6 +19585,7 @@ function msieversion() {
                                             $scope.save = function (hideSnackbar, timeoutDefer, hideSpinner) {
                                                 if ($scope.loadingSave) {
                                                     snackbar.showK('saveInProgress');
+                                                    return;
                                                 }
                                                 var promise,
                                                     timeout = timeoutDefer ? timeoutDefer.promise : undefined;
