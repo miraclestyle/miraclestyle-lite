@@ -11746,7 +11746,7 @@ function msieversion() {
                                     $scope.$watch('isNew', function () {
                                         config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
                                     });
-                                    if (config.ui.specifics.remote) {
+                                    if (!config.ui.specifics.remote) {
                                         $.extend(config.ui.specifics.toolbar, {
                                             leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
                                             hideSave: true
@@ -19180,7 +19180,9 @@ function msieversion() {
                                                             $scope.pricetag._state = 'deleted';
                                                             $timeout(function () {
                                                                 close().then(function () {
-                                                                    $scope.save();
+                                                                    $timeout(function () {
+                                                                        $scope.save();
+                                                                    });
                                                                 });
                                                             });
                                                         });
@@ -19543,14 +19545,14 @@ function msieversion() {
 
                                             $scope.loadingSave = false;
 
-                                            $scope.save = function (hideSnackbar, timeoutDefer) {
+                                            $scope.save = function (hideSnackbar, timeoutDefer, hideSpinner) {
                                                 var promise,
                                                     timeout = timeoutDefer ? timeoutDefer.promise : undefined;
                                                 $scope.syncCancelDefer = timeoutDefer;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args, {
-                                                    activitySpinner: true,
+                                                    activitySpinner: !hideSpinner,
                                                     timeout: timeout
                                                 });
                                                 promise.then(function (response) {

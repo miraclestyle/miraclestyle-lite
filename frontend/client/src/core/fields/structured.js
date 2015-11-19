@@ -393,7 +393,7 @@
                                     $scope.$watch('isNew', function () {
                                         config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
                                     });
-                                    if (config.ui.specifics.remote) {
+                                    if (!config.ui.specifics.remote) {
                                         $.extend(config.ui.specifics.toolbar, {
                                             leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
                                             hideSave: true

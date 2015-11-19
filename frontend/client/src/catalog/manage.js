@@ -638,7 +638,9 @@
                                                             $scope.pricetag._state = 'deleted';
                                                             $timeout(function () {
                                                                 close().then(function () {
-                                                                    $scope.save();
+                                                                    $timeout(function () {
+                                                                        $scope.save();
+                                                                    });
                                                                 });
                                                             });
                                                         });
@@ -1001,14 +1003,14 @@
 
                                             $scope.loadingSave = false;
 
-                                            $scope.save = function (hideSnackbar, timeoutDefer) {
+                                            $scope.save = function (hideSnackbar, timeoutDefer, hideSpinner) {
                                                 var promise,
                                                     timeout = timeoutDefer ? timeoutDefer.promise : undefined;
                                                 $scope.syncCancelDefer = timeoutDefer;
                                                 $scope.loadingSave = true;
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args, {
-                                                    activitySpinner: true,
+                                                    activitySpinner: !hideSpinner,
                                                     timeout: timeout
                                                 });
                                                 promise.then(function (response) {
