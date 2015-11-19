@@ -130,7 +130,7 @@
             }, {
                 name: 'Tumblr',
                 key: 'tumblr',
-                command: 'https://www.tumblr.com/profile'
+                command: 'http://themiraclestyle.tumblr.com/'
             }];
 
             $scope.share = function (soc) {
