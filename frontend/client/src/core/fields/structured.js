@@ -103,6 +103,7 @@
                         noSpecifics = !angular.isDefined(config.ui.specifics),
                         newSort = [],
                         defaults,
+                        resolveDefer,
                         defaultSortable,
                         findWhereByLayoutConfig,
                         buildPaths,
@@ -284,6 +285,12 @@
                         config.ui.specifics.toolbar.titleEdit = 'edit' + helpers.toolbar.makeTitle(config.code_name);
                     }
 
+                    resolveDefer = function () {
+                        if (config.ui.specifics.readerDefer) {
+                            config.ui.specifics.readerDefer.resolve();
+                        }
+                    };
+
                     if (config.ui.specifics.remote) {
                         // construct reference to root arguments
                         rootArgs = (config.ui.specifics.getRootArgs ? config.ui.specifics.getRootArgs() : config.ui.specifics.rootScope.args);
@@ -312,14 +319,14 @@
                                     config.ui.specifics.parentArgs.empty();
                                 }
                                 $timeout(function () {
-                                    config.ui.specifics.reader.load()['finally'](function () {
-                                        if (config.ui.specifics.readerDefer) {
-                                            config.ui.specifics.readerDefer.resolve();
-                                        }
-                                    });
+                                    config.ui.specifics.reader.load()['finally'](resolveDefer);
                                 }, 100, false);
+                            } else {
+                                resolveDefer();
                             }
 
+                        } else {
+                            resolveDefer();
                         }
                     }
 
@@ -372,6 +379,7 @@
                                 controller: ng(function ($scope, modelsUtil) {
                                     var process, getTitle;
 
+                                    $scope.config = config;
                                     $scope.isNew = (arg ? false : true);
                                     $scope.container = {
                                         action: endpoint.url
@@ -430,7 +438,6 @@
                                         $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
 
                                         $scope.response = null;
-                                        $scope.config = config;
                                         if (!arg) {
                                             arg = {
                                                 kind: config.modelclass_kind,
