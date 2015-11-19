@@ -21747,7 +21747,9 @@ function msieversion() {
                                     promise;
 
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                    promise = models['13'].get(updatedAddress.region, {activitySpinner: true});
+                                    promise = models['13'].get(updatedAddress.region, {
+                                        activitySpinner: true
+                                    });
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
                                             updatedAddress._region = response.data.entities[0];
@@ -22048,193 +22050,193 @@ function msieversion() {
                                         modelsUtil.normalize(arg, undefined, config.ui.specifics.entity, config.code_name,
                                             config.ui.specifics.parentArgs.length);
                                     }
+                                    $scope.$watch('isNew', function () {
+                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
+                                    });
                                     $scope.info = {
                                         build: true
                                     };
-                                    $scope.config = config;
-                                    $scope.setNewArg = function () {
-                                        if ($scope.info.kind !== 0 && $scope.args.kind !== $scope.info.kind) {
-                                            arg = {
-                                                kind: $scope.info.kind
-                                            };
-                                            modelsUtil.normalize(arg, undefined, config.ui.specifics.entity, config.code_name,
-                                                config.ui.specifics.parentArgs.length, false);
-                                            $scope.isNew = true;
-
-                                            $scope.args = arg;
-                                            $scope.getFormBuilder();
-                                            $scope.info.build = false;
-
-                                            $timeout(function () {
-                                                $scope.info.build = true;
-                                                $scope.$apply();
-                                            }, 100);
-
-                                        }
-                                    };
-
-                                    resetFormBuilder();
-
-                                    $scope.getFormBuilder = function () {
-                                        resetFormBuilder();
-                                        var kind = $scope.info.kind,
-                                            fields = modelsMeta.getFields(kind),
-                                            realTotal = 0,
-                                            found = false;
-                                        fields = _.toArray(fields);
-                                        fields.sort(helpers.fields.sorter);
-                                        config.ui.specifics.fields = fields;
-                                        angular.forEach(fields, function (field) {
-                                            helpers.fields.applyGlobalConfig(field);
-                                            field._title_ = config._title_.concat();
-                                            field.ui.name = 'plugin.' + field.code_name;
-                                            field.ui.writable = true;
-                                            var extra = getPluginFieldOverrides(kind, field.code_name),
-                                                next;
-                                            if (extra) {
-                                                helpers.extendDeep(field, extra);
-                                            }
-                                            if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
-                                                $scope.layouts.groups.push({
-                                                    label: field.ui.label || $filter('humanized')(field.code_name),
-                                                    disabled: false,
-                                                    open: false
-                                                });
-
-                                                field.ui.label = false;
-                                                next = $scope.layouts.groups.length - 1;
-
-                                                if (!angular.isDefined($scope.formBuilder[next])) {
-                                                    $scope.formBuilder[next] = [];
-                                                    $scope.formBuilder[next].push(field);
-                                                }
-                                                $scope.layouts.groups[0].disabled = false;
-                                            } else {
-                                                $scope.formBuilder['0'].push(field);
-                                            }
-                                        });
-
-                                        angular.forEach($scope.layouts.groups, function (group, i) {
-                                            if ($scope.formBuilder[i].length) {
-                                                realTotal += 1;
-                                            }
-                                            if (found !== false) {
-                                                return;
-                                            }
-                                            if ($scope.formBuilder[i].length) {
-                                                group.open = true;
-                                                found = group;
-                                            } else {
-                                                group.open = false;
-                                            }
-                                        });
-
-                                        if (realTotal === 1) {
-                                            found.disabled = true;
-                                        }
-
-                                    };
-
                                     $scope.container = {};
-                                    $scope.args = angular.copy(arg);
-                                    // entity.addreses.0.address
-                                    $scope.parentArgs = config.ui.specifics.parentArgs;
-                                    // entity.addresses
-                                    $scope.entity = config.ui.specifics.entity;
-                                    $scope.rootFormSetDirty = rootFormSetDirty;
-                                    $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
-                                    $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
-                                    $scope.validateForm = angular.bind($scope, helpers.form.validate);
+                                    $scope.config = config;
+                                    $scope.$state.ready = function () {
+                                        $scope.setNewArg = function () {
+                                            if ($scope.info.kind !== 0 && $scope.args.kind !== $scope.info.kind) {
+                                                arg = {
+                                                    kind: $scope.info.kind
+                                                };
+                                                modelsUtil.normalize(arg, undefined, config.ui.specifics.entity, config.code_name,
+                                                    config.ui.specifics.parentArgs.length, false);
+                                                $scope.isNew = true;
 
+                                                $scope.args = arg;
+                                                $scope.getFormBuilder();
+                                                $scope.info.build = false;
 
-                                    if ($scope.args && $scope.args.kind) {
-                                        $scope.info.kind = $scope.args.kind;
-                                        $scope.getFormBuilder();
+                                                $timeout(function () {
+                                                    $scope.info.build = true;
+                                                    $scope.$apply();
+                                                }, 100);
 
-                                    }
-                                    $scope.close = function () {
-                                        if (!$scope.container.form.$dirty) {
-                                            return $scope.$close();
-                                        }
-                                        var save = $scope.save();
-                                        if (save) {
-                                            return save.then(function () {
-                                                $scope._close_ = undefined;
-                                                return $scope.$close();
+                                            }
+                                        };
+
+                                        resetFormBuilder();
+
+                                        $scope.getFormBuilder = function () {
+                                            resetFormBuilder();
+                                            var kind = $scope.info.kind,
+                                                fields = modelsMeta.getFields(kind),
+                                                realTotal = 0,
+                                                found = false;
+                                            fields = _.toArray(fields);
+                                            fields.sort(helpers.fields.sorter);
+                                            config.ui.specifics.fields = fields;
+                                            angular.forEach(fields, function (field) {
+                                                helpers.fields.applyGlobalConfig(field);
+                                                field._title_ = config._title_.concat();
+                                                field.ui.name = 'plugin.' + field.code_name;
+                                                field.ui.writable = true;
+                                                var extra = getPluginFieldOverrides(kind, field.code_name),
+                                                    next;
+                                                if (extra) {
+                                                    helpers.extendDeep(field, extra);
+                                                }
+                                                if (helpers.fields.isFieldset(field) && formInputTypes[field.type]) {
+                                                    $scope.layouts.groups.push({
+                                                        label: field.ui.label || $filter('humanized')(field.code_name),
+                                                        disabled: false,
+                                                        open: false
+                                                    });
+
+                                                    field.ui.label = false;
+                                                    next = $scope.layouts.groups.length - 1;
+
+                                                    if (!angular.isDefined($scope.formBuilder[next])) {
+                                                        $scope.formBuilder[next] = [];
+                                                        $scope.formBuilder[next].push(field);
+                                                    }
+                                                    $scope.layouts.groups[0].disabled = false;
+                                                } else {
+                                                    $scope.formBuilder['0'].push(field);
+                                                }
                                             });
-                                        } else {
-                                            return modals.confirm('discardWithFieldsRequired', $scope.$close);
-                                        }
-                                    };
 
-                                    $scope._close_ = $scope.close;
+                                            angular.forEach($scope.layouts.groups, function (group, i) {
+                                                if ($scope.formBuilder[i].length) {
+                                                    realTotal += 1;
+                                                }
+                                                if (found !== false) {
+                                                    return;
+                                                }
+                                                if ($scope.formBuilder[i].length) {
+                                                    group.open = true;
+                                                    found = group;
+                                                } else {
+                                                    group.open = false;
+                                                }
+                                            });
 
-                                    $scope.save = function () {
-                                        var promise,
-                                            complete,
-                                            saveCompleteDefer = $q.defer(),
-                                            saveCompletePromise = saveCompleteDefer.promise;
-                                        if (!$scope.validateForm() || !$scope.info.kind) {
-                                            return;
-                                        }
-
-                                        if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                            promise = config.ui.specifics.beforeSave($scope, info);
-                                        }
-
-                                        complete = function () {
-                                            var newPromise = null,
-                                                total = 0;
-                                            if ($scope.isNew) {
-                                                $scope.parentArgs.unshift($scope.args);
-                                                $scope.isNew = false;
-                                                total = $scope.parentArgs.length;
-                                                angular.forEach($scope.parentArgs, function (item, i) {
-                                                    i = total - i;
-                                                    item._sequence = i;
-                                                });
-                                            } else {
-                                                $.extend(arg, $scope.args);
-                                            }
-
-                                            if (angular.isFunction(config.ui.specifics.afterSave)) {
-                                                newPromise = config.ui.specifics.afterSave($scope, info);
-                                            }
-
-                                            if (newPromise && newPromise.then) {
-                                                newPromise.then(function () {
-                                                    saveCompleteDefer.resolve();
-                                                });
-                                            } else {
-                                                saveCompleteDefer.resolve();
+                                            if (realTotal === 1) {
+                                                found.disabled = true;
                                             }
 
                                         };
 
-                                        if ($scope.container.form.$dirty) {
-                                            rootFormSetDirty();
-                                        }
-                                        if (promise && promise.then) {
-                                            promise.then(complete);
-                                        } else {
-                                            complete();
+                                        $scope.args = angular.copy(arg);
+                                        // entity.addreses.0.address
+                                        $scope.parentArgs = config.ui.specifics.parentArgs;
+                                        // entity.addresses
+                                        $scope.entity = config.ui.specifics.entity;
+                                        $scope.rootFormSetDirty = rootFormSetDirty;
+                                        $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
+                                        $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
+                                        $scope.validateForm = angular.bind($scope, helpers.form.validate);
+
+
+                                        if ($scope.args && $scope.args.kind) {
+                                            $scope.info.kind = $scope.args.kind;
+                                            $scope.getFormBuilder();
 
                                         }
+                                        $scope.close = function () {
+                                            if (!$scope.container.form.$dirty) {
+                                                return $scope.$close();
+                                            }
+                                            var save = $scope.save();
+                                            if (save) {
+                                                return save.then(function () {
+                                                    $scope._close_ = undefined;
+                                                    return $scope.$close();
+                                                });
+                                            } else {
+                                                return modals.confirm('discardWithFieldsRequired', $scope.$close);
+                                            }
+                                        };
 
-                                        $scope.isNew = false;
+                                        $scope._close_ = $scope.close;
 
-                                        return saveCompletePromise;
+                                        $scope.save = function () {
+                                            var promise,
+                                                complete,
+                                                saveCompleteDefer = $q.defer(),
+                                                saveCompletePromise = saveCompleteDefer.promise;
+                                            if (!$scope.validateForm() || !$scope.info.kind) {
+                                                return;
+                                            }
 
+                                            if (angular.isFunction(config.ui.specifics.beforeSave)) {
+                                                promise = config.ui.specifics.beforeSave($scope, info);
+                                            }
+
+                                            complete = function () {
+                                                var newPromise = null,
+                                                    total = 0;
+                                                if ($scope.isNew) {
+                                                    $scope.parentArgs.unshift($scope.args);
+                                                    $scope.isNew = false;
+                                                    total = $scope.parentArgs.length;
+                                                    angular.forEach($scope.parentArgs, function (item, i) {
+                                                        i = total - i;
+                                                        item._sequence = i;
+                                                    });
+                                                } else {
+                                                    $.extend(arg, $scope.args);
+                                                }
+
+                                                if (angular.isFunction(config.ui.specifics.afterSave)) {
+                                                    newPromise = config.ui.specifics.afterSave($scope, info);
+                                                }
+
+                                                if (newPromise && newPromise.then) {
+                                                    newPromise.then(function () {
+                                                        saveCompleteDefer.resolve();
+                                                    });
+                                                } else {
+                                                    saveCompleteDefer.resolve();
+                                                }
+
+                                            };
+
+                                            if ($scope.container.form.$dirty) {
+                                                rootFormSetDirty();
+                                            }
+                                            if (promise && promise.then) {
+                                                promise.then(complete);
+                                            } else {
+                                                complete();
+
+                                            }
+
+                                            $scope.isNew = false;
+
+                                            return saveCompletePromise;
+
+                                        };
+                                        $scope.$on('$destroy', function () {
+                                            config._title_.remove(getTitle);
+                                            config.ui.specifics.getScope = undefined;
+                                        });
                                     };
-                                    $scope.$on('$destroy', function () {
-                                        config._title_.remove(getTitle);
-                                        config.ui.specifics.getScope = undefined;
-                                    });
-
-                                    $scope.$watch('isNew', function () {
-                                        config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
-                                    });
-
                                 })
                             });
                         }
@@ -22266,11 +22268,11 @@ function msieversion() {
 
         modelsConfig(function (models) {
             var read_arguments = {
-                    _content: {
-                        documents: {}
-                    },
-                    _plugin_group: {}
-                };
+                _content: {
+                    documents: {}
+                },
+                _plugin_group: {}
+            };
 
             $.extend(models['23'], {
                 makeSellerDetails: function (seller, config) {
