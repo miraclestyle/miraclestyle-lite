@@ -20703,7 +20703,7 @@ function msieversion() {
                             controller: ng(function ($scope) {
                                 $scope.dialog = {
                                     toolbar: {
-                                        title: 'Cart',
+                                        title: (order && order.state !== 'cart' ? 'Order' : 'Cart'),
                                         templateRight: 'order/toolbar_actions.html'
                                     }
                                 };
