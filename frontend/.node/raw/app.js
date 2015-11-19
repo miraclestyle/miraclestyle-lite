@@ -11677,7 +11677,7 @@ function msieversion() {
                                 controller: ng(function ($scope, modelsUtil) {
                                     var process, getTitle;
 
-                                    $scope.isNew = (arg ? true : false);
+                                    $scope.isNew = (arg ? false : true);
                                     $scope.container = {
                                         action: endpoint.url
                                     };
@@ -17496,22 +17496,6 @@ function msieversion() {
                     }
                 }
             }
-        })).controller('LoginLinksController', ng(function ($scope, endpoint, currentAccount, models) {
-
-            $scope.authorization_urls = {};
-            if (currentAccount._is_guest === undefined || currentAccount._is_guest) {
-                models['11'].actions.login({
-                    login_method: '1'
-                }).then(function (response) {
-                    $scope.authorization_urls = response.data.authorization_urls;
-                });
-            }
-
-            $scope.login = function (type) {
-                endpoint.removeCache('currentAccount');
-                window.location.replace($scope.authorization_urls[type]);
-            };
-
         })).controller('AccountManagementController', ng(function ($scope, currentAccount, models, modelsUtil) {
 
             $scope.settings = function () {

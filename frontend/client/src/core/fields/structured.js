@@ -372,7 +372,7 @@
                                 controller: ng(function ($scope, modelsUtil) {
                                     var process, getTitle;
 
-                                    $scope.isNew = (arg ? true : false);
+                                    $scope.isNew = (arg ? false : true);
                                     $scope.container = {
                                         action: endpoint.url
                                     };
