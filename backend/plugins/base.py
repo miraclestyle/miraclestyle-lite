@@ -32,6 +32,7 @@ class Context(orm.BaseModel):
       else:
         context.account = context.models['11'].system_account()
     context._callbacks = []
+    context.output['is_guest'] = context.account._is_guest
 
 
 class Set(orm.BaseModel):

@@ -94,7 +94,6 @@ class AccountLoginWrite(orm.BaseModel):
         entity._record_arguments = {'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address}
         entity.record()
       else:
-        current_identity = None
         for identity in entity.identities.value:
           identity.primary = False
           if identity.identity == context._identity_id:

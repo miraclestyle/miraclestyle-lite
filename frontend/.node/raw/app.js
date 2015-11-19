@@ -723,13 +723,13 @@ if (window.DEBUG) {
     angular.module('app').factory('errorHandling', ng(function ($modal, snackbar, GLOBAL_CONFIG, modals) {
         var translations = GLOBAL_CONFIG.backendErrorHandling,
             errorHandling = {
-                translate: function (k, v) {
+                translate: function (k, v, data) {
                     var possible = translations[k];
                     if (angular.isString(possible)) {
                         return possible;
                     }
                     if (angular.isFunction(possible)) {
-                        return possible(v);
+                        return possible(v, data);
                     }
                     return v;
                 },
@@ -749,15 +749,14 @@ if (window.DEBUG) {
                         }())
                     });
                 },
-                snackbar: function (errors, callback) {
+                snackbar: function (errors, callback, data) {
                     if (errors.traceback) {
                         return snackbar.showK('errorWithTraceback');
-                        //return errorHandling.modal(errors);
                     }
                     var messages = (function () {
                             var formatErrors = [];
                             angular.forEach(errors, function (error, key) {
-                                formatErrors.push(errorHandling.translate(key, error));
+                                formatErrors.push(errorHandling.translate(key, error, data));
                             });
                             return formatErrors;
                         }()).join('\n'),
@@ -1143,6 +1142,8 @@ if (window.DEBUG) {
 
     })).config(['$httpProvider', function ($httpProvider) {
 
+        var guestCheck = false;
+
         $httpProvider.interceptors.push(['$rootScope', '$q', '$injector',
             function ($rootScope, $q, $injector) {
 
@@ -1157,6 +1158,12 @@ if (window.DEBUG) {
                             $rootScope.$broadcast('disableUI', false);
                         },
                         reject,
+                        models,
+                        $state,
+                        snackbar,
+                        $timeout,
+                        overrideSnackbarError,
+                        currentAccount = $injector.get('currentAccount'),
                         shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
 
                     if (shouldSpin) {
@@ -1164,26 +1171,60 @@ if (window.DEBUG) {
                     }
 
                     if (rejection.status === -1) {
-                        errorHandling.snackbar({connection_refused: true});
+                        errorHandling.snackbar({connection_refused: true}, undefined, rejection.data);
                         if (shouldDisable) {
                             enableUI();
                         }
                         return $q.reject(rejection);
                     }
 
-                    if (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 1) {
+                    if (!guestCheck && (angular.isObject(rejection.data) && currentAccount._is_guest !== undefined)) {
+                        if (rejection.data.is_guest !== undefined && (rejection.data.is_guest !== currentAccount._is_guest)) {
+                            models = $injector.get('models');
+                            $state = $injector.get('$state');
+                            $timeout = $injector.get('$timeout');
+                            snackbar = $injector.get('snackbar');
+                            overrideSnackbarError = true;
+                            guestCheck = true;
+                            models['11'].actions.current_account().then(function (response) {
+                                var user = response.data.entity,
+                                    key = 'youAreNotSignedIn';
+                                if (currentAccount._is_guest !== user._is_guest) {
+                                    $.extend(currentAccount, user);
+                                    if (user._is_guest) {
+                                        if (rejection.data.errors) {
+                                            $state.go('home');
+                                        }
+                                    } else {
+                                        $state.go($state.current, {}, {inherit: true, location: false, reload: true});
+                                        key = 'loginSuccess';
+                                    }
+                                    $timeout(function () {
+                                        snackbar.showK(key);
+                                    });
+                                }
+                                guestCheck = false;
+                            });
+                        }
+                    }
+
+                    if ((!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 1)) {
 
                         if (rejection.status > 200 && (!rejection.config.ignoreErrors || rejection.config.ignoreErrors === 2)) {
-                            errorHandling.snackbar(angular.isString(rejection.data) ? {
-                                traceback: rejection.data
-                            } : rejection.data.errors, rejection.config.handleError);
+                            if (!overrideSnackbarError) {
+                                errorHandling.snackbar(angular.isString(rejection.data) ? {
+                                    traceback: rejection.data
+                                } : rejection.data.errors, rejection.config.handleError, rejection.data);
+                            }
                             if (shouldDisable) {
                                 enableUI();
                             }
                             return $q.reject(rejection);
                         }
                         if (data && data.errors && (!rejection.config.ignoreErrors || rejection.config.ignoreErrors > 2)) {
-                            errorHandling.snackbar(rejection.data.errors, rejection.config.handleError);
+                            if (!overrideSnackbarError) {
+                                errorHandling.snackbar(rejection.data.errors, rejection.config.handleError, rejection.data);
+                            }
                             reject = (rejection.config.rejectOnErrors === undefined || rejection.config.rejectOnErrors === true);
                             if (data.errors.action_denied) {
                                 reject = true;
@@ -1283,7 +1324,7 @@ if (window.DEBUG) {
 (function () {
     'use strict';
 
-    angular.module('app').config(ng(function (GLOBAL_CONFIG) {
+    angular.module('app').config(ng(function (GLOBAL_CONFIG, $injector) {
         var locals = {};
 
         $.extend(GLOBAL_CONFIG.modals.confirmations, {
@@ -1715,7 +1756,8 @@ if (window.DEBUG) {
             loginSuccess: 'Signed in.',
             loginFailed: 'Sign in failed!',
             loggedOut: 'Signed out.',
-            loginCanceled: 'Sign in canceled.'
+            loginCanceled: 'Sign in canceled.',
+            youAreNotSignedIn: 'You are not signed in.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -1775,6 +1817,9 @@ if (window.DEBUG) {
         if (!GLOBAL_CONFIG.backendErrorHandling) {
             GLOBAL_CONFIG.backendErrorHandling = {};
         }
+
+
+    })).run(ng(function (GLOBAL_CONFIG, currentAccount, models, $state, $timeout, snackbar) {
         $.extend(GLOBAL_CONFIG.backendErrorHandling, {
             sellerProfileNotFound: function (errors) {
                 if (errors.not_found && $.inArray('seller', errors.not_found) !== -1) {
@@ -1791,7 +1836,7 @@ if (window.DEBUG) {
             internal_server_error: function (errors) {
                 return 'Error occurred on the server.';
             },
-            action_denied: function (reason) {
+            action_denied: function () {
                 return 'You do not have permission to perform this action.';
             },
             not_found: function (fields) {
@@ -1820,7 +1865,6 @@ if (window.DEBUG) {
                 return reason;
             }
         });
-
     }));
 }());
 (function () {
@@ -20354,7 +20398,7 @@ function msieversion() {
                 show: [],
                 stop: function () {
                     if (this.hide) {
-                        _.last(this.hide)();
+                        (_.last(this.hide) || angular.noop)();
                     }
                 },
                 start: function () {
@@ -20366,10 +20410,7 @@ function msieversion() {
                         cb();
                     });
                     if (this.show) {
-                        var last = _.last(this.show);
-                        if (last) {
-                            last();
-                        }
+                        (_.last(this.show) || angular.noop)();
                     }
                 }
             };

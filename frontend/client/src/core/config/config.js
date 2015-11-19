@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    angular.module('app').config(ng(function (GLOBAL_CONFIG) {
+    angular.module('app').config(ng(function (GLOBAL_CONFIG, $injector) {
         var locals = {};
 
         $.extend(GLOBAL_CONFIG.modals.confirmations, {
@@ -433,7 +433,8 @@
             loginSuccess: 'Signed in.',
             loginFailed: 'Sign in failed!',
             loggedOut: 'Signed out.',
-            loginCanceled: 'Sign in canceled.'
+            loginCanceled: 'Sign in canceled.',
+            youAreNotSignedIn: 'You are not signed in.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -493,6 +494,9 @@
         if (!GLOBAL_CONFIG.backendErrorHandling) {
             GLOBAL_CONFIG.backendErrorHandling = {};
         }
+
+
+    })).run(ng(function (GLOBAL_CONFIG, currentAccount, models, $state, $timeout, snackbar) {
         $.extend(GLOBAL_CONFIG.backendErrorHandling, {
             sellerProfileNotFound: function (errors) {
                 if (errors.not_found && $.inArray('seller', errors.not_found) !== -1) {
@@ -509,7 +513,7 @@
             internal_server_error: function (errors) {
                 return 'Error occurred on the server.';
             },
-            action_denied: function (reason) {
+            action_denied: function () {
                 return 'You do not have permission to perform this action.';
             },
             not_found: function (fields) {
@@ -538,6 +542,5 @@
                 return reason;
             }
         });
-
     }));
 }());

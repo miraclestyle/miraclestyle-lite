@@ -56,7 +56,7 @@
                 show: [],
                 stop: function () {
                     if (this.hide) {
-                        _.last(this.hide)();
+                        (_.last(this.hide) || angular.noop)();
                     }
                 },
                 start: function () {
@@ -68,10 +68,7 @@
                         cb();
                     });
                     if (this.show) {
-                        var last = _.last(this.show);
-                        if (last) {
-                            last();
-                        }
+                        (_.last(this.show) || angular.noop)();
                     }
                 }
             };
