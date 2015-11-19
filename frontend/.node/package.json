@@ -1,5 +1,13 @@
 {
-    "name": "Processor",
+    "name": "builder",
+    "description": "Frontend build tools for miraclestyle app - gulp based tasks that uglify, minify, and anotate angular",
+    "homepage": "https://miraclestyle.com",
+    "license": "PROPRIETARY LICENCE",
+    "bugs": "https://bitbucket.org/vertazzar/miraclestyle-lite/issues",
+    "repository": {
+        "type": "git",
+        "url": "git://bitbucket.org/vertazzar/miraclestyle-lite.git"
+    },
     "devDependencies": {
         "gulp-angular-injector": "1.0.0",
         "gulp": "3.8.11",
