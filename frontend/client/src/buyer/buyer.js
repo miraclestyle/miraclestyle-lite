@@ -267,7 +267,8 @@
                                 }
                             },
                             toolbar: {
-                                titleEdit: 'buyer.viewAddresses'
+                                titleEdit: 'buyer.viewAddresses',
+                                titleAdd: 'buyer.viewAddresses'
                             },
                             excludeFields: ['account', 'read_arguments'],
                             argumentLoader: function ($scope) {

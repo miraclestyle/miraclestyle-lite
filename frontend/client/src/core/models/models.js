@@ -581,6 +581,7 @@
                                     addTitle = 'add' + config.kind,
                                     rootTitle,
                                     process;
+                                $scope.config = config;
                                 $scope.container = {
                                     action: endpoint.url
                                 };
@@ -589,6 +590,17 @@
                                     templateBodyUrl: config.templateBodyUrl
                                 };
                                 $scope.entity = entity;
+                                if (!config.toolbar) {
+                                    config.toolbar = {};
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleEdit)) {
+                                    config.toolbar.titleEdit = editTitle;
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleAdd)) {
+                                    config.toolbar.titleAdd = addTitle;
+                                }
                                 rootTitle = function () {
                                     var toolbar = $scope.dialog.toolbar,
                                         out;
@@ -603,21 +615,12 @@
                                         }
                                         out = toolbar.titleAdd;
                                     }
+                                    console.log(out);
                                     return out;
                                 };
                                 config._title_ = [rootTitle];
                                 $scope.$watch('entity.id', rootTitle);
-                                if (!config.toolbar) {
-                                    config.toolbar = {};
-                                }
-
-                                if (angular.isUndefined(config.toolbar.titleEdit)) {
-                                    config.toolbar.titleEdit = editTitle;
-                                }
-
-                                if (angular.isUndefined(config.toolbar.titleAdd)) {
-                                    config.toolbar.titleAdd = addTitle;
-                                }
+                                rootTitle();
                                 process = function ($scope) {
                                     var field,
                                         done = {},
@@ -651,7 +654,6 @@
                                     };
                                     modelsUtil.normalize(entity);
                                     $scope.withArgs = args;
-                                    $scope.config = config;
                                     $scope.args = config.argumentLoader($scope);
                                     $scope.rootScope = $scope;
 

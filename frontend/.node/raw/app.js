@@ -15480,6 +15480,7 @@ function msieversion() {
                                     addTitle = 'add' + config.kind,
                                     rootTitle,
                                     process;
+                                $scope.config = config;
                                 $scope.container = {
                                     action: endpoint.url
                                 };
@@ -15488,6 +15489,17 @@ function msieversion() {
                                     templateBodyUrl: config.templateBodyUrl
                                 };
                                 $scope.entity = entity;
+                                if (!config.toolbar) {
+                                    config.toolbar = {};
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleEdit)) {
+                                    config.toolbar.titleEdit = editTitle;
+                                }
+
+                                if (angular.isUndefined(config.toolbar.titleAdd)) {
+                                    config.toolbar.titleAdd = addTitle;
+                                }
                                 rootTitle = function () {
                                     var toolbar = $scope.dialog.toolbar,
                                         out;
@@ -15502,21 +15514,12 @@ function msieversion() {
                                         }
                                         out = toolbar.titleAdd;
                                     }
+                                    console.log(out);
                                     return out;
                                 };
                                 config._title_ = [rootTitle];
                                 $scope.$watch('entity.id', rootTitle);
-                                if (!config.toolbar) {
-                                    config.toolbar = {};
-                                }
-
-                                if (angular.isUndefined(config.toolbar.titleEdit)) {
-                                    config.toolbar.titleEdit = editTitle;
-                                }
-
-                                if (angular.isUndefined(config.toolbar.titleAdd)) {
-                                    config.toolbar.titleAdd = addTitle;
-                                }
+                                rootTitle();
                                 process = function ($scope) {
                                     var field,
                                         done = {},
@@ -15550,7 +15553,6 @@ function msieversion() {
                                     };
                                     modelsUtil.normalize(entity);
                                     $scope.withArgs = args;
-                                    $scope.config = config;
                                     $scope.args = config.argumentLoader($scope);
                                     $scope.rootScope = $scope;
 
@@ -18139,7 +18141,8 @@ function msieversion() {
                                 }
                             },
                             toolbar: {
-                                titleEdit: 'buyer.viewAddresses'
+                                titleEdit: 'buyer.viewAddresses',
+                                titleAdd: 'buyer.viewAddresses'
                             },
                             excludeFields: ['account', 'read_arguments'],
                             argumentLoader: function ($scope) {
@@ -22159,16 +22162,14 @@ function msieversion() {
                         documents: {}
                     },
                     _plugin_group: {}
-                },
-                globalSellerStack = {};
+                };
 
             $.extend(models['23'], {
                 makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;
                     return (function ($scope) {
-                        var chartData,
-                            sellerUrl = $state.href('seller-info', {
+                        var sellerUrl = $state.href('seller-info', {
                                 key: seller.parent.key
                             }, {
                                 absolute: true
@@ -22182,8 +22183,6 @@ function msieversion() {
                         $scope.seller = seller;
                         $scope.menu = {};
                         helpers.sideNav.setup($scope.menu, 'right_seller_details');
-
-                        chartData = [];
 
                         $scope.socialMeta = {
                             facebook: {
@@ -22346,7 +22345,8 @@ function msieversion() {
                         fields: _.toArray(fields),
                         toolbar: {
                             submitNative: true,
-                            titleEdit: 'seller.settings'
+                            titleEdit: 'seller.settings',
+                            titleAdd: 'seller.settings'
                         },
                         modalConfig: {
                             inDirection: false,

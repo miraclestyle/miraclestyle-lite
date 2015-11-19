@@ -780,16 +780,14 @@
                         documents: {}
                     },
                     _plugin_group: {}
-                },
-                globalSellerStack = {};
+                };
 
             $.extend(models['23'], {
                 makeSellerDetails: function (seller, config) {
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;
                     return (function ($scope) {
-                        var chartData,
-                            sellerUrl = $state.href('seller-info', {
+                        var sellerUrl = $state.href('seller-info', {
                                 key: seller.parent.key
                             }, {
                                 absolute: true
@@ -803,8 +801,6 @@
                         $scope.seller = seller;
                         $scope.menu = {};
                         helpers.sideNav.setup($scope.menu, 'right_seller_details');
-
-                        chartData = [];
 
                         $scope.socialMeta = {
                             facebook: {
@@ -967,7 +963,8 @@
                         fields: _.toArray(fields),
                         toolbar: {
                             submitNative: true,
-                            titleEdit: 'seller.settings'
+                            titleEdit: 'seller.settings',
+                            titleAdd: 'seller.settings'
                         },
                         modalConfig: {
                             inDirection: false,
