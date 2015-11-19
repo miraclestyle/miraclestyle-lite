@@ -615,7 +615,6 @@
                                         }
                                         out = toolbar.titleAdd;
                                     }
-                                    console.log(out);
                                     return out;
                                 };
                                 config._title_ = [rootTitle];
@@ -842,7 +841,9 @@
                                         process($scope);
                                     });
                                 } else {
-                                    process($scope);
+                                    $scope.$state.ready = function () {
+                                        process($scope);
+                                    };
                                 }
                             };
 

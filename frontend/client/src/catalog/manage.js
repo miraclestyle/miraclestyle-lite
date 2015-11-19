@@ -284,9 +284,7 @@
                                                     return ipricetag.key === pricetag.key;
                                                 });
                                             };
-
                                             $scope.$stateHiddenLoading = true;
-
                                             $scope.$on('modalOpened', function () {
                                                 imagesReader.load()['finally'](function () {
                                                     $scope.$stateHiddenLoading = false;

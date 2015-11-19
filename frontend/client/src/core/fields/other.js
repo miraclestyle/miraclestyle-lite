@@ -228,14 +228,15 @@
                                     '17': true
                                 },
                                 type: {
-                                    /*'12': 'local',
+                                    '12': 'local',
                                     '17': 'local',
                                     '24': 'local',
-                                    '13': 'local',*/
+                                    '13': 'local',
+                                    /*
                                     '12': 'memory',
                                     '17': 'memory',
                                     '24': 'memory',
-                                    '13': 'memory',
+                                    '13': 'memory',*/
                                     'default': 'memory'
                                 }
                             },
@@ -423,7 +424,6 @@
                     if (override.cache && angular.isDefined(override.cache.type)) {
                         opts.cacheType = override.cache.type;
                     }
-
 
                     if (model && !config.ui.specifics.getEntities) {
                         if (model.actions.search) {

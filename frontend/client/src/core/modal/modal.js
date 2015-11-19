@@ -121,6 +121,9 @@
                     }
                     scope.size = attrs.size;
                     scope.$isRendered = true;
+                    scope.$renderComplete = function () {
+                        $timeout(ready, 50, false);
+                    };
                     // Observe function will be called on next digest cycle after compilation, ensuring that the DOM is ready.
                     // In order to use this way of finding whether DOM is ready, we need to observe a scope property used in modal's template.
                     ready = function () {
@@ -207,7 +210,6 @@
                             $timeout(ready, 50, false);
                         }
                     });
-
                     scope.backdropClose = function ($event) {
                         if (scope.modalOptions.cantCloseWithBackdrop) {
                             return;
@@ -288,7 +290,8 @@
 
                 setTimeout(function () {
                     if (domEl) {
-                        demise();
+                        // @todo check this
+                        // demise();
                     }
                 }, 600);
 
@@ -450,7 +453,7 @@
 
         var $modalProvider = {
             options: {
-                backdrop: false, //can be also false or 'static'
+                backdrop: false,
                 inDirection: 'right',
                 outDirection: 'right',
                 fullScreen: true

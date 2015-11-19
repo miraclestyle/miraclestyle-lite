@@ -10962,14 +10962,15 @@ function msieversion() {
                                     '17': true
                                 },
                                 type: {
-                                    /*'12': 'local',
+                                    '12': 'local',
                                     '17': 'local',
                                     '24': 'local',
-                                    '13': 'local',*/
+                                    '13': 'local',
+                                    /*
                                     '12': 'memory',
                                     '17': 'memory',
                                     '24': 'memory',
-                                    '13': 'memory',
+                                    '13': 'memory',*/
                                     'default': 'memory'
                                 }
                             },
@@ -11157,7 +11158,6 @@ function msieversion() {
                     if (override.cache && angular.isDefined(override.cache.type)) {
                         opts.cacheType = override.cache.type;
                     }
-
 
                     if (model && !config.ui.specifics.getEntities) {
                         if (model.actions.search) {
@@ -11746,6 +11746,12 @@ function msieversion() {
                                     $scope.$watch('isNew', function () {
                                         config.ui.specifics.toolbar.title = helpers.toolbar.buildTitle(config._title_);
                                     });
+                                    if (config.ui.specifics.remote) {
+                                        $.extend(config.ui.specifics.toolbar, {
+                                            leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
+                                            hideSave: true
+                                        });
+                                    }
                                     process = function ($scope) {
                                         var length = (config.ui.specifics.modal ? 0 : (config.ui.specifics.parentArgs ? config.ui.specifics.parentArgs.length : 0)),
                                             formBuilder = {
@@ -11836,10 +11842,6 @@ function msieversion() {
                                             });
 
                                         } else {
-                                            $.extend(config.ui.specifics.toolbar, {
-                                                leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
-                                                hideSave: true
-                                            });
                                             $scope.close = function () {
                                                 if (!$scope.container.form.$dirty) {
                                                     return $scope.$close();
@@ -12272,7 +12274,9 @@ function msieversion() {
                                             process($scope);
                                         });
                                     } else {
-                                        process($scope);
+                                        $scope.$state.ready = function () {
+                                            process($scope);
+                                        };
                                     }
                                 })
                             });
@@ -14137,6 +14141,93 @@ function msieversion() {
                     });
                 }
             };
+        }))
+        /*
+         * The whenReady directive allows you to execute the content of a when-ready
+         * attribute after the element is ready (i.e. when it's done loading all sub directives and DOM
+         * content). See: http://stackoverflow.com/questions/14968690/sending-event-when-angular-js-finished-loading
+         *
+         * Execute multiple expressions in the when-ready attribute by delimiting them
+         * with a semi-colon. when-ready="doThis(); doThat()"
+         *
+         * Optional: If the value of a wait-for-interpolation attribute on the
+         * element evaluates to true, then the expressions in when-ready will be
+         * evaluated after all text nodes in the element have been interpolated (i.e.
+         * {{placeholders}} have been replaced with actual values).
+         *
+         * Optional: Use a ready-check attribute to write an expression that
+         * specifies what condition is true at any given moment in time when the
+         * element is ready. The expression will be evaluated repeatedly until the
+         * condition is finally true. The expression is executed with
+         * requestAnimationFrame so that it fires at a moment when it is least likely
+         * to block rendering of the page.
+         *
+         * If wait-for-interpolation and ready-check are both supplied, then the
+         * when-ready expressions will fire after interpolation is done *and* after
+         * the ready-check condition evaluates to true.
+         *
+         * Caveats: if other directives exists on the same element as this directive
+         * and destroy the element thus preventing other directives from loading, using
+         * this directive won't work. The optimal way to use this is to put this
+         * directive on an outer element.
+         */
+        .directive('whenReady', ng(function ($interpolate, $$rAF) {
+            return {
+                restrict: 'A',
+                priority: Number.MIN_SAFE_INTEGER, // execute last, after all other directives if any.
+                link: function ($scope, $element, $attributes) {
+                    var expressions = $attributes.whenReady.split(';');
+                    var waitForInterpolation = false;
+                    var hasReadyCheckExpression = false;
+
+                    function evalExpressions(expressions) {
+                        console.log('dialog', new Date());
+                        expressions.forEach(function (expression) {
+                            $scope.$eval(expression);
+                        });
+                    }
+
+                    if ($attributes.whenReady.trim().length === 0) {
+                        return;
+                    }
+
+                    if ($attributes.waitForInterpolation && $scope.$eval($attributes.waitForInterpolation)) {
+                        waitForInterpolation = true;
+                    }
+
+                    if ($attributes.readyCheck) {
+                        hasReadyCheckExpression = true;
+                    }
+
+                    if (waitForInterpolation || hasReadyCheckExpression) {
+                        $$rAF(function checkIfReady() {
+                            var isInterpolated = false;
+                            var isReadyCheckTrue = false;
+
+                            if (waitForInterpolation && $element.text().indexOf($interpolate.startSymbol()) >= 0) { // if the text still has {{placeholders}}
+                                isInterpolated = false;
+                            } else {
+                                isInterpolated = true;
+                            }
+
+                            if (hasReadyCheckExpression && !$scope.$eval($attributes.readyCheck)) { // if the ready check expression returns false
+                                isReadyCheckTrue = false;
+                            } else {
+                                isReadyCheckTrue = true;
+                            }
+
+                            if (isInterpolated && isReadyCheckTrue) {
+                                evalExpressions(expressions);
+                            } else {
+                                $$rAF(checkIfReady);
+                            }
+
+                        });
+                    } else {
+                        evalExpressions(expressions);
+                    }
+                }
+            };
         }));
 }());
 (function () {
@@ -14262,6 +14353,9 @@ function msieversion() {
                     }
                     scope.size = attrs.size;
                     scope.$isRendered = true;
+                    scope.$renderComplete = function () {
+                        $timeout(ready, 50, false);
+                    };
                     // Observe function will be called on next digest cycle after compilation, ensuring that the DOM is ready.
                     // In order to use this way of finding whether DOM is ready, we need to observe a scope property used in modal's template.
                     ready = function () {
@@ -14348,7 +14442,6 @@ function msieversion() {
                             $timeout(ready, 50, false);
                         }
                     });
-
                     scope.backdropClose = function ($event) {
                         if (scope.modalOptions.cantCloseWithBackdrop) {
                             return;
@@ -14429,7 +14522,8 @@ function msieversion() {
 
                 setTimeout(function () {
                     if (domEl) {
-                        demise();
+                        // @todo check this
+                        // demise();
                     }
                 }, 600);
 
@@ -14591,7 +14685,7 @@ function msieversion() {
 
         var $modalProvider = {
             options: {
-                backdrop: false, //can be also false or 'static'
+                backdrop: false,
                 inDirection: 'right',
                 outDirection: 'right',
                 fullScreen: true
@@ -15518,7 +15612,6 @@ function msieversion() {
                                         }
                                         out = toolbar.titleAdd;
                                     }
-                                    console.log(out);
                                     return out;
                                 };
                                 config._title_ = [rootTitle];
@@ -15745,7 +15838,9 @@ function msieversion() {
                                         process($scope);
                                     });
                                 } else {
-                                    process($scope);
+                                    $scope.$state.ready = function () {
+                                        process($scope);
+                                    };
                                 }
                             };
 
@@ -18731,9 +18826,7 @@ function msieversion() {
                                                     return ipricetag.key === pricetag.key;
                                                 });
                                             };
-
                                             $scope.$stateHiddenLoading = true;
-
                                             $scope.$on('modalOpened', function () {
                                                 imagesReader.load()['finally'](function () {
                                                     $scope.$stateHiddenLoading = false;
@@ -20490,7 +20583,7 @@ function msieversion() {
             }, {
                 name: 'Tumblr',
                 key: 'tumblr',
-                command: 'https://www.tumblr.com/profile'
+                command: 'http://themiraclestyle.tumblr.com/'
             }];
 
             $scope.share = function (soc) {
