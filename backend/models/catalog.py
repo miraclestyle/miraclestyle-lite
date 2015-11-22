@@ -639,6 +639,7 @@ class Catalog(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_catalog'}})
                   ]
               )
@@ -666,6 +667,7 @@ class Catalog(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_catalog'}})
                   ]
               )
@@ -693,6 +695,7 @@ class Catalog(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Write(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_catalog'}})
                   ]
               )
