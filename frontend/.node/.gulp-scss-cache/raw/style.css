@@ -1390,7 +1390,8 @@ img.vertical, .vertical {
   overflow: hidden;
   position: relative;
   width: 100%;
-  overflow-x: visible; }
+  overflow-x: visible;
+  -webkit-overflow-scrolling: touch; }
 
 .image-slider .image-slider-item {
   float: left;
@@ -1484,19 +1485,23 @@ img.vertical, .vertical {
 
 .overflow-x {
   overflow-x: scroll;
-  overflow-y: hidden; }
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; }
 
 .overflow-y {
   overflow-y: scroll;
-  overflow-x: hidden; }
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; }
 
 .overflow-auto-y {
   overflow-y: auto;
-  overflow-x: hidden; }
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; }
 
 .overflow-auto-x {
   overflow-x: auto;
-  overflow-y: hidden; }
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; }
 
 .overflow-hidden {
   overflow: hidden; }

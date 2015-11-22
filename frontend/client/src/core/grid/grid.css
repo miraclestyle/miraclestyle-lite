@@ -65,6 +65,7 @@ img.vertical, .vertical {
     position: relative;
     width: 100%;
     overflow-x: visible;
+    -webkit-overflow-scrolling: touch;
 }
 
 .image-slider .image-slider-item {
