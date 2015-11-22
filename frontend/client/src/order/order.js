@@ -230,8 +230,10 @@
                                             return $.inArray(indx, $scope.stage.out) !== -1;
                                         },
                                         toCheckout: function () {
-                                            $scope.stage.out.push(1);
-                                            $scope.stage.current = 2;
+                                            $timeout(function () {
+                                                $scope.stage.out.push(1);
+                                                $scope.stage.current = 2;
+                                            }, 300);
                                         },
                                         toDeliveryMethod: function () {
                                             var valid = $scope.addresses.form.billing.$valid,

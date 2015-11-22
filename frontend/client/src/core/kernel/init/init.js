@@ -185,7 +185,7 @@
                 controller: 'AdminListController'
             });
 
-    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
+    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
         $rootScope.$on('$stateChangeSuccess',
             function (event, toState, toParams, fromState, fromParams) {
                 if (toState.title) {

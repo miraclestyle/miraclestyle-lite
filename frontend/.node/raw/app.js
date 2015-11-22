@@ -20991,8 +20991,10 @@ angular.module('app')
                                             return $.inArray(indx, $scope.stage.out) !== -1;
                                         },
                                         toCheckout: function () {
-                                            $scope.stage.out.push(1);
-                                            $scope.stage.current = 2;
+                                            $timeout(function () {
+                                                $scope.stage.out.push(1);
+                                                $scope.stage.current = 2;
+                                            }, 300);
                                         },
                                         toDeliveryMethod: function () {
                                             var valid = $scope.addresses.form.billing.$valid,
@@ -22859,7 +22861,7 @@ angular.module('app')
                 controller: 'AdminListController'
             });
 
-    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil) {
+    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
         $rootScope.$on('$stateChangeSuccess',
             function (event, toState, toParams, fromState, fromParams) {
                 if (toState.title) {
