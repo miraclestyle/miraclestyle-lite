@@ -1,4 +1,5 @@
 <div fit-in-modal>
+    <modal-loading toolbar="true"></modal-loading>
     <div ng-form="container.form" class="modal-body">
         <div class="top-close">
                 <button md-ink-ripple-action loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
@@ -7,7 +8,7 @@
         </div>
         <div class="fixed-height relative overflow-auto-y">
 
-            <div class="modal-body-inner">
+            <div ng-if="$state.isCompleted()" class="modal-body-inner">
                 <div class="list seam-bottom list-padding">
                     <div class="social-grid">
                         <button ng-click="share(soc)" type="button" ng-repeat="soc in socials" class="social-grid-item" md-ink-ripple>

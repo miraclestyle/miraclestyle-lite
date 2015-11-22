@@ -5,6 +5,7 @@
     transition-property: top;
     transition-duration: 300ms;
     position: absolute;
+    -webkit-overflow-scrolling: touch;
 }
 
 .order-stage.out {
@@ -27,7 +28,6 @@
     top: 0px;
     overflow: auto;
     height: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .order-next-stage {

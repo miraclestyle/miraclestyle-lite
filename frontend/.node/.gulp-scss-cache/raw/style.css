@@ -3057,7 +3057,8 @@ body, html {
   transition-timing-function: cubic-bezier(0.8, 0, 0.4, 1);
   transition-property: top;
   transition-duration: 300ms;
-  position: absolute; }
+  position: absolute;
+  -webkit-overflow-scrolling: touch; }
 
 .order-stage.out {
   top: 100%;
@@ -3076,8 +3077,7 @@ body, html {
 .order-stage.in {
   top: 0px;
   overflow: auto;
-  height: auto;
-  -webkit-overflow-scrolling: touch; }
+  height: auto; }
 
 .order-next-stage {
   display: block;
