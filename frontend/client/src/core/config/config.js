@@ -428,7 +428,6 @@
             orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
-            saveInProgress: 'Save in progress. Please wait.',
             saveChangesFirst: 'Save changes first.',
             loginSuccess: 'Signed in.',
             loginFailed: 'Sign in failed!',
