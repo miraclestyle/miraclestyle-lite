@@ -20888,6 +20888,7 @@ function msieversion() {
                                     seller = response.data.entity._seller;
                                     var locals = {
                                         customPlaceholder: null,
+                                        spawnAddress: null,
                                         updateLiveEntity: function (response, config) {
                                             var messages = $scope.order._messages,
                                                 lines = $scope.order._lines;
@@ -21040,6 +21041,35 @@ function msieversion() {
                                     $scope.logoImageConfig = {
                                         size: 280
                                     };
+
+                                    locals.spawnAddress = function (addr) {
+                                        addr.country = null;
+                                        addr.kind = '14';
+                                        delete addr.key;
+                                        addr.region = null;
+                                        models['12'].actions.search({
+                                            search: {
+                                                keys: [[['12', addr.country_code.toLowerCase()]]]
+                                            }
+                                        }, {
+                                            cache: true,
+                                            disableUI: false
+                                        }).then(function (response) {
+                                            addr.country = response.data.entities[0].key;
+                                            return models['13'].actions.search({
+                                                search: {
+                                                    keys: [[['12', addr.country_code.toLowerCase(), '13', addr.region_code.toLowerCase()]]]
+                                                }
+                                            }, {
+                                                cache: true,
+                                                disableUI: false
+                                            }).then(function (response) {
+                                                addr.region = response.data.entities[0].key;
+                                            });
+                                        });
+                                        return addr;
+                                    };
+
                                     $scope.cmd = {};
                                     $scope.container = {};
                                     $scope.cartMode = cartMode;
@@ -21050,8 +21080,8 @@ function msieversion() {
                                     $scope.addresses = {
                                         sameAsBilling: true,
                                         form: {},
-                                        shipping: {},
-                                        billing: {},
+                                        shipping: locals.spawnAddress($scope.order.shipping_address) || {},
+                                        billing: locals.spawnAddress($scope.order.billing_address) || {},
                                         browse: function (type) {
                                             var parentScope = $scope;
                                             models['19'].current().then(function (response) {

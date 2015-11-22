@@ -455,7 +455,7 @@ class BaseKeyProperty(_BaseProperty, KeyProperty):
         try:
           out = Key(*value[0], **kwds)
         except Exception as e:
-          tools.log.error('Failed discovering key from %s for field %s' % (v, self), exc_info=e)
+          tools.log.error('Failed discovering key from %s for field %s' % (value, self), exc_info=e)
           raise FormatError('malformed_key')
         if self._kind and out.kind() != self._kind:
           raise FormatError('invalid_kind')
