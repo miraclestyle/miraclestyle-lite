@@ -14436,6 +14436,7 @@ function msieversion() {
 
                         element.oneAnimationEnd(function () {
                             setTimeout(function () {
+                                element.addClass('visible');
                                 $(window).triggerHandler('modal.visible', [element]);
                                 scope.modalOptions.opened = true;
                                 scope.$emit('modalOpened');
