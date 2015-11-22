@@ -285,6 +285,9 @@
                                     };
 
                                     locals.spawnAddress = function (addr) {
+                                        if (!addr) {
+                                            return addr;
+                                        }
                                         addr.country = null;
                                         addr.kind = '14';
                                         delete addr.key;
