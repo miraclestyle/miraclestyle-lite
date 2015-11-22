@@ -3076,7 +3076,8 @@ body, html {
 .order-stage.in {
   top: 0px;
   overflow: auto;
-  height: auto; }
+  height: auto;
+  -webkit-overflow-scrolling: touch; }
 
 .order-next-stage {
   display: block;

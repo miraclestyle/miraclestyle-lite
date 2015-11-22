@@ -55,7 +55,7 @@
                     resize();
                     measure();
                     steadyScroll = new Steady({
-                        throttle: 100,
+                        throttle: 200,
                         scrollElement: parent.get(0),
                         handler: tryToLoadSteady
                     });

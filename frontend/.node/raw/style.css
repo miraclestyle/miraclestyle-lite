@@ -3750,6 +3750,7 @@ body, html {
     top: 0px;
     overflow: auto;
     height: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .order-next-stage {
