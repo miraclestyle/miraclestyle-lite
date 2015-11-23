@@ -20,25 +20,25 @@
                                         }
                                     };
                                     var defaultReaderOpts = {
-                                            access: ['_records'],
-                                            key: config.key,
-                                            next: {
-                                                _records: {
-                                                    config: {
-                                                        more: true,
-                                                        search: {
-                                                            orders: [{
-                                                                field: 'logged',
-                                                                operator: 'desc'
-                                                            }]
-                                                        }
+                                        access: ['_records'],
+                                        key: config.key,
+                                        next: {
+                                            _records: {
+                                                config: {
+                                                    more: true,
+                                                    search: {
+                                                        orders: [{
+                                                            field: 'logged',
+                                                            operator: 'desc'
+                                                        }]
                                                     }
                                                 }
-                                            },
-                                            complete: function (records) {
-                                                $scope.history.records.extend(records);
                                             }
-                                        };
+                                        },
+                                        complete: function (records) {
+                                            $scope.history.records.extend(records);
+                                        }
+                                    };
 
                                     $.extend(defaultReaderOpts, config.reader);
 
@@ -61,8 +61,9 @@
                                             });
                                         }
                                     };
-
-                                    $scope.history.reader.load();
+                                    $scope.$state.promise(function () {
+                                        return $scope.history.reader.load();
+                                    }, angular.noop);
                                 })
                             });
 

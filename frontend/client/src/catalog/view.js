@@ -316,7 +316,9 @@
                                             }
                                         }, {
                                             disableUI: false
-                                        }) : models['34'].current(sellerKey, {disableUI: false})).then(function (response) {
+                                        }) : models['34'].current(sellerKey, {
+                                            disableUI: false
+                                        })).then(function (response) {
                                             var order = response.data.entity;
                                             if (order.id) {
                                                 angular.forEach(order._lines, function (line) {
@@ -556,9 +558,7 @@
                                     shareWatch();
                                 });
 
-                                $scope.$on('modalOpen', function modalOpenWatch() {
-                                    deferOpen.resolve();
-                                });
+                                deferOpen.resolve();
 
                             }, failedOpen);
 
@@ -578,7 +578,6 @@
                         outDirection: config.outDirection,
                         noEscape: config.noEscape,
                         controller: ng(function ($scope) {
-
 
                             $scope.hideClose = config.hideClose;
                             $scope.$state.promise(function () {

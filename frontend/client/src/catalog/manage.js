@@ -438,8 +438,6 @@
                                                 } else if (left < -8.5) {
                                                     //console.log('must go to the previous image');
                                                     extract();
-                                                } else {
-                                                    //console.log('stays');
                                                 }
 
                                                 if (!$scope.$$phase) {
@@ -453,7 +451,6 @@
 
                                             $scope.onDrop = function (event, ui, image) {
                                                 if ($scope.container.form.$dirty) {
-                                                    //snackbar.showK('saveChangesFirst');
                                                     return;
                                                 }
                                                 var target_drop = $(event.target),

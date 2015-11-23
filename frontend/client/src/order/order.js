@@ -331,15 +331,17 @@
                                         billing: locals.spawnAddress($scope.order.billing_address) || {},
                                         browse: function (type) {
                                             var parentScope = $scope;
-                                            models['19'].current().then(function (response) {
-                                                $modal.open({
-                                                    inDirection: false,
-                                                    windowClass: 'modal-medium-simple',
-                                                    outDirection: false,
-                                                    fullScreen: false,
-                                                    backdrop: true,
-                                                    templateUrl: 'order/browse_addresses.html',
-                                                    controller: ng(function ($scope) {
+                                            $modal.open({
+                                                inDirection: false,
+                                                windowClass: 'modal-medium-simple',
+                                                outDirection: false,
+                                                fullScreen: false,
+                                                backdrop: true,
+                                                templateUrl: 'order/browse_addresses.html',
+                                                controller: ng(function ($scope) {
+                                                    $scope.$state.promise(function () {
+                                                        return models['19'].current();
+                                                    }, function ($scope, response) {
                                                         $scope.addresses = response.data.entity.addresses;
                                                         $scope.select = function (ent) {
                                                             var doit = function () {
@@ -360,8 +362,8 @@
                                                                 outDirection: false
                                                             });
                                                         };
-                                                    })
-                                                });
+                                                    });
+                                                })
                                             });
                                         },
                                         fields: {

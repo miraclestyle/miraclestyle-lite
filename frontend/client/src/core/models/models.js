@@ -430,7 +430,6 @@
 
             var modelsEditor = {
                 create: function (config) {
-
                     var defaultConfig = {
                             showClose: true,
                             closeAfterSave: false,
@@ -676,8 +675,8 @@
 
                                         promise.then(function (response) {
                                             $.extend($scope.entity, response.data.entity);
-                                            var new_args = config.argumentLoader($scope);
-                                            $.extend($scope.args, new_args);
+                                            var newArgs = config.argumentLoader($scope);
+                                            $.extend($scope.args, newArgs);
                                             makeHistory();
                                             if (angular.isDefined(config.afterSave)) {
                                                 config.afterSave($scope);
@@ -931,7 +930,7 @@
                                             $.extend(theConfig.config, {
                                                 disableUI: false
                                             });
-                                            promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
+                                            promise = that.actions[theConfig.action || 'search'](theConfig.args, theConfig.config);
                                             promise.error(function (response) {
                                                 paginate.more = false;
                                                 if (config.error) {

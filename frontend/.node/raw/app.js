@@ -15450,7 +15450,6 @@ function msieversion() {
 
             var modelsEditor = {
                 create: function (config) {
-
                     var defaultConfig = {
                             showClose: true,
                             closeAfterSave: false,
@@ -15696,8 +15695,8 @@ function msieversion() {
 
                                         promise.then(function (response) {
                                             $.extend($scope.entity, response.data.entity);
-                                            var new_args = config.argumentLoader($scope);
-                                            $.extend($scope.args, new_args);
+                                            var newArgs = config.argumentLoader($scope);
+                                            $.extend($scope.args, newArgs);
                                             makeHistory();
                                             if (angular.isDefined(config.afterSave)) {
                                                 config.afterSave($scope);
@@ -15951,7 +15950,7 @@ function msieversion() {
                                             $.extend(theConfig.config, {
                                                 disableUI: false
                                             });
-                                            promise = that.actions[theConfig.action ? theConfig.action : 'search'](theConfig.args, theConfig.config);
+                                            promise = that.actions[theConfig.action || 'search'](theConfig.args, theConfig.config);
                                             promise.error(function (response) {
                                                 paginate.more = false;
                                                 if (config.error) {
@@ -16272,25 +16271,25 @@ function msieversion() {
                                         }
                                     };
                                     var defaultReaderOpts = {
-                                            access: ['_records'],
-                                            key: config.key,
-                                            next: {
-                                                _records: {
-                                                    config: {
-                                                        more: true,
-                                                        search: {
-                                                            orders: [{
-                                                                field: 'logged',
-                                                                operator: 'desc'
-                                                            }]
-                                                        }
+                                        access: ['_records'],
+                                        key: config.key,
+                                        next: {
+                                            _records: {
+                                                config: {
+                                                    more: true,
+                                                    search: {
+                                                        orders: [{
+                                                            field: 'logged',
+                                                            operator: 'desc'
+                                                        }]
                                                     }
                                                 }
-                                            },
-                                            complete: function (records) {
-                                                $scope.history.records.extend(records);
                                             }
-                                        };
+                                        },
+                                        complete: function (records) {
+                                            $scope.history.records.extend(records);
+                                        }
+                                    };
 
                                     $.extend(defaultReaderOpts, config.reader);
 
@@ -16313,8 +16312,9 @@ function msieversion() {
                                             });
                                         }
                                     };
-
-                                    $scope.history.reader.load();
+                                    $scope.$state.promise(function () {
+                                        return $scope.history.reader.load();
+                                    }, angular.noop);
                                 })
                             });
 
@@ -19007,8 +19007,6 @@ angular.module('app')
                                                 } else if (left < -8.5) {
                                                     //console.log('must go to the previous image');
                                                     extract();
-                                                } else {
-                                                    //console.log('stays');
                                                 }
 
                                                 if (!$scope.$$phase) {
@@ -19022,7 +19020,6 @@ angular.module('app')
 
                                             $scope.onDrop = function (event, ui, image) {
                                                 if ($scope.container.form.$dirty) {
-                                                    //snackbar.showK('saveChangesFirst');
                                                     return;
                                                 }
                                                 var target_drop = $(event.target),
@@ -20050,7 +20047,9 @@ angular.module('app')
                                             }
                                         }, {
                                             disableUI: false
-                                        }) : models['34'].current(sellerKey, {disableUI: false})).then(function (response) {
+                                        }) : models['34'].current(sellerKey, {
+                                            disableUI: false
+                                        })).then(function (response) {
                                             var order = response.data.entity;
                                             if (order.id) {
                                                 angular.forEach(order._lines, function (line) {
@@ -20290,9 +20289,7 @@ angular.module('app')
                                     shareWatch();
                                 });
 
-                                $scope.$on('modalOpen', function modalOpenWatch() {
-                                    deferOpen.resolve();
-                                });
+                                deferOpen.resolve();
 
                             }, failedOpen);
 
@@ -20312,7 +20309,6 @@ angular.module('app')
                         outDirection: config.outDirection,
                         noEscape: config.noEscape,
                         controller: ng(function ($scope) {
-
 
                             $scope.hideClose = config.hideClose;
                             $scope.$state.promise(function () {
@@ -21092,15 +21088,17 @@ angular.module('app')
                                         billing: locals.spawnAddress($scope.order.billing_address) || {},
                                         browse: function (type) {
                                             var parentScope = $scope;
-                                            models['19'].current().then(function (response) {
-                                                $modal.open({
-                                                    inDirection: false,
-                                                    windowClass: 'modal-medium-simple',
-                                                    outDirection: false,
-                                                    fullScreen: false,
-                                                    backdrop: true,
-                                                    templateUrl: 'order/browse_addresses.html',
-                                                    controller: ng(function ($scope) {
+                                            $modal.open({
+                                                inDirection: false,
+                                                windowClass: 'modal-medium-simple',
+                                                outDirection: false,
+                                                fullScreen: false,
+                                                backdrop: true,
+                                                templateUrl: 'order/browse_addresses.html',
+                                                controller: ng(function ($scope) {
+                                                    $scope.$state.promise(function () {
+                                                        return models['19'].current();
+                                                    }, function ($scope, response) {
                                                         $scope.addresses = response.data.entity.addresses;
                                                         $scope.select = function (ent) {
                                                             var doit = function () {
@@ -21121,8 +21119,8 @@ angular.module('app')
                                                                 outDirection: false
                                                             });
                                                         };
-                                                    })
-                                                });
+                                                    });
+                                                })
                                             });
                                         },
                                         fields: {
