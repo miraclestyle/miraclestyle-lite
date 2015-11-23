@@ -9,7 +9,10 @@
 }
 
 .order-loading-wrapper {
-    position: absolute;
+    width: 100%;
+    background: white;
+    height: 100%;
+    position: fixed;
     z-index: 2;
 }
 
