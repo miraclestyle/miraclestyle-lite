@@ -221,7 +221,7 @@
 
                                     $scope.stage = {
                                         checkout: null,
-                                        time: 300,
+                                        time: 500,
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
