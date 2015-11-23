@@ -11084,7 +11084,8 @@ function msieversion() {
                         search = {},
                         args,
                         opts = {
-                            activitySpinner: true
+                            activitySpinner: true,
+                            disableUI: false
                         },
                         override = config.ui.specifics.override || {},
                         repackMemory = function () {

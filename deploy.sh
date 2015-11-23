@@ -1,17 +1,32 @@
 #!/bin/bash
 #
 git pull
+
+if [ "$1" = "frontend" ] || ["$1" = "all"]
+then
 sh build.sh
+fi
+
 git add -A
 git commit -m"deploy"
 git push
-appcfg.py update backend/app.yaml
-sleep 5
-echo "Waiting for frontend deployment... 5s"
-sleep 5
-echo "Waiting for frontend deployment... 10s"
-sleep 5
-echo "Waiting for frontend deployment... 15s"
-appcfg.py update frontend/app.yaml
-appcfg.py update_dispatch .
-appcfg.py update_indexes backend
+
+if [ "$1" = "backend" ] || ["$1" = "all"]
+then
+    appcfg.py update backend/app.yaml
+else
+    echo "Just updating backend..."
+fi
+
+if [ "$1" = "frontend" ] || ["$1" = "all"]
+then
+    appcfg.py update frontend/app.yaml
+else
+    echo "Just updating frontend..."
+fi
+
+if [ "$2" = "index" ]
+then
+    appcfg.py update_dispatch .
+    appcfg.py update_indexes backend
+fi
