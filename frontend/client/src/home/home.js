@@ -26,7 +26,7 @@
                 }
             };
         }))
-        .directive('toolbarPaddingControl', function ($timeout) {
+        .directive('toolbarPaddingControl', ng(function ($timeout) {
             return {
                 restrict: 'A',
                 controller: ng(function ($scope, $element) {
@@ -45,8 +45,8 @@
                     $timeout(ctrl.recalculate, 0, false);
                 }
             };
-        })
-        .directive('toolbarPaddingControlElement', function ($timeout) {
+        }))
+        .directive('toolbarPaddingControlElement', ng(function ($timeout) {
             return {
                 restrict: 'A',
                 require: '^toolbarPaddingControl',
@@ -57,7 +57,7 @@
                     });
                 }
             };
-        })
+        }))
         .directive('homeSplash', ng(function ($animate) {
             return {
                 restrict: 'A',
