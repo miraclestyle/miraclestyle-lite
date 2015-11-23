@@ -124,7 +124,7 @@
     <div layout="column" layout-fill tabIndex="-1" role="main">
         <md-toolbar class="main-toolbar" ng-class="{'no-right-actions': site.toolbar.hideRight,
                                'no-left-actions': site.toolbar.hideLeft, 'ngloaded': true, 'hidden': site.toolbar.hidden}">
-            <div class="md-toolbar-tools with-actions">
+            <div toolbar-padding-control class="md-toolbar-tools with-actions">
                 <div class="fill-height">
                     <div ng-if="!site.toolbar.hideLeft" class="md-toolbar-item md-tools actions-left ng-scope">
                         <button md-ink-ripple-action
@@ -139,7 +139,7 @@
                         <span ng-bind="site.toolbar.title" class="md-toolbar-title"></span>
                     </div>
 
-                    <div ng-if="!site.toolbar.hideRight" class="md-toolbar-item md-tools actions-right ng-scope">
+                    <div toolbar-padding-control-element ng-if="!site.toolbar.hideRight" class="md-toolbar-item md-tools actions-right ng-scope">
                         <button ng-click="site.toolbar.actionRight()"
                                 md-ink-ripple-action type="button"
                                 class="action button-transparent button-action ripple-presence" 

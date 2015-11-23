@@ -1,7 +1,7 @@
 <md-toolbar ng-class="{'no-right-actions': spec.hideRight,
                        'no-left-actions': spec.hideLeft,
                        'one-right-action': spec.hideSave || !spec.templateActionsUrl}">
-    <div class="md-toolbar-tools with-actions">
+    <div toolbar-padding-control class="md-toolbar-tools with-actions">
         <div class="fill-height">
             <div ng-if="!spec.hideLeft" class="md-toolbar-item md-tools actions-left">
                 <span ng-include="spec.templateLeft"></span>
@@ -23,16 +23,18 @@
                 <md-button 
                   ng-if="!spec.templateRight && !spec.hideSave"
                   loading="container.form.$pristine"
-                  type="button" 
+                  type="button"
+                  toolbar-padding-control-element
                   submit-if="validateForm()" 
                   submit-if-files-no-complete="noComplete()" 
                   submit-if-files="save(dontShowMessage)"
                   submit-native="spec.submitNative"
                   class="action">Save</md-button>
 
-                <span ng-include="spec.templateRight"></span>
+                <span toolbar-padding-control-element ng-include="spec.templateRight"></span>
 
                 <action-dropdown
+                  toolbar-padding-control-element
                   fixed-position="toolbar"
                   parent=".modal-content:first" 
                   template="spec.templateActionsUrl"

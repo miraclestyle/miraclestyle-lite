@@ -20534,6 +20534,38 @@ angular.module('app')
                 }
             };
         }))
+        .directive('toolbarPaddingControl', function ($timeout) {
+            return {
+                restrict: 'A',
+                controller: ng(function ($scope, $element) {
+                    var that = this;
+                    that.recalculate = function () {
+                        var crumb = $element.find('.md-toolbar-item.md-breadcrumb'),
+                            size = 0,
+                            actions = $element.find('.md-toolbar-item.md-tools.actions-right');
+                        if (actions.length) {
+                            size = actions.width();
+                        }
+                        crumb.css('padding-right', size + 16);
+                    };
+                }),
+                link: function (scope, element, attrs, ctrl) {
+                    $timeout(ctrl.recalculate, 0, false);
+                }
+            };
+        })
+        .directive('toolbarPaddingControlElement', function ($timeout) {
+            return {
+                restrict: 'A',
+                require: '^toolbarPaddingControl',
+                link: function (scope, element, attrs, ctrl) {
+                    $timeout(ctrl.recalculate, 0, false);
+                    scope.$on('$destroy', function () {
+                        $timeout(ctrl.recalculate, 100, false);
+                    });
+                }
+            };
+        })
         .directive('homeSplash', ng(function ($animate) {
             return {
                 restrict: 'A',
