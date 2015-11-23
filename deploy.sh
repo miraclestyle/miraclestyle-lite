@@ -8,7 +8,16 @@ sh build.sh
 fi
 
 git add -A
-git commit -m"deploy"
+if [ "$1" = "frontend" ]
+then
+    git commit -m"deploy frontend"
+elif [ "$1" = "backend"]
+    then
+    git commit -m"deploy backend"
+elif ["$1" = "all"]
+    then
+    git commit -m"deploy all"
+fi
 git push
 
 if [ "$1" = "backend" ] || ["$1" = "all"]
