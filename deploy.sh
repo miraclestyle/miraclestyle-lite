@@ -2,7 +2,7 @@
 #
 git pull
 
-if [ "$1" = "frontend" ] || ["$1" = "all"]; then
+if [ "$1" = "frontend" ] || [ "$1" = "all" ]; then
 sh build.sh
 fi
 
