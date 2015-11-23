@@ -258,7 +258,8 @@
 
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
                                     promise = models['13'].get(updatedAddress.region, {
-                                        activitySpinner: true
+                                        activitySpinner: true,
+                                        disableUI: false
                                     });
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
@@ -272,7 +273,8 @@
                                     promise = models['12'].actions.search(undefined, {
                                         cache: true,
                                         cacheType: 'local',
-                                        activitySpinner: true
+                                        activitySpinner: true,
+                                        disableUI: false
                                     });
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
@@ -306,6 +308,7 @@
                                         templateBodyUrl: 'seller/help/plugins.html',
                                         toolbar: {
                                             hideSave: true,
+                                            hideRight: true,
                                             leftIcon: 'arrow_back',
                                             title: helpers.toolbar.title('seller.settings.aboutRules')
                                         }
@@ -540,7 +543,8 @@
                                         };
                                     config.ui.specifics.toolbar = {
                                         leftIcon: 'arrow_back',
-                                        hideSave: true
+                                        hideSave: true,
+                                        hideRight: true
                                     };
                                     if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
                                         config.ui.specifics.toolbar.titleAdd = 'add' + helpers.toolbar.makeTitle(config.code_name);
@@ -699,7 +703,8 @@
                                             }
 
                                             if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                promise = config.ui.specifics.beforeSave($scope, info);
+                                                //promise = 
+                                                config.ui.specifics.beforeSave($scope, info);
                                             }
 
                                             complete = function () {

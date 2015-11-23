@@ -11749,7 +11749,8 @@ function msieversion() {
                                     if (!config.ui.specifics.remote) {
                                         $.extend(config.ui.specifics.toolbar, {
                                             leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
-                                            hideSave: true
+                                            hideSave: true,
+                                            hideRight: true
                                         });
                                     }
                                     $scope.$on('$destroy', function () {
@@ -12237,7 +12238,8 @@ function msieversion() {
                                                     };
 
                                                 if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                    promise = config.ui.specifics.beforeSave($scope, info);
+                                                    //promise = 
+                                                    config.ui.specifics.beforeSave($scope, info);
                                                 }
 
                                                 if (promise && promise.then) {
@@ -18221,7 +18223,7 @@ angular.module('app')
                                         updatedAddress = $scope.args,
                                         promise;
                                     if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                        promise = models['13'].get(updatedAddress.region, {activitySpinner: true});
+                                        promise = models['13'].get(updatedAddress.region, {activitySpinner: true, disableUI: false});
                                         promise.then(function (response) {
                                             if (response.data.entities.length) {
                                                 updatedAddress._region = response.data.entities[0];
@@ -18234,7 +18236,8 @@ angular.module('app')
                                         promise = models['12'].actions.search(undefined, {
                                             cache: true,
                                             cacheType: 'local',
-                                            activitySpinner: true
+                                            activitySpinner: true,
+                                            disableUI: false
                                         });
                                         promise.then(function (response) {
                                             if (response.data.entities.length) {
@@ -21890,7 +21893,8 @@ angular.module('app')
 
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
                                     promise = models['13'].get(updatedAddress.region, {
-                                        activitySpinner: true
+                                        activitySpinner: true,
+                                        disableUI: false
                                     });
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
@@ -21904,7 +21908,8 @@ angular.module('app')
                                     promise = models['12'].actions.search(undefined, {
                                         cache: true,
                                         cacheType: 'local',
-                                        activitySpinner: true
+                                        activitySpinner: true,
+                                        disableUI: false
                                     });
                                     promise.then(function (response) {
                                         if (response.data.entities.length) {
@@ -21938,6 +21943,7 @@ angular.module('app')
                                         templateBodyUrl: 'seller/help/plugins.html',
                                         toolbar: {
                                             hideSave: true,
+                                            hideRight: true,
                                             leftIcon: 'arrow_back',
                                             title: helpers.toolbar.title('seller.settings.aboutRules')
                                         }
@@ -22172,7 +22178,8 @@ angular.module('app')
                                         };
                                     config.ui.specifics.toolbar = {
                                         leftIcon: 'arrow_back',
-                                        hideSave: true
+                                        hideSave: true,
+                                        hideRight: true
                                     };
                                     if (angular.isUndefined(config.ui.specifics.toolbar.titleAdd)) {
                                         config.ui.specifics.toolbar.titleAdd = 'add' + helpers.toolbar.makeTitle(config.code_name);
@@ -22331,7 +22338,8 @@ angular.module('app')
                                             }
 
                                             if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                promise = config.ui.specifics.beforeSave($scope, info);
+                                                //promise = 
+                                                config.ui.specifics.beforeSave($scope, info);
                                             }
 
                                             complete = function () {

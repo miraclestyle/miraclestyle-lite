@@ -212,7 +212,7 @@
                                         updatedAddress = $scope.args,
                                         promise;
                                     if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                        promise = models['13'].get(updatedAddress.region, {activitySpinner: true});
+                                        promise = models['13'].get(updatedAddress.region, {activitySpinner: true, disableUI: false});
                                         promise.then(function (response) {
                                             if (response.data.entities.length) {
                                                 updatedAddress._region = response.data.entities[0];
@@ -225,7 +225,8 @@
                                         promise = models['12'].actions.search(undefined, {
                                             cache: true,
                                             cacheType: 'local',
-                                            activitySpinner: true
+                                            activitySpinner: true,
+                                            disableUI: false
                                         });
                                         promise.then(function (response) {
                                             if (response.data.entities.length) {

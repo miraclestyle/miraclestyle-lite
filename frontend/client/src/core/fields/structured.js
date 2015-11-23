@@ -396,7 +396,8 @@
                                     if (!config.ui.specifics.remote) {
                                         $.extend(config.ui.specifics.toolbar, {
                                             leftIcon: (config.ui.specifics.cards ? 'close' : 'arrow_back'),
-                                            hideSave: true
+                                            hideSave: true,
+                                            hideRight: true
                                         });
                                     }
                                     $scope.$on('$destroy', function () {
@@ -884,7 +885,8 @@
                                                     };
 
                                                 if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                    promise = config.ui.specifics.beforeSave($scope, info);
+                                                    //promise = 
+                                                    config.ui.specifics.beforeSave($scope, info);
                                                 }
 
                                                 if (promise && promise.then) {
