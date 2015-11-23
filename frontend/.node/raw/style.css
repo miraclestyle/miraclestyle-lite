@@ -3793,9 +3793,5 @@ body, html {
 }
 
 .order-go-pay {
-    padding: 0px;
-    line-height: 0px;
-    font-size: 0px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding: 8px 24px;
 }

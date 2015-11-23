@@ -13039,7 +13039,7 @@ function msieversion() {
                                     waitinterval = false;
                                 }
 
-                            }, 1000, false);
+                            }, 800, false);
 
                         };
 
