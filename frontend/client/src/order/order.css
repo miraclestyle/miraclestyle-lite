@@ -8,11 +8,11 @@
     -webkit-overflow-scrolling: touch;
 }
 
-.order-loading-wrapper {
+.order-loading-wrapper  .progress-wrapper.progress.circular {
     width: 100%;
     background: white;
     height: 100%;
-    position: fixed;
+    position: absolute;
     z-index: 2;
 }
 

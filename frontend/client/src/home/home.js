@@ -36,7 +36,7 @@
                             size = 0,
                             actions = $element.find('.md-toolbar-item.md-tools.actions-right');
                         if (actions.length) {
-                            size = actions.width();
+                            size = actions.outerWidth();
                         }
                         crumb.css('padding-right', size + 16);
                     };

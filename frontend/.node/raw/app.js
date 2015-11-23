@@ -20544,7 +20544,7 @@ angular.module('app')
                             size = 0,
                             actions = $element.find('.md-toolbar-item.md-tools.actions-right');
                         if (actions.length) {
-                            size = actions.width();
+                            size = actions.outerWidth();
                         }
                         crumb.css('padding-right', size + 16);
                     };
@@ -21010,6 +21010,7 @@ angular.module('app')
 
                                     $scope.stage = {
                                         checkout: null,
+                                        time: 300,
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
@@ -21024,7 +21025,7 @@ angular.module('app')
                                             $scope.stage.current = 2;
                                             $timeout(function () {
                                                 $scope.stage.animating = false;
-                                            }, 60000);
+                                            }, $scope.stage.time);
                                         },
                                         toDeliveryMethod: function () {
                                             var valid = $scope.addresses.form.billing.$valid,
@@ -21042,8 +21043,12 @@ angular.module('app')
                                                     if (helpers.endpoint.isResponseError(response)) {
                                                         return;
                                                     }
+                                                    $scope.stage.animating = 3;
                                                     $scope.stage.out.push(2);
                                                     $scope.stage.current = 3;
+                                                    $timeout(function () {
+                                                        $scope.stage.animating = false;
+                                                    }, $scope.stage.time);
                                                 });
                                             } else {
                                                 helpers.form.wakeUp($scope.addresses.form.billing);
@@ -21060,8 +21065,12 @@ angular.module('app')
                                                         carrier: $scope.carrier.selected,
                                                         state: 'checkout'
                                                     }).then(function () {
+                                                        $scope.stage.animating = 4;
                                                         $scope.stage.out.push(3);
                                                         $scope.stage.current = 4;
+                                                        $timeout(function () {
+                                                            $scope.stage.animating = false;
+                                                        }, $scope.stage.time);
                                                     });
                                                 } else {
                                                     helpers.form.wakeUp($scope.carrier.form);
