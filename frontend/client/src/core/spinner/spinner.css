@@ -198,7 +198,7 @@
     height: 100%;
     padding: 0px !important;
     border-radius: inherit;
-    z-index: 1;
+    z-index: 2;
 }
 
 activity-spinner[z-index="high"] .progress-wrapper-loading .progress-wrapper {

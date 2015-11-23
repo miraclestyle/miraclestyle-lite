@@ -31,132 +31,151 @@
                         <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
                         <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
-                        <div ng-if="!stage.checkout" class="order-stage seam-bottom in fixed-height" ng-class="{'in': stage.current === 1, 'out-up': stage.isOut(1)}">
-                          <div ng-if="!helpers.models.isEntityListEmpty(order._lines)" ng-include="'order/lines.html'"></div>
-                          <div ng-if="order.ui.rule.action.update.executable && !helpers.models.isEntityListEmpty(order._lines)" class="list">
-
-                            <button md-ink-ripple loading class="md-button text-center order-next-stage" ng-click="stage.toCheckout()" type="button">
-                              <div class="order-next-stage-inner">
-                                <span class="md-button-text">Proceed To Checkout</span>
-                                <div class="wide-arrow-down">
-                                   <span class="pager">1/4</span>
+                        <div ng-if="!stage.checkout"
+                             class="order-stage seam-bottom in fixed-height"
+                             ng-class="{'in': stage.current === 1, 'out-up': stage.isOut(1)}">
+                          <div ng-if="!stage.animating">
+                            <div ng-if="!helpers.models.isEntityListEmpty(order._lines)" ng-include="'order/lines.html'"></div>
+                            <div ng-if="order.ui.rule.action.update.executable && !helpers.models.isEntityListEmpty(order._lines)" class="list">
+                              <button md-ink-ripple loading class="md-button text-center order-next-stage" ng-click="stage.toCheckout()" type="button">
+                                <div class="order-next-stage-inner">
+                                  <span class="md-button-text">Proceed To Checkout</span>
+                                  <div class="wide-arrow-down">
+                                     <span class="pager">1/4</span>
+                                  </div>
                                 </div>
-                              </div>
-                            </button>
-
+                              </button>
+                            </div>
+                            <div ng-if="helpers.models.isEntityListEmpty(order._lines)" help-render="GLOBAL_CONFIG.emptyHelp.cart"></div>
                           </div>
-                          <div ng-if="helpers.models.isEntityListEmpty(order._lines)" help-render="GLOBAL_CONFIG.emptyHelp.cart"></div>
                         </div>
 
                         <div ng-if="!stage.checkout" class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
-                            <div class="list list-padding seam-bottom">
-                              <div class="list-subheader subheader">Billing info</div>
-                              <button md-ink-ripple-list
-                                      ng-click="addresses.browse('billing')" 
-                                      loading
-                                      type="button" 
-                                      class="list-row color-child-when-disabled list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
-                                      <div class="list-content-tile">
-                                        <div class="list-primary-tile">
-                                          <div class="avatar">
-                                            <icon type="arrow_drop_down_circle"></icon>
-                                          </div>
-                                        </div>
-                                        <div class="first">Use a saved address to automatically populate the fields below</div>
-                                      </div>
-                              </button>
-                              <div ng-form="addresses.form.billing">
-                                 <div form-builder="addresses.fields.billing"></div>
-                              </div>
+                            <div ng-if="stage.animating === 2" class="order-loading-wrapper">
+                                <div ng-include="'core/spinner/spinner.html'"></div>
                             </div>
+                            <div ng-if="stage.current === 2 && !stage.animating">
 
-                            <div class="list list-padding seam-bottom">
-                              <div class="list-subheader subheader">Shipping info</div>
-                              <div form-input="addresses.fields.sameAsBilling"></div>
-                              <div collapse="addresses.sameAsBilling" class="order-expanding-address" ng-form="addresses.form.shipping">
-                                  <button md-ink-ripple-list
-                                          ng-click="addresses.browse('shipping')" 
-                                          loading
-                                          type="button" 
-                                          class="list-row color-child-when-disabled list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
-                                          <div class="list-content-tile">
-                                            <div class="list-primary-tile">
-                                              <div class="avatar">
-                                                <icon type="arrow_drop_down_circle"></icon>
-                                              </div>
+                              <div class="list list-padding seam-bottom">
+                                <div class="list-subheader subheader">Billing info</div>
+                                <button md-ink-ripple-list
+                                        ng-click="addresses.browse('billing')" 
+                                        loading
+                                        type="button" 
+                                        class="list-row color-child-when-disabled list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
+                                        <div class="list-content-tile">
+                                          <div class="list-primary-tile">
+                                            <div class="avatar">
+                                              <icon type="arrow_drop_down_circle"></icon>
                                             </div>
-                                            <div class="first">Use a saved address to automatically populate the fields below</div>
                                           </div>
-                                  </button>
-                                 <div form-builder="addresses.fields.shipping"></div>
-                              </div>
-                            </div>
-
-                           <div class="list">
-                            <button md-ink-ripple 
-                                    loading 
-                                    class="md-button text-center order-next-stage" 
-                                    ng-click="stage.toDeliveryMethod()" 
-                                    type="button">
-                                <div class="order-next-stage-inner">
-                                  <span class="md-button-text">Select Delivery Method</span>
-                                  <div class="wide-arrow-down">
-                                     <span class="pager">2/4</span>
-                                  </div>
+                                          <div class="first">Use a saved address to automatically populate the fields below</div>
+                                        </div>
+                                </button>
+                                <div ng-form="addresses.form.billing">
+                                   <div form-builder="addresses.fields.billing"></div>
                                 </div>
-                            </button>
+                              </div>
+
+                              <div class="list list-padding seam-bottom">
+                                <div class="list-subheader subheader">Shipping info</div>
+                                <div form-input="addresses.fields.sameAsBilling"></div>
+                                <div collapse="addresses.sameAsBilling" class="order-expanding-address" ng-form="addresses.form.shipping">
+                                    <button md-ink-ripple-list
+                                            ng-click="addresses.browse('shipping')" 
+                                            loading
+                                            type="button" 
+                                            class="list-row color-child-when-disabled list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
+                                            <div class="list-content-tile">
+                                              <div class="list-primary-tile">
+                                                <div class="avatar">
+                                                  <icon type="arrow_drop_down_circle"></icon>
+                                                </div>
+                                              </div>
+                                              <div class="first">Use a saved address to automatically populate the fields below</div>
+                                            </div>
+                                    </button>
+                                   <div form-builder="addresses.fields.shipping"></div>
+                                </div>
+                              </div>
+
+                             <div class="list">
+                              <button md-ink-ripple 
+                                      loading 
+                                      class="md-button text-center order-next-stage" 
+                                      ng-click="stage.toDeliveryMethod()" 
+                                      type="button">
+                                  <div class="order-next-stage-inner">
+                                    <span class="md-button-text">Select Delivery Method</span>
+                                    <div class="wide-arrow-down">
+                                       <span class="pager">2/4</span>
+                                    </div>
+                                  </div>
+                              </button>
+                            </div>
                           </div>
                         </div>
 
                         <div ng-if="!stage.checkout" class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
-                              <div ng-form="carrier.form" class="list list-padding seam-bottom">
-                                <div class="list-subheader subheader">Delivery methods</div>
-                                     <md-radio-group ng-model="carrier.selected" class="list list-row-has-primary">
-                                      <md-radio-button ng-repeat="available_carrier in carrier.available" 
-                                                       md-ink-ripple
-                                                       class="list-content-tile list-row-two-lines list-row"
-                                                       ng-value="available_carrier.key" 
-                                                       aria-label="available_carrier.name"
-                                                       ng-required="true">
-                                          <span class="first">{{available_carrier.price|formatCurrency:order.currency}}</span>
-                                          <span class="second">{{available_carrier.name}}</span>
-                                      </md-radio-button>
-                                  </md-radio-group>
+                              <div ng-if="stage.animating === 3" class="order-loading-wrapper">
+                                  <div ng-include="'core/spinner/spinner.html'"></div>
                               </div>
-                            <div class="list">
-                              <button md-ink-ripple 
-                                      loading 
-                                      class="md-button text-center order-next-stage" 
-                                      ng-click="stage.toReviewOrder()" 
-                                      type="button">
-                                <div class="order-next-stage-inner">
-                                  <span class="md-button-text">Review Cart</span>
-                                  <div class="wide-arrow-down">
-                                     <span class="pager">3/4</span>
+                              <div ng-if="stage.current === 3 && !stage.animating">
+                                  <div ng-form="carrier.form" class="list list-padding seam-bottom">
+                                      <div class="list-subheader subheader">Delivery methods</div>
+                                           <md-radio-group ng-model="carrier.selected" class="list list-row-has-primary">
+                                            <md-radio-button ng-repeat="available_carrier in carrier.available" 
+                                                             md-ink-ripple
+                                                             class="list-content-tile list-row-two-lines list-row"
+                                                             ng-value="available_carrier.key" 
+                                                             aria-label="available_carrier.name"
+                                                             ng-required="true">
+                                                <span class="first">{{available_carrier.price|formatCurrency:order.currency}}</span>
+                                                <span class="second">{{available_carrier.name}}</span>
+                                            </md-radio-button>
+                                        </md-radio-group>
+                                    </div>
+                                  <div class="list">
+                                    <button md-ink-ripple 
+                                            loading 
+                                            class="md-button text-center order-next-stage" 
+                                            ng-click="stage.toReviewOrder()" 
+                                            type="button">
+                                      <div class="order-next-stage-inner">
+                                        <span class="md-button-text">Review Cart</span>
+                                        <div class="wide-arrow-down">
+                                           <span class="pager">3/4</span>
+                                        </div>
+                                      </div>
+                                    </button>
                                   </div>
-                                </div>
-                              </button>
-                            </div>
+                              </div>
                         </div>
 
                         <div class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
-                            <div ng-include="'order/lines.html'"></div>
-                            <div ng-if="stage.canShowPay()" class="list">
 
-                              <div class="clearfix multiline">
-                                <div class="pull-left">
-                                  <button md-ink-ripple type="button" class="button-transparent order-reset-button"
-                                          ng-show="order.ui.rule.action.cancel.executable"
-                                          loading
-                                          ng-click="cmd.order.cancel()">
-                                      <span class="wide-arrow-right pull-left"></span>
-                                      <span class="order-reset-button-text md-button-text pull-left">Reset Cart</span>
-                                  </button>
-                                </div>
-                                <div ng-if="order._payment_method" class="pull-right">
-                                  <button md-ink-ripple type="submit" loading class="order-go-pay button-transparent">
-                                       <img src="/client/dist/static/order/x-click-but6.gif" alt="Check out with PayPal" />
-                                  </button>
+                            <div ng-if="stage.animating === 4" class="order-loading-wrapper">
+                                  <div ng-include="'core/spinner/spinner.html'"></div>
+                            </div>
+
+                            <div ng-if="stage.current === 4 && !stage.animating">
+                              <div ng-include="'order/lines.html'"></div>
+                              <div ng-if="stage.canShowPay()" class="list">
+                                <div class="clearfix multiline">
+                                  <div class="pull-left">
+                                    <button md-ink-ripple type="button" class="button-transparent order-reset-button"
+                                            ng-show="order.ui.rule.action.cancel.executable"
+                                            loading
+                                            ng-click="cmd.order.cancel()">
+                                        <span class="wide-arrow-right pull-left"></span>
+                                        <span class="order-reset-button-text md-button-text pull-left">Reset Cart</span>
+                                    </button>
+                                  </div>
+                                  <div ng-if="order._payment_method" class="pull-right">
+                                    <button md-ink-ripple type="submit" loading class="order-go-pay button-transparent">
+                                         <img src="/client/dist/static/order/x-click-but6.gif" alt="Check out with PayPal" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>

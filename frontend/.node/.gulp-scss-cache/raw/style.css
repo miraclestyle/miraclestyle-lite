@@ -2747,7 +2747,7 @@ div[disabled] .select-box {
   height: 100%;
   padding: 0px !important;
   border-radius: inherit;
-  z-index: 1; }
+  z-index: 2; }
 
 activity-spinner[z-index="high"] .progress-wrapper-loading .progress-wrapper {
   z-index: 61; }
@@ -3059,6 +3059,10 @@ body, html {
   transition-duration: 300ms;
   position: absolute;
   -webkit-overflow-scrolling: touch; }
+
+.order-loading-wrapper {
+  position: absolute;
+  z-index: 2; }
 
 .order-stage.out {
   top: 100%;

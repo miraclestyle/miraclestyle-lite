@@ -230,10 +230,12 @@
                                             return $.inArray(indx, $scope.stage.out) !== -1;
                                         },
                                         toCheckout: function () {
+                                            $scope.stage.animating = 2;
+                                            $scope.stage.out.push(1);
+                                            $scope.stage.current = 2;
                                             $timeout(function () {
-                                                $scope.stage.out.push(1);
-                                                $scope.stage.current = 2;
-                                            }, 300);
+                                                $scope.stage.animating = false;
+                                            }, 60000);
                                         },
                                         toDeliveryMethod: function () {
                                             var valid = $scope.addresses.form.billing.$valid,
