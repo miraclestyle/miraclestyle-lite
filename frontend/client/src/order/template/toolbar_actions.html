@@ -1,8 +1,15 @@
+<button md-ink-ripple type="button" class="action md-button"
+        toolbar-padding-control-element
+        ng-show="order.ui.rule.action.cancel.executable"
+        loading
+        ng-click="cmd.order.cancel()">
+    Reset Cart
+</button>
 
-
-<button md-ink-ripple-action 
+<button md-ink-ripple-action
+        toolbar-padding-control-element
         type="button"
-        class="button-transparent button-square"
+        class="action button-transparent button-square"
         loading ng-click="messages.toggle()">
     <icon type="chat_bubble"></icon>
 </button>

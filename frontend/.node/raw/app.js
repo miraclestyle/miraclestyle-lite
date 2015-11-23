@@ -21093,6 +21093,7 @@ angular.module('app')
                                         if (!addr) {
                                             return addr;
                                         }
+                                        addr = angular.copy(addr);
                                         addr.country = null;
                                         addr.kind = '14';
                                         delete addr.key;

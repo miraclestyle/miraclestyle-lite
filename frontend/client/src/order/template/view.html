@@ -162,18 +162,10 @@
                               <div ng-include="'order/lines.html'"></div>
                               <div ng-if="stage.canShowPay()" class="list">
                                 <div class="clearfix multiline">
-                                  <div class="pull-left">
-                                    <button md-ink-ripple type="button" class="button-transparent order-reset-button"
-                                            ng-show="order.ui.rule.action.cancel.executable"
-                                            loading
-                                            ng-click="cmd.order.cancel()">
-                                        <span class="wide-arrow-right pull-left"></span>
-                                        <span class="order-reset-button-text md-button-text pull-left">Reset Cart</span>
-                                    </button>
-                                  </div>
-                                  <div ng-if="order._payment_method" class="pull-right">
+                                  <div ng-if="order._payment_method">
                                     <button md-ink-ripple type="submit" loading class="order-go-pay button-transparent">
-                                         <img src="/client/dist/static/order/x-click-but6.gif" alt="Check out with PayPal" />
+                                         <span class="md-button-text">Click Here To Pay With</span>
+                                         <img class="block full-width" src="/client/dist/static/order/cc-badges-ppmcvdam.png" alt="Check out with PayPal" />
                                     </button>
                                   </div>
                                 </div>
