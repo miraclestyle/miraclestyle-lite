@@ -122,7 +122,7 @@
     <div class="card" ng-if="stage.current > 2">
         <div class="menu-item card-inner">
             <div class="card-inner-padding">
-                <h1 class="headline">Delivery method</h1>
+                <h1 class="headline">Shipping method</h1>
                 <div class="secondary padding-bottom-16">{{order.carrier.description}}</div>
                 <div class="clearfix">
                     <table class="pull-right card-table">
@@ -144,11 +144,6 @@
                     <h1 class="headline padding-bottom-16">Summary</h1>
                     <table class="pull-right card-table">
                         <tbody>
-                            <tr>
-                                <td class="secondary info">Shipping &amp; handling</td>
-                                <td ng-if="stage.current > 1" class="secondary">{{order.carrier.subtotal|formatCurrency:order.currency}}</td>
-                                <td ng-if="stage.current === 1" class="secondary">To be calculated</td>
-                            </tr>
                             <tr>
                                 <td class="secondary info">Net total</td>
                                 <td class="secondary">{{cmd.order.showNetTotalAmount()|formatCurrency:order.currency}}</td>
