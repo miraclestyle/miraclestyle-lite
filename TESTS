@@ -1,0 +1,8 @@
+http://x-arcanum-801.appspot.com/api/tests/LoginAs?email=seller@elvinkosova.com
+
+http://x-arcanum-801.appspot.com/sell/catalogs
+
+
+http://localhost:9982/api/tests/LoginAs?email=edis.sehalic@gmail.com
+
+http://localhost:9982/sell/catalogs
