@@ -41,6 +41,21 @@
                     });
                 }
             };
+        }))
+        .directive('orderWentUp', ng(function ($timeout) {
+            return {
+                link: function (scope, element, attrs) {
+                    var cb = function () {
+                        if (element.hasClass('out-up')) {
+                            scope.$eval(attrs.orderWentUp);
+                        }
+                    };
+                    element.transitionEnd(cb);
+                    scope.$on('$destroy', function () {
+                        element.transitionEndOff(cb);
+                    });
+                }
+            };
         })).filter('displayTaxes', ng(function () {
             return function (value) {
                 var formatted = '';
@@ -225,6 +240,11 @@
                                         isAnimating: function (c1) {
                                             return ($scope.stage.animating === (c1 + 1) || !$scope.stage.animating);
                                         },
+                                        endAnimation: function () {
+                                            $timeout(function () {
+                                                $scope.stage.animating = false;
+                                            }, $scope.stage.time);
+                                        },
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
@@ -237,9 +257,6 @@
                                             $scope.stage.animating = 2;
                                             $scope.stage.out.push(1);
                                             $scope.stage.current = 2;
-                                            $timeout(function () {
-                                                $scope.stage.animating = false;
-                                            }, $scope.stage.time);
                                         },
                                         toDeliveryMethod: function () {
                                             var valid = $scope.addresses.form.billing.$valid,
@@ -260,9 +277,6 @@
                                                     $scope.stage.animating = 3;
                                                     $scope.stage.out.push(2);
                                                     $scope.stage.current = 3;
-                                                    $timeout(function () {
-                                                        $scope.stage.animating = false;
-                                                    }, $scope.stage.time);
                                                 });
                                             } else {
                                                 helpers.form.wakeUp($scope.addresses.form.billing);
@@ -282,9 +296,6 @@
                                                         $scope.stage.animating = 4;
                                                         $scope.stage.out.push(3);
                                                         $scope.stage.current = 4;
-                                                        $timeout(function () {
-                                                            $scope.stage.animating = false;
-                                                        }, $scope.stage.time);
                                                     });
                                                 } else {
                                                     helpers.form.wakeUp($scope.carrier.form);

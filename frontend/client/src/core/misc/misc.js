@@ -81,24 +81,41 @@
                 }
             });
 
-            var animationEnd = function (which, cb) {
-                return $(this).on($mdConstant.CSS.ANIMATIONEND, function kill(e) {
+            var eventEnd = function (event, which, cb) {
+                return $(this).on(event, function kill(e) {
                     if (e.target === this) {
                         cb.call(this, e);
                         if (which === 'one') {
-                            $(this).off($mdConstant.CSS.ANIMATIONEND, kill);
+                            $(this).off(event, kill);
                         }
                     }
                 });
             };
 
-            $.fn.oneAnimationEnd = function (cb) {
-                return animationEnd.call(this, 'one', cb);
+            $.fn.animationEndOff = function (cb) {
+                $(this).off($mdConstant.CSS.ANIMATIONEND, cb);
             };
 
-            $.fn.onAnimationEnd = function (cb) {
-                return animationEnd.call(this, 'on', cb);
+            $.fn.oneAnimationEnd = function (cb) {
+                return eventEnd.call(this, $mdConstant.CSS.ANIMATIONEND, 'one', cb);
             };
+
+            $.fn.animationEnd = function (cb) {
+                return eventEnd.call(this, $mdConstant.CSS.ANIMATIONEND, 'on', cb);
+            };
+
+            $.fn.oneTransitionEnd = function (cb) {
+                return eventEnd.call(this, $mdConstant.CSS.TRANSITIONEND, 'one', cb);
+            };
+
+            $.fn.transitionEnd = function (cb) {
+                return eventEnd.call(this, $mdConstant.CSS.TRANSITIONEND, 'on', cb);
+            };
+
+            $.fn.transitionEndOff = function (cb) {
+                $(this).off($mdConstant.CSS.TRANSITIONEND, cb);
+            };
+
 
         }))
         .directive('fillEmptySpace', function () {

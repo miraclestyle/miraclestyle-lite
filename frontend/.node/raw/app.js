@@ -12718,24 +12718,41 @@ function msieversion() {
                 }
             });
 
-            var animationEnd = function (which, cb) {
-                return $(this).on($mdConstant.CSS.ANIMATIONEND, function kill(e) {
+            var eventEnd = function (event, which, cb) {
+                return $(this).on(event, function kill(e) {
                     if (e.target === this) {
                         cb.call(this, e);
                         if (which === 'one') {
-                            $(this).off($mdConstant.CSS.ANIMATIONEND, kill);
+                            $(this).off(event, kill);
                         }
                     }
                 });
             };
 
-            $.fn.oneAnimationEnd = function (cb) {
-                return animationEnd.call(this, 'one', cb);
+            $.fn.animationEndOff = function (cb) {
+                $(this).off($mdConstant.CSS.ANIMATIONEND, cb);
             };
 
-            $.fn.onAnimationEnd = function (cb) {
-                return animationEnd.call(this, 'on', cb);
+            $.fn.oneAnimationEnd = function (cb) {
+                return eventEnd.call(this, $mdConstant.CSS.ANIMATIONEND, 'one', cb);
             };
+
+            $.fn.animationEnd = function (cb) {
+                return eventEnd.call(this, $mdConstant.CSS.ANIMATIONEND, 'on', cb);
+            };
+
+            $.fn.oneTransitionEnd = function (cb) {
+                return eventEnd.call(this, $mdConstant.CSS.TRANSITIONEND, 'one', cb);
+            };
+
+            $.fn.transitionEnd = function (cb) {
+                return eventEnd.call(this, $mdConstant.CSS.TRANSITIONEND, 'on', cb);
+            };
+
+            $.fn.transitionEndOff = function (cb) {
+                $(this).off($mdConstant.CSS.TRANSITIONEND, cb);
+            };
+
 
         }))
         .directive('fillEmptySpace', function () {
@@ -20837,6 +20854,21 @@ angular.module('app')
                     });
                 }
             };
+        }))
+        .directive('orderWentUp', ng(function ($timeout) {
+            return {
+                link: function (scope, element, attrs) {
+                    var cb = function () {
+                        if (element.hasClass('out-up')) {
+                            scope.$eval(attrs.orderWentUp);
+                        }
+                    };
+                    element.transitionEnd(cb);
+                    scope.$on('$destroy', function () {
+                        element.transitionEndOff(cb);
+                    });
+                }
+            };
         })).filter('displayTaxes', ng(function () {
             return function (value) {
                 var formatted = '';
@@ -21021,6 +21053,11 @@ angular.module('app')
                                         isAnimating: function (c1) {
                                             return ($scope.stage.animating === (c1 + 1) || !$scope.stage.animating);
                                         },
+                                        endAnimation: function () {
+                                            $timeout(function () {
+                                                $scope.stage.animating = false;
+                                            }, $scope.stage.time);
+                                        },
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
@@ -21033,9 +21070,6 @@ angular.module('app')
                                             $scope.stage.animating = 2;
                                             $scope.stage.out.push(1);
                                             $scope.stage.current = 2;
-                                            $timeout(function () {
-                                                $scope.stage.animating = false;
-                                            }, $scope.stage.time);
                                         },
                                         toDeliveryMethod: function () {
                                             var valid = $scope.addresses.form.billing.$valid,
@@ -21056,9 +21090,6 @@ angular.module('app')
                                                     $scope.stage.animating = 3;
                                                     $scope.stage.out.push(2);
                                                     $scope.stage.current = 3;
-                                                    $timeout(function () {
-                                                        $scope.stage.animating = false;
-                                                    }, $scope.stage.time);
                                                 });
                                             } else {
                                                 helpers.form.wakeUp($scope.addresses.form.billing);
@@ -21078,9 +21109,6 @@ angular.module('app')
                                                         $scope.stage.animating = 4;
                                                         $scope.stage.out.push(3);
                                                         $scope.stage.current = 4;
-                                                        $timeout(function () {
-                                                            $scope.stage.animating = false;
-                                                        }, $scope.stage.time);
                                                     });
                                                 } else {
                                                     helpers.form.wakeUp($scope.carrier.form);

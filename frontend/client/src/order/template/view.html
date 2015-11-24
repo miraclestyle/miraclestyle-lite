@@ -33,6 +33,7 @@
 
                         <div ng-if="!stage.checkout"
                              class="order-stage seam-bottom in fixed-height"
+                             order-went-up="stage.endAnimation()"
                              ng-class="{'in': stage.current === 1, 'out-up': stage.isOut(1)}">
                           <div ng-if="stage.isAnimating(1)">
                             <div ng-if="!helpers.models.isEntityListEmpty(order._lines)" ng-include="'order/lines.html'"></div>
@@ -50,7 +51,9 @@
                           </div>
                         </div>
 
-                        <div ng-if="!stage.checkout" class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
+                        <div ng-if="!stage.checkout"
+                             order-went-up="stage.endAnimation()"
+                             class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
                             <div ng-if="stage.animating === 2" class="order-loading-wrapper">
                                 <div ng-include="'core/spinner/spinner.html'"></div>
                             </div>
@@ -116,7 +119,10 @@
                           </div>
                         </div>
 
-                        <div ng-if="!stage.checkout" class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
+                        <div ng-if="!stage.checkout"
+                             class="order-stage seam-bottom out fixed-height"
+                             order-went-up="stage.endAnimation()"
+                             ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
                               <div ng-if="stage.animating === 3" class="order-loading-wrapper">
                                   <div ng-include="'core/spinner/spinner.html'"></div>
                               </div>
@@ -152,7 +158,9 @@
                               </div>
                         </div>
 
-                        <div class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
+                        <div class="order-stage seam-bottom out fixed-height"
+                             order-went-up="stage.endAnimation()"
+                             ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
 
                             <div ng-if="stage.animating === 4" class="order-loading-wrapper">
                                   <div ng-include="'core/spinner/spinner.html'"></div>
