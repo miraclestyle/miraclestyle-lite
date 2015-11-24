@@ -3060,7 +3060,7 @@ body, html {
   position: absolute;
   -webkit-overflow-scrolling: touch; }
 
-.order-loading-wrapper .progress-wrapper.progress.circular {
+html body .order-loading-wrapper .progress-wrapper.progress.circular {
   width: 100%;
   background: white;
   height: 100%;
