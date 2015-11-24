@@ -383,6 +383,7 @@
                                 } else {
                                     console.log(listenNode, viewport, listenScrollHeight, viewport - listenScrollHeight);
                                     maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
+                                    console.log('decision was', maybe);
                                 }
                                 if (!listen.length || !listenNode) {
                                     return;
