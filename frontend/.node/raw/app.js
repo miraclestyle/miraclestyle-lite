@@ -13018,9 +13018,9 @@ function msieversion() {
                                 if (config.reverse) {
                                     maybe = (listenNode ? (listen.scrollTop() < (config.top || 40)) : false);
                                 } else {
-                                    console.log(listenNode, viewport, listenScrollHeight, viewport - listenScrollHeight);
+                                    //console.log(listenNode, viewport, listenScrollHeight, viewport - listenScrollHeight);
                                     maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
-                                    console.log('decision was', maybe);
+                                    //console.log('decision was', maybe);
                                 }
                                 if (!listen.length || !listenNode) {
                                     return;
@@ -21018,6 +21018,9 @@ angular.module('app')
                                     $scope.stage = {
                                         checkout: null,
                                         time: 500,
+                                        isAnimating: function (c1) {
+                                            return ($scope.stage.animating === (c1 + 1) || !$scope.stage.animating);
+                                        },
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
