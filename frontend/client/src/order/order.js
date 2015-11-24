@@ -222,6 +222,9 @@
                                     $scope.stage = {
                                         checkout: null,
                                         time: 500,
+                                        isAnimating: function (c1) {
+                                            return ($scope.stage.animating === (c1 + 1) || !$scope.stage.animating);
+                                        },
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {

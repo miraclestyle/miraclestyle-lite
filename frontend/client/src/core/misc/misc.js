@@ -381,9 +381,9 @@
                                 if (config.reverse) {
                                     maybe = (listenNode ? (listen.scrollTop() < (config.top || 40)) : false);
                                 } else {
-                                    console.log(listenNode, viewport, listenScrollHeight, viewport - listenScrollHeight);
+                                    //console.log(listenNode, viewport, listenScrollHeight, viewport - listenScrollHeight);
                                     maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
-                                    console.log('decision was', maybe);
+                                    //console.log('decision was', maybe);
                                 }
                                 if (!listen.length || !listenNode) {
                                     return;

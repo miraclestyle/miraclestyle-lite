@@ -34,7 +34,7 @@
                         <div ng-if="!stage.checkout"
                              class="order-stage seam-bottom in fixed-height"
                              ng-class="{'in': stage.current === 1, 'out-up': stage.isOut(1)}">
-                          <div ng-if="!stage.animating">
+                          <div ng-if="stage.isAnimating(1)">
                             <div ng-if="!helpers.models.isEntityListEmpty(order._lines)" ng-include="'order/lines.html'"></div>
                             <div ng-if="order.ui.rule.action.update.executable && !helpers.models.isEntityListEmpty(order._lines)" class="list">
                               <button md-ink-ripple loading class="md-button text-center order-next-stage" ng-click="stage.toCheckout()" type="button">
@@ -54,7 +54,7 @@
                             <div ng-if="stage.animating === 2" class="order-loading-wrapper">
                                 <div ng-include="'core/spinner/spinner.html'"></div>
                             </div>
-                            <div ng-if="stage.current === 2 && !stage.animating">
+                            <div ng-if="stage.isAnimating(2)">
 
                               <div class="list list-padding seam-bottom">
                                 <div class="list-subheader subheader">Billing address</div>
@@ -120,7 +120,7 @@
                               <div ng-if="stage.animating === 3" class="order-loading-wrapper">
                                   <div ng-include="'core/spinner/spinner.html'"></div>
                               </div>
-                              <div ng-if="stage.current === 3 && !stage.animating">
+                              <div ng-if="stage.isAnimating(3)">
                                   <div ng-form="carrier.form" class="list list-padding seam-bottom">
                                       <div class="list-subheader subheader">Shipping methods</div>
                                            <md-radio-group ng-model="carrier.selected" class="list list-row-has-primary">
@@ -158,7 +158,7 @@
                                   <div ng-include="'core/spinner/spinner.html'"></div>
                             </div>
 
-                            <div ng-if="stage.current === 4 && !stage.animating">
+                            <div ng-if="stage.isAnimating(4)">
                               <div ng-include="'order/lines.html'"></div>
                               <div ng-if="stage.canShowPay()" class="list">
                                 <div class="clearfix">
@@ -171,7 +171,7 @@
                                 </div>
                               </div>
                             </div>
-                            
+
                         </div>
 
                     </div>
