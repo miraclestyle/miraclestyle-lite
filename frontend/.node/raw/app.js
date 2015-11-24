@@ -13035,6 +13035,8 @@ function msieversion() {
                                         })['finally'](function () {
                                             waitinterval = false;
                                         });
+                                    } else {
+                                        waitinterval = false;
                                     }
                                 } else {
                                     waitinterval = false;
@@ -13048,7 +13050,7 @@ function msieversion() {
                             clearInterval(intervalid);
                             intervalid = setInterval(function () {
                                 if (waitinterval) {
-                                    return true;
+                                    return;
                                 }
                                 waitinterval = true;
                                 maybeMore();

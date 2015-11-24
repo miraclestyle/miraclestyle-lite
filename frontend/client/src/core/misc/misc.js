@@ -398,6 +398,8 @@
                                         })['finally'](function () {
                                             waitinterval = false;
                                         });
+                                    } else {
+                                        waitinterval = false;
                                     }
                                 } else {
                                     waitinterval = false;
@@ -411,7 +413,7 @@
                             clearInterval(intervalid);
                             intervalid = setInterval(function () {
                                 if (waitinterval) {
-                                    return true;
+                                    return;
                                 }
                                 waitinterval = true;
                                 maybeMore();
