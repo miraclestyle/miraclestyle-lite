@@ -8,7 +8,7 @@
     -webkit-overflow-scrolling: touch;
 }
 
-html body .order-loading-wrapper  .progress-wrapper.progress.circular {
+.order-loading-wrapper .progress-wrapper.progress.circular {
     width: 100%;
     background: white;
     height: 100%;
