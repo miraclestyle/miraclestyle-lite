@@ -52,8 +52,8 @@
         <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style, True)}}" /> {% endfor %}
     {% else %}
     {% for style in settings.ANGULAR_VENDOR_CSS %}
-     <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style)}}" /> {% endfor %}
-     <link rel="stylesheet" type="text/css" href="{{static_dir('dist/style.css')}}" />
+     <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style, True)}}" /> {% endfor %}
+     <link rel="stylesheet" type="text/css" href="{{static_dir('dist/style.css', True)}}" />
     {% endif %}
 </head>
 <body ng-controller="RootController" layout="row">
