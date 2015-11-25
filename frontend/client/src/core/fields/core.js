@@ -411,7 +411,7 @@
             return {
                 require: '^form',
                 link: function (scope, element, attrs, ngFormController) {
-                    if (window.isChromeApp) {
+                    if (window.isChromeApp || attrs.noLeaveCheck) {
                         return; // chrome does not have this
                     }
                     var cb;

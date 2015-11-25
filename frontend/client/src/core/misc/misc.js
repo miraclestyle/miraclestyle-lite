@@ -138,7 +138,7 @@
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.onEnter);
                     element.on('keydown', function (e) {
-                        if (helpers.responsive.isMobile() || helpers.responsive.isTablet()) {
+                        if (helpers.responsive.isMobile() || helpers.responsive.isTablet() || (element[0] !== e.target)) {
                             return;
                         }
                         if (e.keyCode === $mdConstant.KEY_CODE.ENTER && !e.shiftKey) {

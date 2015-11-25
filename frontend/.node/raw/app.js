@@ -10700,7 +10700,7 @@ function msieversion() {
             return {
                 require: '^form',
                 link: function (scope, element, attrs, ngFormController) {
-                    if (window.isChromeApp) {
+                    if (window.isChromeApp || attrs.noLeaveCheck) {
                         return; // chrome does not have this
                     }
                     var cb;
@@ -12775,7 +12775,7 @@ function msieversion() {
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.onEnter);
                     element.on('keydown', function (e) {
-                        if (helpers.responsive.isMobile() || helpers.responsive.isTablet()) {
+                        if (helpers.responsive.isMobile() || helpers.responsive.isTablet() || (element[0] !== e.target)) {
                             return;
                         }
                         if (e.keyCode === $mdConstant.KEY_CODE.ENTER && !e.shiftKey) {
