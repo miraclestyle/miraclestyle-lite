@@ -578,7 +578,9 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     context._order.payment_method = self.key
 
   def new_mismatch(self, code, order_value, ipn_value):
-    context.mismatches.append([code, order_value, ipn_value])
+    # 'Seller settings receiver e-mail: testA@example.com - Paypal Payment receiver e-mail: testB@example.com'
+    new_str = '\n%s: %s - %s: %s' % (order_value[0], order_value[1], ipn_value[0], ipn_value[1])
+    context.mismatches += new_str
 
   def notify(self, context):
     if not self.active:
@@ -588,7 +590,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     order = context._order
     ip_address = os.environ.get('REMOTE_ADDR')
     # begin ipn message validation
-    context.mismatches = []
+    context.mismatches = ''
     shipping_address = order.shipping_address.value
     order_currency = order.currency.value
 
@@ -677,7 +679,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       if line.subtotal != ipn_line_subtotal:
         self.new_mismatch('mc_gross_%s' % line.sequence, ('Order line subtotal %s' % line.sequence, line.subtotal), ('Paypal Payment item subtotal %s' % line.sequence, ipn_line_subtotal))
 
-    if not context.mismatches:
+    if not len(context.mismatches):
       if order.payment_status == ipn_payment_status:
         return None  # nothing to do since the payment status is exactly the same
       else:
@@ -702,7 +704,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
           elif order.state == 'completed':
             order.payment_status = ipn_payment_status
     else:
-      # log that there were missmatches, where we should log that?
+      # log that there were mismatches, where we should log that?
       ipn_payment_status = 'Mismatched'
       order.payment_status = ipn_payment_status  # Here we have to devise a plan how to mark order as mismatched (perhaps via order.state), and use filtering in Admin / Orders to investigate mismatched orders.
       tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (context.mismatches, ipn, order.key))
@@ -710,7 +712,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
                            'action': context.action.key,
                            'ancestor': order.key,
                            'agent': Account.build_key('system'),
-                           'body': 'PayPal payment %s' % ipn_payment_status,
+                           'body': 'PayPal payment %s%s' % (ipn_payment_status, context.mismatches),
                            'payment_status': ipn_payment_status,
                            'ipn': request['body']}
     context.new_message_fields = {'ipn': orm.SuperTextProperty(name='ipn', compressed=True, indexed=False)}

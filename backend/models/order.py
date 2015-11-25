@@ -530,11 +530,6 @@ class Order(orm.BaseExpando):
                                         'subject': notifications.ORDER_NOTIFY_SUBJECT,
                                         'body': notifications.ORDER_NOTIFY_BODY},
                                   'd': {'recipient': '_order.seller_email'}}),
-                      Notify(cfg={'condition': lambda mismatches, **kwargs: mismatches,
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_NOTIFY_MISMATCH_SUBJECT,
-                                        'body': notifications.ORDER_NOTIFY_MISMATCH_BODY},
-                                  'd': {'recipient': '_order.seller_email', 'mismatches': 'mismatches'}}),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
