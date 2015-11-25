@@ -577,11 +577,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     # currently we only support paypal, so its enforced by default
     context._order.payment_method = self.key
 
-  def new_mismatch(self, code, order_value, ipn_value):
-    # 'Seller settings receiver e-mail: testA@example.com - Paypal Payment receiver e-mail: testB@example.com'
-    new_str = '\n%s: %s - %s: %s' % (order_value[0], order_value[1], ipn_value[0], ipn_value[1])
-    context.mismatches += new_str
-
   def notify(self, context):
     if not self.active:
       return
@@ -593,6 +588,11 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     context.mismatches = ''
     shipping_address = order.shipping_address.value
     order_currency = order.currency.value
+
+    def new_mismatch(code, order_value, ipn_value):
+      # 'Seller settings receiver e-mail: testA@example.com - Paypal Payment receiver e-mail: testB@example.com'
+      new_str = '\n%s: %s - %s: %s' % (order_value[0], order_value[1], ipn_value[0], ipn_value[1])
+      context.mismatches += new_str
 
     # ipn alias
     ipn_payment_status = ipn['payment_status']
@@ -612,72 +612,72 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     reciever_email = self.reciever_email.lower()
     ipn_reciever_email = ipn['receiver_email'].lower()
     if reciever_email != ipn_reciever_email:
-      self.new_mismatch('receiver_email', ('Seller settings reciever e-mail', reciever_email), ('Paypal Payment reciever e-mail', ipn_reciever_email))
+      new_mismatch('receiver_email', ('Seller settings reciever e-mail', reciever_email), ('Paypal Payment reciever e-mail', ipn_reciever_email))
 
     if 'business' in ipn:
       business_email = self.business.lower()
       ipn_business_email = ipn['business'].lower()
       if business_email != ipn_business_email:
-        self.new_mismatch('business_email', ('Seller settings business e-mail', business_email), ('Paypal Payment business e-mail', ipn_business_email))
+        new_mismatch('business_email', ('Seller settings business e-mail', business_email), ('Paypal Payment business e-mail', ipn_business_email))
 
     if order_currency.code != ipn['mc_currency']:
-      self.new_mismatch('mc_currency', ('Order currency', order_currency.code), ('Paypal Payment currency', ipn['mc_currency']))
+      new_mismatch('mc_currency', ('Order currency', order_currency.code), ('Paypal Payment currency', ipn['mc_currency']))
 
     if ipn_payment_status not in ['Refunded', 'Reversed'] and order.total_amount != tools.format_value(ipn['mc_gross'], order_currency):
-      self.new_mismatch('mc_gross', ('Order total amount', order.total_amount), ('Paypal Payment total amount', tools.format_value(ipn['mc_gross'], order_currency)))
+      new_mismatch('mc_gross', ('Order total amount', order.total_amount), ('Paypal Payment total amount', tools.format_value(ipn['mc_gross'], order_currency)))
     elif order.total_amount != abs(tools.format_value(ipn['mc_gross'], order_currency)):
-      self.new_mismatch('mc_gross', ('Order total amount', order.total_amount), ('Paypal Payment total amount', abs(tools.format_value(ipn['mc_gross'], order_currency))))
+      new_mismatch('mc_gross', ('Order total amount', order.total_amount), ('Paypal Payment total amount', abs(tools.format_value(ipn['mc_gross'], order_currency))))
 
     if 'tax' in ipn and order.tax_amount != tools.format_value(ipn['tax'], order_currency):
-      self.new_mismatch('tax', ('Order tax amount', order.tax_amount), ('Paypal Payment tax amount', tools.format_value(ipn['tax'], order_currency)))
+      new_mismatch('tax', ('Order tax amount', order.tax_amount), ('Paypal Payment tax amount', tools.format_value(ipn['tax'], order_currency)))
 
     if order.key.urlsafe() != ipn['invoice']:
-      self.new_mismatch('invoice', ('Order id', order.key.urlsafe()), ('Paypal Payment order id', ipn['invoice']))
+      new_mismatch('invoice', ('Order id', order.key.urlsafe()), ('Paypal Payment order id', ipn['invoice']))
 
     if shipping_address.country != ipn['address_country']:
-      self.new_mismatch('address_country', ('Order address country', shipping_address.country), ('Paypal Payment address country', ipn['address_country']))
+      new_mismatch('address_country', ('Order address country', shipping_address.country), ('Paypal Payment address country', ipn['address_country']))
 
     if shipping_address.country_code != ipn['address_country_code']:
-      self.new_mismatch('address_country_code', ('Order address country code', shipping_address.country_code), ('Paypal Payment address country code', ipn['address_country_code']))
+      new_mismatch('address_country_code', ('Order address country code', shipping_address.country_code), ('Paypal Payment address country code', ipn['address_country_code']))
 
     shipping_address_city = shipping_address.city.lower()
     ipn_address_city = ipn['address_city'].lower()
     if shipping_address_city != ipn_address_city:
-      self.new_mismatch('address_city', ('Order address city', shipping_address_city), ('Paypal Payment address city', ipn_address_city))
+      new_mismatch('address_city', ('Order address city', shipping_address_city), ('Paypal Payment address city', ipn_address_city))
 
     if shipping_address.name != ipn['address_name']:
-      self.new_mismatch('address_name', ('Order address name', shipping_address.name), ('Paypal Payment address name', ipn['address_name']))
+      new_mismatch('address_name', ('Order address name', shipping_address.name), ('Paypal Payment address name', ipn['address_name']))
 
     if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']:  # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
-      self.new_mismatch('address_state', ('Order address state', shipping_address.region_code[len(shipping_address.country_code) + 1:]), ('Paypal Payment address state', ipn['address_state']))
+      new_mismatch('address_state', ('Order address state', shipping_address.region_code[len(shipping_address.country_code) + 1:]), ('Paypal Payment address state', ipn['address_state']))
 
     shipping_address_street = shipping_address.street.lower()
     ipn_shipping_address_street = ipn['address_street'].lower()
     if shipping_address_street != ipn_shipping_address_street:
-      self.new_mismatch('address_street', ('Order address street', shipping_address_street), ('Paypal Payment address street', ipn_shipping_address_street))
+      new_mismatch('address_street', ('Order address street', shipping_address_street), ('Paypal Payment address street', ipn_shipping_address_street))
 
     shipping_address_postal_code = shipping_address.postal_code.lower()
     ipn_shipping_address_postal_code = ipn['address_zip'].lower()
     if shipping_address_postal_code != ipn_shipping_address_postal_code:
-      self.new_mismatch('address_zip', ('Order address zip', shipping_address_postal_code), ('Paypal Payment address zip', ipn_shipping_address_postal_code))
+      new_mismatch('address_zip', ('Order address zip', shipping_address_postal_code), ('Paypal Payment address zip', ipn_shipping_address_postal_code))
 
     for line in order._lines.value:
       product = line.product.value
       tools.log.debug('Order sequence %s' % line.sequence)
       # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
       if str(line.sequence) != ipn['item_number%s' % line.sequence]:
-        self.new_mismatch('item_number%s' % line.sequence, ('Order line sequence %s' % line.sequence, line.sequence), ('Paypal Payment item number %s' % line.sequence, ipn['item_number%s' % line.sequence]))
+        new_mismatch('item_number%s' % line.sequence, ('Order line sequence %s' % line.sequence, line.sequence), ('Paypal Payment item number %s' % line.sequence, ipn['item_number%s' % line.sequence]))
 
       if product.name != ipn['item_name%s' % line.sequence]:
-        self.new_mismatch('item_name%s' % line.sequence, ('Order line product name %s' % line.sequence, product.name), ('Paypal Payment item name %s' % line.sequence, ipn['item_name%s' % line.sequence]))
+        new_mismatch('item_name%s' % line.sequence, ('Order line product name %s' % line.sequence, product.name), ('Paypal Payment item name %s' % line.sequence, ipn['item_name%s' % line.sequence]))
 
       ipn_line_quantity = tools.format_value(ipn['quantity%s' % line.sequence], product.uom.value)
       if product.quantity != ipn_line_quantity:
-        self.new_mismatch('quantity%s' % line.sequence, ('Order line quantity %s' % line.sequence, product.quantity), ('Paypal Payment item quantity %s' % line.sequence, ipn_line_quantity))
+        new_mismatch('quantity%s' % line.sequence, ('Order line quantity %s' % line.sequence, product.quantity), ('Paypal Payment item quantity %s' % line.sequence, ipn_line_quantity))
 
       ipn_line_subtotal = tools.format_value(ipn['mc_gross_%s' % line.sequence], order_currency)
       if line.subtotal != ipn_line_subtotal:
-        self.new_mismatch('mc_gross_%s' % line.sequence, ('Order line subtotal %s' % line.sequence, line.subtotal), ('Paypal Payment item subtotal %s' % line.sequence, ipn_line_subtotal))
+        new_mismatch('mc_gross_%s' % line.sequence, ('Order line subtotal %s' % line.sequence, line.subtotal), ('Paypal Payment item subtotal %s' % line.sequence, ipn_line_subtotal))
 
     if not len(context.mismatches):
       if order.payment_status == ipn_payment_status:
