@@ -84,10 +84,10 @@
             var eventEnd = function (event, which, cb) {
                 return $(this).on(event, function kill(e) {
                     if (e.target === this) {
-                        cb.call(this, e);
                         if (which === 'one') {
                             $(this).off(event, kill);
                         }
+                        cb.call(this, e);
                     }
                 });
             };
@@ -1412,6 +1412,9 @@
                         slide = function () {
                             return top().find('.slide');
                         },
+                        animation = function () {
+                            return slide().find('.progress:first');
+                        },
                         hide = function (fast) {
                             requests -= 1;
                             if (top().hasClass('ng-hide')) {
@@ -1420,26 +1423,29 @@
                             if (!(requests < 1)) {
                                 return;
                             }
-                            var s = slide();
+                            var s = slide(),
+                                anim = animation();
                             if (s.length) {
                                 if (fast) {
                                     s.removeClass('in').addClass('out');
                                     top().addClass('ng-hide');
                                     return;
                                 }
-                                $animate.addClass(s, 'out').then(function () {
+                                anim.oneTransitionEnd(function () {
                                     top().addClass('ng-hide');
-                                    s.removeClass('in');
+                                    s.removeClass('in out');
                                 });
+                                s.addClass('out');
                             }
                         },
                         show = function () {
                             top().removeClass('ng-hide');
                             if (slide().length) {
                                 requests += 1;
-                                $animate.removeClass(slide(), 'out').then(function () {
-                                    return $animate.addClass(slide(), 'in');
-                                });
+                                var s = slide();
+                                if (!s.hasClass('in')) {
+                                    s.removeClass('out').addClass('in');
+                                }
                             }
                         };
                     scope.activitySpinner.hide.push(hide);

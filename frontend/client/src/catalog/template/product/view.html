@@ -24,14 +24,16 @@
                </button>
           </div>
 
-            <div ng-show="$state.isCompleted()" class="fixed-height relative overflow-x unselectable">
-                <div ng-class="{'swoop-from-left-finish': true}" ng-if="product.images.length && modalOptions.opened" image-slider="product.images" class="image-slider swoop-from-left">
-                    <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
-                        <img class="not-pointable" slider-image="image" />
-                    </div>
-                </div>
-                <div ng-if="!product.images.length">
-                    <h1 class="no-things-available display1">No images available</h1>
+            <div class="fixed-height relative overflow-x unselectable">
+                <div ng-show="$state.isCompleted()">
+                  <div ng-class="{'swoop-from-left-finish': true}" ng-if="product.images.length && modalOptions.opened" image-slider="product.images" class="image-slider swoop-from-left">
+                      <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
+                          <img class="not-pointable" slider-image="image" />
+                      </div>
+                  </div>
+                  <div ng-if="!product.images.length">
+                      <h1 class="no-things-available display1">No images available</h1>
+                  </div>
                 </div>
             </div>
 

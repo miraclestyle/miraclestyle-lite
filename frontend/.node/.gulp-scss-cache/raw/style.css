@@ -2408,14 +2408,10 @@ modal-loading .progress-wrapper {
   padding: 0px !important;
   border-radius: inherit; }
 
-modal-loading[toolbar="true"] .progress-wrapper {
-  height: calc(100% - 56px); }
-
 .modal-loading-wrapper {
   width: 100%;
   background: white;
-  height: 100%;
-  position: fixed; }
+  height: 100%; }
 
 modal-loading[absolute="true"] .modal-loading-wrapper {
   position: absolute; }
@@ -2730,16 +2726,24 @@ div[disabled] .select-box {
   height: 100%;
   display: block; }
 
+/*
 @keyframes top-slide-in {
-  0% {
-    top: -100%; }
-  100% {
-    top: 72px; } }
+    0% {
+        top: -100%;
+    }
+    100% {
+        top: 72px;
+    }
+}
+
 @keyframes top-slide-out {
-  0% {
-    top: 72px; }
-  100% {
-    top: -100%; } }
+    0% {
+        top: 72px;
+    }
+    100% {
+        top: -100%;
+    }
+}*/
 .progress-wrapper-loading.first-load .progress-wrapper, activity-spinner .progress-wrapper-loading .progress-wrapper {
   position: absolute;
   text-align: center;
@@ -2749,25 +2753,26 @@ div[disabled] .select-box {
   border-radius: inherit;
   z-index: 2; }
 
+content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-wrapper .progress.circular {
+  padding-top: 56px; }
+
 activity-spinner[z-index="high"] .progress-wrapper-loading .progress-wrapper {
   z-index: 61; }
-
-content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-wrapper {
-  height: calc(100% - 56px); }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper {
   top: -100%;
   height: auto; }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.slide.in {
-  animation-name: top-slide-in; }
+  /*animation-name: top-slide-in;*/
+  top: 72px; }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.slide {
-  animation-duration: 0.6s; }
+  /*animation-duration: 0.3s;*/ }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.slide.out {
-  animation-name: top-slide-out;
-  animation-delay: 0.15s; }
+  /*animation-name: top-slide-out;
+  animation-delay: 0.15s;*/ }
 
 activity-spinner .progress-wrapper .progress.circular.raised {
   transition-delay: 0s;
@@ -3028,7 +3033,7 @@ button.product-quantity-button {
   position: absolute;
   text-align: center;
   width: 100%;
-  height: calc(100% - 56px);
+  height: 100%;
   padding: 0px !important;
   border-radius: inherit; }
 

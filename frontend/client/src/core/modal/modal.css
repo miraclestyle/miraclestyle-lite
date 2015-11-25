@@ -175,15 +175,10 @@ modal-loading .progress-wrapper {
     border-radius: inherit;
 }
 
-modal-loading[toolbar="true"] .progress-wrapper {
-    height: calc(100% - 56px);
-}
-
 .modal-loading-wrapper {
     width: 100%;
     background: white;
     height: 100%;
-    position: fixed;
 }
 
 modal-loading[absolute="true"] .modal-loading-wrapper {

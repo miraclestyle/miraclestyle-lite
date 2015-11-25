@@ -38,7 +38,7 @@
     position: absolute;
     text-align: center;
     width: 100%;
-    height: calc(100% - 56px);
+    height: 100%;
     padding: 0px !important;
     border-radius: inherit;
 }

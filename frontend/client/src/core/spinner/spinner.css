@@ -173,6 +173,7 @@
     display: block;
 }
 
+/*
 @keyframes top-slide-in {
     0% {
         top: -100%;
@@ -189,7 +190,7 @@
     100% {
         top: -100%;
     }
-}
+}*/
 
 .progress-wrapper-loading.first-load .progress-wrapper, activity-spinner .progress-wrapper-loading .progress-wrapper {
     position: absolute;
@@ -201,12 +202,13 @@
     z-index: 2;
 }
 
-activity-spinner[z-index="high"] .progress-wrapper-loading .progress-wrapper {
-    z-index: 61;
+
+content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-wrapper .progress.circular {
+    padding-top: 56px;
 }
 
-content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-wrapper {
-    height: calc(100% - 56px);
+activity-spinner[z-index="high"] .progress-wrapper-loading .progress-wrapper {
+    z-index: 61;
 }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper {
@@ -215,16 +217,17 @@ activity-spinner .progress-wrapper-loading .progress-wrapper {
 }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.slide.in {
-    animation-name: top-slide-in;
+    /*animation-name: top-slide-in;*/
+    top: 72px;
 }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.slide {
-    animation-duration: 0.6s;
+    /*animation-duration: 0.3s;*/
 }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.slide.out {
-    animation-name: top-slide-out;
-    animation-delay: 0.15s;
+    /*animation-name: top-slide-out;
+    animation-delay: 0.15s;*/
 }
 
 activity-spinner .progress-wrapper .progress.circular.raised {

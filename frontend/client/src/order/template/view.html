@@ -1,11 +1,11 @@
 <div fit-in-modal>
-    <modal-loading toolbar="true"></modal-loading>
     <activity-spinner toolbar="true"></activity-spinner>
     <form method="post" name="container.paypal" action="https://www.sandbox.paypal.com/cgi-bin/webscr">
         <action-toolbar spec="dialog.toolbar"></action-toolbar>
-        <div ng-if="$state.isCompleted()" class="modal-body">
+        <div class="modal-body">
+            <modal-loading toolbar="true"></modal-loading>
             <div class="fixed-height relative has-toolbar">
-                <div class="modal-body-inner">
+                <div ng-if="$state.isCompleted()" class="modal-body-inner">
                     <div class="order">
                         <input type="hidden" name="cmd" value="_cart" />
                         <input type="hidden" name="upload" value="1" />
@@ -35,6 +35,9 @@
                              class="order-stage seam-bottom in fixed-height"
                              order-went-up="stage.endAnimation()"
                              ng-class="{'in': stage.current === 1, 'out-up': stage.isOut(1)}">
+                          <div ng-show="stage.animating === 1" class="order-loading-wrapper">
+                                <div ng-include="'core/spinner/spinner.html'"></div>
+                          </div>
                           <div ng-if="stage.isAnimating(1)">
                             <div ng-if="!helpers.models.isEntityListEmpty(order._lines)" ng-include="'order/lines.html'"></div>
                             <div ng-if="order.ui.rule.action.update.executable && !helpers.models.isEntityListEmpty(order._lines)" class="list">
