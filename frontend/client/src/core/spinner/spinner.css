@@ -173,25 +173,6 @@
     display: block;
 }
 
-/*
-@keyframes top-slide-in {
-    0% {
-        top: -100%;
-    }
-    100% {
-        top: 72px;
-    }
-}
-
-@keyframes top-slide-out {
-    0% {
-        top: 72px;
-    }
-    100% {
-        top: -100%;
-    }
-}*/
-
 .progress-wrapper-loading.first-load .progress-wrapper, activity-spinner .progress-wrapper-loading .progress-wrapper {
     position: absolute;
     text-align: center;
@@ -204,7 +185,7 @@
 
 
 content-spinner[toolbar="true"] .progress-wrapper-loading.first-load .progress-wrapper .progress.circular {
-    padding-top: 56px;
+    padding-top: 61px;
 }
 
 activity-spinner[z-index="high"] .progress-wrapper-loading .progress-wrapper {
@@ -216,18 +197,16 @@ activity-spinner .progress-wrapper-loading .progress-wrapper {
     height: auto;
 }
 
-activity-spinner .progress-wrapper-loading .progress-wrapper.slide.in {
-    /*animation-name: top-slide-in;*/
+activity-spinner .progress-wrapper-loading .progress-wrapper.in, activity-spinner .progress-wrapper-loading .progress-wrapper.out  {
     top: 72px;
 }
 
-activity-spinner .progress-wrapper-loading .progress-wrapper.slide {
-    /*animation-duration: 0.3s;*/
+activity-spinner .progress-wrapper-loading .progress-wrapper.in .progress.circular.raised {
+    transform: scale(1, 1);
 }
 
-activity-spinner .progress-wrapper-loading .progress-wrapper.slide.out {
-    /*animation-name: top-slide-out;
-    animation-delay: 0.15s;*/
+activity-spinner .progress-wrapper-loading .progress-wrapper.out .progress.circular.raised {
+    transform: scale(0, 0);
 }
 
 activity-spinner .progress-wrapper .progress.circular.raised {
@@ -235,15 +214,11 @@ activity-spinner .progress-wrapper .progress.circular.raised {
     transition-duration: 0.15s;
     transition-timing-function: cubic-bezier(0.8,0,1,1);
     transition-property: transform;
-    transform: scale(1, 1);
+    transform: scale(0, 0);
 }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper {
     background: none;
-}
-
-activity-spinner .progress-wrapper.slide.out .progress.circular.raised {
-    transform: scale(0, 0);
 }
 
 activity-spinner[toolbar="true"] {}

@@ -1404,13 +1404,12 @@
                 templateUrl: 'core/misc/activity_spinner.html',
                 link: function (scope, element) {
                     scope.raised = true;
-                    scope.slide = true;
                     var top = function () {
                             return element.find(':first');
                         },
                         requests = 0,
                         slide = function () {
-                            return top().find('.slide');
+                            return top().find('.progress:first');
                         },
                         animation = function () {
                             return slide().find('.progress:first');
@@ -1447,7 +1446,9 @@
                                 requests += 1;
                                 var s = slide();
                                 if (!s.hasClass('in')) {
-                                    s.removeClass('out').addClass('in');
+                                    setTimeout(function () {
+                                        s.removeClass('out').addClass('in');
+                                    }, 100);
                                 }
                             }
                         };
