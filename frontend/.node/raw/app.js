@@ -14068,6 +14068,9 @@ function msieversion() {
                                     top().addClass('ng-hide');
                                     return;
                                 }
+                                if (s.hasClass('out')) {
+                                    return;
+                                }
                                 anim.oneTransitionEnd(function () {
                                     top().addClass('ng-hide');
                                     s.removeClass('in out');
