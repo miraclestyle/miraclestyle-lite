@@ -21993,6 +21993,10 @@ angular.module('app')
                                             title: helpers.toolbar.title('seller.settings.aboutRules')
                                         }
                                     };
+
+                                    $scope.$state.instant(function () {
+                                        $scope.appear = true;
+                                    });
                                 })
                             });
                         },
