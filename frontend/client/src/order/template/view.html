@@ -54,7 +54,7 @@
                         <div ng-if="!stage.checkout"
                              order-went-up="stage.endAnimation()"
                              class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
-                            <div ng-if="stage.animating === 2" class="order-loading-wrapper">
+                            <div ng-show="stage.animating === 2" class="order-loading-wrapper">
                                 <div ng-include="'core/spinner/spinner.html'"></div>
                             </div>
                             <div ng-if="stage.isAnimating(2)">
@@ -123,7 +123,7 @@
                              class="order-stage seam-bottom out fixed-height"
                              order-went-up="stage.endAnimation()"
                              ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
-                              <div ng-if="stage.animating === 3" class="order-loading-wrapper">
+                              <div ng-show="stage.animating === 3" class="order-loading-wrapper">
                                   <div ng-include="'core/spinner/spinner.html'"></div>
                               </div>
                               <div ng-if="stage.isAnimating(3)">
@@ -162,7 +162,7 @@
                              order-went-up="stage.endAnimation()"
                              ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
 
-                            <div ng-if="stage.animating === 4" class="order-loading-wrapper">
+                            <div ng-show="stage.animating === 4" class="order-loading-wrapper">
                                   <div ng-include="'core/spinner/spinner.html'"></div>
                             </div>
 
