@@ -2749,10 +2749,12 @@ activity-spinner .progress-wrapper-loading .progress-wrapper.in, activity-spinne
   top: 72px; }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.in .progress.circular.raised {
-  transform: scale(1, 1); }
+  transform: scale(1, 1);
+  transition-timing-function: cubic-bezier(0, 0, 0.4, 1); }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.out .progress.circular.raised {
-  transform: scale(0, 0); }
+  transform: scale(0, 0);
+  transition-timing-function: cubic-bezier(0.8, 0, 1, 1); }
 
 activity-spinner .progress-wrapper .progress.circular.raised {
   transition-delay: 0s;
