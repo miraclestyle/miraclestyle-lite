@@ -203,7 +203,7 @@ activity-spinner .progress-wrapper-loading .progress-wrapper.in, activity-spinne
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.in .progress.circular.raised {
     transform: scale(1, 1);
-    transition-timing-function: cubic-bezier(0,0,0.4,1)
+    transition-timing-function: cubic-bezier(0,0,0.4,1);
 }
 
 activity-spinner .progress-wrapper-loading .progress-wrapper.out .progress.circular.raised {
