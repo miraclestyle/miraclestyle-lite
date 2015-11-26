@@ -348,41 +348,36 @@ class OrderSetMessage(orm.BaseModel):
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
     OrderMessage = context.models['35']
     # this could be extended to allow params
-    defaults = {
-        'agent': 'account.key',
-        '_agent': 'account',
-        'body': 'input.message',
-        'action': 'action.key'
-    }
-    data = {}
-    data_config = self.cfg.get('data', {})
-    for key, value in defaults.iteritems():
-      data[key] = tools.get_attr(context, value)
-    additional = {}
-    if 'additional' in self.cfg:
-      additional = self.cfg.get('additional')
-      if not isinstance(additional, dict):
-        data = tools.get_attr(context, additional)
-      else:
-        for key, value in additional.iteritems():
-          data[key] = tools.get_attr(context, value)
-    later = {}
-    extra_fields = {}
-    fields = {}
-    if 'fields' in self.cfg:
-      fields = self.cfg.get('fields')
-      if not isinstance(fields, dict):
-        fields = tools.get_attr(context, fields)
-    for key, value in fields.iteritems():
-      later[key] = data.pop(key, None)
-      extra_fields[key] = tools.get_attr(context, value)
-    new_order_message = OrderMessage(**data)
-    if 'fields' in self.cfg:
+    order_message = {}
+    default_values = {}
+    default_values['agent'] = self.cfg.get('agent', 'account.key')
+    default_values['_agent'] = self.cfg.get('_agent', 'account')
+    default_values['body'] = self.cfg.get('body', 'input.message')
+    default_values['action'] = self.cfg.get('action', 'action.key')
+    expando_values = self.cfg.get('expando_values', {})
+    expando_fields = self.cfg.get('expando_fields', {})
+    for key, value in default_values.iteritems():
+      order_message[key] = tools.get_attr(context, value)
+    if not expando_fields:
+      for key, value in expando_values.iteritems():
+        order_message[key] = tools.get_attr(context, value)
+      new_order_message = OrderMessage(**order_message)
+    else:
+      order_message_expando_fields = {}
+      for key, value in expando_fields.iteritems():
+        order_message_expando_fields[key] = tools.get_attr(context, value)
+      order_message_expando_values = {}
+      for key, value in expando_values.iteritems():
+        order_message_expando_values[key] = tools.get_attr(context, value)
+      new_order_message = OrderMessage(**order_message)
       new_order_message._clone_properties()
-      new_order_message._properties.update(extra_fields)
-      new_order_message.populate(**later)
+      new_order_message._properties.update(order_message_expando_fields)
+      for key, value in order_message_expando_fields.iteritems():
+        value._set_value(new_order_message, order_message_expando_values[key])
     context._order._messages = [new_order_message]
 
 
