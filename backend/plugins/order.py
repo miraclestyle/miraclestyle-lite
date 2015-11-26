@@ -40,7 +40,7 @@ class OrderInit(orm.BaseModel):
         raise PluginError('seller_missing')
       seller_key = product.parent().parent().parent()  # go 3 levels up, account->seller->catalog->pricetag->product
     order = Order.query(Order.seller_reference == seller_key,
-                        Order.state.IN(['cart', 'checkout']),
+                        Order.state == 'cart',
                         ancestor=context.input.get('buyer')).get()  # we will need composite index for this
     if order is None:
       order = Order(parent=context.input.get('buyer'))
@@ -683,26 +683,15 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       if order.payment_status == ipn_payment_status:
         return None  # nothing to do since the payment status is exactly the same
       else:
-        update_paypal_payment_status = False
         if order.payment_status == 'Pending' or order.payment_status is None:
           if ipn_payment_status == 'Completed' or ipn_payment_status == 'Denied':
-            update_paypal_payment_status = True
+            order.payment_status = ipn_payment_status
         elif order.payment_status == 'Completed':
           if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
-            update_paypal_payment_status = True
+            order.payment_status = ipn_payment_status
         elif order.payment_status == 'Reversed':
           # if ipn_payment_status == 'Refunded' or ipn_payment_status == 'Reversed':
-          update_paypal_payment_status = True
-
-        if update_paypal_payment_status:
-          if order.state in ('checkout', 'canceled') and ipn_payment_status == 'Completed':
-            order.state = 'completed'
-            order.payment_status = ipn_payment_status
-          elif order.state in ('checkout', 'canceled') and ipn_payment_status == 'Denied':
-            order.state = 'canceled'
-            order.payment_status = ipn_payment_status
-          elif order.state == 'completed':
-            order.payment_status = ipn_payment_status
+          order.payment_status = ipn_payment_status
     else:
       # log that there were mismatches, where we should log that?
       ipn_payment_status = 'Mismatched'
