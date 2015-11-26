@@ -415,6 +415,31 @@ class Order(orm.BaseExpando):
           ]
       ),
       orm.Action(
+          id='delete',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='34', required=True)
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      Delete(),
+                      RulePrepare(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
+                      Set(cfg={'d': {'output.entity': '_order'}})
+                  ]
+              )
+          ]
+      ),
+      orm.Action(
           id='search',
           arguments={
               'search': orm.SuperSearchProperty(
@@ -450,31 +475,6 @@ class Order(orm.BaseExpando):
                                      'output.cursor': '_cursor',
                                      'output.more': '_more'}}),
                       CallbackExec()
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='delete',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='34', required=True)
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      RulePrepare(),
-                      RuleExec()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Delete(),
-                      RulePrepare(),
-                      DeleteCache(cfg=DELETE_CACHE_POLICY),
-                      Set(cfg={'d': {'output.entity': '_order'}})
                   ]
               )
           ]
