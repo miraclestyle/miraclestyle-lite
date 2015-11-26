@@ -243,10 +243,6 @@ class Order(orm.BaseExpando):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "cart" and action.key_id_str == "update_line"
 
-  def condition_payment_method(account, entity, action, **kwargs):
-    return not account._is_guest and entity._original.key_root == account.key \
-        and entity._original.state == "cart" and action.key_id_str == "update"
-
   def condition_state(action, entity, **kwargs):
     return (action.key_id_str == "update_line" and entity.state == "cart") \
         or (action.key_id_str == "update" and entity.state == "order")
@@ -291,12 +287,11 @@ class Order(orm.BaseExpando):
       orm.WriteFieldPermission(('date', 'seller_reference', 'billing_address', 'shipping_address',
                                 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                 'payment_method', '_lines', 'carrier', '_records'), condition_update_line),
-      orm.WriteFieldPermission('payment_method', condition_payment_method),
       orm.WriteFieldPermission('state', condition_state),
       orm.WriteFieldPermission(('payment_status', '_messages'), condition_notify),
       orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('shipping_address', 'billing_address', '_lines', 'carrier',
-                                'untaxed_amount', 'tax_amount', 'total_amount'), condition_update_and_view_order),
+                                'untaxed_amount', 'tax_amount', 'total_amount', 'payment_method'), condition_update_and_view_order),
       orm.DenyWriteFieldPermission(('_lines.taxes', '_lines.product.reference',
                                     '_lines.product.category', '_lines.product.name', '_lines.product.uom',
                                     '_lines.product.code', '_lines.product.unit_price', '_lines.product.variant_signature',
