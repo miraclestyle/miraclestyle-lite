@@ -382,7 +382,7 @@ class OrderSetMessage(orm.BaseModel):
       new_order_message._properties.update(order_message_expando_fields)
       for key, value in order_message_expando_fields.iteritems():
         value._set_value(new_order_message, order_message_expando_values.pop(key))
-      new_order_message.populate(**order_message_expando_fields)
+      new_order_message.populate(**order_message_expando_values)
     context._order._messages = [new_order_message]
 
 
