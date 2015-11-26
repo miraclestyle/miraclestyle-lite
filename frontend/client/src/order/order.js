@@ -187,7 +187,6 @@
                                             writable: true,
                                             name: 'supplier_' + value.code_name
                                         });
-                                        value.required = (value.required ? '!addresses.sameAsShipping' : false);
                                         locals.shippingAddressFields.push(value);
                                     });
 
@@ -198,6 +197,7 @@
                                             writable: true,
                                             name: 'supplier_' + value.code_name
                                         });
+                                        value.required = (value.required ? '!addresses.sameAsShipping' : false);
                                         locals.billingAddressFields.push(value);
                                     });
 
@@ -279,9 +279,9 @@
                                                     $scope.stage.current = 3;
                                                 });
                                             } else {
-                                                helpers.form.wakeUp($scope.addresses.form.billing);
+                                                helpers.form.wakeUp($scope.addresses.form.shipping);
                                                 if (!$scope.addresses.sameAsShipping) {
-                                                    helpers.form.wakeUp($scope.addresses.form.shipping);
+                                                    helpers.form.wakeUp($scope.addresses.form.billing);
                                                 }
                                             }
                                         },

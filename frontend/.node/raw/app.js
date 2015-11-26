@@ -21010,7 +21010,6 @@ angular.module('app')
                                             writable: true,
                                             name: 'supplier_' + value.code_name
                                         });
-                                        value.required = (value.required ? '!addresses.sameAsShipping' : false);
                                         locals.shippingAddressFields.push(value);
                                     });
 
@@ -21021,6 +21020,7 @@ angular.module('app')
                                             writable: true,
                                             name: 'supplier_' + value.code_name
                                         });
+                                        value.required = (value.required ? '!addresses.sameAsShipping' : false);
                                         locals.billingAddressFields.push(value);
                                     });
 
@@ -21102,9 +21102,9 @@ angular.module('app')
                                                     $scope.stage.current = 3;
                                                 });
                                             } else {
-                                                helpers.form.wakeUp($scope.addresses.form.billing);
+                                                helpers.form.wakeUp($scope.addresses.form.shipping);
                                                 if (!$scope.addresses.sameAsShipping) {
-                                                    helpers.form.wakeUp($scope.addresses.form.shipping);
+                                                    helpers.form.wakeUp($scope.addresses.form.billing);
                                                 }
                                             }
                                         },
