@@ -161,7 +161,7 @@ class Order(orm.BaseExpando):
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
-  state = orm.SuperStringProperty('3', required=True, default='cart', choices=('cart', 'checkout', 'completed', 'canceled'))
+  state = orm.SuperStringProperty('3', required=True, default='cart', choices=('cart', 'order')) # 'checkout', 'completed', 'canceled'
   date = orm.SuperDateTimeProperty('4', required=True)
   seller_reference = orm.SuperKeyProperty('5', kind='23', required=True)
   billing_address = orm.SuperLocalStructuredProperty('121', '6')
@@ -236,12 +236,8 @@ class Order(orm.BaseExpando):
                                                    and input["search"]["filters"][0]["value"]._root == account.key)
                                                   or (not account._is_guest and "ancestor" in input["search"] and input["search"]["ancestor"]._root == account.key)))
 
-  def condition_not_guest_and_owner_and_checkout(account, entity, **kwargs):
-    return not account._is_guest and entity._original.key_root == account.key \
-        and entity._original.state == "checkout"
-
   def condition_notify(action, entity, **kwargs):
-    return action.key_id_str == "notify" and entity._original.state in ["checkout", "completed", "canceled"]
+    return action.key_id_str == "notify" and entity._original.state == "order"
 
   def condition_update_line(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -253,8 +249,7 @@ class Order(orm.BaseExpando):
 
   def condition_state(action, entity, **kwargs):
     return (action.key_id_str == "update_line" and entity.state == "cart") \
-        or (action.key_id_str == "update" and entity.state == "checkout") \
-        or (action.key_id_str == "cancel" and entity.state == "canceled")
+        or (action.key_id_str == "update" and entity.state == "order")
 
   def condition_update_and_view_order(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -278,11 +273,10 @@ class Order(orm.BaseExpando):
   _permissions = [
       #  action.key_id_str not in ["search"] and...
       # Included payment_status in field permissions, will have to further analyse exclusion...
-      orm.ExecuteActionPermission(('update_line', 'update'), condition_not_guest_and_owner_and_cart),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
+      orm.ExecuteActionPermission(('update_line', 'update', 'delete'), condition_not_guest_and_owner_and_cart),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
       orm.ExecuteActionPermission('view_order', condition_not_guest_and_owner),
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
-      orm.ExecuteActionPermission('cancel', condition_not_guest_and_owner_and_checkout),
       orm.ExecuteActionPermission('notify', condition_notify),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
@@ -397,7 +391,7 @@ class Order(orm.BaseExpando):
               'shipping_address': orm.SuperLocalStructuredProperty('14'),
               'carrier': orm.SuperVirtualKeyProperty(kind='113'),
               '_lines': orm.SuperLocalStructuredProperty(OrderLine, repeated=True),
-              'state': orm.SuperStringProperty(choices=('checkout',)),
+              'state': orm.SuperStringProperty(choices=('order',)),
               'read_arguments': orm.SuperJsonProperty()
           },
           _plugin_groups=[
@@ -440,7 +434,7 @@ class Order(orm.BaseExpando):
                       'search_by_keys': True,
                       'filters': {'name': orm.SuperStringProperty(),
                                   'key': orm.SuperVirtualKeyProperty(kind='34', searchable=False),
-                                  'state': orm.SuperStringProperty(repeated=True, choices=('checkout', 'cart', 'canceled', 'completed')),
+                                  'state': orm.SuperStringProperty(repeated=True, choices=('cart', 'order')),
                                   'seller_reference': orm.SuperKeyProperty(kind='23', searchable=False)},
                       'indexes': [{'orders': [('updated', ['asc', 'desc'])]},
                                   {'orders': [('created', ['asc', 'desc'])]},
@@ -470,7 +464,7 @@ class Order(orm.BaseExpando):
           ]
       ),
       orm.Action(
-          id='cancel',
+          id='delete',
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True)
           },
@@ -479,7 +473,6 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(),
-                      Set(cfg={'s': {'_order.state': 'canceled'}}),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -487,7 +480,7 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   transactional=True,
                   plugins=[
-                      Write(),
+                      Delete(),
                       RulePrepare(),
                       DeleteCache(cfg=DELETE_CACHE_POLICY),
                       Set(cfg={'d': {'output.entity': '_order'}})
