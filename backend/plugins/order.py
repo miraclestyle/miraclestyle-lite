@@ -368,15 +368,15 @@ class OrderSetMessage(orm.BaseModel):
       order_message[key] = tools.get_attr(context, value)
     if not expando_fields:
       for key, value in expando_values.iteritems():
-        order_message[key] = tools.get_attr(context, value)
+        order_message[key] = value
       new_order_message = OrderMessage(**order_message)
     else:
       order_message_expando_fields = {}
       for key, value in expando_fields.iteritems():
-        order_message_expando_fields[key] = tools.get_attr(context, value)
+        order_message_expando_fields[key] = value
       order_message_expando_values = {}
       for key, value in expando_values.iteritems():
-        order_message_expando_values[key] = tools.get_attr(context, value)
+        order_message_expando_values[key] = value
       new_order_message = OrderMessage(**order_message)
       new_order_message._clone_properties()
       new_order_message._properties.update(order_message_expando_fields)
