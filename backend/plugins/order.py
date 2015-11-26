@@ -45,7 +45,6 @@ class OrderInit(orm.BaseModel):
     if order is None:
       order = Order(parent=context.input.get('buyer'))
       order.state = 'cart'
-      order.date = datetime.datetime.now()
       order.seller_reference = seller_key
       order.make_original()
       order._lines = []
@@ -299,6 +298,7 @@ class OrderFormat(orm.BaseModel):
 
   def run(self, context):
     order = context._order
+    order.date = datetime.datetime.now()
     untaxed_amount = tools.format_value('0', order.currency.value)
     tax_amount = tools.format_value('0', order.currency.value)
     total_amount = tools.format_value('0', order.currency.value)
