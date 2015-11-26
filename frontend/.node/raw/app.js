@@ -21082,15 +21082,15 @@ angular.module('app')
                                             $scope.stage.current = 2;
                                         },
                                         toDeliveryMethod: function () {
-                                            var valid = $scope.addresses.form.billing.$valid,
+                                            var valid = $scope.addresses.form.shipping.$valid,
                                                 addressing = {
-                                                    billing_address: $scope.addresses.billing
+                                                    shipping_address: $scope.addresses.shipping
                                                 };
                                             if (!$scope.addresses.sameAsShipping) {
-                                                valid = valid && $scope.addresses.form.shipping.$valid;
-                                                addressing.shipping_address = $scope.addresses.shipping;
+                                                valid = valid && $scope.addresses.form.billing.$valid;
+                                                addressing.billing_address = $scope.addresses.billing;
                                             } else {
-                                                addressing.shipping_address = $scope.addresses.billing;
+                                                addressing.billing_address = $scope.addresses.shipping;
                                             }
                                             if (valid) {
                                                 $scope.cmd.order.update(addressing).then(function (response) {
