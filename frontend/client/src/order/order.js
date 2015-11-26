@@ -536,6 +536,9 @@
                                         },
                                         sent: false,
                                         resendMaybe: function (message) {
+                                            if (!message._failed) {
+                                                return;
+                                            }
                                             message._failed = false;
                                             var newMessage = angular.copy(message);
                                             newMessage.key = $scope.order.key;
