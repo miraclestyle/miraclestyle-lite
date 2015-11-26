@@ -358,8 +358,12 @@ class OrderSetMessage(orm.BaseModel):
     default_values['_agent'] = self.cfg.get('_agent', 'account')
     default_values['body'] = self.cfg.get('body', 'input.message')
     default_values['action'] = self.cfg.get('action', 'action.key')
-    expando_values = self.cfg.get('expando_values', {})
-    expando_fields = self.cfg.get('expando_fields', {})
+    expando_values = self.cfg.get('expando_values')
+    expando_fields = self.cfg.get('expando_fields')
+    if expando_values:
+      expando_values = tools.get_attr(context, expando_values)
+    if expando_fields:
+      expando_fields = tools.get_attr(context, expando_fields)
     for key, value in default_values.iteritems():
       order_message[key] = tools.get_attr(context, value)
     if not expando_fields:
