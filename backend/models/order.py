@@ -217,9 +217,6 @@ class Order(orm.BaseExpando):
       '_seller_reference': orm.SuperComputedProperty(lambda self: self.seller_reference._structure if self.seller_reference else None),
   }
 
-  def condition_not_guest_and_owner(account, entity, **kwargs):
-    return not account._is_guest and entity._original.key_root == account.key
-
   def condition_not_guest_and_owner_and_cart(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "cart"
@@ -269,8 +266,7 @@ class Order(orm.BaseExpando):
   _permissions = [
       #  action.key_id_str not in ["search"] and...
       # Included payment_status in field permissions, will have to further analyse exclusion...
-      orm.ExecuteActionPermission(('update_line', 'update', 'delete'), condition_not_guest_and_owner_and_cart),  # Product To Line plugin handles state as well, so not sure if state validation is required!?
-      orm.ExecuteActionPermission('view_order', condition_not_guest_and_owner),
+      orm.ExecuteActionPermission(('update_line', 'view_order', 'update', 'delete'), condition_not_guest_and_owner_and_cart),
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('notify', condition_notify),
@@ -284,14 +280,14 @@ class Order(orm.BaseExpando):
                                '_seller.logo', '_seller._content',
                                '_seller.follower_count', '_seller._notified_followers_count',
                                '_seller._currency'), condition_root_or_owner_or_seller),
-      orm.WriteFieldPermission(('date', 'seller_reference', 'billing_address', 'shipping_address',
+      orm.WriteFieldPermission(('date', 'seller_reference',
                                 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                 'payment_method', '_lines', 'carrier', '_records'), condition_update_line),
       orm.WriteFieldPermission('state', condition_state),
       orm.WriteFieldPermission(('payment_status', '_messages'), condition_notify),
       orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
-      orm.WriteFieldPermission(('shipping_address', 'billing_address', '_lines', 'carrier',
-                                'untaxed_amount', 'tax_amount', 'total_amount', 'payment_method'), condition_update_and_view_order),
+      orm.WriteFieldPermission(('date', 'shipping_address', 'billing_address', '_lines', 'carrier',
+                                'untaxed_amount', 'tax_amount', 'total_amount', 'payment_method', '_records'), condition_update_and_view_order),
       orm.DenyWriteFieldPermission(('_lines.taxes', '_lines.product.reference',
                                     '_lines.product.category', '_lines.product.name', '_lines.product.uom',
                                     '_lines.product.code', '_lines.product.unit_price', '_lines.product.variant_signature',
