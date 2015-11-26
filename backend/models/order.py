@@ -293,7 +293,7 @@ class Order(orm.BaseExpando):
                                 'payment_method', '_lines', 'carrier', '_records'), condition_update_line),
       orm.WriteFieldPermission('payment_method', condition_payment_method),
       orm.WriteFieldPermission('state', condition_state),
-      orm.WriteFieldPermission(('payment_status', 'state', '_messages'), condition_notify),
+      orm.WriteFieldPermission(('payment_status', '_messages'), condition_notify),
       orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('shipping_address', 'billing_address', '_lines', 'carrier',
                                 'untaxed_amount', 'tax_amount', 'total_amount'), condition_update_and_view_order),
