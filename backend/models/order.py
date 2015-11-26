@@ -508,8 +508,8 @@ class Order(orm.BaseExpando):
                       Read(),
                       OrderNotify(),
                       OrderSetMessage(cfg={
-                        'fields': 'new_message_fields',
-                        'additional': 'new_message'
+                        'expando_fields': 'new_message_fields',
+                        'expando_values': 'new_message'
                       }),
                       RulePrepare(),
                       RuleExec()
