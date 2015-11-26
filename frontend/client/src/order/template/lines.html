@@ -39,17 +39,6 @@
         </div>
     </div>
 
-    <div ng-if="stage.current > 2" class="card">
-        <div class="card-inner">
-            <div class="card-inner-padding clearfix">
-                <h1 class="headline padding-bottom-16">Billing address</h1>
-                <div class="secondary">{{order.billing_address.name}}</div>
-                <div class="secondary">{{order.billing_address.street}}</div>
-                <div class="secondary">{{order.billing_address.city}} {{order.billing_address.region}} {{order.billing_address.postal_code}}</div>
-                <div class="secondary">{{order.billing_address.country}}</div>
-            </div>
-        </div>
-    </div>
 
     <div ng-if="stage.current > 2" class="card">
         <div class="card-inner">
@@ -63,6 +52,18 @@
         </div>
     </div>
 
+
+    <div ng-if="stage.current > 2" class="card">
+        <div class="card-inner">
+            <div class="card-inner-padding clearfix">
+                <h1 class="headline padding-bottom-16">Billing address</h1>
+                <div class="secondary">{{order.billing_address.name}}</div>
+                <div class="secondary">{{order.billing_address.street}}</div>
+                <div class="secondary">{{order.billing_address.city}} {{order.billing_address.region}} {{order.billing_address.postal_code}}</div>
+                <div class="secondary">{{order.billing_address.country}}</div>
+            </div>
+        </div>
+    </div>
 
     <div drag="true" jqyoui-draggable="{onDrag: 'lineDrag.onDrag(line)', onStart: 'lineDrag.onStart(line)', onStop: 'lineDrag.onStop(line)'}" jqyoui-options="lineDrag.options" class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
         <button loading ng-click="cmd.line.view(line, $event)" type="button" md-ink-ripple class="menu-item card-inner">

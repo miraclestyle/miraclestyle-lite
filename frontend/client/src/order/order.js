@@ -187,7 +187,7 @@
                                             writable: true,
                                             name: 'supplier_' + value.code_name
                                         });
-                                        value.required = (value.required ? '!addresses.sameAsBilling' : false);
+                                        value.required = (value.required ? '!addresses.sameAsShipping' : false);
                                         locals.shippingAddressFields.push(value);
                                     });
 
@@ -263,7 +263,7 @@
                                                 addressing = {
                                                     billing_address: $scope.addresses.billing
                                                 };
-                                            if (!$scope.addresses.sameAsBilling) {
+                                            if (!$scope.addresses.sameAsShipping) {
                                                 valid = valid && $scope.addresses.form.shipping.$valid;
                                                 addressing.shipping_address = $scope.addresses.shipping;
                                             } else {
@@ -280,7 +280,7 @@
                                                 });
                                             } else {
                                                 helpers.form.wakeUp($scope.addresses.form.billing);
-                                                if (!$scope.addresses.sameAsBilling) {
+                                                if (!$scope.addresses.sameAsShipping) {
                                                     helpers.form.wakeUp($scope.addresses.form.shipping);
                                                 }
                                             }
@@ -351,7 +351,7 @@
                                     $scope.seller = seller;
                                     $scope.currentAccount = currentAccount;
                                     $scope.addresses = {
-                                        sameAsBilling: true,
+                                        sameAsShipping: true,
                                         form: {},
                                         shipping: locals.spawnAddress($scope.order.shipping_address) || {},
                                         billing: locals.spawnAddress($scope.order.billing_address) || {},
@@ -395,13 +395,13 @@
                                         fields: {
                                             shipping: locals.shippingAddressFields,
                                             billing: locals.billingAddressFields,
-                                            sameAsBilling: {
+                                            sameAsShipping: {
                                                 type: 'SuperBooleanProperty',
-                                                code_name: 'sameAsBilling',
+                                                code_name: 'sameAsShipping',
                                                 ui: {
                                                     writable: true,
                                                     parentArgs: 'addresses',
-                                                    args: 'addresses.sameAsBilling',
+                                                    args: 'addresses.sameAsShipping',
                                                     specifics: {
                                                         type: 'checkbox'
                                                     }

@@ -63,9 +63,9 @@
                             <div ng-if="stage.isAnimating(2)">
 
                               <div class="list list-padding seam-bottom">
-                                <div class="list-subheader subheader">Billing address</div>
+                                <div class="list-subheader subheader">Shipping address</div>
                                 <button md-ink-ripple-list
-                                        ng-click="addresses.browse('billing')" 
+                                        ng-click="addresses.browse('shipping')" 
                                         loading
                                         type="button" 
                                         class="list-row color-child-when-disabled list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
@@ -78,17 +78,17 @@
                                           <div class="first">Use a saved address to automatically populate the fields below</div>
                                         </div>
                                 </button>
-                                <div ng-form="addresses.form.billing">
-                                   <div form-builder="addresses.fields.billing"></div>
+                                <div ng-form="addresses.form.shipping">
+                                   <div form-builder="addresses.fields.shipping"></div>
                                 </div>
                               </div>
 
                               <div class="list list-padding seam-bottom">
-                                <div class="list-subheader subheader">Shipping address</div>
-                                <div form-input="addresses.fields.sameAsBilling"></div>
-                                <div collapse="addresses.sameAsBilling" class="order-expanding-address" ng-form="addresses.form.shipping">
+                                <div class="list-subheader subheader">Billing address</div>
+                                <div form-input="addresses.fields.sameAsShipping"></div>
+                                <div collapse="addresses.sameAsShipping" class="order-expanding-address" ng-form="addresses.form.billing">
                                     <button md-ink-ripple-list
-                                            ng-click="addresses.browse('shipping')" 
+                                            ng-click="addresses.browse('billing')" 
                                             loading
                                             type="button" 
                                             class="list-row color-child-when-disabled list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
@@ -101,7 +101,7 @@
                                               <div class="first">Use a saved address to automatically populate the fields below</div>
                                             </div>
                                     </button>
-                                   <div form-builder="addresses.fields.shipping"></div>
+                                   <div form-builder="addresses.fields.billing"></div>
                                 </div>
                               </div>
 
