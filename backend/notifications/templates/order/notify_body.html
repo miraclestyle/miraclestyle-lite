@@ -6,6 +6,6 @@
   "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
 </span><br/><br/>
 <span>
-  {{entity._messages[0]|nl2br}}
+  {{entity._messages.value[0].body|nl2br}}
 </span>
 {% endblock %}
