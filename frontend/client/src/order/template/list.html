@@ -16,9 +16,16 @@
                                 <td class="secondary">{{order.parent.parent.id}}</td>
                             </tr>
                             
-                            <tr>
+                            <!-- <tr>
                                 <td class="secondary info">State</td>
                                 <td class="secondary">{{order.state|labelize:"order"}}</td>
+                            </tr>-->
+
+                            <tr>
+                                <td class="secondary info">Payment</td>
+                                <td class="secondary">
+                                    <span>{{order.payment_status|labelize:"order"}}</span>
+                                </td>
                             </tr>
 
                             <tr>

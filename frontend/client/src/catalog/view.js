@@ -304,6 +304,7 @@
                                     $scope.productQuantity = 0;
                                     $scope.hasThisProduct = false;
                                     $scope.disableUpdateCart = false;
+                                    $scope.orderLineCount = 0;
                                     if (!currentAccount._is_guest) {
                                         (config.orderKey ? models['34'].actions.read({
                                             key: config.orderKey,
@@ -320,8 +321,10 @@
                                             disableUI: false
                                         })).then(function (response) {
                                             var order = response.data.entity;
+                                            $scope.order = order;
                                             if (order.id) {
-                                                angular.forEach(order._lines, function (line) {
+                                                $scope.orderLineCount = order._lines.length;
+                                                angular.forEach(order._lines, function (line, iii) {
                                                     if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
                                                         $scope.productQuantity = parseInt(line.product.quantity, 10);
                                                         if ($scope.productQuantity > 0) {
@@ -500,6 +503,11 @@
                                     }
                                     $scope.activitySpinner.start();
                                     models['19'].current().then(function (response) {
+                                        if ($scope.order && $scope.orderLineCount === 1 && $scope.productQuantity.toString() === '0') {
+                                            return models['34'].actions['delete']({
+                                                key: $scope.order.key
+                                            });
+                                        }
                                         return models['34'].actions.update_line({
                                             buyer: response.data.entity.key,
                                             product: $scope.product.key,
@@ -513,13 +521,13 @@
                                         if (config.events && config.events.addToCart) {
                                             config.events.addToCart.call(this, response);
                                         }
-                                        /*
-                                        if (models['34'].getCache('current' + sellerKey)) {
-                                            models['34'].current(sellerKey).then(function (cached) {
-                                                $.extend(cached.data.entity, response.data.entity);
-                                            });
-                                        }*/
-                                        models['34'].removeCache('current' + sellerKey);
+                                        var sellerCacheKey = 'current' + sellerKey,
+                                            memoized = models['34'].getCache(sellerCacheKey);
+                                        if (memoized) {
+                                            $.extend(memoized.data.entity, response.data.entity);
+                                        } else {
+                                            models['34'].setCache(sellerCacheKey, response);
+                                        }
 
                                         if ($scope.productQuantity < 1) {
                                             $scope.hasThisProduct = false;
@@ -528,6 +536,8 @@
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;
                                         }
+
+                                        $scope.orderLineCount = response.data.entity._lines.length;
 
                                         snackbar.showK('cartUpdated');
                                     })['finally'](function () {

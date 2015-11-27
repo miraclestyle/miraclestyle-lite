@@ -47,18 +47,25 @@
                     primary: 'Sign out'
                 },
             },
-            cancelOrder: {
-                title: 'Reset the cart?',
+            deleteCart: {
+                title: 'Delete the cart?',
                 message: 'This cart will be emptied, and all of its settings will be lost after this action is completed.',
                 text: {
-                    primary: 'Reset'
+                    primary: 'Delete'
                 }
             },
-            toCheckout: {
-                title: 'Review the cart?',
-                message: 'You won\'t be able to update the cart after this step. However, you will be able to reset the cart, or place an order by making a payment.',
+            deleteOrder: {
+                title: 'Delete the order?',
+                message: 'This order will be deleted, and all of its settings will be lost after this action is completed.',
                 text: {
-                    primary: 'Review'
+                    primary: 'Delete'
+                }
+            },
+            convertToOrder: {
+                title: 'Place your order and pay?',
+                message: 'If you click on "PAY", a new purchase order will be generated in your "Buyer / Orders" section, and you will be automatically redirected to a payment gateway web page to complete the payment transaction for the new purchase order.',
+                text: {
+                    primary: 'Pay'
                 }
             },
             publishCatalog: {
@@ -144,7 +151,8 @@
                 revision: 'Review',
                 reported: 'Reported',
                 sudo: 'Administered',
-                review: 'Review'
+                review: 'Review',
+                null: 'Unpaid'
             }
         });
 

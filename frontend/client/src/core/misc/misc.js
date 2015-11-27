@@ -580,7 +580,7 @@
             };
         })).filter('labelize', ng(function (GLOBAL_CONFIG, $log) {
             return function (key, group) {
-                if (key === undefined || key === null) {
+                if (key === undefined) {
                     return key;
                 }
                 if (angular.isUndefined(group)) {

@@ -34,8 +34,8 @@
                             if (gorder) {
                                 helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'ui']);
                             }
-                            if (response.data.entity.state === 'completed') {
-                                snackbar.showK('orderPaymentSuccessProgress' + response.data.entity.state);
+                            if (response.data.entity.payment_status) {
+                                snackbar.showK('orderPaymentSuccessProgress' + response.data.entity.payment_status);
                             } else {
                                 scheduleTick();
                             }
@@ -51,7 +51,7 @@
                     inDirection: false,
                     outDirection: false,
                     afterClose: function () {
-                        $state.go('buy-carts');
+                        $state.go('buy-orders');
                     }
                 },
                 viewThen = function (order) {
@@ -137,8 +137,8 @@
                     args: {
                         search: {
                             ancestor: buyerEntity.key,
-                            filters: [{field: 'state', operator: 'IN', value: (carts ? ['cart', 'checkout'] : ['completed', 'canceled'])}],
-                            orders: [{field: 'updated', operator: 'desc'}, {field: 'key', operator: 'asc'}]
+                            filters: [{field: 'state', operator: 'IN', value: [(carts ? 'cart' : 'order')]}],
+                            orders: [{field: 'updated', operator: 'desc'}]
                         }
                     },
                     config: {

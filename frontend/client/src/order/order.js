@@ -248,7 +248,7 @@
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
-                                            return $scope.order.state === 'checkout';
+                                            return true;
                                         },
                                         isOut: function (indx) {
                                             return $.inArray(indx, $scope.stage.out) !== -1;
@@ -286,20 +286,32 @@
                                             }
                                         },
                                         toReviewOrder: function () {
-                                            modals.confirm('toCheckout', function () {
-                                                if ($scope.carrier.form.$valid) {
-                                                    // state = 'checkout' is needed here
-                                                    $scope.cmd.order.update({
-                                                        carrier: $scope.carrier.selected,
-                                                        state: 'checkout'
-                                                    }).then(function () {
-                                                        $scope.stage.animating = 4;
-                                                        $scope.stage.out.push(3);
-                                                        $scope.stage.current = 4;
-                                                    });
-                                                } else {
-                                                    helpers.form.wakeUp($scope.carrier.form);
-                                                }
+                                            if ($scope.carrier.form.$valid) {
+                                                // state = 'checkout' is needed here
+                                                $scope.cmd.order.update({
+                                                    carrier: $scope.carrier.selected
+                                                }).then(function () {
+                                                    $scope.stage.animating = 4;
+                                                    $scope.stage.out.push(3);
+                                                    $scope.stage.current = 4;
+                                                });
+                                            } else {
+                                                helpers.form.wakeUp($scope.carrier.form);
+                                            }
+                                        },
+                                        converToOrder: function ($event) {
+                                            var submit = function () {
+                                                $($event.target).parents('form:first').submit();
+                                            };
+                                            if ($scope.order.state === 'order') {
+                                                return submit();
+                                            }
+                                            modals.confirm('convertToOrder', function () {
+                                                $scope.cmd.order.update({
+                                                    state: 'order'
+                                                }).then(function () {
+                                                    submit();
+                                                });
                                             });
                                         },
                                         complete: function () {
@@ -653,7 +665,8 @@
                                             $.extend(data, extra);
                                             return models['34'].actions.update(data, {
                                                 ignoreErrors: 2,
-                                                activitySpinner: !config.noLoader
+                                                activitySpinner: !config.noLoader,
+                                                disableUI: (angular.isDefined(config.disableUI) ? config.disableUI : true)
                                             }).then(function (response) {
                                                 var errors = response.data.errors;
                                                 if (errors) {
@@ -696,23 +709,27 @@
                                             }
                                             return total;
                                         },
-                                        cancel: function () {
-                                            if ($scope.order.state === 'checkout') {
-                                                modals.confirm('cancelOrder', function () {
-                                                    models['34'].actions.cancel({
-                                                        key: $scope.order.key
-                                                    }, {
-                                                        activitySpinner: true
-                                                    }).then(function (response) {
-                                                        locals.updateLiveEntity(response);
-                                                        locals.reactOnUpdate(true);
-                                                        models['34'].removeCache('current' + seller.key);
-                                                        $scope.close();
-                                                    })['finally'](function () {
-                                                        $scope.activitySpinner.stop();
-                                                    });
+                                        'delete': function (cart, now) {
+                                            var exec = function () {
+                                                var promise = models['34'].actions['delete']({
+                                                    key: $scope.order.key
+                                                }, {
+                                                    activitySpinner: true
                                                 });
+                                                promise.then(function (response) {
+                                                    response.data.entity.id = null;
+                                                    locals.updateLiveEntity(response);
+                                                    locals.reactOnUpdate(true);
+                                                    models['34'].removeCache('current' + seller.key);
+                                                })['finally'](function () {
+                                                    $scope.activitySpinner.stop();
+                                                });
+                                                return promise;
+                                            };
+                                            if (now) {
+                                                return exec();
                                             }
+                                            modals.confirm('delete' + (cart ? 'Cart' : 'Order'), exec);
                                         }
                                     };
 
@@ -781,11 +798,23 @@
                                                     left: (ui.helper.width() * 2) * -1
                                                 }, function () {
                                                     $timeout(function () {
+                                                        var allDeleted = true;
                                                         line.product.quantity = '0';
                                                         line._state = 'deleted';
                                                         ui.helper.hide();
+                                                        angular.forEach($scope.order._lines, function (value) {
+                                                            if (value._state !== 'deleted' || line.product.quantity.toString() !== '0') {
+                                                                allDeleted = false;
+                                                            }
+                                                        });
+                                                        if (allDeleted) {
+                                                            return $scope.cmd.order['delete'](false, true).then(function () {
+                                                                snackbar.showK('cartUpdated');
+                                                            });
+                                                        }
                                                         $scope.cmd.order.scheduleUpdate(undefined, {
-                                                            noLines: true
+                                                            noLines: true,
+                                                            disableUI: false
                                                         }).then(function (response) {
                                                             if (!(response && response.then)) {
                                                                 snackbar.showK('cartUpdated');
@@ -802,7 +831,7 @@
                                     };
 
                                     (function () {
-                                        if ($scope.order.state === 'checkout' || $scope.order.state === 'canceled' || $scope.order.state === 'completed') {
+                                        if ($scope.order.state === 'order') {
                                             $scope.stage.out.extend([1, 2, 3]);
                                             $scope.stage.current = 4;
                                             $scope.stage.checkout = 1;

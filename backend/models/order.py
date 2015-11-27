@@ -455,8 +455,8 @@ class Order(orm.BaseExpando):
                       'indexes': [{'orders': [('updated', ['asc', 'desc'])]},
                                   {'orders': [('created', ['asc', 'desc'])]},
                                   {'filters': [('key', ['=='])]},
-                                  {'filters': [('state', ['IN'])], 'orders': [('updated', ['asc', 'desc']), ('key', ['asc'])]},
-                                  {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('updated', ['desc']), ('key', ['asc'])]},
+                                  {'filters': [('state', ['IN'])], 'orders': [('updated', ['asc', 'desc'])]},
+                                  {'ancestor': True, 'filters': [('state', ['IN'])], 'orders': [('updated', ['desc'])]},
                                   {'filters': [('seller_reference', ['=='])], 'orders': [('updated', ['desc'])]}]
                   }
               )

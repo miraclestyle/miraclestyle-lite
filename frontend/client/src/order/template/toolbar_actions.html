@@ -1,9 +1,11 @@
-<button md-ink-ripple type="button" class="action md-button"
+<button md-ink-ripple-action
         toolbar-padding-control-element
-        ng-show="order.ui.rule.action.cancel.executable"
+        type="button"
+        class="action button-transparent button-square"
+        ng-show="order.ui.rule.action.delete.executable && order.id"
         loading
-        ng-click="cmd.order.cancel()">
-    Reset Cart
+        ng-click="cmd.order.delete(cmd.order.state !== 'order')">
+    <icon type="delete"></icon>
 </button>
 
 <button md-ink-ripple-action

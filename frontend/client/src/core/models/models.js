@@ -891,6 +891,9 @@
                             getCache: function (key) {
                                 return endpoint.getCache(this.getCacheKey(key));
                             },
+                            setCache: function (key, data) {
+                                return endpoint.setCache(this.getCacheKey(key), data);
+                            },
                             get: function (key, opts) {
                                 if (angular.isDefined(this.actions.search)) {
                                     return this.actions.search({

@@ -261,6 +261,18 @@
                 });
                 return result;
             },
+            setCache: function (key, data, engine) {
+                var engines = [];
+                if (!engine || (engine === 'memory' || engine === 'all')) {
+                    engines.push(onlyInMemoryCache);
+                }
+                if (engine === 'local' || engine === 'all') {
+                    engines.push(generalLocalCache);
+                }
+                angular.forEach(engines, function (value) {
+                    value.put(cache_prefix + key, data);
+                });
+            },
             removeCache: function (key) {
 
                 if (!angular.isDefined(key)) {

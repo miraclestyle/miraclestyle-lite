@@ -367,8 +367,9 @@ class OrderSetMessage(orm.BaseModel):
     for key, value in default_values.iteritems():
       order_message[key] = tools.get_attr(context, value)
     if not expando_fields:
-      for key, value in expando_values.iteritems():
-        order_message[key] = value
+      if expando_values:
+        for key, value in expando_values.iteritems():
+          order_message[key] = value
       new_order_message = OrderMessage(**order_message)
     else:
       order_message_expando_fields = {}
