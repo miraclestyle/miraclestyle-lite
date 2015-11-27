@@ -48,10 +48,10 @@
                 },
             },
             deleteCart: {
-                title: 'Delete the cart?',
-                message: 'This cart will be emptied, and all of its settings will be lost after this action is completed.',
+                title: 'Empty the cart at once?',
+                message: 'If you empty the cart all of its items and settings will be lost permanently.',
                 text: {
-                    primary: 'Delete'
+                    primary: 'Empty'
                 }
             },
             deleteOrder: {
