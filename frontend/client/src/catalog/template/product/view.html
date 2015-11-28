@@ -99,7 +99,7 @@
                                                 </md-button>
                                             </div>
                                             <div class="product-quantity-input-wrapper">
-                                                <input ng-change="changedQuantity()" class="text-input product-quantity-input display1" name="productQuantity" ng-required="true" ng-disabled="!canAddToCart" type="text" ng-model="productQuantity" />
+                                                <input ng-change="changedQuantity()" class="text-input product-quantity-input display1" name="productQuantity" min="0" ng-required="true" ng-disabled="!canAddToCart" type="numeric" ng-model="productManager.quantity" />
                                              
                                             </div>
                                             <div class="product-quantity-control">

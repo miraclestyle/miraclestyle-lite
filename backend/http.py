@@ -139,8 +139,6 @@ class RequestHandler(webapp2.RequestHandler):
       super(RequestHandler, self).dispatch()
       self.after()
     finally:
-      tools.log.debug('Release In-memory Cache')
-      tools.mem_storage.__release_local__()
       tools.log.debug('Finished request in %s ms' % dispatch_time.miliseconds)
 
 

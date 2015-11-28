@@ -160,6 +160,7 @@ class Delete(orm.BaseModel):
       for key, value in dynamic_record_arguments.iteritems():
         record_arguments[key] = tools.get_attr(context, value)
       entity.delete(record_arguments)
+      entity._state = 'deleted' # signal the response that this is no longer existing
 
 
 class Duplicate(orm.BaseModel):
@@ -357,12 +358,12 @@ class CreateChannel(orm.BaseModel):
       token_reference = 'channel_%s' % tools.get_attr(context, dynamic_token_reference)
     else:
       token_reference = 'channel_%s' % static_token_reference
-    token = tools.mem_get(token_reference)
+    token = tools.mem_rpc_get(token_reference)
     if token and token[1] > time.time():
       context._token = token[0]
     else:
       context._token = tools.channel_create(token_reference)
-      tools.mem_set(token_reference, [context._token, time.time() + 6000], 9600)
+      tools.mem_rpc_set(token_reference, [context._token, time.time() + 6000], 9600)
 
 
 class Notify(orm.BaseModel):
@@ -476,7 +477,7 @@ class BaseCache(orm.BaseModel):
           except Exception as e:
             data = None
             tools.log.warn('Failed upacking memcache data for key %s in context of: using group %s, with driver %s. With input %s. Memory key deleted.' % (k, group_key, driver, context.input))
-            tools.mem_delete(k)
+            tools.mem_rpc_delete(k)
           break
       if data:
         context.cache = {'value': data}

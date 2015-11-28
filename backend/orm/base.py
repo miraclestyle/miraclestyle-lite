@@ -24,6 +24,7 @@ import errors
 # We set memory policy for google app engine ndb calls to False, and decide whether to use memcache or not per 'get' call.
 ctx = get_context()
 ctx.set_memcache_policy(False)
+ctx.set_cache_policy(True)
 
 
 #############################################

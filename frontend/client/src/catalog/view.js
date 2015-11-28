@@ -198,6 +198,7 @@
                                     productInstanceResponse = response.productResponse;
                                 $scope.variantMenu = {};
                                 $scope.productMenu = {};
+                                $scope.productManager = {};
                                 helpers.sideNav.setup($scope.productMenu, 'right_product_sidenav', doNotRipple);
                                 helpers.sideNav.setup($scope.variantMenu, 'right_variantMenu_sidenav', doNotRipple);
 
@@ -297,11 +298,11 @@
                                 $scope.canAddToCart = true;
                                 $scope.hasThisProduct = false;
                                 $scope.disableUpdateCart = false;
-                                $scope.productQuantity = 0;
+                                $scope.productManager.quantity = 0;
 
                                 sellerKey = $scope.catalog._seller.key;
                                 $scope.cartProductQuantity = function () {
-                                    $scope.productQuantity = 0;
+                                    $scope.productManager.quantity = 0;
                                     $scope.hasThisProduct = false;
                                     $scope.disableUpdateCart = false;
                                     $scope.orderLineCount = 0;
@@ -326,8 +327,8 @@
                                                 $scope.orderLineCount = order._lines.length;
                                                 angular.forEach(order._lines, function (line, iii) {
                                                     if (line.product._reference.parent.id === $scope.product.parent.id && line.product._reference.id === $scope.product.id && angular.toJson($scope.currentVariation) === angular.toJson(line.product.variant_signature)) {
-                                                        $scope.productQuantity = parseInt(line.product.quantity, 10);
-                                                        if ($scope.productQuantity > 0) {
+                                                        $scope.productManager.quantity = parseInt(line.product.quantity, 10);
+                                                        if ($scope.productManager.quantity > 0) {
                                                             $scope.hasThisProduct = true;
                                                             $scope.disableUpdateCart = true;
                                                         }
@@ -338,13 +339,13 @@
                                                 $scope.canAddToCart = true;
                                             }
 
-                                            if (!$scope.productQuantity) {
-                                                $scope.productQuantity = 1;
+                                            if (!$scope.productManager.quantity) {
+                                                $scope.productManager.quantity = 1;
                                             }
 
                                         });
                                     } else {
-                                        $scope.productQuantity = 1;
+                                        $scope.productManager.quantity = 1;
                                     }
                                 };
 
@@ -403,15 +404,15 @@
 
                                 $scope.increaseQuantity = function () {
                                     $scope.disableUpdateCart = false;
-                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) + 1;
+                                    $scope.productManager.quantity = parseInt($scope.productManager.quantity, 10) + 1;
                                 };
 
                                 $scope.decreaseQuantity = function () {
-                                    if (parseInt($scope.productQuantity, 10) === 0) {
+                                    if (parseInt($scope.productManager.quantity, 10) === 0) {
                                         return;
                                     }
                                     $scope.disableUpdateCart = false;
-                                    $scope.productQuantity = parseInt($scope.productQuantity, 10) - 1;
+                                    $scope.productManager.quantity = parseInt($scope.productManager.quantity, 10) - 1;
                                 };
 
                                 $scope.changedQuantity = function () {
@@ -482,7 +483,7 @@
                                             image_id: $scope.catalog._images[0].id,
                                             pricetag_id: $scope.catalog._images[0].pricetags[0].id,
                                             variant: helpers.url.jsonToUrlsafe($scope.currentVariation),
-                                            quantity: $scope.productQuantity
+                                            quantity: $scope.productManager.quantity
                                         }));
                                         return;
                                     }
@@ -491,9 +492,9 @@
                                         return;
                                     }
                                     if (config.autoAddToCart) {
-                                        $scope.productQuantity = config.autoAddToCartQuantity;
+                                        $scope.productManager.quantity = config.autoAddToCartQuantity;
                                     }
-                                    if (!$scope.hasThisProduct && $scope.productQuantity < 1) {
+                                    if (!$scope.hasThisProduct && $scope.productManager.quantity < 1) {
                                         $scope.container.form.$setDirty();
                                         var productQuantityField = $scope.container.form.productQuantity;
                                         productQuantityField.$setViewValue(productQuantityField.$viewValue !== undefined ? productQuantityField.$viewValue : '');
@@ -503,7 +504,7 @@
                                     }
                                     $scope.activitySpinner.start();
                                     models['19'].current().then(function (response) {
-                                        if ($scope.order && $scope.orderLineCount === 1 && $scope.productQuantity.toString() === '0') {
+                                        if ($scope.order && $scope.orderLineCount === 1 && $scope.productManager.quantity.toString() === '0') {
                                             return models['34'].actions['delete']({
                                                 key: $scope.order.key
                                             });
@@ -512,7 +513,7 @@
                                             buyer: response.data.entity.key,
                                             product: $scope.product.key,
                                             image: imageKey,
-                                            quantity: $scope.productQuantity,
+                                            quantity: $scope.productManager.quantity,
                                             variant_signature: $scope.currentVariation
                                         }, {
                                             handleError: GLOBAL_CONFIG.backendErrorHandling.productOutOfStock
@@ -529,9 +530,9 @@
                                             models['34'].setCache(sellerCacheKey, response);
                                         }
 
-                                        if ($scope.productQuantity < 1) {
+                                        if ($scope.productManager.quantity < 1) {
                                             $scope.hasThisProduct = false;
-                                            $scope.productQuantity = 1;
+                                            $scope.productManager.quantity = 1;
                                         } else {
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;

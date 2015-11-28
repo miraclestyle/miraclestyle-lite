@@ -133,7 +133,7 @@
                             controller: ng(function ($scope) {
                                 $scope.dialog = {
                                     toolbar: {
-                                        title: (order && order.state !== 'cart' ? 'Order' : 'Cart'),
+                                        title: ((order && order.state !== 'cart') ? 'Order' : 'Cart'),
                                         templateRight: 'order/toolbar_actions.html'
                                     }
                                 };
@@ -160,7 +160,7 @@
                                             helpers.update($scope.order, response.data.entity, ['state', 'ui']);
                                             locals.reactOnUpdate();
                                         },
-                                        reactOnUpdate: function (skipCache) {
+                                        reactOnUpdate: function () {
                                             if (order) {
                                                 $.extend(order, $scope.order);
                                             }
@@ -226,7 +226,7 @@
 
                                     $scope.$watch('order.state', function (neww, old) {
                                         var title = 'Cart';
-                                        if (neww === 'completed') {
+                                        if (neww === 'order') {
                                             title = 'Order';
                                         }
                                         $scope.dialog.toolbar.title = title;
@@ -248,7 +248,7 @@
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
-                                            return true;
+                                            return $scope.order.payment_status === null;
                                         },
                                         isOut: function (indx) {
                                             return $.inArray(indx, $scope.stage.out) !== -1;
@@ -283,6 +283,7 @@
                                                 if (!$scope.addresses.sameAsShipping) {
                                                     helpers.form.wakeUp($scope.addresses.form.billing);
                                                 }
+                                                snackbar.showK('actionFailedCheckForm');
                                             }
                                         },
                                         toReviewOrder: function () {
@@ -296,7 +297,7 @@
                                                     $scope.stage.current = 4;
                                                 });
                                             } else {
-                                                helpers.form.wakeUp($scope.carrier.form);
+                                                helpers.form.wakeUp($scope.carrier.form, false, true);
                                             }
                                         },
                                         converToOrder: function ($event) {
@@ -606,7 +607,7 @@
                                                     return response;
                                                 });
                                             }
-                                            helpers.form.wakeUp($scope.container.messages);
+                                            helpers.form.wakeUp($scope.container.messages, false, true);
                                         },
                                         close: function () {
                                             return $scope.message.toggle(true);
@@ -717,10 +718,8 @@
                                                     activitySpinner: true
                                                 });
                                                 promise.then(function (response) {
-                                                    response.data.entity.id = null;
                                                     locals.updateLiveEntity(response);
-                                                    locals.reactOnUpdate(true);
-                                                    models['34'].removeCache('current' + seller.key);
+                                                    locals.reactOnUpdate();
                                                 })['finally'](function () {
                                                     $scope.activitySpinner.stop();
                                                 });
@@ -733,6 +732,13 @@
                                         }
                                     };
 
+                                    $scope.$watch('order._state', function (neww) {
+                                        if (neww === 'deleted') {
+                                            $scope.stage.out = [];
+                                            $scope.stage.current = 1;
+                                        }
+                                    });
+
                                     $scope.cmd.line = {
                                         view: function (line, $event) {
                                             var path = line.product._reference;
@@ -742,7 +748,10 @@
                                                     popFrom: helpers.clicks.realEventTarget($event.target),
                                                     orderKey: $scope.order.key,
                                                     events: {
-                                                        addToCart: locals.updateLiveEntity
+                                                        addToCart: function () {
+                                                            locals.updateLiveEntity.apply($scope, arguments);
+                                                            locals.reactOnUpdate();
+                                                        }
                                                     }
                                                 });
                                         },

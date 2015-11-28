@@ -179,8 +179,8 @@
                                             type="button"
                                             loading
                                             class="md-button text-center order-next-stage order-go-pay">
-                                         <span class="md-button-text">Place Your Order And Pay With</span>
-                                         <img class="block full-width" src="/client/dist/static/order/cc-badges-ppmcvdam.png" alt="Check out with PayPal" />
+                                         <span class="md-button-text"><span ng-if="order.state !== 'order'">Place Your Order And </span>Pay With</span>
+                                         <img class="block t100" src="/client/dist/static/order/cc-badges-ppmcvdam.png" alt="Check out with PayPal" />
                                     </button>
                                   </div>
                                 </div>

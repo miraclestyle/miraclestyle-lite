@@ -103,7 +103,7 @@
             $scope.$watch(function maybeRemoveSearchResult() {
                 var maybe = false;
                 $scope.search.results.iremove(function (ent) {
-                    var truth = ent.state === 'canceled';
+                    var truth = (!ent.id || ent._state === 'deleted') || (ent.state === 'order' && carts);
                     if (!maybe) {
                         maybe = truth;
                     }

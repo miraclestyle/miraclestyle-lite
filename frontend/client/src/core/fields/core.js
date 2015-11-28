@@ -110,7 +110,7 @@
                 }
             });
             $.extend(helpers.form, {
-                wakeUp: function (form, dirty) {
+                wakeUp: function (form, dirty, snackit) {
                     var happend = false;
                     angular.forEach(form, function (formElement) {
                         if (angular.isObject(formElement) && formElement.hasOwnProperty('$valid') && !formElement.$valid && angular.isFunction(formElement.$setViewValue)) {
@@ -124,6 +124,10 @@
                             happend = true;
                         }
                     });
+
+                    if (happend && snackit) {
+                        snackbar.showK('actionFailedCheckForm');
+                    }
 
                     return happend;
                 },
@@ -140,9 +144,7 @@
                 validate: function () {
                     var form = this.container.form;
                     if (!form.$valid) {
-                        helpers.form.wakeUp(form);
-                        this.$broadcast('invalidForm');
-                        snackbar.showK('actionFailedCheckForm');
+                        helpers.form.wakeUp(form, false, true);
                         return false;
                     }
                     return true;

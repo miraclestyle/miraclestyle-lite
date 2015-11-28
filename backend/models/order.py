@@ -194,7 +194,7 @@ class Order(orm.BaseExpando):
               }],
           }
       }),
-      '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True, deleteable=False,
+      '_messages': orm.SuperRemoteStructuredProperty(OrderMessage, repeated=True,
                                                      search={
                                                          'default': {
                                                              'filters': [],
@@ -432,8 +432,8 @@ class Order(orm.BaseExpando):
                   transactional=True,
                   plugins=[
                       Delete(),
-                      RulePrepare(),
                       DeleteCache(cfg=DELETE_CACHE_POLICY),
+                      RulePrepare(),
                       Set(cfg={'d': {'output.entity': '_order'}})
                   ]
               )

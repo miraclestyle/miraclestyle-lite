@@ -2,7 +2,7 @@
         toolbar-padding-control-element
         type="button"
         class="action button-transparent button-square"
-        ng-show="order.ui.rule.action.delete.executable && order.id"
+        ng-show="order.ui.rule.action.delete.executable && order.id && order._state !== 'deleted'"
         loading
         ng-click="cmd.order.delete(cmd.order.state !== 'order')">
     <icon type="delete"></icon>
