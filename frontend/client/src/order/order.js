@@ -133,7 +133,7 @@
                             controller: ng(function ($scope) {
                                 $scope.dialog = {
                                     toolbar: {
-                                        title: ((order && order.state !== 'cart') ? 'Order' : 'Cart'),
+                                        title: (((order && order.state !== 'cart') || !cartMode) ? 'Order' : 'Cart'),
                                         templateRight: 'order/toolbar_actions.html'
                                     }
                                 };

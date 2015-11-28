@@ -1767,8 +1767,10 @@ if (window.DEBUG) {
             errorWithTraceback: 'Server errored with traceback.',
             actionFailedCheckForm: 'Action failed! Inspect the form for errors.',
             orderPaymentSuccessProgress: 'Order processing is in pogress.',
-            orderPaymentSuccessProgresscanceled: 'Order payment is canceled.',
-            orderPaymentSuccessProgresscompleted: 'Order payment is completed.',
+            orderPaymentSuccessProgressCanceled: 'Order payment is canceled.',
+            orderPaymentSuccessProgressCompleted: 'Order payment is completed.',
+            orderPaymentSuccessProgressRefunded: 'Order payment is refunded.',
+            orderPaymentSuccessProgressPending: 'Order payment is pending.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
             saveChangesFirst: 'Save changes first.',
@@ -18095,6 +18097,9 @@ angular.module('app')
                         $timeout.cancel(tick);
                     }
                     tick = $timeout(function () {
+                        if (!$state.params.key) {
+                            return; // exit tick if request state changes
+                        }
                         models['34'].actions.read({
                             key: $state.params.key
                         }, {disableUI: false}).then(function (response) {
@@ -18151,7 +18156,7 @@ angular.module('app')
                 };
 
             if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
-                carts = true;
+                carts = false;
             }
 
 
@@ -20992,7 +20997,7 @@ angular.module('app')
                             controller: ng(function ($scope) {
                                 $scope.dialog = {
                                     toolbar: {
-                                        title: ((order && order.state !== 'cart') ? 'Order' : 'Cart'),
+                                        title: (((order && order.state !== 'cart') || !cartMode) ? 'Order' : 'Cart'),
                                         templateRight: 'order/toolbar_actions.html'
                                     }
                                 };
@@ -22967,12 +22972,12 @@ angular.module('app')
             .state('order-payment-canceled', {
                 url: '/order/payment/canceled/:key',
                 controller: 'BuyOrdersController',
-                templateUrl: 'buyer/carts.html'
+                templateUrl: 'order/list.html'
             })
             .state('order-payment-success', {
                 url: '/order/payment/success/:key',
                 controller: 'BuyOrdersController',
-                templateUrl: 'buyer/carts.html'
+                templateUrl: 'order/list.html'
             })
             .state('order-view', {
                 url: '/order/:key',

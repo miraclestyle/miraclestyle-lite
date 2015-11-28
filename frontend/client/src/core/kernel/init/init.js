@@ -115,12 +115,12 @@
             .state('order-payment-canceled', {
                 url: '/order/payment/canceled/:key',
                 controller: 'BuyOrdersController',
-                templateUrl: 'buyer/carts.html'
+                templateUrl: 'order/list.html'
             })
             .state('order-payment-success', {
                 url: '/order/payment/success/:key',
                 controller: 'BuyOrdersController',
-                templateUrl: 'buyer/carts.html'
+                templateUrl: 'order/list.html'
             })
             .state('order-view', {
                 url: '/order/:key',

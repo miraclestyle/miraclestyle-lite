@@ -28,6 +28,9 @@
                         $timeout.cancel(tick);
                     }
                     tick = $timeout(function () {
+                        if (!$state.params.key) {
+                            return; // exit tick if request state changes
+                        }
                         models['34'].actions.read({
                             key: $state.params.key
                         }, {disableUI: false}).then(function (response) {
@@ -84,7 +87,7 @@
                 };
 
             if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
-                carts = true;
+                carts = false;
             }
 
 
