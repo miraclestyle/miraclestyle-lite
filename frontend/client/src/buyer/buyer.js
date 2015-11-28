@@ -120,6 +120,9 @@
                     return response.data.entity;
                 }).then(function (buyer) {
                     var opts = {
+                        onReadError: function () {
+                            $state.go('home');
+                        },
                         cartMode: carts,
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     }, viewPromise, directView = $event === false;

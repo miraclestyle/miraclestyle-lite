@@ -604,7 +604,13 @@
                                         }
                                     }
                                 }, {
-                                    disableUI: false
+                                    disableUI: false,
+                                    handleError: function (errors) {
+                                        if (config.onReadError) {
+                                            config.onReadError();
+                                        }
+                                        return GLOBAL_CONFIG.backendErrorHandling.catalogNotFound(errors);
+                                    }
                                 });
                             }, function ($scope, response) {
                                 var entity = response.data.entity;
@@ -749,9 +755,11 @@
 
                                 if (config.loadProduct) {
                                     loadProduct = function () {
+                                        var pricetags = [];
                                         angular.forEach($scope.catalog._images, function (image) {
                                             if (image.id.toString() === config.loadProduct.image.toString()) {
                                                 $scope.maybeLoadProduct = config.loadProduct;
+                                                pricetags = image.pricetags;
                                             }
                                         });
                                         if (!$scope.maybeLoadProduct) {
@@ -759,6 +767,10 @@
                                             var promise = imagesReader.load();
                                             if (promise) {
                                                 promise.then(loadProduct);
+                                            }
+                                        } else {
+                                            if (!_.findWhere(pricetags, {id: config.loadProduct.id})) {
+                                                snackbar.showK('catalogProductNotFound');
                                             }
                                         }
                                     };

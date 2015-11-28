@@ -21,7 +21,10 @@
                         // this is seller
                         $state.go('sell-orders');
                     }
-                }
+                },
+                onReadError: function () {
+                    $state.go('home');
+                },
             }).then(function (response) {
                 entity = response;
             });
@@ -66,7 +69,7 @@
                 }
                 return formatted;
             };
-        })).run(ng(function (modelsMeta, modelsConfig, $modal, modals, snackbar, $state, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
+        })).run(ng(function (modelsMeta, modelsConfig, GLOBAL_CONFIG, $modal, modals, snackbar, $state, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
             modelsConfig(function (models) {
                 $.extend(models['34'], {
                     current: function (sellerKey, opts) {
@@ -139,7 +142,13 @@
                                 };
                                 $scope.$state.promise(function () {
                                     return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
-                                        disableUI: false
+                                        disableUI: false,
+                                        handleError: function (errors) {
+                                            if (config.onReadError) {
+                                                config.onReadError();
+                                            }
+                                            return GLOBAL_CONFIG.backendErrorHandling.orderNotFound(errors);
+                                        }
                                     });
                                 }, function ($scope, response) {
                                     seller = response.data.entity._seller;

@@ -444,7 +444,10 @@
             loggedOut: 'Signed out.',
             loginCanceled: 'Sign in canceled.',
             youAreNotSignedIn: 'You are not signed in.',
-            saveInProgress: 'Please wait save in progress.'
+            saveInProgress: 'Please wait save in progress.',
+            orderNotFound: 'Requested order does not exist.',
+            catalogNotFound: 'Catalog not found.',
+            catalogProductNotFound: 'Catalog product not found.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -511,6 +514,18 @@
             sellerProfileNotFound: function (errors) {
                 if (errors.not_found && $.inArray('seller', errors.not_found) !== -1) {
                     return GLOBAL_CONFIG.snackbar.messages.sellerProfileNotFound;
+                }
+                return false;
+            },
+            orderNotFound: function (errors) {
+                if (errors.not_found || errors.malformed_key) {
+                    return GLOBAL_CONFIG.snackbar.messages.orderNotFound;
+                }
+                return false;
+            },
+            catalogNotFound: function (errors) {
+                if (errors.not_found || errors.malformed_key) {
+                    return GLOBAL_CONFIG.snackbar.messages.catalogNotFound;
                 }
                 return false;
             },

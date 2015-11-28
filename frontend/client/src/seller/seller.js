@@ -8,16 +8,22 @@
         models['23'].viewProfileModal($stateParams.key, {
             inDirection: false,
             outDirection: false,
+            onReadError: function () {
+                $state.go('home');
+            },
             afterClose: function () {
                 $state.go('home');
             }
         });
-    })).controller('SellerEmbedInfo', ng(function ($scope, $stateParams, models) {
+    })).controller('SellerEmbedInfo', ng(function ($scope, $stateParams, $state, models) {
         $scope.site.toolbar.hidden = true;
         models['23'].viewProfileModal($stateParams.key, {
             hideClose: true,
             inDirection: false,
-            outDirection: false
+            outDirection: false,
+            onReadError: function () {
+                $state.go('home');
+            }
         });
     })).directive('addressRuleLocationListView', function () {
         return {
@@ -889,7 +895,13 @@
                                         _content: {}
                                     }
                                 }, {
-                                    disableUI: false
+                                    disableUI: false,
+                                    handleError: function (errors) {
+                                        if (config.onReadError) {
+                                            config.onReadError();
+                                        }
+                                        return GLOBAL_CONFIG.backendErrorHandling.sellerProfileNotFound;
+                                    }
                                 });
                             }, function ($scope, response) {
                                 var seller = response.data.entity;

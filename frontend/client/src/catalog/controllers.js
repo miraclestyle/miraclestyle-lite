@@ -7,6 +7,9 @@
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
+                onReadError: function () {
+                    $state.go('home');
+                },
                 afterClose: function () {
                     $state.go('home');
                 }
@@ -25,6 +28,9 @@
                 afterClose: embed ? undefined : function () {
                     $state.go('home');
                 },
+                onReadError: function () {
+                    $state.go('home');
+                },
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 autoAddToCartQuantity: $state.params.quantity,
                 loadProduct: {
@@ -39,6 +45,9 @@
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
+                onReadError: function () {
+                    $state.go('home');
+                },
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 afterClose: function () {
                     $state.go('home');
@@ -55,6 +64,9 @@
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
+                onReadError: function () {
+                    $state.go('home');
+                },
                 afterClose: function () {
                     $state.go('home');
                 },
@@ -72,6 +84,9 @@
                 inDirection: false,
                 outDirection: false,
                 openCart: true,
+                onReadError: function () {
+                    $state.go('home');
+                },
                 afterClose: function () {
                     $state.go('home');
                 },
@@ -85,6 +100,9 @@
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
+                onReadError: function () {
+                    $state.go('home');
+                },
                 noEscape: true,
                 hideClose: true
             });
@@ -98,6 +116,9 @@
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
+                onReadError: function () {
+                    $state.go('home');
+                },
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
@@ -113,6 +134,9 @@
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
+                onReadError: function () {
+                    $state.go('home');
+                },
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 loadProduct: {
                     image: $state.params.image_id,

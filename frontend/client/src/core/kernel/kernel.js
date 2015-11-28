@@ -521,8 +521,10 @@
                             if (data.errors.action_denied) {
                                 reject = true;
                             }
-                            if (reject && shouldDisable) {
-                                enableUI();
+                            if (reject) {
+                                if (shouldDisable) {
+                                    enableUI();
+                                }
                                 return $q.reject(rejection);
                             }
 
