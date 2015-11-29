@@ -1267,29 +1267,43 @@
                             },
                             channel: new goog.appengine.Channel(token),
                             open: function (config) {
-                                var that = this;
+                                var that = this,
+                                    dequeue = [],
+                                    dequeueAll = function () {
+                                        angular.forEach(dequeue, function (cb) {
+                                            cb();
+                                        });
+                                        if (!that.signals.length && that.socket) { // kill socket if there are no callbacks queued
+                                            that.socket.close();
+                                        }
+                                    };
                                 angular.forEach(config, function (callback, type) {
-                                    that[type](callback);
+                                    dequeue.push(that[type](callback));
                                 });
                                 if (that.socket !== null) {
-                                    return that;
+                                    return dequeueAll;
                                 }
                                 that.socket = that.channel.open(that.events);
-                                console.log('socket.open', that.socket);
                                 that.socket.onclose = function () {
                                     angular.forEach(that.afterOnclose, function (cb) {
                                         cb();
                                     });
                                 };
-                                return that;
+                                return dequeueAll;
                             },
                             destroy: function () {
                                 delete channelApi.instances[token];
                             },
                             queue: function (type, cb) {
-                                var id = this.signals.length;
-                                this.signals.push(id);
-                                this.callbacks[type].push([cb, id]);
+                                var that = this,
+                                    id = _.uniqueId(),
+                                    next = [cb, id];
+                                that.signals.push(id);
+                                that.callbacks[type].push(next);
+                                return function dequeue() {
+                                    that.signals.remove(id);
+                                    that.callbacks[type].remove(next);
+                                };
                             },
                             dispatch: function (type, args) {
                                 var that = this,
@@ -1320,7 +1334,7 @@
                         angular.forEach(['onopen', 'onmessage', 'onerror'], function (type) {
                             instance.callbacks[type] = [];
                             instance[type] = function (cb) {
-                                this.queue(type, cb);
+                                return this.queue(type, cb);
                             };
                             instance.events[type] = function () {
                                 instance.dispatch(type, arguments);
@@ -1342,12 +1356,10 @@
             return channelApi;
         })).factory('channelNotifications', ng(function (channelApi, snackbar) {
             var channelNotifications = {
-                instances: {},
                 create: function (token, callback) {
-                    var out;
+                    var out, dequeue;
                     out = channelApi.create(token);
-                    //channelNotifications.instances[token] = out;
-                    out.open({
+                    dequeue = out.open({
                         onmessage: function (message, destroy) {
                             destroy();
                             if (angular.isObject(message) && message.data) {
@@ -1366,7 +1378,7 @@
                             }
                         }
                     });
-                    return out;
+                    return [out, dequeue];
                 }
             };
             return channelNotifications;

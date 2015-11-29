@@ -100,6 +100,13 @@
                                         });
                                     };
 
+                                $scope.dequeueChannel = [];
+                                $scope.$on('$destroy', function () {
+                                    angular.forEach($scope.dequeueChannel, function (cb) {
+                                        cb();
+                                    });
+                                });
+
                                 $scope.actions = {
                                     publish: function () {
                                         modals.confirm('publishCatalog',
@@ -145,11 +152,13 @@
                                                         });
                                                     }
                                                 }).then(function (response) {
+                                                    $scope.dequeueChannel.push(response.channel[1]);
                                                     models['31'].actions.catalog_duplicate({
                                                         key: $scope.entity.key,
                                                         channel: response.token
                                                     }, {
-                                                        activitySpinner: true
+                                                        activitySpinner: true,
+                                                        disableUI: false
                                                     });
                                                 });
                                             });
@@ -191,6 +200,12 @@
                                                     hideSave: true
                                                 }
                                             };
+                                            $scope.dequeueChannel = [];
+                                            $scope.$on('$destroy', function () {
+                                                angular.forEach($scope.dequeueChannel, function (cb) {
+                                                    cb();
+                                                });
+                                            });
                                             $scope.imagesLoaded = false;
                                             $scope.container = {};
                                             $scope.formSetPristine = angular.bind($scope, helpers.form.setPristine);
@@ -717,6 +732,7 @@
                                                                                     if (!_.findWhere(image.pricetags, {
                                                                                             key: response.pricetag_key
                                                                                         })) {
+                                                                                        console.log(response);
                                                                                         image.pricetags.push(value);
                                                                                     }
                                                                                 });
@@ -725,6 +741,7 @@
                                                                         });
                                                                     }
                                                                 }).then(function (response) {
+                                                                    $scope.dequeueChannel.push(response.channel[1]);
                                                                     models['31'].actions.catalog_pricetag_duplicate({
                                                                         key: $scope.entity.key,
                                                                         channel: response.token,
@@ -741,7 +758,8 @@
                                                                             }
                                                                         }
                                                                     }, {
-                                                                        activitySpinner: true
+                                                                        activitySpinner: true,
+                                                                        disableUI: false
                                                                     });
                                                                 });
                                                             });

@@ -320,7 +320,9 @@
                                                 $scope.cmd.order.update({
                                                     state: 'order'
                                                 }).then(function () {
-                                                    submit();
+                                                    $timeout(function () {
+                                                        submit();
+                                                    }, 200);
                                                 });
                                             });
                                         },

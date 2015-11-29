@@ -16,7 +16,7 @@ class LocalStorage(object):
 __all__ = ['mem_get', 'mem_set', 'mem_delete_multi', 'mem_set_multi', 'mem_temp_get', 'mem_temp_set',
            'mem_temp_delete', 'mem_replace_multi', 'mem_add_multi', 'mem_forget_dead_hosts', 'mem_set_servers',
            'mem_debuglog', 'mem_temp_exists', 'mem_decr', 'mem_offset_multi', 'mem_disconnect_all',
-           'mem_replace', 'mem_incr', 'mem_flush_all', 'mem_delete', 'mem_add', 'mem_get_multi', 'mem_rpc_get']
+           'mem_replace', 'mem_incr', 'mem_flush_all', 'mem_delete', 'mem_add', 'mem_get_multi', 'mem_rpc_get', 'mem_rpc_set', 'mem_rpc_delete']
 
 
 def mem_get(key, default=None, callback=None, **kwargs):
