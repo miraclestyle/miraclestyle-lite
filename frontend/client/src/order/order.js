@@ -322,7 +322,7 @@
                                                 }).then(function () {
                                                     $timeout(function () {
                                                         submit();
-                                                    }, 200);
+                                                    }, 200, false);
                                                 });
                                             });
                                         },
