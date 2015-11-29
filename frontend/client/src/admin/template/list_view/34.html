@@ -23,8 +23,7 @@
                             <tr>
                                 <td class="secondary info">Payment</td>
                                 <td class="secondary">
-                                        <span ng-show="!order.payment_status">N/A</span>
-                                        <span ng-show="order.payment_status">{{order.payment_status|labelize:"order"}}</span>
+                                        <span>{{order.payment_status|labelize:"order"}}</span>
                                 </td>
                             </tr>
      
