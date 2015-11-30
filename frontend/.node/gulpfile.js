@@ -44,11 +44,6 @@ gulp.task('templates', function () {
         .pipe(gulp.dest('../client/dist'));
 });
 
-gulp.task('finalize', function () {
-    return gulp.src('../client/dist/**/*', {base: '..client', replace: true})
-        .pipe(gulp.dest('../chrome_app/client/dist', {replace: true}));
-});
-
 var running = null;
 
 gulp.task('watch', function () {
