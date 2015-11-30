@@ -40,17 +40,21 @@ def profile(message=None):
   return decorator
 
 
-def detail_profile(message=None):
+def detail_profile(message=None, limit=None, satisfiy=None, logger=None):
   def decorator(func):
     def inner(*args, **kwargs):
+      ctime = Profile()
       profiler = cProfile.Profile()
       profiler.enable()
       result = func(*args, **kwargs)
       profiler.disable()
+      if satisfiy is not None:
+        if not satisfiy(profiler, ctime):
+          return
       string_io = cStringIO.StringIO()
       stats = pstats.Stats(profiler, stream=string_io).sort_stats('cumulative')
-      stats.print_stats()
-      log.debug(message % (func.__name__, string_io.getvalue()))
+      stats.print_stats(limit)
+      getattr(log, 'debug' if logger is None else logger)(message % (func.__name__, string_io.getvalue()))
       return result
     return inner
   return decorator

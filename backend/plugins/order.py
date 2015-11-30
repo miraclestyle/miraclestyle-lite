@@ -702,11 +702,11 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       elif ipn_payment_status == 'Refunded':
         if order.payment_status == 'Completed':
           order.payment_status = ipn_payment_status
-          context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency))
+          context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
       elif ipn_payment_status == 'Reversed':
         if order.payment_status == 'Completed':
           order.payment_status = ipn_payment_status
-          context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency))
+          context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
       elif ipn_payment_status == 'Canceled_Reversal':
         if order.payment_status == 'Reversed':
           order.payment_status = ipn_payment_status

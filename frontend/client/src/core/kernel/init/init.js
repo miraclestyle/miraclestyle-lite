@@ -8,11 +8,6 @@
                 templateUrl: 'home/index.html',
                 controller: 'HomePageController'
             })
-            .state('following', {
-                url: '/following',
-                templateUrl: 'home/index.html',
-                controller: 'HomePageController'
-            })
             .state('seller-info', {
                 url: '/seller/:key',
                 controller: 'SellerInfo',
@@ -122,10 +117,25 @@
                 controller: 'BuyOrdersController',
                 templateUrl: 'order/list.html'
             })
-            .state('order-view', {
-                url: '/order/:key',
-                controller: 'OrderViewController',
-                template: ''
+            .state('seller-order-view', {
+                url: '/seller/order/:key',
+                controller: 'SellOrdersController',
+                templateUrl: 'order/list.html'
+            })
+            .state('seller-cart-view', {
+                url: '/seller/cart/:key',
+                controller: 'SellOrdersController',
+                templateUrl: 'order/list.html'
+            })
+            .state('buyer-order-view', {
+                url: '/buyer/order/:key',
+                controller: 'BuyOrdersController',
+                templateUrl: 'order/list.html'
+            })
+            .state('buyer-cart-view', {
+                url: '/buyer/cart/:key',
+                controller: 'BuyOrdersController',
+                templateUrl: 'buyer/carts.html'
             })
             .state('login-status', {
                 url: '/login/status',

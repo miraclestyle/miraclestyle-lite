@@ -13,13 +13,18 @@
            </button>
       </div>
 
-      <div ng-if="$state.isCompleted()" class="top-close top-close-right">
+      <div ng-if="$state.isCompleted() && !notFound" class="top-close top-close-right">
            <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="catalogMenu.toggle()">
              <icon color="white" type="more_vert"></icon>
            </button>
       </div>
+
+      <div ng-if="notFound || noImages">
+          <h1 ng-if="!noImages" class="no-things-available display1 with-toolbar">This catalog does not exist.</h1>
+          <h1 ng-if="noImages" class="no-things-available display1">No images for this catalog.</h1>
+      </div>
  
-      <div ng-if="modalOptions.opened && $state.isCompleted()" track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
+      <div ng-if="modalOptions.opened && $state.isCompleted() && !notFound" track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
          <div ng-class="{'swoop-from-left-finish': true}" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider swoop-from-left"> 
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
                <img class="not-pointable" slider-image="image" /> 
@@ -41,7 +46,7 @@
          </div>
       </div>
 
-     <md-sidenav ng-if="$state.isCompleted()" md-swipe-right="catalogMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="catalogMenu.id">
+     <md-sidenav ng-if="$state.isCompleted() && !notFound" md-swipe-right="catalogMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="catalogMenu.id">
         <md-content>
             <div class="list">
                 <div class="sidebar-seller-logo">
@@ -64,7 +69,7 @@
     </md-sidenav>
        
 
-    <div ng-if="$state.isCompleted()" ng-include="'seller/view.html'"></div>
+    <div ng-if="$state.isCompleted() && !notFound" ng-include="'seller/view.html'"></div>
        
     </div>
 </form>

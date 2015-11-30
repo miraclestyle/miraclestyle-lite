@@ -12,7 +12,9 @@
 
         })).controller('BuyOrdersController', ng(function ($scope, $timeout, modals, snackbar, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
 
-            var carts = $state.current.name === 'buy-carts',
+            var carts = ($state.current.name === 'buy-carts' || $state.current.name === 'buyer-cart-view'),
+                isBuyerViewCart = $state.current.name === 'buyer-cart-view',
+                isBuyerViewOrder = $state.current.name === 'buyer-order-view',
                 isOrderPaymentCanceled = $state.current.name === 'order-payment-canceled',
                 isOrderPaymentSuccess = $state.current.name === 'order-payment-success',
                 wait = null,
@@ -54,7 +56,11 @@
                     inDirection: false,
                     outDirection: false,
                     afterClose: function () {
-                        $state.go('buy-orders');
+                        var state = 'buy-orders';
+                        if (isBuyerViewCart) {
+                            state = 'buy-carts';
+                        }
+                        $state.go(state);
                     }
                 },
                 viewThen = function (order) {
@@ -63,7 +69,9 @@
                         snackbar.showK('orderPaymentSuccessProgresscanceled');
                     } else {
                         snackbar.showK('orderPaymentSuccessProgress');
-                        scheduleTick();
+                        if (!(isBuyerViewOrder || isBuyerViewCart)) {
+                            scheduleTick();
+                        }
                     }
                 },
                 maybeOpenOrder = function () {
@@ -86,7 +94,7 @@
 
                 };
 
-            if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
+            if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewOrder) {
                 carts = false;
             }
 
@@ -120,9 +128,6 @@
                     return response.data.entity;
                 }).then(function (buyer) {
                     var opts = {
-                        onReadError: function () {
-                            $state.go('home');
-                        },
                         cartMode: carts,
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     }, viewPromise, directView = $event === false;
@@ -160,7 +165,7 @@
                             $scope.search.results.extend(response.data.entities);
                         }
 
-                        if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
+                        if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewCart || isBuyerViewOrder) {
                             maybeOpenOrder();
                         }
 

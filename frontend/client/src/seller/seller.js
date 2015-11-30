@@ -8,9 +8,6 @@
         models['23'].viewProfileModal($stateParams.key, {
             inDirection: false,
             outDirection: false,
-            onReadError: function () {
-                $state.go('home');
-            },
             afterClose: function () {
                 $state.go('home');
             }
@@ -20,10 +17,7 @@
         models['23'].viewProfileModal($stateParams.key, {
             hideClose: true,
             inDirection: false,
-            outDirection: false,
-            onReadError: function () {
-                $state.go('home');
-            }
+            outDirection: false
         });
     })).directive('addressRuleLocationListView', function () {
         return {
@@ -141,7 +135,36 @@
 
     })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
-        var carts = $state.current.name === 'sell-carts';
+        var carts = $state.current.name === 'sell-carts',
+            isSellerOrderView = _.string.startsWith($state.current.name, 'seller'),
+            wait = null,
+            loaded = false,
+            viewOpts = {
+                inDirection: false,
+                outDirection: false,
+                afterClose: function () {
+                    $state.go('sell-orders');
+                }
+            },
+            maybeOpenOrder = function () {
+                if (loaded) {
+                    return;
+                }
+                if (wait) {
+                    clearTimeout(wait);
+                }
+                wait = setTimeout(function () {
+                    var find = {
+                        key: $state.params.key
+                    }, order = _.findWhere($scope.search.results, find);
+                    loaded = true;
+                    if (order) {
+                        return $scope.view(order, false);
+                    }
+                    models['34'].manageModal(find, undefined, undefined, viewOpts);
+                }, 300);
+
+            };
 
         $scope.setPageToolbarTitle('seller.' + (carts ? 'carts' : 'orders'));
 
@@ -189,6 +212,10 @@
                     var errors = response.data.errors;
                     if (!errors) {
                         $scope.search.results.extend(response.data.entities);
+                    }
+
+                    if (isSellerOrderView) {
+                        maybeOpenOrder();
                     }
 
                     $scope.search.loaded = true;
@@ -896,14 +923,21 @@
                                     }
                                 }, {
                                     disableUI: false,
-                                    handleError: function (errors) {
-                                        if (config.onReadError) {
-                                            config.onReadError();
-                                        }
-                                        return GLOBAL_CONFIG.backendErrorHandling.sellerProfileNotFound;
-                                    }
+                                    ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
+                                $scope.close = function () {
+                                    var promise = $scope.$close();
+                                    promise.then(config.afterClose || angular.noop);
+                                    return promise;
+                                };
+                                if (response) {
+                                    var errors = response.data.errors;
+                                    if (errors && (errors.not_found || errors.malformed_key)) {
+                                        $scope.notFound = true;
+                                        return;
+                                    }
+                                }
                                 var seller = response.data.entity;
                                 $scope.view = function (key, $event) {
                                     models['31'].viewModal(key, {
@@ -948,11 +982,6 @@
                                     loader: $scope.search.pagination
                                 };
                                 $scope.search.pagination.load();
-                                $scope.close = function () {
-                                    var promise = $scope.$close();
-                                    promise.then(config.afterClose || angular.noop);
-                                    return promise;
-                                };
                             });
                         })
                     });

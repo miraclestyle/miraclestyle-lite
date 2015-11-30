@@ -605,17 +605,29 @@
                                     }
                                 }, {
                                     disableUI: false,
-                                    handleError: function (errors) {
-                                        if (config.onReadError) {
-                                            config.onReadError();
-                                        }
-                                        return GLOBAL_CONFIG.backendErrorHandling.catalogNotFound(errors);
-                                    }
+                                    ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
+                                $scope.close = function () {
+                                    var promise = $scope.$close();
+                                    promise.then(function () {
+                                        if (config.afterClose) {
+                                            config.afterClose();
+                                        }
+                                    });
+                                    return promise;
+                                };
+                                if (response) {
+                                    var errors = response.data.errors;
+                                    if (errors && (errors.not_found || errors.malformed_key)) {
+                                        $scope.notFound = true;
+                                        return;
+                                    }
+                                }
                                 var entity = response.data.entity;
                                 if (!entity._images.length) {
-                                    snackbar.showK('noImagesInCatalog');
+                                    $scope.noImages = true;
+                                    return;
                                 }
                                 $scope.catalogMenu = {};
                                 helpers.sideNav.setup($scope.catalogMenu, 'right_catalog_sidenav', doNotRipple);
@@ -780,15 +792,6 @@
 
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
-                                $scope.close = function () {
-                                    var promise = $scope.$close();
-                                    promise.then(function () {
-                                        if (config.afterClose) {
-                                            config.afterClose();
-                                        }
-                                    });
-                                    return promise;
-                                };
                             });
                         })
                     });

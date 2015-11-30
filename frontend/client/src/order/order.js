@@ -1,35 +1,6 @@
 (function () {
     'use strict';
     angular.module('app')
-        .controller('OrderViewController', ng(function ($scope, models, currentAccount, $state) {
-
-            var entity = false;
-
-            models['34'].manageModal({
-                key: $state.params.key
-            }, undefined, undefined, {
-                inDirection: false,
-                outDirection: false,
-                afterClose: function () {
-                    if (!entity) {
-                        return;
-                    }
-                    if (entity.parent.parent.key === currentAccount.key) {
-                        // this is buyer
-                        $state.go('buy-orders');
-                    } else {
-                        // this is seller
-                        $state.go('sell-orders');
-                    }
-                },
-                onReadError: function () {
-                    $state.go('home');
-                },
-            }).then(function (response) {
-                entity = response;
-            });
-
-        }))
         .directive('alwaysScrollToBottom', ng(function ($timeout) {
             return {
                 link: function (scope, element, attrs) {
@@ -143,14 +114,23 @@
                                 $scope.$state.promise(function () {
                                     return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
                                         disableUI: false,
-                                        handleError: function (errors) {
-                                            if (config.onReadError) {
-                                                config.onReadError();
-                                            }
-                                            return GLOBAL_CONFIG.backendErrorHandling.orderNotFound(errors);
-                                        }
+                                        ignoreErrors: 2
                                     });
                                 }, function ($scope, response) {
+
+                                    $scope.close = function () {
+                                        var promise = $scope.$close();
+                                        promise.then(config.afterClose || angular.noop);
+                                        return promise;
+                                    };
+
+                                    if (response) {
+                                        var errors = response.data.errors;
+                                        if (errors && (errors.not_found || errors.malformed_key)) {
+                                            $scope.notFound = true;
+                                            return;
+                                        }
+                                    }
                                     seller = response.data.entity._seller;
                                     var locals = {
                                         customPlaceholder: null,
@@ -857,13 +837,6 @@
                                             $scope.stage.checkout = 1;
                                         }
                                     }());
-
-
-                                    $scope.close = function () {
-                                        var promise = $scope.$close();
-                                        promise.then(config.afterClose || angular.noop);
-                                        return promise;
-                                    };
 
 
                                     $scope.notifyUrl = $state.href('order-notify', {

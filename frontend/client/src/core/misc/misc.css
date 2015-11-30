@@ -1018,6 +1018,10 @@ button::-moz-focus-inner {
     margin: 0px;
 }
 
+.no-things-available.with-toolbar {
+    padding-top: 32px;
+}
+
 img.auto-width, .auto-width {
     width: 100%;
     height: 100%;

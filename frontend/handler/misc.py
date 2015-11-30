@@ -66,7 +66,10 @@ settings.ROUTES.extend(((r'/collections', base.AngularBlank),
 
                         # other
                         (r'/login/status', base.AngularBlank),
-                        (r'/order/<key>', base.AngularBlank),
+                        (r'/seller/order/<key>', base.AngularBlank),
+                        (r'/seller/cart/<key>', base.AngularBlank),
+                        (r'/buyer/order/<key>', base.AngularBlank),
+                        (r'/buyer/cart/<key>', base.AngularBlank),
                         (r'/order/payment/success/<key>', base.AngularBlank),
                         (r'/order/payment/canceled/<key>', base.AngularBlank),
                         (r'/login_provider_connected/<provider>', base.AngularBlank),

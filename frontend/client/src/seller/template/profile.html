@@ -4,6 +4,11 @@
     <div class="modal-body">
         <div class="fixed-height relative overflow-auto-y has-toolbar">
             <div class="modal-body-inner">
+
+                <div ng-if="notFound">
+                    <h1 class="no-things-available display1">This seller does not exist.</h1>
+             
+                </div>
                 <div class="clearfix">
 
                     <div ng-hide="hideClose" class="top-close">
@@ -12,13 +17,13 @@
                         </button>
                     </div>
 
-                    <div ng-if="$state.isCompleted()" class="top-close top-close-right">
+                    <div ng-if="$state.isCompleted() && !notFound" class="top-close top-close-right">
                         <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="sellerDetails.menu.toggle()">
                             <icon color="white" type="more_vert"></icon>
                         </button>
                     </div>
 
-                    <div ng-if="$state.isCompleted()" class="list padding-bottom-8">
+                    <div ng-if="$state.isCompleted() && !notFound" class="list padding-bottom-8">
                         <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = 240" grid-scale="{maxHeight: maxHeight}" ng-show="search.results.length" class="grid-wrapper clearfix">
                             <div ng-repeat="result in search.results track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
                                 <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
@@ -28,8 +33,8 @@
                         </div>
                         <div load-more-button="search.pagination"></div>
                         <!-- help -->
-                        <div class="padding-top-64 padding-bottom-8" ng-if="helpers.models.isEntityListEmpty(search.results) && !search.pagination.loading">
-                            <div help-render="GLOBAL_CONFIG.emptyHelp.sellerProfileCatalogList"></div>
+                        <div ng-if="helpers.models.isEntityListEmpty(search.results) && !search.pagination.loading">
+                            <h1 class="no-things-available display1">This seller does not have any catalogs published.</h1>
                         </div>
                        <!-- end help -->
                     </div>

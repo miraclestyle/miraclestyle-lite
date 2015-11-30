@@ -682,7 +682,7 @@
             };
         }).filter('autobr', ng(function (helpers) {
             return function (data) {
-                if (!data) {
+                if (!angular.isString(data)) {
                     return data;
                 }
                 return data.replace(/\n\r?/g, '<br />');
