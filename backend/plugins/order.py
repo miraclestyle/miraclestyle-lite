@@ -583,6 +583,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       return
     request = context.input['request']
     ipn = request['params']
+    tools.log.debug('IPN: %s' % (ipn))
     ipn_payment_status = ipn['payment_status']
     order = context._order
     ip_address = os.environ.get('REMOTE_ADDR')
@@ -592,7 +593,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     
     def duplicate_check():
       OrderMessage = context.models['35']
-      Account = context.models['11']
       order_messages = OrderMessage.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
       for order_message in order_messages:
         if order_message.payment_status == ipn_payment_status:
@@ -700,11 +700,11 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         if order.payment_status == 'Pending':
           order.payment_status = ipn_payment_status
       elif ipn_payment_status == 'Refunded':
-        if order.payment_status == 'Completed':
+        if order.payment_status in ['Completed', 'Mismatched']:
           order.payment_status = ipn_payment_status
           context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
       elif ipn_payment_status == 'Reversed':
-        if order.payment_status == 'Completed':
+        if order.payment_status in ['Completed', 'Mismatched']:
           order.payment_status = ipn_payment_status
           context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
       elif ipn_payment_status == 'Canceled_Reversal':
@@ -744,12 +744,13 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       decide()
     
     # Produce final message
+    Account = context.models['11']
     context.new_message = {'ipn_txn_id': ipn['txn_id'],
                            'action': context.action.key,
                            'ancestor': order.key,
                            'agent': Account.build_key('system'),
-                           'body': 'PayPal payment %s.%s' % (ipn_payment_status, context.message_body),
-                           'payment_status': ipn_payment_status,
+                           'body': 'PayPal payment %s.%s' % (order.payment_status, context.message_body),
+                           'payment_status': order.payment_status,
                            'ipn': request['body']}
     context.new_message_fields = {'ipn': orm.SuperTextProperty(name='ipn', compressed=True, indexed=False)}
 
