@@ -592,7 +592,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     
     def duplicate_check():
       OrderMessage = context.models['35']
-      Account = context.models['11']
       order_messages = OrderMessage.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
       for order_message in order_messages:
         if order_message.payment_status == ipn_payment_status:
@@ -744,6 +743,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       decide()
     
     # Produce final message
+    Account = context.models['11']
     context.new_message = {'ipn_txn_id': ipn['txn_id'],
                            'action': context.action.key,
                            'ancestor': order.key,
