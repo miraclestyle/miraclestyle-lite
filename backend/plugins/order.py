@@ -752,6 +752,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
                            'payment_status': order.payment_status,
                            'ipn': request['body']}
     context.new_message_fields = {'ipn': orm.SuperTextProperty(name='ipn', compressed=True, indexed=False)}
+    tools.log.debug('IPN: %s' % (ipn))
 
 
 class OrderTaxPlugin(orm.BaseModel):
