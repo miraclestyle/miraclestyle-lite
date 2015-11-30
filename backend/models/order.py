@@ -157,7 +157,7 @@ class Order(orm.BaseExpando):
     search_34_<order.account.id>
   '''
 
-  DELETE_CACHE_POLICY = {'group': [lambda context: 'read_34_%s' % context._order.key._root._id_str, 'search_34_admin', lambda context: 'search_34_%s' % context._order.key._root._id_str]}
+  DELETE_CACHE_POLICY = {'group': [lambda context: 'read_34_%s' % context._order.key._root._id_str, 'search_34_admin', lambda context: 'search_34_%s' % context._order.seller_reference._id_str, lambda context: 'search_34_%s' % context._order.key._root._id_str]}
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
