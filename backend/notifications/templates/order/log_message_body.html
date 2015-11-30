@@ -1,27 +1,30 @@
 {% extends 'base.html' %}
 
+{% macro order_link(entity, seller) -%}{{absolute_url('%s/%s/%s' % ('seller' if seller else 'buyer', 'order' if entity.state == 'order' else 'cart', entity.key_urlsafe))}}{%- endmacro %}
+
+
 {% block body %}
 <span>
   {% if account._root_admin %}
   Administrator left the following message on your order
-  "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
+  "<a href="{{order_link(entity, seller)}}">#{{entity.key_id}}</a>":
   {% endif %}
   {% if not account._root_admin and account.key == entity.key._root %}
   Buyer left the following message on your order
-  "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
+  "<a href="{{order_link(entity, seller)}}">#{{entity.key_id}}</a>":
   {% endif %}
   {% if not account._root_admin and account.key == entity.seller_reference._root %}
   {% if entity.state == 'cart' %}
   Seller
   "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name}}</a>"
   left the following message on your
-  <a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">cart</a>:
+  <a href="{{order_link(entity, seller)}}">cart</a>:
   {% endif %}
   {% if entity.state != 'cart' %}
   Seller
   "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name}}</a>"
   left the following message on your order
-  "<a href="{{absolute_url('order/%s' % entity.key_urlsafe)}}">#{{entity.key_id}}</a>":
+  "<a href="{{order_link(entity, seller)}}">#{{entity.key_id}}</a>":
   {% endif %}
   {% endif %}
 </span><br/><br/>
