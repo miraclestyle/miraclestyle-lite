@@ -583,6 +583,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       return
     request = context.input['request']
     ipn = request['params']
+    tools.log.debug('IPN: %s' % (ipn))
     ipn_payment_status = ipn['payment_status']
     order = context._order
     ip_address = os.environ.get('REMOTE_ADDR')
@@ -752,7 +753,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
                            'payment_status': order.payment_status,
                            'ipn': request['body']}
     context.new_message_fields = {'ipn': orm.SuperTextProperty(name='ipn', compressed=True, indexed=False)}
-    tools.log.debug('IPN: %s' % (ipn))
 
 
 class OrderTaxPlugin(orm.BaseModel):
