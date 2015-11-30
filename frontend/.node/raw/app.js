@@ -19326,6 +19326,7 @@ angular.module('app')
                                                     removeConfirm: function (arg, close) {
                                                         modals.confirm('removePricetagConfirm', function () {
                                                             $scope.pricetag._state = 'deleted';
+                                                            $scope.formSetDirty();
                                                             $timeout(function () {
                                                                 close().then(function () {
                                                                     $timeout(function () {
