@@ -13360,7 +13360,7 @@ function msieversion() {
             };
         }).filter('autobr', ng(function (helpers) {
             return function (data) {
-                if (!data) {
+                if (!angular.isString(data)) {
                     return data;
                 }
                 return data.replace(/\n\r?/g, '<br />');
@@ -18110,7 +18110,9 @@ angular.module('app')
 
         })).controller('BuyOrdersController', ng(function ($scope, $timeout, modals, snackbar, modelsEditor, GLOBAL_CONFIG, modelsMeta, helpers, models, modelsUtil, $state) {
 
-            var carts = $state.current.name === 'buy-carts',
+            var carts = ($state.current.name === 'buy-carts' || $state.current.name === 'buyer-cart-view'),
+                isBuyerViewCart = $state.current.name === 'buyer-cart-view',
+                isBuyerViewOrder = $state.current.name === 'buyer-order-view',
                 isOrderPaymentCanceled = $state.current.name === 'order-payment-canceled',
                 isOrderPaymentSuccess = $state.current.name === 'order-payment-success',
                 wait = null,
@@ -18152,7 +18154,11 @@ angular.module('app')
                     inDirection: false,
                     outDirection: false,
                     afterClose: function () {
-                        $state.go('buy-orders');
+                        var state = 'buy-orders';
+                        if (isBuyerViewCart) {
+                            state = 'buy-carts';
+                        }
+                        $state.go(state);
                     }
                 },
                 viewThen = function (order) {
@@ -18161,7 +18167,9 @@ angular.module('app')
                         snackbar.showK('orderPaymentSuccessProgresscanceled');
                     } else {
                         snackbar.showK('orderPaymentSuccessProgress');
-                        scheduleTick();
+                        if (!(isBuyerViewOrder || isBuyerViewCart)) {
+                            scheduleTick();
+                        }
                     }
                 },
                 maybeOpenOrder = function () {
@@ -18184,7 +18192,7 @@ angular.module('app')
 
                 };
 
-            if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
+            if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewOrder) {
                 carts = false;
             }
 
@@ -18218,9 +18226,6 @@ angular.module('app')
                     return response.data.entity;
                 }).then(function (buyer) {
                     var opts = {
-                        onReadError: function () {
-                            $state.go('home');
-                        },
                         cartMode: carts,
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     }, viewPromise, directView = $event === false;
@@ -18258,7 +18263,7 @@ angular.module('app')
                             $scope.search.results.extend(response.data.entities);
                         }
 
-                        if (isOrderPaymentCanceled || isOrderPaymentSuccess) {
+                        if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewCart || isBuyerViewOrder) {
                             maybeOpenOrder();
                         }
 
@@ -18401,9 +18406,6 @@ angular.module('app')
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
-                onReadError: function () {
-                    $state.go('home');
-                },
                 afterClose: function () {
                     $state.go('home');
                 }
@@ -18422,9 +18424,6 @@ angular.module('app')
                 afterClose: embed ? undefined : function () {
                     $state.go('home');
                 },
-                onReadError: function () {
-                    $state.go('home');
-                },
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 autoAddToCartQuantity: $state.params.quantity,
                 loadProduct: {
@@ -18439,9 +18438,6 @@ angular.module('app')
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
-                onReadError: function () {
-                    $state.go('home');
-                },
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 afterClose: function () {
                     $state.go('home');
@@ -18458,9 +18454,6 @@ angular.module('app')
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
-                onReadError: function () {
-                    $state.go('home');
-                },
                 afterClose: function () {
                     $state.go('home');
                 },
@@ -18478,9 +18471,6 @@ angular.module('app')
                 inDirection: false,
                 outDirection: false,
                 openCart: true,
-                onReadError: function () {
-                    $state.go('home');
-                },
                 afterClose: function () {
                     $state.go('home');
                 },
@@ -18494,9 +18484,6 @@ angular.module('app')
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
-                onReadError: function () {
-                    $state.go('home');
-                },
                 noEscape: true,
                 hideClose: true
             });
@@ -18510,9 +18497,6 @@ angular.module('app')
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
-                onReadError: function () {
-                    $state.go('home');
-                },
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
@@ -18528,9 +18512,6 @@ angular.module('app')
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
-                onReadError: function () {
-                    $state.go('home');
-                },
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 loadProduct: {
                     image: $state.params.image_id,
@@ -20474,17 +20455,29 @@ angular.module('app')
                                     }
                                 }, {
                                     disableUI: false,
-                                    handleError: function (errors) {
-                                        if (config.onReadError) {
-                                            config.onReadError();
-                                        }
-                                        return GLOBAL_CONFIG.backendErrorHandling.catalogNotFound(errors);
-                                    }
+                                    ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
+                                $scope.close = function () {
+                                    var promise = $scope.$close();
+                                    promise.then(function () {
+                                        if (config.afterClose) {
+                                            config.afterClose();
+                                        }
+                                    });
+                                    return promise;
+                                };
+                                if (response) {
+                                    var errors = response.data.errors;
+                                    if (errors && (errors.not_found || errors.malformed_key)) {
+                                        $scope.notFound = true;
+                                        return;
+                                    }
+                                }
                                 var entity = response.data.entity;
                                 if (!entity._images.length) {
-                                    snackbar.showK('noImagesInCatalog');
+                                    $scope.noImages = true;
+                                    return;
                                 }
                                 $scope.catalogMenu = {};
                                 helpers.sideNav.setup($scope.catalogMenu, 'right_catalog_sidenav', doNotRipple);
@@ -20649,15 +20642,6 @@ angular.module('app')
 
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
-                                $scope.close = function () {
-                                    var promise = $scope.$close();
-                                    promise.then(function () {
-                                        if (config.afterClose) {
-                                            config.afterClose();
-                                        }
-                                    });
-                                    return promise;
-                                };
                             });
                         })
                     });
@@ -20951,35 +20935,6 @@ angular.module('app')
 }());(function () {
     'use strict';
     angular.module('app')
-        .controller('OrderViewController', ng(function ($scope, models, currentAccount, $state) {
-
-            var entity = false;
-
-            models['34'].manageModal({
-                key: $state.params.key
-            }, undefined, undefined, {
-                inDirection: false,
-                outDirection: false,
-                afterClose: function () {
-                    if (!entity) {
-                        return;
-                    }
-                    if (entity.parent.parent.key === currentAccount.key) {
-                        // this is buyer
-                        $state.go('buy-orders');
-                    } else {
-                        // this is seller
-                        $state.go('sell-orders');
-                    }
-                },
-                onReadError: function () {
-                    $state.go('home');
-                },
-            }).then(function (response) {
-                entity = response;
-            });
-
-        }))
         .directive('alwaysScrollToBottom', ng(function ($timeout) {
             return {
                 link: function (scope, element, attrs) {
@@ -21093,14 +21048,23 @@ angular.module('app')
                                 $scope.$state.promise(function () {
                                     return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
                                         disableUI: false,
-                                        handleError: function (errors) {
-                                            if (config.onReadError) {
-                                                config.onReadError();
-                                            }
-                                            return GLOBAL_CONFIG.backendErrorHandling.orderNotFound(errors);
-                                        }
+                                        ignoreErrors: 2
                                     });
                                 }, function ($scope, response) {
+
+                                    $scope.close = function () {
+                                        var promise = $scope.$close();
+                                        promise.then(config.afterClose || angular.noop);
+                                        return promise;
+                                    };
+
+                                    if (response) {
+                                        var errors = response.data.errors;
+                                        if (errors && (errors.not_found || errors.malformed_key)) {
+                                            $scope.notFound = true;
+                                            return;
+                                        }
+                                    }
                                     seller = response.data.entity._seller;
                                     var locals = {
                                         customPlaceholder: null,
@@ -21809,13 +21773,6 @@ angular.module('app')
                                     }());
 
 
-                                    $scope.close = function () {
-                                        var promise = $scope.$close();
-                                        promise.then(config.afterClose || angular.noop);
-                                        return promise;
-                                    };
-
-
                                     $scope.notifyUrl = $state.href('order-notify', {
                                         method: 'paypal'
                                     }, {
@@ -21868,9 +21825,6 @@ angular.module('app')
         models['23'].viewProfileModal($stateParams.key, {
             inDirection: false,
             outDirection: false,
-            onReadError: function () {
-                $state.go('home');
-            },
             afterClose: function () {
                 $state.go('home');
             }
@@ -21880,10 +21834,7 @@ angular.module('app')
         models['23'].viewProfileModal($stateParams.key, {
             hideClose: true,
             inDirection: false,
-            outDirection: false,
-            onReadError: function () {
-                $state.go('home');
-            }
+            outDirection: false
         });
     })).directive('addressRuleLocationListView', function () {
         return {
@@ -22001,7 +21952,36 @@ angular.module('app')
 
     })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
-        var carts = $state.current.name === 'sell-carts';
+        var carts = $state.current.name === 'sell-carts',
+            isSellerOrderView = _.string.startsWith($state.current.name, 'seller'),
+            wait = null,
+            loaded = false,
+            viewOpts = {
+                inDirection: false,
+                outDirection: false,
+                afterClose: function () {
+                    $state.go('sell-orders');
+                }
+            },
+            maybeOpenOrder = function () {
+                if (loaded) {
+                    return;
+                }
+                if (wait) {
+                    clearTimeout(wait);
+                }
+                wait = setTimeout(function () {
+                    var find = {
+                        key: $state.params.key
+                    }, order = _.findWhere($scope.search.results, find);
+                    loaded = true;
+                    if (order) {
+                        return $scope.view(order, false);
+                    }
+                    models['34'].manageModal(find, undefined, undefined, viewOpts);
+                }, 300);
+
+            };
 
         $scope.setPageToolbarTitle('seller.' + (carts ? 'carts' : 'orders'));
 
@@ -22049,6 +22029,10 @@ angular.module('app')
                     var errors = response.data.errors;
                     if (!errors) {
                         $scope.search.results.extend(response.data.entities);
+                    }
+
+                    if (isSellerOrderView) {
+                        maybeOpenOrder();
                     }
 
                     $scope.search.loaded = true;
@@ -22756,14 +22740,21 @@ angular.module('app')
                                     }
                                 }, {
                                     disableUI: false,
-                                    handleError: function (errors) {
-                                        if (config.onReadError) {
-                                            config.onReadError();
-                                        }
-                                        return GLOBAL_CONFIG.backendErrorHandling.sellerProfileNotFound;
-                                    }
+                                    ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
+                                $scope.close = function () {
+                                    var promise = $scope.$close();
+                                    promise.then(config.afterClose || angular.noop);
+                                    return promise;
+                                };
+                                if (response) {
+                                    var errors = response.data.errors;
+                                    if (errors && (errors.not_found || errors.malformed_key)) {
+                                        $scope.notFound = true;
+                                        return;
+                                    }
+                                }
                                 var seller = response.data.entity;
                                 $scope.view = function (key, $event) {
                                     models['31'].viewModal(key, {
@@ -22808,11 +22799,6 @@ angular.module('app')
                                     loader: $scope.search.pagination
                                 };
                                 $scope.search.pagination.load();
-                                $scope.close = function () {
-                                    var promise = $scope.$close();
-                                    promise.then(config.afterClose || angular.noop);
-                                    return promise;
-                                };
                             });
                         })
                     });
@@ -22974,11 +22960,6 @@ angular.module('app')
                 templateUrl: 'home/index.html',
                 controller: 'HomePageController'
             })
-            .state('following', {
-                url: '/following',
-                templateUrl: 'home/index.html',
-                controller: 'HomePageController'
-            })
             .state('seller-info', {
                 url: '/seller/:key',
                 controller: 'SellerInfo',
@@ -23088,10 +23069,25 @@ angular.module('app')
                 controller: 'BuyOrdersController',
                 templateUrl: 'order/list.html'
             })
-            .state('order-view', {
-                url: '/order/:key',
-                controller: 'OrderViewController',
-                template: ''
+            .state('seller-order-view', {
+                url: '/seller/order/:key',
+                controller: 'SellOrdersController',
+                templateUrl: 'order/list.html'
+            })
+            .state('seller-cart-view', {
+                url: '/seller/cart/:key',
+                controller: 'SellOrdersController',
+                templateUrl: 'order/list.html'
+            })
+            .state('buyer-order-view', {
+                url: '/buyer/order/:key',
+                controller: 'BuyOrdersController',
+                templateUrl: 'order/list.html'
+            })
+            .state('buyer-cart-view', {
+                url: '/buyer/cart/:key',
+                controller: 'BuyOrdersController',
+                templateUrl: 'buyer/carts.html'
             })
             .state('login-status', {
                 url: '/login/status',

@@ -2236,6 +2236,9 @@ button::-moz-focus-inner {
   padding-top: 80px;
   margin: 0px; }
 
+.no-things-available.with-toolbar {
+  padding-top: 32px; }
+
 img.auto-width, .auto-width {
   width: 100%;
   height: 100%; }
