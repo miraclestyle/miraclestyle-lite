@@ -675,7 +675,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         
         ipn_line_subtotal = tools.format_value(ipn['mc_gross_%s' % line.sequence], order_currency)
         if line.subtotal != ipn_line_subtotal:
-          new_mismatch(('item #%s subtotal' % line.sequence, line.subtotal), ('item #%s subtotal' % line.sequence, ipn_line_subtotal))
+          new_mismatch(('item #%s subtotal (before discount)' % line.sequence, line.subtotal), ('item #%s subtotal' % line.sequence, ipn_line_subtotal))
     
     def decide():
       if ipn_payment_status == 'Pending':
