@@ -25,7 +25,7 @@ class AccountCacheGroup(orm.BaseModel):
 
   _use_record_engine = False
   _use_rule_engine = False
-  _use_memcache = True
+  _use_memcache = False
 
   keys = orm.SuperStringProperty(repeated=True, indexed=False) # stores 128bit md5 = can hold aprox 22k items
 
@@ -87,7 +87,7 @@ class Account(orm.BaseExpando):
 
   _kind = 11
 
-  _use_memcache = True
+  _use_memcache = False
 
   '''
   Cache:
