@@ -748,8 +748,8 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
                            'action': context.action.key,
                            'ancestor': order.key,
                            'agent': Account.build_key('system'),
-                           'body': 'PayPal payment %s.%s' % (ipn_payment_status, context.message_body),
-                           'payment_status': ipn_payment_status,
+                           'body': 'PayPal payment %s.%s' % (order.payment_status, context.message_body),
+                           'payment_status': order.payment_status,
                            'ipn': request['body']}
     context.new_message_fields = {'ipn': orm.SuperTextProperty(name='ipn', compressed=True, indexed=False)}
 
