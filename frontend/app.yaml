@@ -6,7 +6,7 @@ threadsafe: true
 
 
 handlers:
-
+# @todo must hide client .apps, and /src for production version
 - url: /client/
   static_dir: client/
   expiration: "364d 5h"
