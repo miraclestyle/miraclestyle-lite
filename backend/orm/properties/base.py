@@ -28,6 +28,7 @@ class _BaseProperty(object):
   _max_size = None
   _value_filters = None
   _searchable = None
+  _logical = False
   _search_document_field_name = None
   initialized = False
 

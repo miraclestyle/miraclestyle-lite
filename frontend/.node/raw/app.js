@@ -1773,6 +1773,7 @@ if (window.DEBUG) {
             orderPaymentSuccessProgressCompleted: 'Payment completed.',
             orderPaymentSuccessProgressRefunded: 'Payment refunded.',
             orderPaymentSuccessProgressPending: 'Payment pending.',
+            orderPaymentSuccessProgressMismatched: 'Payment mismatched.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
             saveChangesFirst: 'Save changes first.',
@@ -14265,7 +14266,7 @@ function msieversion() {
                                         var entities = response.data.entities;
                                         angular.forEach(entities, function (value) {
                                             if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
-                                                scope.newItems.push(value);
+                                                scope.newItems.unshift(value);
                                             }
                                             seen[value.key] = true;
                                         });
@@ -14276,7 +14277,6 @@ function msieversion() {
                         };
                     scope.newItems = [];
                     scope.seeNewItems = function () {
-                        scope.newItems.reverse();
                         scope.config.results.prepend(scope.newItems);
                         scope.newItems.length = 0;
                     };

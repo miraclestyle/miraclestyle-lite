@@ -136,8 +136,8 @@ old_get_async = Key.get_async
 
 def get_async(*args, **kwargs):
   if in_transaction():
-    #tools.trace()
-    print(args, kwargs)
+    # tools.trace(limit=20)
+    tools.log.warn(['Using .get() in transaction, can cause contention', args, kwargs])
   return old_get_async(*args, **kwargs)
 
 Key.get_async = get_async
@@ -362,7 +362,8 @@ class _BaseModel(object):
       out = out[:-1]
       virtual_fields_out = []
       for field_key, field in virtual_fields.iteritems():
-        val = getattr(self, field_key, None)
+        # val = getattr(self, field_key, None)
+        val = 'virtual field value'
         virtual_fields_out.append('%s=%s' % (field._code_name, val))
       out += ', %s)' % ', '.join(virtual_fields_out)
     return out
@@ -794,6 +795,7 @@ class _BaseModel(object):
         except IndexError as e:
           break
       if (current_field_value is None and not current_field.can_be_none) \
+          or hasattr(field, '_logical') and not field._logical \
           or (hasattr(current_field, '_updateable') and (not current_field._updateable and not current_field._deleteable)) \
           or (hasattr(current_field, '_auto_now') and current_field._auto_now):
         current_field_key = None
@@ -894,7 +896,8 @@ class _BaseModel(object):
       if not hasattr(self, '_original'):
         raise ValueError('Working on entity (%r) without _original. entity.make_original() needs to be called.' % self)
       for field_key, field in self.get_fields().iteritems():
-        self._rule_write(self._field_permissions, self, field_key, field, getattr(self._original, field_key))
+        if hasattr(field, '_logical') and not field._logical: # we cannot allow logical fields to be called in _original conundrum
+          self._rule_write(self._field_permissions, self, field_key, field, getattr(self._original, field_key))
 
   @classmethod
   def _rule_reset_actions(cls, action_permissions, actions):

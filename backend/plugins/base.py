@@ -111,7 +111,6 @@ class Read(orm.BaseModel):
     entity.make_original()
     tools.set_attr(context, save_path, entity)
 
-
 class Write(orm.BaseModel):
 
   _kind = 89
@@ -514,11 +513,6 @@ class BaseCache(orm.BaseModel):
             keys.extend(group.keys)
         tools.mem_delete_multi(keys)
         tools.log.info('Deleted cache for group %s' % group_id)
-        '''
-        # for now we do not need removal of keys with task queue
-        keys = base64.b64encode(zlib.compress(','.join(keys)))
-        context._callbacks.append(('callback', {'action_id': 'update', 'keys': keys, 'delete': True, 'ids': group_id, 'action_model': '135'}))
-        '''
 
 
 class GetCache(BaseCache):

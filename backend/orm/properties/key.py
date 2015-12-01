@@ -44,6 +44,7 @@ class SuperReferenceProperty(SuperKeyProperty):
   '''
   _value_class = ReferencePropertyValue
   _async = True
+  _logical = True
   can_be_copied = False
 
   def __init__(self, *args, **kwargs):

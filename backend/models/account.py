@@ -7,6 +7,7 @@ Created on Jan 6, 2014
 
 import hashlib
 import os
+import datetime
 
 import orm
 import tools
@@ -457,7 +458,11 @@ class Account(orm.BaseExpando):
 
   def new_session(self):
     account = self
-    session_ids = [session.session_id for session in account.sessions.value]
+    session_ids = set()
+    for session in account.sessions.value:
+      if session.created < (datetime.datetime.now() - datetime.timedelta(days=10)):
+        session._state = 'deleted'
+      session_ids.add(session.session_id)
     while True:
       session_id = hashlib.md5(tools.random_chars(30)).hexdigest()
       if session_id not in session_ids:

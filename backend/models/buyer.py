@@ -46,8 +46,8 @@ class BuyerAddress(orm.BaseExpando):
   _default_indexed = False
 
   _virtual_fields = {
-      '_country': orm.SuperReferenceProperty(target_field='country'),
-      '_region': orm.SuperReferenceProperty(target_field='region')
+      '_country': orm.SuperReferenceProperty(autoload=True, target_field='country'),
+      '_region': orm.SuperReferenceProperty(autoload=True, target_field='region')
   }
 
   def get_location(self):

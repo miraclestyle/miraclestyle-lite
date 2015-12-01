@@ -52,5 +52,5 @@ def debug():
       sys, '__stderr__')).set_trace(sys._getframe().f_back)
 
 
-def trace():
-  traceback.print_stack()
+def trace(*args, **kwargs):
+  traceback.print_stack(*args, **kwargs)

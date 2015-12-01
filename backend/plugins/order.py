@@ -447,8 +447,8 @@ class OrderAddressLocation(orm.BaseModel):
   postal_codes = orm.SuperStringProperty('3', indexed=False, repeated=True)
 
   _virtual_fields = {
-      '_country': orm.SuperReferenceProperty(target_field='country'),
-      '_region': orm.SuperReferenceProperty(target_field='region')
+      '_country': orm.SuperReferenceProperty(autoload=True, target_field='country'),
+      '_region': orm.SuperReferenceProperty(autoload=True, target_field='region')
   }
 
 
