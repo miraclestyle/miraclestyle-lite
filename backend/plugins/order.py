@@ -429,7 +429,7 @@ class OrderNotify(orm.BaseModel):
       raise orm.TerminateAction('no_order_id')
     order_key = orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
     order = order_key.get()
-    if not order:
+    if not order or order.state != 'order':
       tools.log.error('Order not found ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
       raise orm.TerminateAction('order_not_found')
     return order
