@@ -18163,10 +18163,7 @@ angular.module('app')
                 },
                 viewThen = function (order) {
                     gorder = order;
-                    if (isOrderPaymentCanceled) {
-                        snackbar.showK('orderPaymentSuccessProgresscanceled');
-                    } else {
-                        snackbar.showK('orderPaymentSuccessProgress');
+                    if (!isOrderPaymentCanceled) {
                         if (!(isBuyerViewOrder || isBuyerViewCart)) {
                             scheduleTick();
                         }
@@ -21226,7 +21223,10 @@ angular.module('app')
                                         },
                                         converToOrder: function ($event) {
                                             var submit = function () {
-                                                $($event.target).parents('form:first').submit();
+                                                $timeout(function () {
+                                                    $scope.pressedSubmit = true;
+                                                    $($event.target).parents('form:first').submit();
+                                                });
                                             };
                                             if ($scope.order.state === 'order') {
                                                 return submit();

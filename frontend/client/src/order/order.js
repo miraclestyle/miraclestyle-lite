@@ -291,7 +291,10 @@
                                         },
                                         converToOrder: function ($event) {
                                             var submit = function () {
-                                                $($event.target).parents('form:first').submit();
+                                                $timeout(function () {
+                                                    $scope.pressedSubmit = true;
+                                                    $($event.target).parents('form:first').submit();
+                                                });
                                             };
                                             if ($scope.order.state === 'order') {
                                                 return submit();

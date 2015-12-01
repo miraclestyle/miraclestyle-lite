@@ -183,7 +183,7 @@
                                     <button ng-click="stage.converToOrder($event)"
                                             md-ink-ripple
                                             type="button"
-                                            loading
+                                            loading="pressedSubmit"
                                             class="md-button text-center order-next-stage order-go-pay">
                                          <span class="md-button-text"><span ng-if="order.state !== 'order'">Place Your Order And </span>Pay With</span>
                                          <img class="block t100" src="/client/dist/static/order/cc-badges-ppmcvdam.png" alt="Check out with PayPal" />

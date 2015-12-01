@@ -612,13 +612,13 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       reciever_email = self.reciever_email.lower()
       ipn_reciever_email = ipn['receiver_email'].lower()
       if reciever_email != ipn_reciever_email:
-        new_mismatch(('seller settings receiver e-mail', reciever_email), ('receiver e-mail', ipn_reciever_email))
+        new_mismatch(('seller settings receiver e-mail', self.reciever_email), ('receiver e-mail', ipn['receiver_email']))
       
       if 'business' in ipn:
         business_email = self.business.lower()
         ipn_business_email = ipn['business'].lower()
         if business_email != ipn_business_email:
-          new_mismatch(('seller settings business e-mail', business_email), ('business e-mail', ipn_business_email))
+          new_mismatch(('seller settings business e-mail', self.business), ('business e-mail', ipn['business']))
       
       if order_currency.code != ipn['mc_currency']:
         new_mismatch(('currency', order_currency.code), ('currency', ipn['mc_currency']))
@@ -633,31 +633,31 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         new_mismatch(('id', order.key.urlsafe()), ('order id', ipn['invoice']))
       
       if shipping_address.country != ipn['address_country']:
-        new_mismatch(('address country', shipping_address.country), ('address country', ipn['address_country']))
+        new_mismatch(('shipping address country', shipping_address.country), ('shipping address country', ipn['address_country']))
       
       if shipping_address.country_code != ipn['address_country_code']:
-        new_mismatch(('address country code', shipping_address.country_code), ('address country code', ipn['address_country_code']))
+        new_mismatch(('shipping address country code', shipping_address.country_code), ('shipping address country code', ipn['address_country_code']))
       
-      if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']:  # paypal za ameriku koristi 2 digit iso standard kodove za njegove stateove
-        new_mismatch(('address region', shipping_address.region_code[len(shipping_address.country_code) + 1:]), ('address region', ipn['address_state']))
+      if shipping_address.country_code == 'US' and shipping_address.region_code[len(shipping_address.country_code) + 1:] != ipn['address_state']:  # PayPa uses 2 digit ISO codes for US states
+        new_mismatch(('shipping address region', shipping_address.region_code[len(shipping_address.country_code) + 1:]), ('shipping address region', ipn['address_state']))
       
       shipping_address_city = shipping_address.city.lower()
       ipn_address_city = ipn['address_city'].lower()
       if shipping_address_city != ipn_address_city:
-        new_mismatch(('address city', shipping_address_city), ('address city', ipn_address_city))
+        new_mismatch(('shipping address city', shipping_address.city), ('shipping address city', ipn['address_city']))
       
       shipping_address_postal_code = shipping_address.postal_code.lower()
       ipn_shipping_address_postal_code = ipn['address_zip'].lower()
       if shipping_address_postal_code != ipn_shipping_address_postal_code:
-        new_mismatch(('address postal code', shipping_address_postal_code), ('address postal code', ipn_shipping_address_postal_code))
+        new_mismatch(('shipping address postal code', shipping_address.postal_code), ('shipping address postal code', ipn['address_zip']))
       
       shipping_address_street = shipping_address.street.lower()
       ipn_shipping_address_street = ipn['address_street'].lower()
       if shipping_address_street != ipn_shipping_address_street:
-        new_mismatch(('address street', shipping_address_street), ('address street', ipn_shipping_address_street))
+        new_mismatch(('shipping address street', shipping_address.street), ('shipping address street', ipn['address_street']))
       
       if shipping_address.name != ipn['address_name']:
-        new_mismatch(('address name', shipping_address.name), ('address name', ipn['address_name']))
+        new_mismatch(('shipping address name', shipping_address.name), ('shipping address name', ipn['address_name']))
       
       for line in order._lines.value:
         product = line.product.value
@@ -675,7 +675,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         
         ipn_line_subtotal = tools.format_value(ipn['mc_gross_%s' % line.sequence], order_currency)
         if line.subtotal != ipn_line_subtotal:
-          new_mismatch(('item #%s subtotal' % line.sequence, line.subtotal), ('item #%s subtotal' % line.sequence, ipn_line_subtotal))
+          new_mismatch(('item #%s subtotal (before discount)' % line.sequence, line.subtotal), ('item #%s subtotal' % line.sequence, ipn_line_subtotal))
     
     def decide():
       if ipn_payment_status == 'Pending':
