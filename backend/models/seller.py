@@ -76,7 +76,7 @@ class Seller(orm.BaseExpando):
       '_content': orm.SuperRemoteStructuredProperty(SellerContent),
       '_plugin_group': orm.SuperRemoteStructuredProperty(SellerPluginContainer),
       '_records': orm.SuperRecordProperty('23'),
-      '_currency': orm.SuperReferenceProperty('17', callback=lambda self: self.get_currency_callback(),
+      '_currency': orm.SuperReferenceProperty('17', autoload=True, callback=lambda self: self.get_currency_callback(),
                                               format_callback=lambda self, value: value)
   }
 

@@ -1587,7 +1587,7 @@
                                         var entities = response.data.entities;
                                         angular.forEach(entities, function (value) {
                                             if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
-                                                scope.newItems.push(value);
+                                                scope.newItems.unshift(value);
                                             }
                                             seen[value.key] = true;
                                         });
@@ -1598,7 +1598,6 @@
                         };
                     scope.newItems = [];
                     scope.seeNewItems = function () {
-                        scope.newItems.reverse();
                         scope.config.results.prepend(scope.newItems);
                         scope.newItems.length = 0;
                     };

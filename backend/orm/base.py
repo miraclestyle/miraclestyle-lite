@@ -132,6 +132,15 @@ def _get_key_structure(self):
       parent_dic = parent_dic['parent']
   return dic
 
+old_get_async = Key.get_async
+
+def get_async(*args, **kwargs):
+  if in_transaction():
+    #tools.trace()
+    print(args, kwargs)
+  return old_get_async(*args, **kwargs)
+
+Key.get_async = get_async
 
 Key._id = property(_get_id)
 Key._id_str = property(_get_id_str)
@@ -147,6 +156,7 @@ Key._structure = property(_get_key_structure)
 Key.entity = property(_get_entity)
 Key.namespace_entity = property(_get_namespace_entity)
 Key.parent_entity = property(_get_parent_entity)
+
 
 
 #############################################
