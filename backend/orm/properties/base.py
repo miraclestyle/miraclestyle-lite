@@ -643,7 +643,7 @@ class _BaseImageProperty(_BaseBlobProperty):
         for i in xrange(4):
           try:
             # http://stackoverflow.com/q/14944317/376238
-            fetched_image = yield ctx.urlfetch('%s=s100' % value.serving_url)
+            fetched_image = yield ctx.urlfetch('%s=s100' % value.serving_url, deadline=60)
             break
           except Exception as e:
             time.sleep(pause)

@@ -87,7 +87,7 @@ class OAuth2Client(object):
     try:
       if data is not None:
         data = urllib.urlencode(data)
-      response = urlfetch.fetch(url=url, payload=data, method=method)
+      response = urlfetch.fetch(url=url, payload=data, deadline=60, method=method)
       if response.status_code == status:
         return json.loads(response.content)
       else:
@@ -115,7 +115,7 @@ class OAuth2Client(object):
     if not url.startswith('https://'):
       raise ValueError('Protocol must be HTTPS, invalid URL: %s' % url)
     data = urllib.urlencode(data)
-    response = urlfetch.fetch(url=url, payload=data, method=urlfetch.POST, headers={'Content-Type': 'application/x-www-form-urlencoded'})
+    response = urlfetch.fetch(url=url, payload=data, method=urlfetch.POST, deadline=60, headers={'Content-Type': 'application/x-www-form-urlencoded'})
     if response and response.status_code == 200:
       try:
         return json.loads(response.content)

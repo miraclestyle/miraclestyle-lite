@@ -227,7 +227,7 @@ def mail_send(data):
 def http_send(data):
   data['subject'] = render_template(data['subject'], data).strip()
   data['body'] = render_template(data['body'], data).strip()
-  urlfetch.fetch(data['recipient'], json.dumps(data), method=urlfetch.POST)
+  urlfetch.fetch(data['recipient'], json.dumps(data), deadline=60, method=urlfetch.POST)
 
 
 def channel_send(data):
