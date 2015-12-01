@@ -432,10 +432,10 @@
             errorWithTraceback: 'Server errored with traceback.',
             actionFailedCheckForm: 'Action failed! Inspect the form for errors.',
             orderPaymentSuccessProgress: 'Order processing is in pogress.',
-            orderPaymentSuccessProgressCanceled: 'Order payment is canceled.',
-            orderPaymentSuccessProgressCompleted: 'Order payment is completed.',
-            orderPaymentSuccessProgressRefunded: 'Order payment is refunded.',
-            orderPaymentSuccessProgressPending: 'Order payment is pending.',
+            orderPaymentSuccessProgressCanceled: 'Payment canceled.',
+            orderPaymentSuccessProgressCompleted: 'Payment completed.',
+            orderPaymentSuccessProgressRefunded: 'Payment refunded.',
+            orderPaymentSuccessProgressPending: 'Payment pending.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
             saveChangesFirst: 'Save changes first.',
@@ -444,10 +444,10 @@
             loggedOut: 'Signed out.',
             loginCanceled: 'Sign in canceled.',
             youAreNotSignedIn: 'You are not signed in.',
-            saveInProgress: 'Please wait save in progress.',
-            orderNotFound: 'Requested order does not exist.',
-            catalogNotFound: 'Catalog not found.',
-            catalogProductNotFound: 'Catalog product not found.'
+            saveInProgress: 'Please wait, save in progress.',
+            orderNotFound: 'This order does not exist.',
+            catalogNotFound: 'This catalog does not exist.',
+            catalogProductNotFound: 'This catalog product does not exist.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
