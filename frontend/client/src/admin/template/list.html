@@ -2,9 +2,9 @@
 
     <div ng-include="'core/misc/search_form.html'"></div>
 
-    <div autoload-on-vertical-scroll-end="scrollEnd" class="clearfix">
+    <div autoload-on-vertical-scroll-end="search" class="clearfix">
         <div ng-if="maybeTemplate" ng-include="maybeTemplate"></div>
         <div ng-if="!maybeTemplate" ng-include="'admin/list_view/default.html'"></div>
     </div>
 
-    <div load-more-button="search.pagination"></div>
+    <div load-more-button="search.loader"></div>

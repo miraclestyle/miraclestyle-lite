@@ -920,16 +920,17 @@
                                         cursor: null,
                                         firstLoad: true,
                                         args: theConfig.args,
-                                        load: function () {
+                                        load: function (loadConfig) {
+                                            loadConfig = helpers.alwaysObject(loadConfig);
                                             var promise;
-                                            if (this.loading || this.more === false) {
+                                            if (!loadConfig.runLast && (this.loading || this.more === false)) {
                                                 return false;
                                             }
                                             if (!theConfig.args.search.options) {
                                                 theConfig.args.search.options = {};
                                             }
-                                            theConfig.args.search.options.start_cursor = this.cursor;
-                                            this.loading = true;
+                                            theConfig.args.search.options.start_cursor = loadConfig.runLast ? null : this.cursor;
+                                            this.loading = !loadConfig.runLast;
                                             $.extend(theConfig.config, {
                                                 disableUI: false
                                             });
@@ -947,6 +948,10 @@
                                                         config.error(response);
                                                     }
                                                     return config.complete.call(this, response);
+                                                }
+                                                if (loadConfig.runLast) {
+                                                    loadConfig.runLast(response);
+                                                    return response;
                                                 }
                                                 paginate.more = response.data.more;
                                                 paginate.cursor = response.data.cursor;

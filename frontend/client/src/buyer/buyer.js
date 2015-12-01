@@ -50,7 +50,7 @@
                                 scheduleTick();
                             }
                         }); // schedule tick if error, and if entity state did not change from cart.
-                    }, 2000);
+                    }, 30000);
                 },
                 viewOpts = {
                     inDirection: false,
@@ -102,11 +102,9 @@
 
             $scope.search = {
                 results: [],
-                pagination: {},
+                loader: false,
                 loaded: false
             };
-
-            $scope.scrollEnd = {loader: false};
 
             $scope.$watch(function maybeRemoveSearchResult() {
                 var maybe = false;
@@ -140,7 +138,7 @@
 
             models['19'].current().then(function (response) {
                 var buyerEntity = response.data.entity;
-                $scope.search.pagination = models['34'].paginate({
+                $scope.search.loader = models['34'].paginate({
                     kind: '34',
                     args: {
                         search: {
@@ -169,8 +167,7 @@
                         $scope.search.loaded = true;
                     }
                 });
-                $scope.scrollEnd.loader = $scope.search.pagination;
-                $scope.search.pagination.load();
+                $scope.search.loader.load();
             });
         })).directive('buyerAddressListView', function () {
             return {

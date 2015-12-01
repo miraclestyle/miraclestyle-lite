@@ -92,17 +92,13 @@
 
         $scope.search = {
             results: [],
-            pagination: {},
+            loader: {},
             loaded: false
-        };
-
-        $scope.scrollEnd = {
-            loader: false
         };
 
         models['23'].current().then(function (response) {
             var sellerEntity = response.data.entity;
-            $scope.search.pagination = models['31'].paginate({
+            $scope.search.loader = models['31'].paginate({
                 kind: '31',
                 args: {
                     search: {
@@ -129,8 +125,7 @@
                     $scope.search.loaded = true;
                 }
             });
-            $scope.scrollEnd.loader = $scope.search.pagination;
-            $scope.search.pagination.load();
+            $scope.search.loader.load();
         });
 
     })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
@@ -173,12 +168,8 @@
 
         $scope.search = {
             results: [],
-            pagination: {},
+            loader: {},
             loaded: false
-        };
-
-        $scope.scrollEnd = {
-            loader: false
         };
 
         $scope.view = function (order, $event) {
@@ -190,7 +181,7 @@
 
         models['23'].current().then(function (response) {
             var sellerEntity = response.data.entity;
-            $scope.search.pagination = models['34'].paginate({
+            $scope.search.loader = models['34'].paginate({
                 kind: '34',
                 args: {
                     search: {
@@ -221,8 +212,7 @@
                     $scope.search.loaded = true;
                 }
             });
-            $scope.scrollEnd.loader = $scope.search.pagination;
-            $scope.search.pagination.load();
+            $scope.search.loader.load();
         });
     })).run(ng(function (modelsConfig, modelsMeta,
         modelsEditor, formInputTypes, underscoreTemplate, $state, $stateParams, $modal, modals, social, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
@@ -949,7 +939,7 @@
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller, config.sellerDetails);
                                 $scope.search = {
                                     results: [],
-                                    pagination: models['31'].paginate({
+                                    loader: models['31'].paginate({
                                         kind: '31',
                                         args: {
                                             search: {
@@ -978,10 +968,7 @@
                                         }
                                     })
                                 };
-                                $scope.scrollEnd = {
-                                    loader: $scope.search.pagination
-                                };
-                                $scope.search.pagination.load();
+                                $scope.search.loader.load();
                             });
                         })
                     });

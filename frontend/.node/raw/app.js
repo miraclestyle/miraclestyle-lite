@@ -1769,10 +1769,10 @@ if (window.DEBUG) {
             errorWithTraceback: 'Server errored with traceback.',
             actionFailedCheckForm: 'Action failed! Inspect the form for errors.',
             orderPaymentSuccessProgress: 'Order processing is in pogress.',
-            orderPaymentSuccessProgressCanceled: 'Order payment is canceled.',
-            orderPaymentSuccessProgressCompleted: 'Order payment is completed.',
-            orderPaymentSuccessProgressRefunded: 'Order payment is refunded.',
-            orderPaymentSuccessProgressPending: 'Order payment is pending.',
+            orderPaymentSuccessProgressCanceled: 'Payment canceled.',
+            orderPaymentSuccessProgressCompleted: 'Payment completed.',
+            orderPaymentSuccessProgressRefunded: 'Payment refunded.',
+            orderPaymentSuccessProgressPending: 'Payment pending.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
             saveChangesFirst: 'Save changes first.',
@@ -1781,10 +1781,10 @@ if (window.DEBUG) {
             loggedOut: 'Signed out.',
             loginCanceled: 'Sign in canceled.',
             youAreNotSignedIn: 'You are not signed in.',
-            saveInProgress: 'Please wait save in progress.',
-            orderNotFound: 'Requested order does not exist.',
-            catalogNotFound: 'Catalog not found.',
-            catalogProductNotFound: 'Catalog product not found.'
+            saveInProgress: 'Please wait, save in progress.',
+            orderNotFound: 'This order does not exist.',
+            catalogNotFound: 'This catalog does not exist.',
+            catalogProductNotFound: 'This catalog product does not exist.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -13149,8 +13149,10 @@ function msieversion() {
                             steady.addCondition('checkTop', true);
                         }
                         scope.$on('$destroy', function () {
-                            steady.stop();
-                            steady = undefined;
+                            if (steady) {
+                                steady.stop();
+                                steady = undefined;
+                            }
                             clearInterval(intervalid);
                             $timeout.cancel(timeoutid);
                         });
@@ -14235,6 +14237,60 @@ function msieversion() {
                                 });
                             });
                         }
+                    });
+                }
+            };
+        })).directive('pollResults', ng(function () {
+            return {
+                scope: {
+                    config: '=pollResults'
+                },
+                templateUrl: 'core/misc/load_more_card.html',
+                link: function (scope, element, attrs) {
+                    var started = false,
+                        config = scope.config,
+                        stop = false,
+                        timer = null,
+                        seen = {},
+                        poll = function () {
+                            if (timer) {
+                                clearTimeout(timer);
+                            }
+                            timer = setTimeout(function () {
+                                config.loader.load({
+                                    runLast: function (response) {
+                                        if (stop) {
+                                            return;
+                                        }
+                                        var entities = response.data.entities;
+                                        angular.forEach(entities, function (value) {
+                                            if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
+                                                scope.newItems.push(value);
+                                                seen[value.key] = true;
+                                            }
+                                        });
+                                        poll();
+                                    }
+                                });
+                            }, 30000);
+                        };
+                    scope.newItems = [];
+                    scope.seeNewItems = function () {
+                        scope.config.results.extend(scope.newItems);
+                        seen = {};
+                        scope.newItems.length = 0;
+                    };
+                    scope.$watch(function () {
+                        return attrs.pollResults && config && config.loader;
+                    }, function (neww) {
+                        if (angular.isObject(neww) && !started) {
+                            started = true;
+                            poll();
+                        }
+                    });
+
+                    scope.$on('$destroy', function () {
+                        stop = true;
                     });
                 }
             };
@@ -16026,16 +16082,17 @@ function msieversion() {
                                         cursor: null,
                                         firstLoad: true,
                                         args: theConfig.args,
-                                        load: function () {
+                                        load: function (loadConfig) {
+                                            loadConfig = helpers.alwaysObject(loadConfig);
                                             var promise;
-                                            if (this.loading || this.more === false) {
+                                            if (!loadConfig.runLast && (this.loading || this.more === false)) {
                                                 return false;
                                             }
                                             if (!theConfig.args.search.options) {
                                                 theConfig.args.search.options = {};
                                             }
-                                            theConfig.args.search.options.start_cursor = this.cursor;
-                                            this.loading = true;
+                                            theConfig.args.search.options.start_cursor = loadConfig.runLast ? null : this.cursor;
+                                            this.loading = !loadConfig.runLast;
                                             $.extend(theConfig.config, {
                                                 disableUI: false
                                             });
@@ -16053,6 +16110,10 @@ function msieversion() {
                                                         config.error(response);
                                                     }
                                                     return config.complete.call(this, response);
+                                                }
+                                                if (loadConfig.runLast) {
+                                                    loadConfig.runLast(response);
+                                                    return response;
                                                 }
                                                 paginate.more = response.data.more;
                                                 paginate.cursor = response.data.cursor;
@@ -18148,7 +18209,7 @@ angular.module('app')
                                 scheduleTick();
                             }
                         }); // schedule tick if error, and if entity state did not change from cart.
-                    }, 2000);
+                    }, 30000);
                 },
                 viewOpts = {
                     inDirection: false,
@@ -18200,11 +18261,9 @@ angular.module('app')
 
             $scope.search = {
                 results: [],
-                pagination: {},
+                loader: false,
                 loaded: false
             };
-
-            $scope.scrollEnd = {loader: false};
 
             $scope.$watch(function maybeRemoveSearchResult() {
                 var maybe = false;
@@ -18238,7 +18297,7 @@ angular.module('app')
 
             models['19'].current().then(function (response) {
                 var buyerEntity = response.data.entity;
-                $scope.search.pagination = models['34'].paginate({
+                $scope.search.loader = models['34'].paginate({
                     kind: '34',
                     args: {
                         search: {
@@ -18267,8 +18326,7 @@ angular.module('app')
                         $scope.search.loaded = true;
                     }
                 });
-                $scope.scrollEnd.loader = $scope.search.pagination;
-                $scope.search.pagination.load();
+                $scope.search.loader.load();
             });
         })).directive('buyerAddressListView', function () {
             return {
@@ -20890,7 +20948,7 @@ angular.module('app')
             defer.resolve();
             $scope.search = {
                 results: [],
-                pagination: models['31'].paginate({
+                loader: models['31'].paginate({
                     kind: '31',
                     args: args,
                     config: {
@@ -20903,12 +20961,8 @@ angular.module('app')
                     }
                 })
             };
-            $scope.scrollEnd = {
-                loader: false
-            };
-            $scope.scrollEnd.loader = $scope.search.pagination;
             promise.then(function () {
-                $scope.search.pagination.load();
+                $scope.search.loader.load();
             });
 
 
@@ -21910,17 +21964,13 @@ angular.module('app')
 
         $scope.search = {
             results: [],
-            pagination: {},
+            loader: {},
             loaded: false
-        };
-
-        $scope.scrollEnd = {
-            loader: false
         };
 
         models['23'].current().then(function (response) {
             var sellerEntity = response.data.entity;
-            $scope.search.pagination = models['31'].paginate({
+            $scope.search.loader = models['31'].paginate({
                 kind: '31',
                 args: {
                     search: {
@@ -21947,8 +21997,7 @@ angular.module('app')
                     $scope.search.loaded = true;
                 }
             });
-            $scope.scrollEnd.loader = $scope.search.pagination;
-            $scope.search.pagination.load();
+            $scope.search.loader.load();
         });
 
     })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
@@ -21991,12 +22040,8 @@ angular.module('app')
 
         $scope.search = {
             results: [],
-            pagination: {},
+            loader: {},
             loaded: false
-        };
-
-        $scope.scrollEnd = {
-            loader: false
         };
 
         $scope.view = function (order, $event) {
@@ -22008,7 +22053,7 @@ angular.module('app')
 
         models['23'].current().then(function (response) {
             var sellerEntity = response.data.entity;
-            $scope.search.pagination = models['34'].paginate({
+            $scope.search.loader = models['34'].paginate({
                 kind: '34',
                 args: {
                     search: {
@@ -22039,8 +22084,7 @@ angular.module('app')
                     $scope.search.loaded = true;
                 }
             });
-            $scope.scrollEnd.loader = $scope.search.pagination;
-            $scope.search.pagination.load();
+            $scope.search.loader.load();
         });
     })).run(ng(function (modelsConfig, modelsMeta,
         modelsEditor, formInputTypes, underscoreTemplate, $state, $stateParams, $modal, modals, social, helpers, $q, $timeout, currentAccount, $filter, dateFilter, GLOBAL_CONFIG, snackbar) {
@@ -22767,7 +22811,7 @@ angular.module('app')
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller, config.sellerDetails);
                                 $scope.search = {
                                     results: [],
-                                    pagination: models['31'].paginate({
+                                    loader: models['31'].paginate({
                                         kind: '31',
                                         args: {
                                             search: {
@@ -22796,10 +22840,7 @@ angular.module('app')
                                         }
                                     })
                                 };
-                                $scope.scrollEnd = {
-                                    loader: $scope.search.pagination
-                                };
-                                $scope.search.pagination.load();
+                                $scope.search.loader.load();
                             });
                         })
                     });
@@ -22926,7 +22967,7 @@ angular.module('app')
                     });
                 },
                 results: [],
-                pagination: models[kind].paginate({
+                loader: models[kind].paginate({
                     args: args,
                     kind: kind,
                     complete: function (response) {
@@ -22937,18 +22978,13 @@ angular.module('app')
 
             $scope.search.kind = kind;
             if (!query) {
-                query = $scope.search.pagination.args;
+                query = $scope.search.loader.args;
             }
             $scope.search.changeKindUI();
             if (query) {
                 $scope.search.setSearch(kind, query.search);
             }
-            $scope.scrollEnd = {
-                loader: $scope.search.pagination
-            };
-            $scope.search.pagination.load();
-
-
+            $scope.search.loader.load();
         }));
 }());
 (function () {

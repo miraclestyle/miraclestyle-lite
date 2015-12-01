@@ -471,8 +471,10 @@
                             steady.addCondition('checkTop', true);
                         }
                         scope.$on('$destroy', function () {
-                            steady.stop();
-                            steady = undefined;
+                            if (steady) {
+                                steady.stop();
+                                steady = undefined;
+                            }
                             clearInterval(intervalid);
                             $timeout.cancel(timeoutid);
                         });
@@ -1557,6 +1559,60 @@
                                 });
                             });
                         }
+                    });
+                }
+            };
+        })).directive('pollResults', ng(function () {
+            return {
+                scope: {
+                    config: '=pollResults'
+                },
+                templateUrl: 'core/misc/load_more_card.html',
+                link: function (scope, element, attrs) {
+                    var started = false,
+                        config = scope.config,
+                        stop = false,
+                        timer = null,
+                        seen = {},
+                        poll = function () {
+                            if (timer) {
+                                clearTimeout(timer);
+                            }
+                            timer = setTimeout(function () {
+                                config.loader.load({
+                                    runLast: function (response) {
+                                        if (stop) {
+                                            return;
+                                        }
+                                        var entities = response.data.entities;
+                                        angular.forEach(entities, function (value) {
+                                            if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
+                                                scope.newItems.push(value);
+                                                seen[value.key] = true;
+                                            }
+                                        });
+                                        poll();
+                                    }
+                                });
+                            }, 30000);
+                        };
+                    scope.newItems = [];
+                    scope.seeNewItems = function () {
+                        scope.config.results.extend(scope.newItems);
+                        seen = {};
+                        scope.newItems.length = 0;
+                    };
+                    scope.$watch(function () {
+                        return attrs.pollResults && config && config.loader;
+                    }, function (neww) {
+                        if (angular.isObject(neww) && !started) {
+                            started = true;
+                            poll();
+                        }
+                    });
+
+                    scope.$on('$destroy', function () {
+                        stop = true;
                     });
                 }
             };

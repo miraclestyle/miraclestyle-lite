@@ -42,7 +42,7 @@
                     });
                 },
                 results: [],
-                pagination: models[kind].paginate({
+                loader: models[kind].paginate({
                     args: args,
                     kind: kind,
                     complete: function (response) {
@@ -53,17 +53,12 @@
 
             $scope.search.kind = kind;
             if (!query) {
-                query = $scope.search.pagination.args;
+                query = $scope.search.loader.args;
             }
             $scope.search.changeKindUI();
             if (query) {
                 $scope.search.setSearch(kind, query.search);
             }
-            $scope.scrollEnd = {
-                loader: $scope.search.pagination
-            };
-            $scope.search.pagination.load();
-
-
+            $scope.search.loader.load();
         }));
 }());

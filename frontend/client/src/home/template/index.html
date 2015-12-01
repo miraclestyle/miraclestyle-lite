@@ -1,6 +1,6 @@
  
 <div class="list list-padding">
-    <div autoload-on-vertical-scroll-end="scrollEnd" ng-init="maxHeight = (sellerDetails ? 240 : 340)"
+    <div autoload-on-vertical-scroll-end="search" ng-init="maxHeight = (sellerDetails ? 240 : 340)"
        grid-scale="{maxHeight: maxHeight}"
        ng-show="search.results.length"
        class="grid-wrapper clearfix">
@@ -13,5 +13,5 @@
             </button>
         </div>
     </div>
-    <div load-more-button="search.pagination"></div>
+    <div load-more-button="search.loader"></div>
 </div> 

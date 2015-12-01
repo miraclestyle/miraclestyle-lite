@@ -1,5 +1,5 @@
 <div class="list list-padding">
-    <div autoload-on-vertical-scroll-end="scrollEnd"
+    <div autoload-on-vertical-scroll-end="search"
          grid-scale="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}"
          ng-show="!helpers.models.isEntityListEmpty(search.results)"
          class="grid-wrapper clearfix">
@@ -22,5 +22,5 @@
     <div ng-show="helpers.models.isEntityListEmpty(search.results) && search.loaded" 
          help-render="listHelp"></div>
     <!-- end help -->
-    <div load-more-button="search.pagination"></div>
+    <div load-more-button="search.loader"></div>
 </div>

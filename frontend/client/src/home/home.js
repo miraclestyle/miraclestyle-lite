@@ -239,7 +239,7 @@
             defer.resolve();
             $scope.search = {
                 results: [],
-                pagination: models['31'].paginate({
+                loader: models['31'].paginate({
                     kind: '31',
                     args: args,
                     config: {
@@ -252,12 +252,8 @@
                     }
                 })
             };
-            $scope.scrollEnd = {
-                loader: false
-            };
-            $scope.scrollEnd.loader = $scope.search.pagination;
             promise.then(function () {
-                $scope.search.pagination.load();
+                $scope.search.loader.load();
             });
 
 

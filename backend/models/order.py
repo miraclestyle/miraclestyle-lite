@@ -313,7 +313,7 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Context(),
                       OrderInit(),
-                      OrderPluginExec(cfg={'kinds': ['117', '109']}),  # order currency must be available for everyone, tax is enabled for review stage
+                      OrderPluginExec(),  #  cfg={'kinds': ['117', '109']} order currency must be available for everyone, tax is enabled for review stage
                       OrderProductSpecsFormat(),
                       OrderUpdateLine(),
                       OrderLineRemove(),
