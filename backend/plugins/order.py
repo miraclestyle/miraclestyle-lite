@@ -603,13 +603,12 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
           # ipn will retry for x amount of times till it gives up
           # so we might as well use `return` statement to exit silently
     
-    def mismatch_check():
+    def new_mismatch(order_value, ipn_value):
+      # 'Seller settings receiver e-mail: testA@example.com - Paypal Payment receiver e-mail: testB@example.com'
+      new_str = '\nOrder %s: %s - PayPal payment %s: %s' % (order_value[0], order_value[1], ipn_value[0], ipn_value[1])
+      context.message_body += new_str
       
-      def new_mismatch(order_value, ipn_value):
-        # 'Seller settings receiver e-mail: testA@example.com - Paypal Payment receiver e-mail: testB@example.com'
-        new_str = '\nOrder %s: %s - PayPal payment %s: %s' % (order_value[0], order_value[1], ipn_value[0], ipn_value[1])
-        context.message_body += new_str
-      
+    def validate_payment_general():
       reciever_email = self.reciever_email.lower()
       ipn_reciever_email = ipn['receiver_email'].lower()
       if reciever_email != ipn_reciever_email:
@@ -633,6 +632,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       if order.key.urlsafe() != ipn['invoice']:
         new_mismatch(('id', order.key.urlsafe()), ('order id', ipn['invoice']))
       
+    def validate_payment_shipping_address():
       if shipping_address.country != ipn['address_country']:
         new_mismatch(('shipping address country', shipping_address.country), ('shipping address country', ipn['address_country']))
       
@@ -660,6 +660,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       if shipping_address.name != ipn['address_name']:
         new_mismatch(('shipping address name', shipping_address.name), ('shipping address name', ipn['address_name']))
       
+    def validate_payment_lines():
       for line in order._lines.value:
         product = line.product.value
         tools.log.debug('Order sequence #%s' % line.sequence)
@@ -678,56 +679,45 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         if line.subtotal != ipn_line_subtotal:
           new_mismatch(('item #%s subtotal (before discount)' % line.sequence, line.subtotal), ('item #%s subtotal' % line.sequence, ipn_line_subtotal))
     
-    def decide():
-      if ipn_payment_status == 'Pending':
-        # Check for ipn mismatches
-        mismatch_check()
-        if len(context.message_body):
-          order.payment_status = 'Mismatched'
-          tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (context.message_body, ipn, order.key))
-        else:
-          order.payment_status = ipn_payment_status
-      elif ipn_payment_status == 'Completed':
-        # Check for ipn mismatches
-        mismatch_check()
-        if len(context.message_body):
-          order.payment_status = 'Mismatched'
-          tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (context.message_body, ipn, order.key))
-        else:
-          order.payment_status = ipn_payment_status
-      elif ipn_payment_status == 'Denied':
-        order.payment_status = ipn_payment_status
-      elif ipn_payment_status == 'Refunded':
-        order.payment_status = ipn_payment_status
-        context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
-      elif ipn_payment_status == 'Reversed':
-        order.payment_status = ipn_payment_status
-        context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
-      elif ipn_payment_status == 'Canceled_Reversal':
-        order.payment_status = ipn_payment_status
+    def set_payment_status():
       '''payment_status The status of the payment:
-          Canceled_Reversal: A reversal has been canceled. For example, you
-          won a dispute with the customer, and the funds for the transaction that was
-          reversed have been returned to you.
-          Completed: The payment has been completed, and the funds have been
-          added successfully to your account balance.
-          Created: A German ELV payment is made using Express Checkout.
-          Denied: You denied the payment. This happens only if the payment was
-          previously pending because of possible reasons described for the
-          pending_reason variable or the Fraud_Management_Filters_x
-          variable.
-          Expired: This authorization has expired and cannot be captured.
-          Failed: The payment has failed. This happens only if the payment was
-          made from your customer’s bank account.
-          Pending: The payment is pending. See pending_reason for more
-          information.
-          Refunded: You refunded the payment.
-          Reversed: A payment was reversed due to a chargeback or other type of
-          reversal. The funds have been removed from your account balance and
-          returned to the buyer. The reason for the reversal is specified in the
-          ReasonCode element.
-          Processed: A payment has been accepted.
-          Voided: This authorization has been voided.'''
+      Canceled_Reversal: A reversal has been canceled. For example, you
+      won a dispute with the customer, and the funds for the transaction that was
+      reversed have been returned to you.
+      Completed: The payment has been completed, and the funds have been
+      added successfully to your account balance.
+      Created: A German ELV payment is made using Express Checkout.
+      Denied: You denied the payment. This happens only if the payment was
+      previously pending because of possible reasons described for the
+      pending_reason variable or the Fraud_Management_Filters_x
+      variable.
+      Expired: This authorization has expired and cannot be captured.
+      Failed: The payment has failed. This happens only if the payment was
+      made from your customer’s bank account.
+      Pending: The payment is pending. See pending_reason for more
+      information.
+      Refunded: You refunded the payment.
+      Reversed: A payment was reversed due to a chargeback or other type of
+      reversal. The funds have been removed from your account balance and
+      returned to the buyer. The reason for the reversal is specified in the
+      ReasonCode element.
+      Processed: A payment has been accepted.
+      Voided: This authorization has been voided.'''
+      if ipn_payment_status in ['Pending', 'Completed']:
+        # Validate payment
+        validate_payment_general()
+        validate_payment_shipping_address()
+        validate_payment_lines()
+        if len(context.message_body):
+          order.payment_status = 'Mismatched'
+          tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (context.message_body, ipn, order.key))
+        else:
+          order.payment_status = ipn_payment_status
+      elif ipn_payment_status in ['Refunded', 'Reversed']:
+        order.payment_status = ipn_payment_status
+        context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
+      else:
+        order.payment_status = ipn_payment_status
     
     # Check for ipn duplicates
     duplicate_check()
@@ -736,7 +726,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     if order.payment_status == ipn_payment_status:
       return None  # nothing to do since the payment status is exactly the same
     else:
-      decide()
+      set_payment_status()
     
     # Produce final message
     Account = context.models['11']
