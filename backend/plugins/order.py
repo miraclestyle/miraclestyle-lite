@@ -413,6 +413,7 @@ class OrderNotify(orm.BaseModel):
       result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
                               payload='cmd=_notify-validate&%s' % request['body'],
                               method=urlfetch.POST,
+                              deadline=60,
                               headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
       result_content = result.content
       if result_content != 'VERIFIED':
