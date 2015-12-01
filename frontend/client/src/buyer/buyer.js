@@ -65,10 +65,7 @@
                 },
                 viewThen = function (order) {
                     gorder = order;
-                    if (isOrderPaymentCanceled) {
-                        snackbar.showK('orderPaymentSuccessProgresscanceled');
-                    } else {
-                        snackbar.showK('orderPaymentSuccessProgress');
+                    if (!isOrderPaymentCanceled) {
                         if (!(isBuyerViewOrder || isBuyerViewCart)) {
                             scheduleTick();
                         }
