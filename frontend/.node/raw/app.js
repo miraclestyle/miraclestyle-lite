@@ -14266,8 +14266,8 @@ function msieversion() {
                                         angular.forEach(entities, function (value) {
                                             if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
                                                 scope.newItems.push(value);
-                                                seen[value.key] = true;
                                             }
+                                            seen[value.key] = true;
                                         });
                                         poll();
                                     }
@@ -14276,8 +14276,8 @@ function msieversion() {
                         };
                     scope.newItems = [];
                     scope.seeNewItems = function () {
-                        scope.config.results.extend(scope.newItems);
-                        seen = {};
+                        scope.newItems.reverse();
+                        scope.config.results.prepend(scope.newItems);
                         scope.newItems.length = 0;
                     };
                     scope.$watch(function () {
