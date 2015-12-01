@@ -607,7 +607,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       # 'Seller settings receiver e-mail: testA@example.com - Paypal Payment receiver e-mail: testB@example.com'
       new_str = '\nOrder %s: %s - PayPal payment %s: %s' % (order_value[0], order_value[1], ipn_value[0], ipn_value[1])
       context.message_body += new_str
-      
+    
     def validate_payment_general():
       reciever_email = self.reciever_email.lower()
       ipn_reciever_email = ipn['receiver_email'].lower()
@@ -634,7 +634,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       
       if order.key.urlsafe() != ipn['invoice']:
         new_mismatch(('id', order.key.urlsafe()), ('order id', ipn['invoice']))
-      
+    
     def validate_payment_shipping_address():
       if shipping_address.country != ipn['address_country']:
         new_mismatch(('shipping address country', shipping_address.country), ('shipping address country', ipn['address_country']))
@@ -662,7 +662,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       
       if shipping_address.name != ipn['address_name']:
         new_mismatch(('shipping address name', shipping_address.name), ('shipping address name', ipn['address_name']))
-      
+    
     def validate_payment_lines():
       for line in order._lines.value:
         product = line.product.value
