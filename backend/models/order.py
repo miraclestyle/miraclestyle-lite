@@ -84,8 +84,8 @@ class OrderCarrier(orm.BaseExpando):
   unit_price = orm.SuperDecimalProperty('3', required=True, indexed=False)
   taxes = orm.SuperLocalStructuredProperty(OrderTax, '4', repeated=True)
   subtotal = orm.SuperDecimalProperty('5', required=True, indexed=False)
-  total = orm.SuperDecimalProperty('6', required=True, indexed=False)
-  tax_subtotal = orm.SuperDecimalProperty('7', required=True, indexed=False)
+  tax_subtotal = orm.SuperDecimalProperty('6', required=True, indexed=False)
+  total = orm.SuperDecimalProperty('7', required=True, indexed=False)
 
   _default_indexed = False
 
