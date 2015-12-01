@@ -436,6 +436,7 @@
             orderPaymentSuccessProgressCompleted: 'Payment completed.',
             orderPaymentSuccessProgressRefunded: 'Payment refunded.',
             orderPaymentSuccessProgressPending: 'Payment pending.',
+            orderPaymentSuccessProgressMismatched: 'Payment mismatched.',
             sellerProhibtsAddress: 'The seller prohibits one of the addresses that you have supplied.',
             productOutOfStock: 'Product out of stock.',
             saveChangesFirst: 'Save changes first.',
