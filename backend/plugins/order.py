@@ -413,7 +413,6 @@ class OrderNotify(orm.BaseModel):
       result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
                               payload='cmd=_notify-validate&%s' % request['body'],
                               method=urlfetch.POST,
-                              deadline=60,
                               headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
       result_content = result.content
       if result_content != 'VERIFIED':
@@ -680,37 +679,31 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     
     def decide():
       if ipn_payment_status == 'Pending':
-        if order.payment_status is None:
-          # Check for ipn mismatches
-          mismatch_check()
-          if len(context.message_body):
-            order.payment_status = 'Mismatched'
-            tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (context.message_body, ipn, order.key))
-          else:
-            order.payment_status = ipn_payment_status
+        # Check for ipn mismatches
+        mismatch_check()
+        if len(context.message_body):
+          order.payment_status = 'Mismatched'
+          tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (context.message_body, ipn, order.key))
+        else:
+          order.payment_status = ipn_payment_status
       elif ipn_payment_status == 'Completed':
-        if order.payment_status == 'Pending' or order.payment_status is None:
-          # Check for ipn mismatches
-          mismatch_check()
-          if len(context.message_body):
-            order.payment_status = 'Mismatched'
-            tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (context.message_body, ipn, order.key))
-          else:
-            order.payment_status = ipn_payment_status
+        # Check for ipn mismatches
+        mismatch_check()
+        if len(context.message_body):
+          order.payment_status = 'Mismatched'
+          tools.log.error('Found mismatches: %s, ipn: %s, order: %s' % (context.message_body, ipn, order.key))
+        else:
+          order.payment_status = ipn_payment_status
       elif ipn_payment_status == 'Denied':
-        if order.payment_status == 'Pending':
-          order.payment_status = ipn_payment_status
+        order.payment_status = ipn_payment_status
       elif ipn_payment_status == 'Refunded':
-        if order.payment_status in ['Completed', 'Mismatched']:
-          order.payment_status = ipn_payment_status
-          context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
+        order.payment_status = ipn_payment_status
+        context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
       elif ipn_payment_status == 'Reversed':
-        if order.payment_status in ['Completed', 'Mismatched']:
-          order.payment_status = ipn_payment_status
-          context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
+        order.payment_status = ipn_payment_status
+        context.message_body = '\n%s amount: %s' % (ipn_payment_status, abs(tools.format_value(ipn['mc_gross'], order_currency)))
       elif ipn_payment_status == 'Canceled_Reversal':
-        if order.payment_status == 'Reversed':
-          order.payment_status = ipn_payment_status
+        order.payment_status = ipn_payment_status
       '''payment_status The status of the payment:
           Canceled_Reversal: A reversal has been canceled. For example, you
           won a dispute with the customer, and the funds for the transaction that was
