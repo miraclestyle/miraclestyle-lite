@@ -629,8 +629,8 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       if order.tax_amount != tools.format_value(ipn['tax'], order_currency):
         new_mismatch(('tax amount', order.tax_amount), ('tax amount', tools.format_value(ipn['tax'], order_currency)))
       
-      if order.carrier.value.total != tools.format_value(ipn['mc_handling'], order_currency):
-        new_mismatch(('shipping and handling amount', order.carrier.value.total), ('shipping and handling amount', tools.format_value(ipn['mc_handling'], order_currency)))
+      if order.carrier.value.subtotal != tools.format_value(ipn['mc_handling'], order_currency):
+        new_mismatch(('shipping and handling amount', order.carrier.value.subtotal), ('shipping and handling amount', tools.format_value(ipn['mc_handling'], order_currency)))
       
       if order.key.urlsafe() != ipn['invoice']:
         new_mismatch(('id', order.key.urlsafe()), ('order id', ipn['invoice']))
