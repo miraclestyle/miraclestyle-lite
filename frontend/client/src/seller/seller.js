@@ -597,6 +597,7 @@
                                     $scope.info = {
                                         build: true
                                     };
+                                    $scope.$stateHiddenLoading = true;
                                     $scope.container = {};
                                     $scope.config = config;
                                     $scope.$on('$destroy', function () {
@@ -664,6 +665,7 @@
                                                 } else {
                                                     $scope.formBuilder['0'].push(field);
                                                 }
+
                                             });
 
                                             angular.forEach($scope.layouts.groups, function (group, i) {
@@ -685,12 +687,14 @@
                                                 found.disabled = true;
                                             }
 
+                                            $scope.$stateHiddenLoading = true;
+                                            helpers.fields.deferFormBuilderFields($scope.formBuilder).then(function () {
+                                                $scope.$stateHiddenLoading = false;
+                                            });
                                         };
 
                                         $scope.args = angular.copy(arg);
-                                        // entity.addreses.0.address
                                         $scope.parentArgs = config.ui.specifics.parentArgs;
-                                        // entity.addresses
                                         $scope.entity = config.ui.specifics.entity;
                                         $scope.rootFormSetDirty = rootFormSetDirty;
                                         $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
@@ -713,9 +717,8 @@
                                                     $scope._close_ = undefined;
                                                     return $scope.$close();
                                                 });
-                                            } else {
-                                                return modals.confirm('discardWithFieldsRequired', $scope.$close);
                                             }
+                                            return modals.confirm('discardWithFieldsRequired', $scope.$close);
                                         };
 
                                         $scope._close_ = $scope.close;

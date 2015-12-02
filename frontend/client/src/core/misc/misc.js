@@ -1584,7 +1584,7 @@
                                         if (stop) {
                                             return;
                                         }
-                                        var entities = response.data.entities;
+                                        var entities = (response ? response.data.entities : false);
                                         if (entities) {
                                             angular.forEach(entities, function (value) {
                                                 if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {

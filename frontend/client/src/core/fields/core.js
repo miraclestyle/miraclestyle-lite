@@ -1,3 +1,4 @@
+
 (function () {
     'use strict';
     angular.module('app')
@@ -9,7 +10,7 @@
                 return _.string.capitalize(human);
             };
         }))
-        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG, snackbar) {
+        .run(ng(function (helpers, modals, $modal, $q, GLOBAL_CONFIG, formInputTypes, snackbar) {
             if (!helpers.fields) {
                 helpers.fields = {};
             }
@@ -30,6 +31,42 @@
                         p2 = 999999;
                     }
                     return p1 - p2;
+                },
+                resolve: function (field) {
+                    if (field.ui && field.ui.defer) {
+                        field.ui.defer.resolve();
+                    }
+                },
+                deferFormBuilderFields: function (formBuilder) {
+                    var promises = [],
+                        anyway = $q.defer(),
+                        extract = function (field) {
+                            if (field.ui.group) {
+                                angular.forEach(field.ui.group.fields, function (f) {
+                                    extract(f);
+                                });
+                            } else {
+                                if ($.inArray(field.type, formInputTypes.resolvable) !== -1) {
+                                    var defer = $q.defer();
+                                    console.log('defering', field);
+                                    field.ui.defer = defer;
+                                    promises.push(defer.promise);
+                                }
+                            }
+                        };
+                    angular.forEach(formBuilder, function (formBuild) {
+                        if (angular.isArray(formBuild)) {
+                            angular.forEach(formBuild, function (field) {
+                                extract(field);
+                            });
+                        }
+                    });
+
+                    if (!promises.length) {
+                        anyway.resolve();
+                        promises = [anyway.promise];
+                    }
+                    return $q.all(promises);
                 },
                 applyGlobalConfig: function (config) {
                     if (angular.isUndefined(config.ui.help) && angular.isDefined(GLOBAL_CONFIG.fields.help[config._maker_])) {
@@ -171,7 +208,7 @@
             };
         }))
         .directive('formInput', ng(function ($compile, underscoreTemplate,
-            formInputTypes, helpers, GLOBAL_CONFIG) {
+            formInputTypes, helpers, GLOBAL_CONFIG, $q, $timeout) {
 
             var types = formInputTypes,
                 utils = helpers.fields.utils;
@@ -370,6 +407,8 @@
 
             var formInputTypes = {};
 
+            formInputTypes.resolvable = [];
+
             return formInputTypes;
 
         })).directive('fastNgChange', ng(function ($parse, $mdUtil) {
@@ -413,8 +452,8 @@
             return {
                 require: '^form',
                 link: function (scope, element, attrs, ngFormController) {
-                    if (window.isChromeApp || attrs.noLeaveCheck) {
-                        return; // chrome does not have this
+                    if (attrs.noLeaveCheck) {
+                        return;
                     }
                     var cb;
                     if (!windowBound) {

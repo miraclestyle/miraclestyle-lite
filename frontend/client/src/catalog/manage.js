@@ -1131,6 +1131,7 @@
                                         fields: ['name', 'discontinue_date'],
                                     }, {
                                         label: GLOBAL_CONFIG.subheaders.catalogImages,
+                                        fields: ['_images'],
                                         include: 'core/misc/action.html',
                                         action: function () {
                                             var scope = config.getScope();
@@ -1144,6 +1145,7 @@
                                     }, {
                                         label: GLOBAL_CONFIG.subheaders.catalogProducts,
                                         include: 'core/misc/action.html',
+                                        fields: [],
                                         action: function () {
                                             var scope = config.getScope();
 

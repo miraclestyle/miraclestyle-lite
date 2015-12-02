@@ -12,6 +12,13 @@
                         view = scope.$eval(attrs.view),
                         listView = scope.$eval(attrs.listView),
                         search = scope.$eval(attrs.search),
+                        defer = scope.$eval(attrs.defer),
+                        resolve = function () {
+                            console.log('resolving', element, defer);
+                            if (defer) {
+                                defer.resolve();
+                            }
+                        },
                         select = scope.$eval(attrs.select),
                         init = (select && select.init ? select.init : null);
 
@@ -25,7 +32,8 @@
                     select.multiple = true;
                     select.items = [];
                     select.find = function (value) {
-                        if (value === null) {
+                        if (value === null || value === undefined) {
+                            resolve();
                             return undefined;
                         }
                         var active,
@@ -67,9 +75,13 @@
                         if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing) {
-                                    select.search.missing(missing);
+                                    select.search.missing(missing).then(resolve);
+                                } else {
+                                    resolve();
                                 }
                             });
+                        } else {
+                            resolve();
                         }
                         return active;
                     };
@@ -129,7 +141,7 @@
                         formCtrl.$setDirty();
                         select.close();
                     };
-
+                    // @todo this is causing problems
                     select.commitMultipleSelect = function (item) {
                         $timeout(function () {
                             select.multipleSelect(item, true);
@@ -189,7 +201,9 @@
                             fullScreen: false,
                             backdrop: true,
                             controller: ng(function ($scope) {
-                                $scope.select = select;
+                                $scope.$state.instant(function () {
+                                    $scope.select = select;
+                                });
                                 $scope.$on('$destroy', function () {
                                     select.opened = false;
                                     select.close = angular.noop;
@@ -259,8 +273,13 @@
                         grouping = scope.$eval(attrs.grouping),
                         listView = scope.$eval(attrs.listView),
                         placeholder = attrs.placeholder,
+                        defer = scope.$eval(attrs.defer),
                         select = {},
-                        timeout,
+                        resolve = function () {
+                            if (defer) {
+                                defer.resolve();
+                            }
+                        },
                         ngModelPipelineCheckValue,
                         dontOpen = false;
                     containerCtrl.input = element;
@@ -307,7 +326,8 @@
                     select.multiple = multiple;
                     select.items = [];
                     select.find = function (value) {
-                        if (value === null) {
+                        if (value === null || value === undefined) {
+                            resolve();
                             return undefined;
                         }
                         var active,
@@ -349,9 +369,13 @@
                         if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing) {
-                                    select.search.missing(missing);
+                                    select.search.missing(missing).then(resolve);
+                                } else {
+                                    resolve();
                                 }
                             });
+                        } else {
+                            resolve();
                         }
                         return active;
                     };
@@ -639,17 +663,24 @@
                                 return nextPromise;
                             },
                             controller: ng(function ($scope) {
-                                select.close = function () {
-                                    if (select.multiple || select.async) {
-                                        $scope.close();
-                                    } else {
-                                        $simpleDialog.hide();
-                                    }
+                                var process = function () {
+                                    select.close = function () {
+                                        if (select.multiple || select.async) {
+                                            $scope.close();
+                                        } else {
+                                            $simpleDialog.hide();
+                                        }
+                                    };
+                                    $scope.select = select;
                                 };
+                                if ($scope.$state) {
+                                    $scope.$state.instant(process);
+                                } else {
+                                    process();
+                                }
                                 $scope.close = function () {
                                     $scope.$close().then(select.afterClose || angular.noop);
                                 };
-                                $scope.select = select;
                                 $scope.$on('$destroy', function () {
                                     select.opened = false;
                                     containerCtrl.setFocused(false);
@@ -698,33 +729,6 @@
                         return $parse(select.search.filterProp)(select.search.query);
                     };
 
-                    if (search) {
-                        select.search = {
-                            query: {},
-                            delay: 200,
-                            enabled: false,
-                            doFind: function () {
-                                var term = select.getFindTerm();
-                                if (timeout) {
-                                    clearTimeout(timeout);
-                                }
-                                if (select.search.find) {
-                                    timeout = setTimeout(function () {
-                                        select.search.find(term);
-                                    }, select.search.delay);
-                                }
-
-                                $timeout(function () {
-                                    $(window).triggerHandler('resize');
-                                }, 0, false);
-                            }
-                        };
-                        $.extend(select.search, search);
-                        select.search.filterProp = (select.search.filterProp ? select.search.filterProp : 'name');
-                        if (!select.search.model) {
-                            select.search.model = 'select.search.query' + ('.' + select.search.filterProp);
-                        }
-                    }
                     if (grouping) {
                         select.hasGrouping = true;
                         select.grouping = [];

@@ -197,6 +197,8 @@
             endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
             errorHandling, modals, GLOBAL_CONFIG, snackbar) {
 
+            formInputTypes.resolvable.extend(['SuperKeyProperty', 'SuperVirtualKeyProperty']);
+
             $.extend(formInputTypes, {
                 SuperBooleanProperty: function (info) {
                     info.config.required = false;
@@ -215,6 +217,7 @@
                 },
                 SuperKeyProperty: function (info) {
                     if (info.config.searchable === false) {
+                        helpers.fields.resolve(info.config);
                         return this.SuperStringProperty(info);
                     }
                     var config = info.config,
@@ -350,7 +353,6 @@
                         search = {},
                         args,
                         opts = {
-                            activitySpinner: true,
                             disableUI: false
                         },
                         override = config.ui.specifics.override || {},
@@ -453,10 +455,12 @@
                                     }
                                     config.ui.specifics.search.missing = function (id) {
                                         if (id === null || id === undefined || !id.length) {
-                                            return;
+                                            var defer = $q.defer();
+                                            defer.resolve();
+                                            return defer.promise;
                                         }
                                         var selectedIsArray = angular.isArray(id);
-                                        model.actions.search({
+                                        return model.actions.search({
                                             search: {
                                                 keys: (selectedIsArray ? id : [id])
                                             }
@@ -475,6 +479,7 @@
                                                     }
                                                 });
                                             }
+                                            return config.ui.specifics.entities;
                                         });
                                     };
                                 }
@@ -485,7 +490,11 @@
                                     initialDefer.resolve();
                                 });
                             });
+                        } else {
+                            config.ui.defer.resolve();
                         }
+                    } else {
+                        config.ui.defer.resolve();
                     }
                     info.scope.$on('$destroy', function () {
                         config.ui.specifics.entities = [];

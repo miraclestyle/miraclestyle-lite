@@ -10328,6 +10328,7 @@ function msieversion() {
             });
         }));
 }());
+
 (function () {
     'use strict';
     angular.module('app')
@@ -10339,7 +10340,7 @@ function msieversion() {
                 return _.string.capitalize(human);
             };
         }))
-        .run(ng(function (helpers, modals, $modal, GLOBAL_CONFIG, snackbar) {
+        .run(ng(function (helpers, modals, $modal, $q, GLOBAL_CONFIG, formInputTypes, snackbar) {
             if (!helpers.fields) {
                 helpers.fields = {};
             }
@@ -10360,6 +10361,42 @@ function msieversion() {
                         p2 = 999999;
                     }
                     return p1 - p2;
+                },
+                resolve: function (field) {
+                    if (field.ui && field.ui.defer) {
+                        field.ui.defer.resolve();
+                    }
+                },
+                deferFormBuilderFields: function (formBuilder) {
+                    var promises = [],
+                        anyway = $q.defer(),
+                        extract = function (field) {
+                            if (field.ui.group) {
+                                angular.forEach(field.ui.group.fields, function (f) {
+                                    extract(f);
+                                });
+                            } else {
+                                if ($.inArray(field.type, formInputTypes.resolvable) !== -1) {
+                                    var defer = $q.defer();
+                                    console.log('defering', field);
+                                    field.ui.defer = defer;
+                                    promises.push(defer.promise);
+                                }
+                            }
+                        };
+                    angular.forEach(formBuilder, function (formBuild) {
+                        if (angular.isArray(formBuild)) {
+                            angular.forEach(formBuild, function (field) {
+                                extract(field);
+                            });
+                        }
+                    });
+
+                    if (!promises.length) {
+                        anyway.resolve();
+                        promises = [anyway.promise];
+                    }
+                    return $q.all(promises);
                 },
                 applyGlobalConfig: function (config) {
                     if (angular.isUndefined(config.ui.help) && angular.isDefined(GLOBAL_CONFIG.fields.help[config._maker_])) {
@@ -10501,7 +10538,7 @@ function msieversion() {
             };
         }))
         .directive('formInput', ng(function ($compile, underscoreTemplate,
-            formInputTypes, helpers, GLOBAL_CONFIG) {
+            formInputTypes, helpers, GLOBAL_CONFIG, $q, $timeout) {
 
             var types = formInputTypes,
                 utils = helpers.fields.utils;
@@ -10700,6 +10737,8 @@ function msieversion() {
 
             var formInputTypes = {};
 
+            formInputTypes.resolvable = [];
+
             return formInputTypes;
 
         })).directive('fastNgChange', ng(function ($parse, $mdUtil) {
@@ -10743,8 +10782,8 @@ function msieversion() {
             return {
                 require: '^form',
                 link: function (scope, element, attrs, ngFormController) {
-                    if (window.isChromeApp || attrs.noLeaveCheck) {
-                        return; // chrome does not have this
+                    if (attrs.noLeaveCheck) {
+                        return;
                     }
                     var cb;
                     if (!windowBound) {
@@ -10974,6 +11013,8 @@ function msieversion() {
             endpoint, modelsMeta, models, $q, $filter, $modal, helpers,
             errorHandling, modals, GLOBAL_CONFIG, snackbar) {
 
+            formInputTypes.resolvable.extend(['SuperKeyProperty', 'SuperVirtualKeyProperty']);
+
             $.extend(formInputTypes, {
                 SuperBooleanProperty: function (info) {
                     info.config.required = false;
@@ -10992,6 +11033,7 @@ function msieversion() {
                 },
                 SuperKeyProperty: function (info) {
                     if (info.config.searchable === false) {
+                        helpers.fields.resolve(info.config);
                         return this.SuperStringProperty(info);
                     }
                     var config = info.config,
@@ -11127,7 +11169,6 @@ function msieversion() {
                         search = {},
                         args,
                         opts = {
-                            activitySpinner: true,
                             disableUI: false
                         },
                         override = config.ui.specifics.override || {},
@@ -11230,10 +11271,12 @@ function msieversion() {
                                     }
                                     config.ui.specifics.search.missing = function (id) {
                                         if (id === null || id === undefined || !id.length) {
-                                            return;
+                                            var defer = $q.defer();
+                                            defer.resolve();
+                                            return defer.promise;
                                         }
                                         var selectedIsArray = angular.isArray(id);
-                                        model.actions.search({
+                                        return model.actions.search({
                                             search: {
                                                 keys: (selectedIsArray ? id : [id])
                                             }
@@ -11252,6 +11295,7 @@ function msieversion() {
                                                     }
                                                 });
                                             }
+                                            return config.ui.specifics.entities;
                                         });
                                     };
                                 }
@@ -11262,7 +11306,11 @@ function msieversion() {
                                     initialDefer.resolve();
                                 });
                             });
+                        } else {
+                            config.ui.defer.resolve();
                         }
+                    } else {
+                        config.ui.defer.resolve();
                     }
                     info.scope.$on('$destroy', function () {
                         config.ui.specifics.entities = [];
@@ -11776,6 +11824,7 @@ function msieversion() {
                                 controller: ng(function ($scope, modelsUtil) {
                                     var process, getTitle;
 
+                                    $scope.$stateHiddenLoading = true;
                                     $scope.config = config;
                                     $scope.isNew = (arg ? false : true);
                                     $scope.container = {
@@ -12308,6 +12357,10 @@ function msieversion() {
 
                                         angular.forEach(config.ui.specifics.fields, function (field) {
                                             field._title_ = config._title_.concat();
+                                        });
+
+                                        helpers.fields.deferFormBuilderFields($scope.formBuilder).then(function () {
+                                            $scope.$stateHiddenLoading = false;
                                         });
 
                                     };
@@ -14264,7 +14317,7 @@ function msieversion() {
                                         if (stop) {
                                             return;
                                         }
-                                        var entities = response.data.entities;
+                                        var entities = (response ? response.data.entities : false);
                                         if (entities) {
                                             angular.forEach(entities, function (value) {
                                                 if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
@@ -15749,6 +15802,7 @@ function msieversion() {
                                 $scope.container = {
                                     action: endpoint.url
                                 };
+                                $scope.$stateHiddenLoading = true;
                                 $scope.dialog = {
                                     toolbar: config.toolbar,
                                     templateBodyUrl: config.templateBodyUrl
@@ -15998,6 +16052,10 @@ function msieversion() {
                                     });
 
                                     defer.resolve($scope);
+
+                                    helpers.fields.deferFormBuilderFields($scope.formBuilder).then(function () {
+                                        $scope.$stateHiddenLoading = false;
+                                    });
                                 };
                                 if (angular.isFunction(promise)) {
                                     $scope.$state.promise(promise, function ($scope, response) {
@@ -16494,6 +16552,13 @@ function msieversion() {
                         view = scope.$eval(attrs.view),
                         listView = scope.$eval(attrs.listView),
                         search = scope.$eval(attrs.search),
+                        defer = scope.$eval(attrs.defer),
+                        resolve = function () {
+                            console.log('resolving', element, defer);
+                            if (defer) {
+                                defer.resolve();
+                            }
+                        },
                         select = scope.$eval(attrs.select),
                         init = (select && select.init ? select.init : null);
 
@@ -16507,7 +16572,8 @@ function msieversion() {
                     select.multiple = true;
                     select.items = [];
                     select.find = function (value) {
-                        if (value === null) {
+                        if (value === null || value === undefined) {
+                            resolve();
                             return undefined;
                         }
                         var active,
@@ -16549,9 +16615,13 @@ function msieversion() {
                         if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing) {
-                                    select.search.missing(missing);
+                                    select.search.missing(missing).then(resolve);
+                                } else {
+                                    resolve();
                                 }
                             });
+                        } else {
+                            resolve();
                         }
                         return active;
                     };
@@ -16611,7 +16681,7 @@ function msieversion() {
                         formCtrl.$setDirty();
                         select.close();
                     };
-
+                    // @todo this is causing problems
                     select.commitMultipleSelect = function (item) {
                         $timeout(function () {
                             select.multipleSelect(item, true);
@@ -16671,7 +16741,9 @@ function msieversion() {
                             fullScreen: false,
                             backdrop: true,
                             controller: ng(function ($scope) {
-                                $scope.select = select;
+                                $scope.$state.instant(function () {
+                                    $scope.select = select;
+                                });
                                 $scope.$on('$destroy', function () {
                                     select.opened = false;
                                     select.close = angular.noop;
@@ -16741,8 +16813,13 @@ function msieversion() {
                         grouping = scope.$eval(attrs.grouping),
                         listView = scope.$eval(attrs.listView),
                         placeholder = attrs.placeholder,
+                        defer = scope.$eval(attrs.defer),
                         select = {},
-                        timeout,
+                        resolve = function () {
+                            if (defer) {
+                                defer.resolve();
+                            }
+                        },
                         ngModelPipelineCheckValue,
                         dontOpen = false;
                     containerCtrl.input = element;
@@ -16789,7 +16866,8 @@ function msieversion() {
                     select.multiple = multiple;
                     select.items = [];
                     select.find = function (value) {
-                        if (value === null) {
+                        if (value === null || value === undefined) {
+                            resolve();
                             return undefined;
                         }
                         var active,
@@ -16831,9 +16909,13 @@ function msieversion() {
                         if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing) {
-                                    select.search.missing(missing);
+                                    select.search.missing(missing).then(resolve);
+                                } else {
+                                    resolve();
                                 }
                             });
+                        } else {
+                            resolve();
                         }
                         return active;
                     };
@@ -17121,17 +17203,24 @@ function msieversion() {
                                 return nextPromise;
                             },
                             controller: ng(function ($scope) {
-                                select.close = function () {
-                                    if (select.multiple || select.async) {
-                                        $scope.close();
-                                    } else {
-                                        $simpleDialog.hide();
-                                    }
+                                var process = function () {
+                                    select.close = function () {
+                                        if (select.multiple || select.async) {
+                                            $scope.close();
+                                        } else {
+                                            $simpleDialog.hide();
+                                        }
+                                    };
+                                    $scope.select = select;
                                 };
+                                if ($scope.$state) {
+                                    $scope.$state.instant(process);
+                                } else {
+                                    process();
+                                }
                                 $scope.close = function () {
                                     $scope.$close().then(select.afterClose || angular.noop);
                                 };
-                                $scope.select = select;
                                 $scope.$on('$destroy', function () {
                                     select.opened = false;
                                     containerCtrl.setFocused(false);
@@ -17180,33 +17269,6 @@ function msieversion() {
                         return $parse(select.search.filterProp)(select.search.query);
                     };
 
-                    if (search) {
-                        select.search = {
-                            query: {},
-                            delay: 200,
-                            enabled: false,
-                            doFind: function () {
-                                var term = select.getFindTerm();
-                                if (timeout) {
-                                    clearTimeout(timeout);
-                                }
-                                if (select.search.find) {
-                                    timeout = setTimeout(function () {
-                                        select.search.find(term);
-                                    }, select.search.delay);
-                                }
-
-                                $timeout(function () {
-                                    $(window).triggerHandler('resize');
-                                }, 0, false);
-                            }
-                        };
-                        $.extend(select.search, search);
-                        select.search.filterProp = (select.search.filterProp ? select.search.filterProp : 'name');
-                        if (!select.search.model) {
-                            select.search.model = 'select.search.query' + ('.' + select.search.filterProp);
-                        }
-                    }
                     if (grouping) {
                         select.hasGrouping = true;
                         select.grouping = [];
@@ -19863,6 +19925,7 @@ angular.module('app')
                                         fields: ['name', 'discontinue_date'],
                                     }, {
                                         label: GLOBAL_CONFIG.subheaders.catalogImages,
+                                        fields: ['_images'],
                                         include: 'core/misc/action.html',
                                         action: function () {
                                             var scope = config.getScope();
@@ -19876,6 +19939,7 @@ angular.module('app')
                                     }, {
                                         label: GLOBAL_CONFIG.subheaders.catalogProducts,
                                         include: 'core/misc/action.html',
+                                        fields: [],
                                         action: function () {
                                             var scope = config.getScope();
 
@@ -22476,6 +22540,7 @@ angular.module('app')
                                     $scope.info = {
                                         build: true
                                     };
+                                    $scope.$stateHiddenLoading = true;
                                     $scope.container = {};
                                     $scope.config = config;
                                     $scope.$on('$destroy', function () {
@@ -22543,6 +22608,7 @@ angular.module('app')
                                                 } else {
                                                     $scope.formBuilder['0'].push(field);
                                                 }
+
                                             });
 
                                             angular.forEach($scope.layouts.groups, function (group, i) {
@@ -22564,12 +22630,14 @@ angular.module('app')
                                                 found.disabled = true;
                                             }
 
+                                            $scope.$stateHiddenLoading = true;
+                                            helpers.fields.deferFormBuilderFields($scope.formBuilder).then(function () {
+                                                $scope.$stateHiddenLoading = false;
+                                            });
                                         };
 
                                         $scope.args = angular.copy(arg);
-                                        // entity.addreses.0.address
                                         $scope.parentArgs = config.ui.specifics.parentArgs;
-                                        // entity.addresses
                                         $scope.entity = config.ui.specifics.entity;
                                         $scope.rootFormSetDirty = rootFormSetDirty;
                                         $scope.formSetDirty = angular.bind($scope, helpers.form.setDirty);
@@ -22592,9 +22660,8 @@ angular.module('app')
                                                     $scope._close_ = undefined;
                                                     return $scope.$close();
                                                 });
-                                            } else {
-                                                return modals.confirm('discardWithFieldsRequired', $scope.$close);
                                             }
+                                            return modals.confirm('discardWithFieldsRequired', $scope.$close);
                                         };
 
                                         $scope._close_ = $scope.close;

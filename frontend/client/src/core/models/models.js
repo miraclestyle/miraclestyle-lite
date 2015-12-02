@@ -584,6 +584,7 @@
                                 $scope.container = {
                                     action: endpoint.url
                                 };
+                                $scope.$stateHiddenLoading = true;
                                 $scope.dialog = {
                                     toolbar: config.toolbar,
                                     templateBodyUrl: config.templateBodyUrl
@@ -833,6 +834,10 @@
                                     });
 
                                     defer.resolve($scope);
+
+                                    helpers.fields.deferFormBuilderFields($scope.formBuilder).then(function () {
+                                        $scope.$stateHiddenLoading = false;
+                                    });
                                 };
                                 if (angular.isFunction(promise)) {
                                     $scope.$state.promise(promise, function ($scope, response) {

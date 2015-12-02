@@ -379,6 +379,7 @@
                                 controller: ng(function ($scope, modelsUtil) {
                                     var process, getTitle;
 
+                                    $scope.$stateHiddenLoading = true;
                                     $scope.config = config;
                                     $scope.isNew = (arg ? false : true);
                                     $scope.container = {
@@ -911,6 +912,10 @@
 
                                         angular.forEach(config.ui.specifics.fields, function (field) {
                                             field._title_ = config._title_.concat();
+                                        });
+
+                                        helpers.fields.deferFormBuilderFields($scope.formBuilder).then(function () {
+                                            $scope.$stateHiddenLoading = false;
                                         });
 
                                     };
