@@ -2741,8 +2741,7 @@ img.auto-width, .auto-width {
 
 .no-decoration {
     text-decoration: none;
-}
-.modal-open {
+}.modal-open {
     overflow: hidden;
 }
 
@@ -3772,4 +3771,8 @@ body, html {
 
 .order-go-pay {
     padding: 8px 24px;
+}
+
+.order-line-no-pointer {
+    cursor: default;
 }

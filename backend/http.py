@@ -126,8 +126,8 @@ class RequestHandler(webapp2.RequestHandler):
         self.abort(403)
 
   @orm.toplevel
-  @tools.detail_profile(HTTP_PERFORMANCE_TEXT)
   def dispatch(self):
+    # @tools.detail_profile(HTTP_PERFORMANCE_TEXT)
     dispatch_time = tools.Profile()
     if settings.LAG:
       time.sleep(settings.LAG)

@@ -5261,7 +5261,8 @@ function msieversion() {
                     return !isDisabled(node) && !isDisabled(parent) && !isDisabled(grandparent) && !isDisabled(ancestor);
 
                     function isDisabled(elem) {
-                        return elem && elem.hasAttribute && elem.hasAttribute('disabled');
+                        var disabled = elem && elem.hasAttribute && elem.hasAttribute('disabled');
+                        return disabled;
                     }
                 }
 

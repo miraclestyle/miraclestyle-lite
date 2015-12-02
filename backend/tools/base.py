@@ -22,6 +22,7 @@ from webapp2_extras import securecookie
 import orm
 import settings
 from .util import normalize
+from .debug import log
 
 __all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url', 'render_template',
            'channel_create', 'json_dumps', 'json_loads', 'mail_send', 'http_send', 'channel_send', 'secure_cookie']
@@ -213,7 +214,7 @@ def mail_send(data):
   body = render_template(data['body'], data).strip()
   subject = render_template(data['subject'], data).strip()
   if settings.DEBUG:
-    tools.log.debug(subject, body)
+    log.debug(subject, body)
   message = mail.EmailMessage()
   message.sender = message_sender
   message.bcc = data['recipient']

@@ -3102,4 +3102,7 @@ body, html {
 .order-go-pay {
   padding: 8px 24px; }
 
+.order-line-no-pointer {
+  cursor: default; }
+
 /*# sourceMappingURL=style.css.map */

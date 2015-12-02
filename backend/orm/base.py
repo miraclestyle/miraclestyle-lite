@@ -10,6 +10,7 @@ import collections
 import time
 import re
 import uuid
+import threading
 
 from google.appengine.ext.ndb import *
 from google.appengine.ext.ndb import polymodel
@@ -354,7 +355,10 @@ class _BaseModel(object):
       return super(_BaseModel, self).__repr__()
     original = 'No, '
     if hasattr(self, '_original') and self._original is not None:
-      original = '%s, ' % self._original
+      if self._original is not self:
+        original = '%s, ' % self._original
+      if self is self._original:
+        original = 'self, '
     out = super(_BaseModel, self).__repr__()
     out = out.replace('%s(' % self.__class__.__name__, '%s(_original=%s_state=%s, ' % (self.__class__.__name__, original, self._state))
     virtual_fields = self.get_virtual_fields()
@@ -425,6 +429,19 @@ class _BaseModel(object):
   @classmethod
   def get_plugin_groups(cls, action):
     return getattr(action, '_plugin_groups', [])
+
+  @classmethod
+  def get_fields2(cls):
+    with cls._fields_cache_lock:
+      if cls._fields_cache is None:
+        fields = {}
+        for prop_key, prop in cls._properties.iteritems():
+          fields[prop._code_name] = prop
+        virtual_fields = cls.get_virtual_fields()
+        if virtual_fields:
+          fields.update(virtual_fields)
+        cls._fields_cache = fields
+    return cls._fields_cache
 
   @classmethod
   def get_fields(cls):
@@ -584,6 +601,41 @@ class _BaseModel(object):
       return super(_BaseModel, self).__delattr__(name)
     except:
       pass
+
+  def __copy__(self, memo):
+    '''This hook for deepcopy will only instance a new entity that has the same properties
+    as the one that is being copied. Manually added _foo, _bar and other python properties will not be copied.
+    This function can be overriden by models who need to include additional fields that should also be copied.
+    e.g.
+    entity = super(Entity, self).__deepcopy__()
+    entity._my_unexisting_field = self._my_unexisting_field
+    return entity
+    We cannot copy self.__dict__ because it does not contain all values that are available later
+
+    '''
+    new_entity = self.__class__()
+    new_entity.key = copy.copy(self.key, memo)
+    new_entity._state = self._state
+    new_entity._sequence = self._sequence
+    for field_key, field in self.get_fields().iteritems():
+      can_be_copied = hasattr(field, 'can_be_copied')
+      if (not can_be_copied or (can_be_copied and field.can_be_copied)):
+        value = getattr(self, field_key, None)
+        is_structured = (hasattr(field, 'is_structured') and field.is_structured)
+        if is_structured:
+          if not value.has_value():
+            continue  # if there's no value to copy skip it
+          value = value.value
+        if is_structured:
+          new_entity_value = getattr(new_entity, field_key)
+          new_entity_value.set(value)
+        if value is None and (hasattr(field, 'can_be_none') and not field.can_be_none):
+          continue
+        try:
+          setattr(new_entity, field_key, value)
+        except (ComputedPropertyError, TypeError) as e:
+          pass  # This is intentional
+    return new_entity
 
   def __deepcopy__(self, memo):
     '''This hook for deepcopy will only instance a new entity that has the same properties
@@ -922,7 +974,7 @@ class _BaseModel(object):
       if field_key not in current_field_permissions:
         current_field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
       if hasattr(field, 'is_structured') and field.is_structured:
-        fields = field.get_model_fields()
+        fields = field.get_model_fields().copy()
         if field._code_name in fields:
           fields.pop(field._code_name)
         next_args.append((fields, fields.iteritems(), current_field_permissions[field_key]))
@@ -1009,7 +1061,7 @@ class _BaseModel(object):
       query = search_arguments['property'].build_datastore_query(search_arguments)
       return query.fetch_page(options.limit, options=options)
 
-  def read(self, read_arguments=None):
+  def read(self, read_arguments=None, make_original=None):
     '''This method loads all sub-entities in async-mode, based on input details.
     It's behaviour is controlled by 'read_arguments' dictioary argument!
     'read_arguments' follows this pattern:
@@ -1039,7 +1091,10 @@ class _BaseModel(object):
     for future, field_read_arguments in futures:
       future.read(field_read_arguments)  # Enforce get_result call now because if we don't the .value will be instances of Future.
       # this could be avoided by implementing custom plugin which will do the same thing we do here and after calling .make_original again.
-    self.make_original()  # Finalize original before touching anything.
+    if make_original != False:
+      if not isinstance(make_original, dict):
+        make_original = {}
+      self.make_original(**make_original)  # Finalize original before touching anything.
 
   def write(self, record_arguments=None):
     if record_arguments is None:
@@ -1138,13 +1193,20 @@ class _BaseModel(object):
     new_entity._state = 'duplicated'
     return new_entity
 
-  def make_original(self):
+  def make_original(self, shallow=False, self_reference=False):
     '''This function will make a copy of the current state of the entity
     and put that data into _original. Again note that only get_fields() key, _state will be copied.
 
     '''
     if self._use_rule_engine and not self._projection:
       self._original = None
+      if self_reference:
+        self._original = self
+        return
+      if shallow:
+        original = copy.copy(self)
+        self._original = original
+        return
       original = copy.deepcopy(self)
       self._original = original
 

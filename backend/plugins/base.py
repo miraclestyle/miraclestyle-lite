@@ -295,7 +295,8 @@ class Search(orm.BaseModel):
       context._cursor = cursor
       context._more = result[2]
     # if we dont call .read() it wont load any properties that depend on it. e.g. localstructured ones.
-    map(lambda ent: ent.read(), context._entities)
+    make_original = {'self_reference': True}
+    map(lambda ent: ent.read(make_original=make_original), context._entities)
 
 
 class CallbackExec(orm.BaseModel):
