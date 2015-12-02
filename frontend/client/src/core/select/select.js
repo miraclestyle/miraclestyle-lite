@@ -72,9 +72,9 @@
                                 missing = value;
                             }
                         }
-                        if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
+                        if (select.search && select.search.ready) {
                             select.search.ready.then(function () {
-                                if (select.search.missing) {
+                                if (select.search.missing && missing && missing.length) {
                                     select.search.missing(missing).then(resolve);
                                 } else {
                                     resolve();
@@ -276,6 +276,7 @@
                         defer = scope.$eval(attrs.defer),
                         select = {},
                         resolve = function () {
+                            console.trace('resolve');
                             if (defer) {
                                 defer.resolve();
                             }
@@ -366,9 +367,9 @@
                                 missing = value;
                             }
                         }
-                        if (angular.isDefined(missing) && missing.length && select.search && select.search.ready) {
+                        if (select.search && select.search.ready) {
                             select.search.ready.then(function () {
-                                if (select.search.missing) {
+                                if (select.search.missing && missing && missing.length) {
                                     select.search.missing(missing).then(resolve);
                                 } else {
                                     resolve();
