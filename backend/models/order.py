@@ -467,7 +467,7 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'group': cache_group_search, 'cache': ['admin', 'account']}),
+                      GetCache(cfg={'group': cache_group_search, 'cache': ['account']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
