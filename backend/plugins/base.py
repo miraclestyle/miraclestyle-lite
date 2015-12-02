@@ -223,6 +223,7 @@ class RulePrepare(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
+  #@tools.detail_profile('RulePrepare.%s %s')
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}

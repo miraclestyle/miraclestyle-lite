@@ -972,9 +972,10 @@ class _BaseModel(object):
         except IndexError as e:
           break
       if field_key not in current_field_permissions:
-        current_field_permissions[field_key] = collections.OrderedDict([('writable', []), ('visible', [])])
+        # collections.OrderedDict([('writable', []), ('visible', [])])
+        current_field_permissions[field_key] = {'writable': [], 'visible': []}
       if hasattr(field, 'is_structured') and field.is_structured:
-        fields = field.get_model_fields().copy()
+        fields = field.get_model_fields()
         if field._code_name in fields:
           fields.pop(field._code_name)
         next_args.append((fields, fields.iteritems(), current_field_permissions[field_key]))

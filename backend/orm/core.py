@@ -9,7 +9,7 @@ from .base import *
 from .properties import *
 
 
-__all__ = ['Record', 'Action', 'PluginGroup', 'Permission', 'ActionPermission', 'FieldPermission',
+__all__ = ['Record', 'Action', 'PluginGroup', 'Permission',
            'ExecuteActionPermission', 'ReadFieldPermission', 'WriteFieldPermission', 'DenyWriteFieldPermission',
            'Role', 'GlobalRole', 'Image']
 
@@ -196,34 +196,6 @@ class Permission(BasePolyExpando):
   _default_indexed = False
 
 
-class ActionPermission(Permission):
-
-  _kind = 4
-
-  model = SuperStringProperty('1', required=True, indexed=False)
-  actions = SuperVirtualKeyProperty('2', kind='1', repeated=True, indexed=False)
-  executable = SuperBooleanProperty('3', required=False, default=None, indexed=False)
-  condition = SuperStringProperty('4', required=True, indexed=False)
-
-  def __init__(self, *args, **kwargs):
-    super(ActionPermission, self).__init__(**kwargs)
-    if len(args):
-      model, actions, executable, condition = args
-      if not isinstance(actions, (tuple, list)):
-        actions = [actions]
-      self.model = model
-      self.actions = actions
-      self.executable = executable
-      self.condition = condition
-
-  def run(self, entity, **kwargs):
-    kwargs['entity'] = entity
-    if (self.model == entity.get_kind()):
-      for action in self.actions:
-        if (entity.get_action(action) is not None) and (tools.safe_eval(self.condition, kwargs)) and (self.executable is not None):
-          entity._action_permissions[action.urlsafe()]['executable'].append(self.executable)
-
-
 class ExecuteActionPermission(Permission):
 
   _kind = 129
@@ -242,44 +214,10 @@ class ExecuteActionPermission(Permission):
 
   def run(self, entity, **kwargs):
     kwargs['entity'] = entity
+    passes = self.condition(**kwargs)
     for action in self.actions:
-      if entity.get_action(action) is not None and self.condition(**kwargs):
+      if entity.get_action(action) is not None and passes:
         entity._action_permissions[action]['executable'].append(True)
-
-
-class FieldPermission(Permission):
-
-  _kind = 5
-
-  model = SuperStringProperty('1', required=True, indexed=False)
-  fields = SuperStringProperty('2', repeated=True, indexed=False)
-  writable = SuperBooleanProperty('3', required=False, default=None, indexed=False)
-  visible = SuperBooleanProperty('4', required=False, default=None, indexed=False)
-  condition = SuperStringProperty('5', required=True, indexed=False)
-
-  def __init__(self, *args, **kwargs):
-    super(FieldPermission, self).__init__(**kwargs)
-    if len(args):
-      model, fields, writable, visible, condition = args
-      if not isinstance(fields, (tuple, list)):
-        fields = [fields]
-      self.model = model
-      self.fields = fields
-      self.writable = writable
-      self.visible = visible
-      self.condition = condition
-
-  def run(self, entity, **kwargs):
-    kwargs['entity'] = entity
-    if (self.model == entity.get_kind()):
-      for field in self.fields:
-        parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
-        if parsed_field and (tools.safe_eval(self.condition, kwargs)):
-          if (self.writable is not None):
-            parsed_field['writable'].append(self.writable)
-          if (self.visible is not None):
-            parsed_field['visible'].append(self.visible)
-
 
 class WriteFieldPermission(Permission):
 
@@ -299,9 +237,10 @@ class WriteFieldPermission(Permission):
 
   def run(self, entity, **kwargs):
     kwargs['entity'] = entity
+    passes = self.condition(**kwargs)
     for field in self.fields:
       parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
-      if parsed_field and self.condition(**kwargs):
+      if parsed_field and passes:
         parsed_field['writable'].append(True)
 
 
@@ -323,9 +262,10 @@ class DenyWriteFieldPermission(Permission):
 
   def run(self, entity, **kwargs):
     kwargs['entity'] = entity
+    passes = self.condition(**kwargs)
     for field in self.fields:
       parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
-      if parsed_field and self.condition(**kwargs):
+      if parsed_field and passes:
         parsed_field['writable'].append(False)
 
 
@@ -347,9 +287,10 @@ class ReadFieldPermission(Permission):
 
   def run(self, entity, **kwargs):
     kwargs['entity'] = entity
+    passes = self.condition(**kwargs)
     for field in self.fields:
       parsed_field = tools.get_attr(entity, '_field_permissions.' + field)
-      if parsed_field and self.condition(**kwargs):
+      if parsed_field and passes:
         parsed_field['visible'].append(True)
 
 
