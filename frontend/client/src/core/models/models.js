@@ -940,6 +940,10 @@
                                                 if (config.error) {
                                                     config.error(response);
                                                 }
+                                                if (loadConfig.runLast) {
+                                                    loadConfig.runLast(response);
+                                                    return response;
+                                                }
                                                 return response;
                                             }).then(function (response) {
                                                 if (helpers.endpoint.isResponseError(response)) {
@@ -959,7 +963,7 @@
                                                     return config.complete.call(this, response);
                                                 }
                                                 return response;
-                                            })['finally'](function () {
+                                            })['finally'](function (response) {
                                                 paginate.loading = false;
                                                 paginate.firstLoad = false;
                                             });

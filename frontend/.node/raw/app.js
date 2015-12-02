@@ -14264,12 +14264,14 @@ function msieversion() {
                                             return;
                                         }
                                         var entities = response.data.entities;
-                                        angular.forEach(entities, function (value) {
-                                            if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
-                                                scope.newItems.unshift(value);
-                                            }
-                                            seen[value.key] = true;
-                                        });
+                                        if (entities) {
+                                            angular.forEach(entities, function (value) {
+                                                if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
+                                                    scope.newItems.unshift(value);
+                                                }
+                                                seen[value.key] = true;
+                                            });
+                                        }
                                         poll();
                                     }
                                 });
@@ -16102,6 +16104,10 @@ function msieversion() {
                                                 if (config.error) {
                                                     config.error(response);
                                                 }
+                                                if (loadConfig.runLast) {
+                                                    loadConfig.runLast(response);
+                                                    return response;
+                                                }
                                                 return response;
                                             }).then(function (response) {
                                                 if (helpers.endpoint.isResponseError(response)) {
@@ -16121,7 +16127,7 @@ function msieversion() {
                                                     return config.complete.call(this, response);
                                                 }
                                                 return response;
-                                            })['finally'](function () {
+                                            })['finally'](function (response) {
                                                 paginate.loading = false;
                                                 paginate.firstLoad = false;
                                             });
