@@ -37,8 +37,8 @@
 
                         <div ng-if="!stage.checkout"
                              class="order-stage seam-bottom in fixed-height"
-                             order-went-up="stage.endAnimation()"
-                             ng-class="{'in': stage.current === 1, 'out-up': stage.isOut(1)}">
+                             order-went-up="stage.endAnimation(1)"
+                             ng-class="{'in': stage.current === 1, 'out': stage.current !== 1, 'out-up': stage.isOut(1)}">
                           <div ng-show="stage.animating === 1" class="order-loading-wrapper">
                                 <div ng-include="'core/spinner/spinner.html'"></div>
                           </div>
@@ -59,19 +59,19 @@
                         </div>
 
                         <div ng-if="!stage.checkout"
-                             order-went-up="stage.endAnimation()"
+                             order-went-up="stage.endAnimation(2)"
                              class="order-stage seam-bottom out fixed-height" ng-class="{'in': stage.current === 2, 'out': stage.current !== 2, 'out-up': stage.isOut(2)}">
-                            <div ng-show="stage.animating === 2" class="order-loading-wrapper">
+                            <div ng-show="stage.animating === 2 || !addresses.finalizeFields" class="order-loading-wrapper">
                                 <div ng-include="'core/spinner/spinner.html'"></div>
                             </div>
-                            <div ng-if="stage.isAnimating(2)">
+                            <div ng-show="addresses.finalizeFields && stage.isAnimating(2)" ng-if="stage.isAnimating(2)">
 
                               <div class="list list-padding seam-bottom">
                                 <div class="list-subheader subheader">Shipping address</div>
                                 <button md-ink-ripple-list
                                         ng-click="addresses.browse('shipping')" 
                                         loading
-                                        type="button" 
+                                        type="button"
                                         class="list-row color-child-when-disabled list-row-one-line list-row-is-clickable list-row-has-avatar list-row-has-primary menu-item">
                                         <div class="list-content-tile">
                                           <div class="list-primary-tile">
@@ -128,7 +128,7 @@
 
                         <div ng-if="!stage.checkout"
                              class="order-stage seam-bottom out fixed-height"
-                             order-went-up="stage.endAnimation()"
+                             order-went-up="stage.endAnimation(3)"
                              ng-class="{'in': stage.current === 3, 'out': stage.current !== 3, 'out-up': stage.isOut(3)}">
                               <div ng-show="stage.animating === 3" class="order-loading-wrapper">
                                   <div ng-include="'core/spinner/spinner.html'"></div>
@@ -166,7 +166,7 @@
                         </div>
 
                         <div class="order-stage seam-bottom out fixed-height"
-                             order-went-up="stage.endAnimation()"
+                             order-went-up="stage.endAnimation(4)"
                              ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
 
                             <div ng-show="stage.animating === 4" class="order-loading-wrapper">

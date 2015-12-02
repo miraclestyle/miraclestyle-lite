@@ -10378,7 +10378,6 @@ function msieversion() {
                             } else {
                                 if ($.inArray(field.type, formInputTypes.resolvable) !== -1) {
                                     var defer = $q.defer();
-                                    console.log('defering', field);
                                     field.ui.defer = defer;
                                     promises.push(defer.promise);
                                 }
@@ -16917,7 +16916,6 @@ function msieversion() {
                         } else {
                             resolve();
                         }
-                        console.log('select.search', select.search);
                         return active;
                     };
                     select.getActive = function () {
@@ -20149,7 +20147,6 @@ angular.module('app')
                                                         }
                                                     }
                                                 }, {
-                                                    activitySpinner: this.notInitialLoad,
                                                     disableUI: disableUI === undefined ? true : disableUI
                                                 });
                                             };
@@ -21078,7 +21075,7 @@ angular.module('app')
             return {
                 link: function (scope, element, attrs) {
                     var cb = function () {
-                        if (element.hasClass('out-up')) {
+                        if (element.hasClass('in')) {
                             scope.$eval(attrs.orderWentUp);
                         }
                     };
@@ -21284,12 +21281,15 @@ angular.module('app')
                                     $scope.stage = {
                                         checkout: null,
                                         time: 500,
+                                        animating: 0,
+                                        finishedAnimating: 1,
                                         isAnimating: function (c1) {
-                                            return ($scope.stage.animating === (c1 + 1) || !$scope.stage.animating);
+                                            return $scope.stage.finishedAnimating === c1;
                                         },
-                                        endAnimation: function () {
+                                        endAnimation: function (ends) {
                                             $timeout(function () {
-                                                $scope.stage.animating = false;
+                                                $scope.stage.finishedAnimating = ends;
+                                                $scope.stage.animating = -1;
                                             }, $scope.stage.time);
                                         },
                                         current: 1,
@@ -21304,6 +21304,12 @@ angular.module('app')
                                             $scope.stage.animating = 2;
                                             $scope.stage.out.push(1);
                                             $scope.stage.current = 2;
+                                            helpers.fields.deferFormBuilderFields({
+                                                '0': _.toArray(locals.orderUpdateFields.shipping_address.modelclass),
+                                                '1': _.toArray(locals.orderUpdateFields.billing_address.modelclass)
+                                            }).then(function () {
+                                                $scope.addresses.finalizeFields = true;
+                                            });
                                         },
                                         toDeliveryMethod: function () {
                                             var valid = $scope.addresses.form.shipping.$valid,
@@ -21416,6 +21422,7 @@ angular.module('app')
                                     $scope.seller = seller;
                                     $scope.currentAccount = currentAccount;
                                     $scope.addresses = {
+                                        finalizeFields: false,
                                         sameAsShipping: true,
                                         form: {},
                                         shipping: locals.spawnAddress($scope.order.shipping_address) || {},

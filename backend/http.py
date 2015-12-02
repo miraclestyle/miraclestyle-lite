@@ -101,6 +101,7 @@ class RequestHandler(webapp2.RequestHandler):
     self.abort(404)
     self.response.write('<h1>404 Not found</h1>')
 
+  @tools.profile(HTTP_PERFORMANCE_TEXT)
   def load_current_account(self):
     '''Loads current user from the local thread and sets it as self.current_account for easier handler access to it.
     Along with that, also sets if the request came from taskqueue or cron, based on app engine headers.

@@ -377,7 +377,6 @@
                         } else {
                             resolve();
                         }
-                        console.log('select.search', select.search);
                         return active;
                     };
                     select.getActive = function () {

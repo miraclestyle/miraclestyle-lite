@@ -48,7 +48,6 @@
                             } else {
                                 if ($.inArray(field.type, formInputTypes.resolvable) !== -1) {
                                     var defer = $q.defer();
-                                    console.log('defering', field);
                                     field.ui.defer = defer;
                                     promises.push(defer.promise);
                                 }

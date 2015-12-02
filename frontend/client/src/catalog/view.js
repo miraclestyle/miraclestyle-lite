@@ -171,7 +171,6 @@
                                                         }
                                                     }
                                                 }, {
-                                                    activitySpinner: this.notInitialLoad,
                                                     disableUI: disableUI === undefined ? true : disableUI
                                                 });
                                             };
