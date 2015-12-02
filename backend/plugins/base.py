@@ -400,7 +400,6 @@ class BaseCache(orm.BaseModel):
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
-    return
     CacheGroup = context.models[self.cfg.get('kind', '135')]
     cache = self.cfg.get('cache', [])
     group_id = self.cfg.get('group', None)
