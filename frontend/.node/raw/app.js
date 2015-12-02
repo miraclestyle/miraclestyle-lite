@@ -16554,7 +16554,6 @@ function msieversion() {
                         search = scope.$eval(attrs.search),
                         defer = scope.$eval(attrs.defer),
                         resolve = function () {
-                            console.log('resolving', element, defer);
                             if (defer) {
                                 defer.resolve();
                             }
@@ -16816,7 +16815,6 @@ function msieversion() {
                         defer = scope.$eval(attrs.defer),
                         select = {},
                         resolve = function () {
-                            console.trace('resolve');
                             if (defer) {
                                 defer.resolve();
                             }
@@ -16861,6 +16859,7 @@ function msieversion() {
                     select.getHash = function (item) {
                         return (angular.isObject(item) ? item.key : item);
                     };
+                    select.search = search;
                     select.async = async;
                     select.placeholder = placeholder;
                     select.loading = false;
@@ -16918,6 +16917,7 @@ function msieversion() {
                         } else {
                             resolve();
                         }
+                        console.log('select.search', select.search);
                         return active;
                     };
                     select.getActive = function () {

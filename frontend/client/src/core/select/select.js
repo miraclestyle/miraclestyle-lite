@@ -14,7 +14,6 @@
                         search = scope.$eval(attrs.search),
                         defer = scope.$eval(attrs.defer),
                         resolve = function () {
-                            console.log('resolving', element, defer);
                             if (defer) {
                                 defer.resolve();
                             }
@@ -276,7 +275,6 @@
                         defer = scope.$eval(attrs.defer),
                         select = {},
                         resolve = function () {
-                            console.trace('resolve');
                             if (defer) {
                                 defer.resolve();
                             }
@@ -321,6 +319,7 @@
                     select.getHash = function (item) {
                         return (angular.isObject(item) ? item.key : item);
                     };
+                    select.search = search;
                     select.async = async;
                     select.placeholder = placeholder;
                     select.loading = false;
@@ -378,6 +377,7 @@
                         } else {
                             resolve();
                         }
+                        console.log('select.search', select.search);
                         return active;
                     };
                     select.getActive = function () {
