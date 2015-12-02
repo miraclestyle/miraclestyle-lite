@@ -159,8 +159,9 @@ class Order(orm.BaseExpando):
 
   DELETE_CACHE_POLICY = {'group': [lambda context: 'read_34_%s' % context._order.key._root._id_str,
                                    'search_34_admin',
-                                   lambda context: 'search_34_%s' % context._order.seller_reference._root._id_str,
-                                   lambda context: 'search_34_%s' % context._order.key._root._id_str
+                                   'search_34',
+                                   lambda context: 'search_34_seller_%s' % context._order.seller_reference._root._id_str,
+                                   lambda context: 'search_34_buyer_%s' % context._order.key._root._id_str
                                    ]}
 
   created = orm.SuperDateTimeProperty('1', required=True, auto_now_add=True)
@@ -252,19 +253,16 @@ class Order(orm.BaseExpando):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "cart" and action.key_id_str in ("view_order", "update")
 
-  def cache_search(context):
-    _ancestor = context.input['search'].get('ancestor')
-    if context.account._root_admin or (_ancestor and _ancestor._root == context.account.key):
-      return 'account'
-    return None
-
   def cache_group_search(context):
     key = 'search_34'
     _ancestor = context.input['search'].get('ancestor')
+    filters = context.input['search'].get('filters')
     if context.account._root_admin:
       return '%s_admin' % key
+    if filters and filters[0]['field'] == 'seller_reference' and filters[0]['value']._root == context.account.key:
+      return '%s_seller_%s' % (key, context.account.key_id_str)
     if _ancestor and _ancestor._root == context.account.key:
-      return '%s_%s' % (key, context.account.key_id_str)
+      return '%s_buyer_%s' % (key, context.account.key_id_str)
     return key
 
   _permissions = [
@@ -469,7 +467,7 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg={'group': cache_group_search, 'cache': ['admin', cache_search, 'all']}),
+                      GetCache(cfg={'group': cache_group_search, 'cache': ['admin', 'account']}),
                       Read(),
                       RulePrepare(),
                       RuleExec(),
