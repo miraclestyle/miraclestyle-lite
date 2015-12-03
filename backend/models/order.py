@@ -479,6 +479,24 @@ class Order(orm.BaseExpando):
           ]
       ),
       orm.Action(
+          id='cron',
+          arguments={},
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec(),
+                      OrderCronDelete(cfg={'page': 100,
+                                           'cart_life': settings.ORDER_CART_LIFE,
+                                           'unpaid_order_life': settings.ORDER_UNPAID_LIFE}),
+                      CallbackExec()
+                  ]
+              )
+          ]
+      ),
+      orm.Action(
           id='notify',
           arguments={
               'payment_method': orm.SuperStringProperty(required=True, choices=settings.AVAILABLE_PAYMENT_METHODS),
