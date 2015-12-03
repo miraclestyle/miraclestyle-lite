@@ -483,7 +483,7 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission('update', condition_update),
       orm.ExecuteActionPermission(('publish', 'catalog_upload_images', 'product_upload_images',
                                    'product_instance_upload_images', 'catalog_pricetag_duplicate'), condition_not_guest_and_owner_and_draft),
-      orm.ExecuteActionPermission(('discontinue', 'catalog_duplicate'), condition_not_guest_and_owner_and_published),
+      orm.ExecuteActionPermission(('catalog_duplicate'), condition_not_guest_and_owner_and_published),
       orm.ExecuteActionPermission('publish', condition_publish),
       orm.ExecuteActionPermission('discontinue', condition_discontinue),
       orm.ExecuteActionPermission('account_discontinue', condition_taskqueue),
