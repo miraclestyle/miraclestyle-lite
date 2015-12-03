@@ -141,10 +141,6 @@ class OrderUpdateLine(orm.BaseModel):
       product = product_key.get()
       product_instance = None
       product.read({'_category': {}})  # more fields probably need to be specified
-      stocks = None
-      out_of_stock = False
-      if product._stock.value and product._stock.value.stocks.value:  # if user defined any stocks
-        stocks = product._stock.value.stocks.value
       if variant_signature:
         plucked_variant_signature = variant_signature[:]
         plucked_variant_signature_map = dict((i, v) for i, v in enumerate(plucked_variant_signature))
@@ -1072,21 +1068,31 @@ class OrderStockManagement(orm.BaseModel):
       line._state = 'deleted'
       context.output['line_deleted_out_of_stock'].append(line.key)
 
+    @orm.tasklet
+    def get_products():
+      for line in context._order._lines.value:
+        line_product = line.product.value
+        if line._state == 'deleted' or not line_product:
+          continue
+        real_product_key = OrderProduct.get_partial_reference_key_path(line_product.reference)
+        line._product = yield real_product_key.get_async()
+        if line._product:
+          line._product._stock.read_async()
+    get_products().get_result()
+
     for line in context._order._lines.value:
-      if line._state == 'deleted':
+      if not hasattr(line, '_product'):
+        line._state = 'deleted'
         continue
       line_product = line.product.value
-      if not line_product:
-        continue
-      real_product_key = OrderProduct.get_partial_reference_key_path(line_product.reference)
-      product = real_product_key.get()
-      if not product: # delete this one
+      product = line._product
+      if not product:
         delete_line(line)
         continue
-      product.read({'_stock': {}})
       variant_signature = line_product.variant_signature
       stocks = None
       out_of_stock = False
+      product._stock.read()
       if product._stock.value and product._stock.value.stocks.value:  # if user defined any stocks
         stocks = product._stock.value.stocks.value
       if variant_signature:
