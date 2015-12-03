@@ -118,3 +118,6 @@ CSRF_SALT = '21482499fsd9i348124982ufs89j9f2qofi4knsgye8w9djqwiodnjenj'
 CSRF_TOKEN_KEY = 'csrf_token'
 COOKIE_SECRET = '3184ur9gejgirtgrkg493itkopgdfaklfnsgjkfgnei'
 COOKIE_AUTH_KEY = 'auth'
+
+ORDER_CART_LIFE = 86400*30
+ORDER_UNPAID_LIFE = 86400*30
