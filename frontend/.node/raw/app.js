@@ -20930,7 +20930,7 @@ angular.module('app')
                 name: 'Facebook',
                 key: 'facebook',
                 command: 'https://www.facebook.com/themiraclestyle/'
-            }, {
+            },/* {
                 name: 'Twitter',
                 key: 'twitter',
                 command: 'https://twitter.com/themiraclestyle'
@@ -20958,7 +20958,7 @@ angular.module('app')
                 name: 'Tumblr',
                 key: 'tumblr',
                 command: 'http://themiraclestyle.tumblr.com/'
-            }];
+            }*/];
 
             $scope.share = function (soc) {
                 return soc.command;

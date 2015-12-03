@@ -1,0 +1,20 @@
+{
+  "name": "Miraclestyle",
+  "short_name": "MS",
+  "icons": [{
+        "src": "/client/dist/static/icons/logo_favicon_64.png",
+        "sizes": "64x64",
+        "type": "image/webp"
+      }, {
+        "src": "/client/dist/static/icons/logo_favicon_64.png",
+        "sizes": "64x64"
+      }, {
+        "src": "/client/dist/static/icons/logo_favicon_128.png",
+        "sizes": "128x128",
+        "density": 2
+      }],
+  "scope": "/",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "any"
+}

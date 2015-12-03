@@ -3106,6 +3106,6 @@ body, html {
   padding: 8px 24px; }
 
 .order-line-no-pointer {
-  cursor: default; }
+  cursor: auto; }
 
 /*# sourceMappingURL=style.css.map */

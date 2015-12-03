@@ -3777,5 +3777,5 @@ body, html {
 }
 
 .order-line-no-pointer {
-    cursor: default;
+    cursor: auto;
 }
