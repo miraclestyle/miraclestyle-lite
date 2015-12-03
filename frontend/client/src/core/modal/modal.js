@@ -293,8 +293,7 @@
 
                 setTimeout(function () {
                     if (domEl) {
-                        // @todo check this
-                        // demise();
+                        demise();
                     }
                 }, 600);
 
@@ -345,7 +344,7 @@
                 modal.scope.modalOptions = {
                     inDirection: modal.inDirection,
                     outDirection: modal.outDirection,
-                    cantCloseWithBackdrop: modal.cantCloseWithBackdrop,
+                    cantCloseWithBackdrop: (angular.isUndefined(modal.cantCloseWithBackdrop) ? modal.fullScreen : modal.cantCloseWithBackdrop),
                     popFrom: modal.popFrom,
                     fullScreen: modal.fullScreen,
                     noEscape: modal.noEscape,

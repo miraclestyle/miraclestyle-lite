@@ -66,7 +66,7 @@
     </div>
 
     <div drag="true" jqyoui-draggable="{onDrag: 'lineDrag.onDrag(line)', onStart: 'lineDrag.onStart(line)', onStop: 'lineDrag.onStop(line)'}" jqyoui-options="lineDrag.options" class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
-        <button loading
+        <a loading
                 ng-click="stage.current < 2 && cmd.line.view(line, $event)"
                 ng-attr-md-no-ink="{{stage.current > 2}}"
                 type="button"
@@ -119,7 +119,7 @@
                 </div>
             </div>
 
-        </button>
+        </a>
         <div ng-if="order.ui.rule.action.update.executable && stage.current < 2" class="card-action-top-right">
             <a ng-class="{'no-move': config.ui.specifics.sortableOptions.disabled}" md-ink-ripple-action draggable-click="lineDrag.whatSortMeans($event)" class="button-square sort-handle color-child-when-disabled">
                 <icon type="delete"></icon>

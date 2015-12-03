@@ -2259,6 +2259,9 @@ img.auto-width, .auto-width {
 .no-decoration {
   text-decoration: none; }
 
+a[type="button"] {
+  text-decoration: none; }
+
 .modal-open {
   overflow: hidden; }
 
