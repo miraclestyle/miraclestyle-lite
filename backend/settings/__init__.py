@@ -38,6 +38,9 @@ CATALOG_DISCONTINUED_LIFE = 1  # @note This will be something like 120-180 days
 CATALOG_INDEX = 'catalogs'
 CATALOG_DOCUMENTS_PER_INDEX = 200
 
+ORDER_CART_LIFE = 1  # @note This will be something like 15 days
+ORDER_UNPAID_LIFE = 1  # @note This will be something like 30 days
+
 MAX_MESSAGE_SIZE = 1024
 
 def get_host_url():
