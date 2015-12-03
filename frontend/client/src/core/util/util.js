@@ -2707,6 +2707,9 @@
 
                     function isDisabled(elem) {
                         var disabled = elem && elem.hasAttribute && elem.hasAttribute('disabled');
+                        if (!disabled) {
+                            disabled = $(elem).hasClass('md-ink-ripple-disabled');
+                        }
                         return disabled;
                     }
                 }
