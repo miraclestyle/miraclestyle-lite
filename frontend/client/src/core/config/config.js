@@ -449,7 +449,8 @@
             orderNotFound: 'This order does not exist.',
             catalogNotFound: 'This catalog does not exist.',
             catalogProductNotFound: 'This catalog product does not exist.',
-            failedAccessingAccount: 'Failed accessing account.'
+            failedAccessingAccount: 'Failed accessing account.',
+            outOfStockLinesRemoved: 'Out of stock products removed from the cart.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

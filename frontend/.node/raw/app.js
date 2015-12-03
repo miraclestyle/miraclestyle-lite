@@ -1786,7 +1786,8 @@ if (window.DEBUG) {
             orderNotFound: 'This order does not exist.',
             catalogNotFound: 'This catalog does not exist.',
             catalogProductNotFound: 'This catalog product does not exist.',
-            failedAccessingAccount: 'Failed accessing account.'
+            failedAccessingAccount: 'Failed accessing account.',
+            outOfStockLinesRemoved: 'Out of stock products removed from the cart.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -20181,6 +20182,7 @@ angular.module('app')
                                     sellerKey,
                                     shareWatch,
                                     timer,
+                                    deleteOrder,
                                     fakeScope = response.fakeScope,
                                     productInstanceResponse = response.productResponse;
                                 $scope.variantMenu = {};
@@ -20242,6 +20244,20 @@ angular.module('app')
                                     };
                                 };
 
+                                deleteOrder = function () {
+                                    return models['34'].actions['delete']({
+                                        key: $scope.order.key
+                                    }).then(function (response) {
+                                        var sellerCacheKey = 'current' + sellerKey,
+                                            memoized = models['34'].getCache(sellerCacheKey);
+                                        if (memoized) {
+                                            $.extend(memoized.data.entity, response.data.entity);
+                                        } else {
+                                            models['34'].setCache(sellerCacheKey, response);
+                                        }
+                                    });
+                                };
+
                                 $scope.displayShare = function () {
                                     shareWatch();
                                     return social.share($scope.socialMeta, false);
@@ -20286,6 +20302,9 @@ angular.module('app')
                                 $scope.hasThisProduct = false;
                                 $scope.disableUpdateCart = false;
                                 $scope.productManager.quantity = 0;
+                                $scope.isInStock = false;
+                                $scope.quantityIncrement = false;
+                                $scope.stockText = '';
 
                                 sellerKey = $scope.catalog._seller.key;
                                 $scope.cartProductQuantity = function () {
@@ -20324,6 +20343,18 @@ angular.module('app')
                                                 $scope.canAddToCart = order.ui.rule.action.update_line.executable;
                                             } else {
                                                 $scope.canAddToCart = true;
+                                            }
+
+                                            $scope.isInStock = $scope.getAvailability(true);
+                                            $scope.stockText = $scope.getAvailability();
+                                            $scope.quantityIncrement = $scope.isInStock;
+
+                                            if ($scope.canAddToCart && !$scope.hasThisProduct) {
+                                                $scope.canAddToCart = $scope.isInStock;
+                                            }
+
+                                            if (!$scope.hasThisProduct && !$scope.canAddToCart) {
+                                                $scope.disableUpdateCart = true;
                                             }
 
                                             if (!$scope.productManager.quantity) {
@@ -20389,9 +20420,22 @@ angular.module('app')
                                     $scope.cartProductQuantity();
                                 });
 
+                                $scope.spotQuantity = function () {
+                                    if ($scope.hasThisProduct && !$scope.isInStock) {
+                                        if ($scope.productManager.quantity > 0) {
+                                            $scope.disableUpdateCart = true;
+                                        } else {
+                                            $scope.disableUpdateCart = false;
+                                        }
+                                    } else if (!$scope.canAddToCart) {
+                                        $scope.disableUpdateCart = true;
+                                    }
+                                };
+
                                 $scope.increaseQuantity = function () {
                                     $scope.disableUpdateCart = false;
                                     $scope.productManager.quantity = parseInt($scope.productManager.quantity, 10) + 1;
+                                    $scope.spotQuantity();
                                 };
 
                                 $scope.decreaseQuantity = function () {
@@ -20400,10 +20444,12 @@ angular.module('app')
                                     }
                                     $scope.disableUpdateCart = false;
                                     $scope.productManager.quantity = parseInt($scope.productManager.quantity, 10) - 1;
+                                    $scope.spotQuantity();
                                 };
 
                                 $scope.changedQuantity = function () {
                                     $scope.disableUpdateCart = false;
+                                    $scope.spotQuantity();
                                 };
 
                                 $scope.getAvailability = function (isInStock) {
@@ -20474,12 +20520,12 @@ angular.module('app')
                                         }));
                                         return;
                                     }
-                                    if (!$scope.getAvailability(true)) {
-                                        snackbar.showK('productOutOfStock');
-                                        return;
-                                    }
                                     if (config.autoAddToCart) {
                                         $scope.productManager.quantity = config.autoAddToCartQuantity;
+                                    }
+                                    if (!$scope.isInStock && $scope.productManager.quantity > 0) {
+                                        snackbar.showK('productOutOfStock');
+                                        return;
                                     }
                                     if (!$scope.hasThisProduct && $scope.productManager.quantity < 1) {
                                         $scope.container.form.$setDirty();
@@ -20492,9 +20538,7 @@ angular.module('app')
                                     $scope.activitySpinner.start();
                                     models['19'].current().then(function (response) {
                                         if ($scope.order && $scope.orderLineCount === 1 && $scope.productManager.quantity.toString() === '0') {
-                                            return models['34'].actions['delete']({
-                                                key: $scope.order.key
-                                            });
+                                            return deleteOrder();
                                         }
                                         return models['34'].actions.update_line({
                                             buyer: response.data.entity.key,
@@ -20520,12 +20564,18 @@ angular.module('app')
                                         if ($scope.productManager.quantity < 1) {
                                             $scope.hasThisProduct = false;
                                             $scope.productManager.quantity = 1;
+                                            $scope.disableUpdateCart = !$scope.isInStock;
+                                            $scope.canAddToCart = $scope.isInStock;
                                         } else {
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;
+                                            $scope.canAddToCart = true;
                                         }
 
                                         $scope.orderLineCount = response.data.entity._lines.length;
+                                        if ($scope.orderLineCount === 0) {
+                                            deleteOrder();
+                                        }
 
                                         snackbar.showK('cartUpdated');
                                     })['finally'](function () {
@@ -21210,6 +21260,14 @@ angular.module('app')
                                             if (config && config.noLines) {
                                                 $scope.order._lines = lines;
                                             }
+                                            if (response.data.line_deleted_out_of_stock) {
+                                                angular.forEach($scope.order._lines.concat(), function (value, key) {
+                                                    if ($.inArray(value.key, response.data.line_deleted_out_of_stock) !== -1) {
+                                                        $scope.order._lines.remove(value);
+                                                    }
+                                                });
+                                                snackbar.showK('outOfStockLinesRemoved');
+                                            }
                                             lines = null;
                                         },
                                         reactOnStateChange: function (response) {
@@ -21733,8 +21791,26 @@ angular.module('app')
                                                 key: $scope.order.key,
                                                 payment_method: $scope.payment.method,
                                                 _lines: $scope.order._lines
-                                            };
+                                            }, deleteMaybe, promise;
                                             $.extend(data, extra);
+                                            deleteMaybe = function () {
+                                                var allDeleted = true;
+                                                angular.forEach($scope.order._lines, function (value) {
+                                                    if (value._state !== 'deleted' || value.product.quantity.toString() !== '0') {
+                                                        allDeleted = false;
+                                                    }
+                                                });
+                                                if (allDeleted) {
+                                                    return $scope.cmd.order['delete'](false, true).then(function () {
+                                                        snackbar.showK('cartUpdated');
+                                                    });
+                                                }
+                                                return false;
+                                            };
+                                            promise = deleteMaybe();
+                                            if (promise) {
+                                                return promise;
+                                            }
                                             return models['34'].actions.update(data, {
                                                 ignoreErrors: 2,
                                                 activitySpinner: !config.noLoader,
@@ -21751,6 +21827,7 @@ angular.module('app')
                                                 locals.reactOnUpdate();
                                                 $scope.carrier.available = response.data.carriers;
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
+                                                deleteMaybe();
                                                 return response;
                                             })['finally'](function () {
                                                 if ($scope.container.paypal) {
@@ -21878,20 +21955,9 @@ angular.module('app')
                                                     left: (ui.helper.width() * 2) * -1
                                                 }, function () {
                                                     $timeout(function () {
-                                                        var allDeleted = true;
                                                         line.product.quantity = '0';
                                                         line._state = 'deleted';
                                                         ui.helper.hide();
-                                                        angular.forEach($scope.order._lines, function (value) {
-                                                            if (value._state !== 'deleted' || line.product.quantity.toString() !== '0') {
-                                                                allDeleted = false;
-                                                            }
-                                                        });
-                                                        if (allDeleted) {
-                                                            return $scope.cmd.order['delete'](false, true).then(function () {
-                                                                snackbar.showK('cartUpdated');
-                                                            });
-                                                        }
                                                         $scope.cmd.order.scheduleUpdate(undefined, {
                                                             noLines: true,
                                                             disableUI: false

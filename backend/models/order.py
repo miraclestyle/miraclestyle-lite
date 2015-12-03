@@ -272,7 +272,7 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('cron', condition_notify),
-      orm.ExecuteActionPermission('notify', condition_taskqueue),
+      orm.ExecuteActionPermission(('notify', 'delete'), condition_taskqueue),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
                                'billing_address', 'shipping_address', 'currency', 'untaxed_amount',

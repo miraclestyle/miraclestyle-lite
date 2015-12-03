@@ -143,6 +143,14 @@
                                             if (config && config.noLines) {
                                                 $scope.order._lines = lines;
                                             }
+                                            if (response.data.line_deleted_out_of_stock) {
+                                                angular.forEach($scope.order._lines.concat(), function (value, key) {
+                                                    if ($.inArray(value.key, response.data.line_deleted_out_of_stock) !== -1) {
+                                                        $scope.order._lines.remove(value);
+                                                    }
+                                                });
+                                                snackbar.showK('outOfStockLinesRemoved');
+                                            }
                                             lines = null;
                                         },
                                         reactOnStateChange: function (response) {
@@ -666,8 +674,26 @@
                                                 key: $scope.order.key,
                                                 payment_method: $scope.payment.method,
                                                 _lines: $scope.order._lines
-                                            };
+                                            }, deleteMaybe, promise;
                                             $.extend(data, extra);
+                                            deleteMaybe = function () {
+                                                var allDeleted = true;
+                                                angular.forEach($scope.order._lines, function (value) {
+                                                    if (value._state !== 'deleted' || value.product.quantity.toString() !== '0') {
+                                                        allDeleted = false;
+                                                    }
+                                                });
+                                                if (allDeleted) {
+                                                    return $scope.cmd.order['delete'](false, true).then(function () {
+                                                        snackbar.showK('cartUpdated');
+                                                    });
+                                                }
+                                                return false;
+                                            };
+                                            promise = deleteMaybe();
+                                            if (promise) {
+                                                return promise;
+                                            }
                                             return models['34'].actions.update(data, {
                                                 ignoreErrors: 2,
                                                 activitySpinner: !config.noLoader,
@@ -684,6 +710,7 @@
                                                 locals.reactOnUpdate();
                                                 $scope.carrier.available = response.data.carriers;
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
+                                                deleteMaybe();
                                                 return response;
                                             })['finally'](function () {
                                                 if ($scope.container.paypal) {
@@ -811,20 +838,9 @@
                                                     left: (ui.helper.width() * 2) * -1
                                                 }, function () {
                                                     $timeout(function () {
-                                                        var allDeleted = true;
                                                         line.product.quantity = '0';
                                                         line._state = 'deleted';
                                                         ui.helper.hide();
-                                                        angular.forEach($scope.order._lines, function (value) {
-                                                            if (value._state !== 'deleted' || line.product.quantity.toString() !== '0') {
-                                                                allDeleted = false;
-                                                            }
-                                                        });
-                                                        if (allDeleted) {
-                                                            return $scope.cmd.order['delete'](false, true).then(function () {
-                                                                snackbar.showK('cartUpdated');
-                                                            });
-                                                        }
                                                         $scope.cmd.order.scheduleUpdate(undefined, {
                                                             noLines: true,
                                                             disableUI: false

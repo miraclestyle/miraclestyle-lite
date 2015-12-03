@@ -193,6 +193,7 @@
                                     sellerKey,
                                     shareWatch,
                                     timer,
+                                    deleteOrder,
                                     fakeScope = response.fakeScope,
                                     productInstanceResponse = response.productResponse;
                                 $scope.variantMenu = {};
@@ -254,6 +255,20 @@
                                     };
                                 };
 
+                                deleteOrder = function () {
+                                    return models['34'].actions['delete']({
+                                        key: $scope.order.key
+                                    }).then(function (response) {
+                                        var sellerCacheKey = 'current' + sellerKey,
+                                            memoized = models['34'].getCache(sellerCacheKey);
+                                        if (memoized) {
+                                            $.extend(memoized.data.entity, response.data.entity);
+                                        } else {
+                                            models['34'].setCache(sellerCacheKey, response);
+                                        }
+                                    });
+                                };
+
                                 $scope.displayShare = function () {
                                     shareWatch();
                                     return social.share($scope.socialMeta, false);
@@ -298,6 +313,9 @@
                                 $scope.hasThisProduct = false;
                                 $scope.disableUpdateCart = false;
                                 $scope.productManager.quantity = 0;
+                                $scope.isInStock = false;
+                                $scope.quantityIncrement = false;
+                                $scope.stockText = '';
 
                                 sellerKey = $scope.catalog._seller.key;
                                 $scope.cartProductQuantity = function () {
@@ -336,6 +354,18 @@
                                                 $scope.canAddToCart = order.ui.rule.action.update_line.executable;
                                             } else {
                                                 $scope.canAddToCart = true;
+                                            }
+
+                                            $scope.isInStock = $scope.getAvailability(true);
+                                            $scope.stockText = $scope.getAvailability();
+                                            $scope.quantityIncrement = $scope.isInStock;
+
+                                            if ($scope.canAddToCart && !$scope.hasThisProduct) {
+                                                $scope.canAddToCart = $scope.isInStock;
+                                            }
+
+                                            if (!$scope.hasThisProduct && !$scope.canAddToCart) {
+                                                $scope.disableUpdateCart = true;
                                             }
 
                                             if (!$scope.productManager.quantity) {
@@ -401,9 +431,22 @@
                                     $scope.cartProductQuantity();
                                 });
 
+                                $scope.spotQuantity = function () {
+                                    if ($scope.hasThisProduct && !$scope.isInStock) {
+                                        if ($scope.productManager.quantity > 0) {
+                                            $scope.disableUpdateCart = true;
+                                        } else {
+                                            $scope.disableUpdateCart = false;
+                                        }
+                                    } else if (!$scope.canAddToCart) {
+                                        $scope.disableUpdateCart = true;
+                                    }
+                                };
+
                                 $scope.increaseQuantity = function () {
                                     $scope.disableUpdateCart = false;
                                     $scope.productManager.quantity = parseInt($scope.productManager.quantity, 10) + 1;
+                                    $scope.spotQuantity();
                                 };
 
                                 $scope.decreaseQuantity = function () {
@@ -412,10 +455,12 @@
                                     }
                                     $scope.disableUpdateCart = false;
                                     $scope.productManager.quantity = parseInt($scope.productManager.quantity, 10) - 1;
+                                    $scope.spotQuantity();
                                 };
 
                                 $scope.changedQuantity = function () {
                                     $scope.disableUpdateCart = false;
+                                    $scope.spotQuantity();
                                 };
 
                                 $scope.getAvailability = function (isInStock) {
@@ -486,12 +531,12 @@
                                         }));
                                         return;
                                     }
-                                    if (!$scope.getAvailability(true)) {
-                                        snackbar.showK('productOutOfStock');
-                                        return;
-                                    }
                                     if (config.autoAddToCart) {
                                         $scope.productManager.quantity = config.autoAddToCartQuantity;
+                                    }
+                                    if (!$scope.isInStock && $scope.productManager.quantity > 0) {
+                                        snackbar.showK('productOutOfStock');
+                                        return;
                                     }
                                     if (!$scope.hasThisProduct && $scope.productManager.quantity < 1) {
                                         $scope.container.form.$setDirty();
@@ -504,9 +549,7 @@
                                     $scope.activitySpinner.start();
                                     models['19'].current().then(function (response) {
                                         if ($scope.order && $scope.orderLineCount === 1 && $scope.productManager.quantity.toString() === '0') {
-                                            return models['34'].actions['delete']({
-                                                key: $scope.order.key
-                                            });
+                                            return deleteOrder();
                                         }
                                         return models['34'].actions.update_line({
                                             buyer: response.data.entity.key,
@@ -532,12 +575,18 @@
                                         if ($scope.productManager.quantity < 1) {
                                             $scope.hasThisProduct = false;
                                             $scope.productManager.quantity = 1;
+                                            $scope.disableUpdateCart = !$scope.isInStock;
+                                            $scope.canAddToCart = $scope.isInStock;
                                         } else {
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;
+                                            $scope.canAddToCart = true;
                                         }
 
                                         $scope.orderLineCount = response.data.entity._lines.length;
+                                        if ($scope.orderLineCount === 0) {
+                                            deleteOrder();
+                                        }
 
                                         snackbar.showK('cartUpdated');
                                     })['finally'](function () {
