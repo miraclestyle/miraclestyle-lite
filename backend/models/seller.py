@@ -86,9 +86,6 @@ class Seller(orm.BaseExpando):
   def condition_owner_active(action, account, entity, **kwargs):
     return entity._original.root_entity.state == "active"
 
-  def condition_taskqueue_or_cron_or_root(account, **kwargs):
-    return account._is_taskqueue or account._is_cron or account._root_admin
-
   _permissions = [
       orm.ExecuteActionPermission(('create', 'update', 'prepare'), condition_not_guest_and_owner),
       orm.ExecuteActionPermission('read', condition_owner_active),
