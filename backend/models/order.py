@@ -147,9 +147,6 @@ class Order(orm.BaseExpando):
 
   _use_memcache = False
 
-  # key path account->buyer->order
-  # 
-  
   '''
   read:
     read_<order.account.id>

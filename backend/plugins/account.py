@@ -24,6 +24,12 @@ class AccountLoginInit(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
+  def parse_result_3(self, result):
+    return {
+      'id': result['id'],
+      'email': result['emailAddress']
+    }
+
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -35,16 +41,23 @@ class AccountLoginInit(orm.BaseModel):
     tools.rule_exec(context._account, context.action)
     login_method = context.input.get('login_method')
     error = context.input.get('error')
+    if not error:
+      error = context.input.get('error_message')
     code = context.input.get('code')
+    state = context.input.get('state')
+    if code and state != context.account._csrf:
+      raise OAuth2Error('state_error')
     for login in login_methods:
       if login['type'] == login_method:
-        oauth2_cfg = login
+        oauth2_cfg = login.copy()
+        oauth2_cfg['state'] = context.account._csrf
         break
     client = tools.OAuth2Client(**oauth2_cfg)
     context.output['authorization_url'] = client.get_authorization_code_uri()
     urls = {}
     for cfg in login_methods:
-      urls_oauth2_cfg = cfg
+      urls_oauth2_cfg = cfg.copy()
+      urls_oauth2_cfg['state'] = context.account._csrf
       urls_client = tools.OAuth2Client(**urls_oauth2_cfg)
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()
     context.output['authorization_urls'] = urls
@@ -54,8 +67,11 @@ class AccountLoginInit(orm.BaseModel):
       client.get_token(code)
       if not client.access_token:
         raise OAuth2Error('failed_access_token')
-      account_info = oauth2_cfg['accountinfo']
+      account_info = oauth2_cfg['account_info']
       info = client.resource_request(url=account_info)
+      parse = getattr(self, 'parse_result_%s' % login_method, None)
+      if parse:
+        info = parse(info)
       if info and 'email' in info:
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)
@@ -94,6 +110,7 @@ class AccountLoginWrite(orm.BaseModel):
         entity._record_arguments = {'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address}
         entity.record()
       else:
+        current_identity = False
         for identity in entity.identities.value:
           identity.primary = False
           if identity.identity == context._identity_id:

@@ -1785,7 +1785,8 @@ if (window.DEBUG) {
             saveInProgress: 'Please wait, save in progress.',
             orderNotFound: 'This order does not exist.',
             catalogNotFound: 'This catalog does not exist.',
-            catalogProductNotFound: 'This catalog product does not exist.'
+            catalogProductNotFound: 'This catalog product does not exist.',
+            failedAccessingAccount: 'Failed accessing account.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -10369,7 +10370,7 @@ function msieversion() {
                 },
                 deferFormBuilderFields: function (formBuilder) {
                     var promises = [],
-                        anyway = $q.defer(),
+                        anyway,
                         extract = function (field) {
                             if (field.ui.group) {
                                 angular.forEach(field.ui.group.fields, function (f) {
@@ -10392,6 +10393,7 @@ function msieversion() {
                     });
 
                     if (!promises.length) {
+                        anyway = $q.defer();
                         anyway.resolve();
                         promises = [anyway.promise];
                     }
@@ -17865,10 +17867,10 @@ angular.module('app')
             name: 'Facebook',
             id: 2
         }, {
-            name: 'Twitter',
+            name: 'Linkedin',
             id: 3
         }, {
-            name: 'Pinterest',
+            name: 'Twitter',
             id: 4
         }])
         .factory('mappedLoginProviders', ng(function (LOGIN_PROVIDERS) {
@@ -17897,8 +17899,13 @@ angular.module('app')
             } else {
                 if (data.errors) {
                     errors = angular.fromJson(data.errors);
-                    if (errors && errors.action_denied) {
-                        snackbar.showK('accessDenied');
+                    if (errors) {
+                        if (errors.action_denied) {
+                            snackbar.showK('accessDenied');
+                        }
+                        if (errors.oauth2_error) {
+                            snackbar.showK('failedAccessingAccount');
+                        }
                     }
                 }
             }
@@ -17985,6 +17992,13 @@ angular.module('app')
                                         name: 'Facebook',
                                         key: '2'
                                     }, {
+                                        name: 'Google+',
+                                        icon: 'googleplus',
+                                        key: '1'
+                                    }, {
+                                        name: 'Linkedin',
+                                        key: '3'
+                                    },/* {
                                         name: 'Twitter',
                                         key: '3'
                                     }, {
@@ -17994,16 +18008,13 @@ angular.module('app')
                                         name: 'Reddit',
                                         key: '5'
                                     }, {
-                                        name: 'Linkedin',
-                                        key: '6'
-                                    }, {
                                         name: 'Google+',
                                         icon: 'googleplus',
                                         key: '1'
                                     }, {
                                         name: 'Tumblr',
                                         key: '7'
-                                    }];
+                                    }*/];
 
                                     $scope.getIcon = function (soc) {
                                         return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
@@ -18097,7 +18108,6 @@ angular.module('app')
                             },
                             init: function ($scope) {
                                 var entity = $scope.entity,
-                                    close,
                                     updateFields = ['state', 'ui.rule', 'created', 'updated'],
                                     updateState = function (newArgs) {
                                         angular.forEach(['args', 'entity'], function (p) {

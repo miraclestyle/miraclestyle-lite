@@ -48,7 +48,7 @@ def _build_url(base, additional_params=None):
 
 class OAuth2Client(object):
 
-  def __init__(self, client_id, client_secret, redirect_uri, authorization_uri, token_uri, access_token=None, **kwds):
+  def __init__(self, client_id, client_secret, redirect_uri, authorization_uri, token_uri, access_token=None, state=None, header=False, **kwds):
     '''Constructor for OAuth 2.0 Client.
     'client_id' parameter: Client ID.
     'client_id' type: String.
@@ -69,6 +69,8 @@ class OAuth2Client(object):
     self.token_uri = token_uri
     self.access_token = access_token
     self.scope = kwds.get('scope')
+    self.state = state
+    self.header = header
 
   def resource_request(self, method=None, url=None, data=None, status=None):
     '''Uses google urlfetch library for performing http requests to external resources.
@@ -76,6 +78,7 @@ class OAuth2Client(object):
     Default value for 'status' is 200.
 
     '''
+    headers = {}
     if method is None:
       method = 'GET'
     if data is None:
@@ -83,16 +86,21 @@ class OAuth2Client(object):
     if status is None:
       status = 200
     method = getattr(urlfetch, method.upper())
-    url = _build_url(url, {'access_token': self.access_token})
+    if not self.header:
+      url = _build_url(url, {'access_token': self.access_token})
+    else:
+      headers['Authorization'] = 'Bearer %s' % self.access_token
     try:
       if data is not None:
         data = urllib.urlencode(data)
-      response = urlfetch.fetch(url=url, payload=data, deadline=60, method=method)
+      response = urlfetch.fetch(url=url, payload=data, deadline=60, method=method, headers=headers)
+      print(response.content)
       if response.status_code == status:
         return json.loads(response.content)
       else:
         raise OAuth2ResourceError(getattr(response, 'content', None))
-    except (TypeError, OAuth2ResourceError):
+    except (TypeError, OAuth2ResourceError) as e:
+      print(e)
       return None
 
   @property
@@ -135,6 +143,8 @@ class OAuth2Client(object):
     params.update({'client_id': self.client_id,
                    'scope': self.scope,
                    'redirect_uri': self.redirect_uri})
+    if 'state' not in params:
+      params['state'] = self.state
     return _build_url(self.authorization_uri, params)
 
   def get_token(self, code, **params):

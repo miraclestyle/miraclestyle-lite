@@ -76,21 +76,33 @@ GOOGLE_OAUTH2 = {
     'token_uri': 'https://accounts.google.com/o/oauth2/token',
     'redirect_uri': '%s/api/account/login/1' % OAUTH2_REDIRECT_URI,
     'type': '1',
-    'accountinfo': 'https://www.googleapis.com/oauth2/v1/userinfo',
+    'account_info': 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
 
 FACEBOOK_OAUTH2 = {
-    'client_id': '125702284258635',
-    'client_secret': 'f5bcbcfa1bec6166bedb703d69911d43',
+    'client_id': '114231673409',
+    'client_secret': '7a467a6d24ba35343d09ce672faf98c2',
     'scope': ",".join(['email']),
     'authorization_uri': 'https://www.facebook.com/dialog/oauth',
     'token_uri': 'https://graph.facebook.com/oauth/access_token',
     'redirect_uri': '%s/api/account/login/2' % OAUTH2_REDIRECT_URI,
     'type': '2',
-    'accountinfo': 'https://graph.facebook.com/me',
+    'account_info': 'https://graph.facebook.com/me',
 }
 
-LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2]
+LINKEDIN_OAUTH2 = {
+    'client_id': '77xclva9s9qsex',
+    'client_secret': 'cYHLJehkmDGm1j9n',
+    'scope': ",".join(['r_basicprofile', 'r_emailaddress']),
+    'authorization_uri': 'https://www.linkedin.com/uas/oauth2/authorization',
+    'token_uri': 'https://www.linkedin.com/uas/oauth2/accessToken',
+    'redirect_uri': '%s/api/account/login/3' % OAUTH2_REDIRECT_URI,
+    'type': '3',
+    'account_info': 'https://api.linkedin.com/v1/people/~:(firstName,lastName,id,email-address)?format=json',
+    'header': True
+}
+
+LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2, LINKEDIN_OAUTH2]
 
 # Payment Methods
 AVAILABLE_PAYMENT_METHODS = ('paypal',)

@@ -8,10 +8,10 @@
             name: 'Facebook',
             id: 2
         }, {
-            name: 'Twitter',
+            name: 'Linkedin',
             id: 3
         }, {
-            name: 'Pinterest',
+            name: 'Twitter',
             id: 4
         }])
         .factory('mappedLoginProviders', ng(function (LOGIN_PROVIDERS) {
@@ -40,8 +40,13 @@
             } else {
                 if (data.errors) {
                     errors = angular.fromJson(data.errors);
-                    if (errors && errors.action_denied) {
-                        snackbar.showK('accessDenied');
+                    if (errors) {
+                        if (errors.action_denied) {
+                            snackbar.showK('accessDenied');
+                        }
+                        if (errors.oauth2_error) {
+                            snackbar.showK('failedAccessingAccount');
+                        }
                     }
                 }
             }
@@ -128,6 +133,13 @@
                                         name: 'Facebook',
                                         key: '2'
                                     }, {
+                                        name: 'Google+',
+                                        icon: 'googleplus',
+                                        key: '1'
+                                    }, {
+                                        name: 'Linkedin',
+                                        key: '3'
+                                    },/* {
                                         name: 'Twitter',
                                         key: '3'
                                     }, {
@@ -137,16 +149,13 @@
                                         name: 'Reddit',
                                         key: '5'
                                     }, {
-                                        name: 'Linkedin',
-                                        key: '6'
-                                    }, {
                                         name: 'Google+',
                                         icon: 'googleplus',
                                         key: '1'
                                     }, {
                                         name: 'Tumblr',
                                         key: '7'
-                                    }];
+                                    }*/];
 
                                     $scope.getIcon = function (soc) {
                                         return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
@@ -240,7 +249,6 @@
                             },
                             init: function ($scope) {
                                 var entity = $scope.entity,
-                                    close,
                                     updateFields = ['state', 'ui.rule', 'created', 'updated'],
                                     updateState = function (newArgs) {
                                         angular.forEach(['args', 'entity'], function (p) {

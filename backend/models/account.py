@@ -157,6 +157,8 @@ class Account(orm.BaseExpando):
           arguments={
               'login_method': orm.SuperStringProperty(required=True, choices=[login_method['type'] for login_method in settings.LOGIN_METHODS]),
               'code': orm.SuperStringProperty(),
+              'error_message': orm.SuperStringProperty(),
+              'state': orm.SuperStringProperty(),
               'error': orm.SuperStringProperty(),
               'redirect_to': orm.SuperStringProperty()
           },

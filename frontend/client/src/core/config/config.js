@@ -448,7 +448,8 @@
             saveInProgress: 'Please wait, save in progress.',
             orderNotFound: 'This order does not exist.',
             catalogNotFound: 'This catalog does not exist.',
-            catalogProductNotFound: 'This catalog product does not exist.'
+            catalogProductNotFound: 'This catalog product does not exist.',
+            failedAccessingAccount: 'Failed accessing account.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {

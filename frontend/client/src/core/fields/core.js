@@ -39,7 +39,7 @@
                 },
                 deferFormBuilderFields: function (formBuilder) {
                     var promises = [],
-                        anyway = $q.defer(),
+                        anyway,
                         extract = function (field) {
                             if (field.ui.group) {
                                 angular.forEach(field.ui.group.fields, function (f) {
@@ -62,6 +62,7 @@
                     });
 
                     if (!promises.length) {
+                        anyway = $q.defer();
                         anyway.resolve();
                         promises = [anyway.promise];
                     }
