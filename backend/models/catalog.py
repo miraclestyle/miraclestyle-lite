@@ -827,11 +827,7 @@ class Catalog(orm.BaseExpando):
                       Notify(cfg={'s': {'subject': notifications.CATALOG_DISCONTINUE_SUBJECT,
                                         'body': notifications.CATALOG_DISCONTINUE_BODY, 'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
-                      DeleteCache(cfg=DELETE_CACHE_POLICY),
-                      CallbackExec(cfg=[('callback',
-                                         {'action_id': 'unindex', 'action_model': '31'},
-                                         {'key': '_catalog.key_urlsafe'},
-                                         None)])
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
           ]
