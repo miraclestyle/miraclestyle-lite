@@ -489,8 +489,7 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission('account_discontinue', condition_taskqueue),
       orm.ExecuteActionPermission('sudo', condition_root),
       orm.ExecuteActionPermission(('catalog_process_duplicate', 'catalog_pricetag_process_duplicate',
-                                   'delete', 'index', 'unindex', 'cron'), condition_taskqueue),
-      orm.ExecuteActionPermission('public_search', condition_false),
+                                   'delete', 'cron'), condition_taskqueue),
       # field permissions
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                'state', 'cover', '_images'), condition_not_guest_and_owner_or_root),
@@ -894,53 +893,6 @@ class Catalog(orm.BaseExpando):
           ]
       ),
       orm.Action(
-          id='index',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='31', required=True)
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      RulePrepare(),
-                      RuleExec(),
-                      CatalogSearchDocumentWrite(cfg={'index': settings.CATALOG_INDEX})
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write()
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          # marketing.SearchDelete() plugin deems this action to allways execute in taskqueue!
-          id='unindex',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='31', required=True)
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      RulePrepare(),
-                      RuleExec(),
-                      CatalogSearchDocumentDelete(cfg={'index': settings.CATALOG_INDEX})
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write()
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
           id='cron',
           arguments={},
           _plugin_groups=[
@@ -1067,44 +1019,6 @@ class Catalog(orm.BaseExpando):
                                         'image_key': '_catalog._images.value.0.key_urlsafe'},
                                   'method': 'channel'}),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='public_search',
-          arguments={
-              'search': orm.SuperSearchProperty(
-                  default={'kind': '31', 'orders': [{'field': 'created', 'operator': 'desc'}]},
-                  cfg={
-                      'search_arguments': {'kind': '31', 'options': {'limit': settings.SEARCH_PAGE}},
-                      'use_search_engine': True,
-                      'filters': {'ancestor': orm.SuperStringProperty(repeated=True),
-                                  'seller_account_key': orm.SuperStringProperty(repeated=True)},
-                      'orders': {'created': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}},
-                                 'updated': {'default_value': {'asc': datetime.datetime.now(), 'desc': datetime.datetime(1990, 1, 1)}}},
-                      'indexes': [{'filters': [],
-                                   'orders': [('created', ['asc', 'desc'])]},
-                                  {'filters': [('ancestor', ['IN'])],
-                                   'orders': [('created', ['asc', 'desc'])]},
-                                  {'filters': [('seller_account_key', ['IN'])],
-                                   'orders': [('created', ['asc', 'desc'])]}]
-                  }
-              )
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      RulePrepare(),
-                      RuleExec(),
-                      CatalogSearch(cfg={'index': settings.CATALOG_INDEX}),
-                      Set(cfg={'d': {'output.entities': '_entities',
-                                     'output.total_matches': '_total_matches',
-                                     'output.entities_count': '_entities_count',
-                                     'output.cursor': '_cursor',
-                                     'output.more': '_more'}})
                   ]
               )
           ]
