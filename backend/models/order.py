@@ -219,6 +219,9 @@ class Order(orm.BaseExpando):
       '_seller_reference': orm.SuperComputedProperty(lambda self: self.seller_reference._structure if self.seller_reference else None),
   }
 
+  def condition_taskqueue(account, **kwargs):
+    return account._is_taskqueue
+
   def condition_not_guest_and_owner_and_cart(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "cart"
@@ -268,7 +271,8 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission(('update_line', 'view_order', 'update', 'delete'), condition_not_guest_and_owner_and_cart),
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
-      orm.ExecuteActionPermission('notify', condition_notify),
+      orm.ExecuteActionPermission('cron', condition_notify),
+      orm.ExecuteActionPermission('notify', condition_taskqueue),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
                                'billing_address', 'shipping_address', 'currency', 'untaxed_amount',
