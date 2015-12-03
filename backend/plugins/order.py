@@ -24,6 +24,32 @@ class PluginError(errors.BaseKeyValueError):
   KEY = 'plugin_error'
 
 
+class OrderCronDelete(orm.BaseModel):
+
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    limit = self.cfg.get('page', 10)
+    cart_life = self.cfg.get('cart_life', 15)
+    unpaid_order_life = self.cfg.get('unpaid_order_life', 30)
+    Order = context.models['34']
+    orders = []
+    carts = Order.query(Order.state == 'cart',
+                        Order.created < (datetime.datetime.now() - datetime.timedelta(days=cart_life))).fetch(limit=limit)
+    unpaid_orders = Order.query(Order.state == 'order',
+                                Order.payment_status == None,
+                                Order.date < (datetime.datetime.now() - datetime.timedelta(days=unpaid_order_life))).fetch(limit=limit)
+    orders.extend(carts)
+    orders.extend(unpaid_orders)
+    for order in orders:
+      data = {'action_id': 'delete',
+              'action_model': '34',
+              'key': order.key.urlsafe()}
+      context._callbacks.append(('callback', data))
+
+
 # This is system plugin, which means end user can not use it!
 class OrderInit(orm.BaseModel):
 
