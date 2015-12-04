@@ -450,7 +450,7 @@
             catalogNotFound: 'This catalog does not exist.',
             catalogProductNotFound: 'This catalog product does not exist.',
             failedAccessingAccount: 'Failed accessing account.',
-            outOfStockLinesRemoved: 'Out of stock products removed from the cart.',
+            outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.'
         });
 
@@ -546,7 +546,7 @@
                 return 'You do not have permission to perform this action.';
             },
             not_found: function (fields) {
-                return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
+                return 'Requested data ' + fields.join(', ') + ' could not be found in the database.';
             },
             invalid_csrf: function () {
                 return GLOBAL_CONFIG.snackbar.messages.invalidCsrf;
