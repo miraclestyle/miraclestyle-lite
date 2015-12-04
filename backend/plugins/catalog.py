@@ -183,7 +183,7 @@ class CatalogCronDelete(orm.BaseModel):
     unpublished_catalogs = Catalog.query(Catalog.state == 'draft',
                                          Catalog.created < (datetime.datetime.now() - datetime.timedelta(days=catalog_unpublished_life))).fetch(limit=limit)
     discontinued_catalogs = Catalog.query(Catalog.state == 'discontinued',
-                                          Catalog.updated < (datetime.datetime.now() - datetime.timedelta(days=catalog_discontinued_life))).fetch(limit=limit)
+                                          Catalog.discontinue_date < (datetime.datetime.now() - datetime.timedelta(days=catalog_discontinued_life))).fetch(limit=limit)
     catalogs.extend(unpublished_catalogs)
     catalogs.extend(discontinued_catalogs)
     for catalog in catalogs:
