@@ -1,8 +1,8 @@
 #- description: Order Lifecycle Support
-#  url: /order/cron
+#  url: /api/order/cron
 #  schedule: every 1 hours
 
 cron:
 - description: Catalog Lifecycle Support
-  url: /catalog/cron
+  url: /api/catalog/cron
   schedule: every 1 hours
