@@ -320,7 +320,7 @@ class _BaseModel(object):
   _initialized = False  # flag if this model was initialized by iom
   _state = None  # This field is used by rule engine!
   _sequence = None  # Internally used for repeated properties
-  _use_record_engine = True  # All models are by default recorded!
+  _use_record_engine = False  # All models are by default NOT recorded!
   _use_rule_engine = True  # All models by default respect rule engine! @note This control property doen't respect Action control!!
   _use_search_engine = False  # Models can utilize google search services along with datastore search services.
   _parent = None

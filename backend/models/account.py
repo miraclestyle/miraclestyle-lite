@@ -24,9 +24,7 @@ class AccountCacheGroup(orm.BaseModel):
 
   _kind = 135
 
-  _use_record_engine = False
   _use_rule_engine = False
-  _use_memcache = False
 
   keys = orm.SuperStringProperty(repeated=True, indexed=False) # stores 128bit md5 = can hold aprox 22k items
 
@@ -41,6 +39,7 @@ class AccountCacheGroup(orm.BaseModel):
   _actions = [
       orm.Action(
           id='update',
+          skip_csrf=True,
           arguments={
               'ids': orm.SuperStringProperty(repeated=True),
               'keys': orm.SuperTextProperty(), # compressed base64 encoded data
@@ -88,7 +87,7 @@ class Account(orm.BaseExpando):
 
   _kind = 11
 
-  _use_memcache = False
+  _use_record_engine = True
 
   '''
   Cache:
@@ -154,6 +153,7 @@ class Account(orm.BaseExpando):
   _actions = [
       orm.Action(
           id='login',
+          skip_csrf=True,
           arguments={
               'login_method': orm.SuperStringProperty(required=True, choices=[login_method['type'] for login_method in settings.LOGIN_METHODS]),
               'code': orm.SuperStringProperty(),
@@ -180,6 +180,7 @@ class Account(orm.BaseExpando):
       ),
       orm.Action(
           id='current_account',
+          skip_csrf=True,
           arguments={
               'read_arguments': orm.SuperJsonProperty()
           },
@@ -383,10 +384,16 @@ class Account(orm.BaseExpando):
       )
   ]
 
+  def __init__(self, *args, **kwargs):
+    self.__is_taskqueue = False
+    self.__is_cron = False
+    return super(Account, self).__init__(*args, **kwargs)
+
   def get_output(self):
     dic = super(Account, self).get_output()
     dic.update({'_is_guest': self._is_guest,
                 '_is_system': self._is_system,
+                '_csrf': self._csrf,
                 '_root_admin': self._root_admin})
     return dic
 
@@ -396,11 +403,11 @@ class Account(orm.BaseExpando):
 
   @property
   def _is_taskqueue(self):
-    return tools.mem_temp_get('current_request_is_taskqueue')
+    return self.__is_taskqueue
 
   @property
   def _is_cron(self):
-    return tools.mem_temp_get('current_request_is_cron')
+    return self.__is_cron
 
   @property
   def _is_system(self):
@@ -474,10 +481,12 @@ class Account(orm.BaseExpando):
     return session
 
   def set_taskqueue(self, flag):
-    return tools.mem_temp_set('current_request_is_taskqueue', flag)
+    self.__is_taskqueue = flag
+    return flag
 
   def set_cron(self, flag):
-    return tools.mem_temp_set('current_request_is_cron', flag)
+    self.__is_cron = flag
+    return flag
 
   @classmethod
   def set_current_account(cls, account, session=None):

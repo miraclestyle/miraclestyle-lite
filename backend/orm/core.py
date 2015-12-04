@@ -158,6 +158,7 @@ class Action(BaseExpando):
   name = SuperStringProperty('1', required=True)
   arguments = SuperPickleProperty('2', required=True, default={}, compressed=False)
   active = SuperBooleanProperty('3', required=True, default=True)
+  skip_csrf = SuperBooleanProperty('4', default=False)
 
   _default_indexed = False
 

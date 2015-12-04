@@ -32,7 +32,6 @@ class SellerContent(orm.BaseModel):
   _kind = 21
 
   _use_rule_engine = False
-  _use_memcache = False
 
   documents = orm.SuperLocalStructuredProperty(SellerContentDocument, '1', repeated=True)
 
@@ -49,7 +48,6 @@ class SellerPluginContainer(orm.BaseModel):
   _kind = 22
 
   _use_rule_engine = False
-  _use_memcache = False
 
   plugins = orm.SuperPluginStorageProperty(('107', '113', '117', '126', '108', '109'), '1', required=True, default=[], compressed=False)
 
@@ -65,7 +63,7 @@ class Seller(orm.BaseExpando):
 
   _kind = 23
 
-  _use_memcache = False
+  _use_record_engine = True
 
   name = orm.SuperStringProperty('1', required=True)
   logo = orm.SuperImageLocalStructuredProperty(orm.Image, '2', required=True)

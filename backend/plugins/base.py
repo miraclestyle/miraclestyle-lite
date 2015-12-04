@@ -33,6 +33,11 @@ class Context(orm.BaseModel):
         context.account = context.models['11'].system_account()
     context._callbacks = []
     context.output['is_guest'] = context.account._is_guest
+    action = context.action
+    if not action.skip_csrf:
+      if context.account._csrf != context.raw_input.get('_csrf'):
+        raise ValueError({'invalid_csrf': True})
+
 
 
 class Set(orm.BaseModel):

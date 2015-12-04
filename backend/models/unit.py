@@ -17,10 +17,6 @@ class Unit(orm.BaseExpando):
 
   _kind = 17
 
-  _use_record_engine = False
-  _use_cache = True
-  _use_memcache = False
-
   measurement = orm.SuperStringProperty('1', required=True)
   name = orm.SuperStringProperty('2', required=True)
   symbol = orm.SuperStringProperty('3', required=True, indexed=False)
@@ -71,6 +67,7 @@ class Unit(orm.BaseExpando):
   _actions = [
       orm.Action(
           id='update_currency',
+          skip_csrf=True,
           arguments={},
           _plugin_groups=[
               orm.PluginGroup(
@@ -87,6 +84,7 @@ class Unit(orm.BaseExpando):
       ),
       orm.Action(
           id='update_unit',
+          skip_csrf=True,
           arguments={},
           _plugin_groups=[
               orm.PluginGroup(

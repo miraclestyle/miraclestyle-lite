@@ -66,7 +66,7 @@ class Buyer(orm.BaseExpando):
 
   _kind = 19
 
-  _use_memcache = False
+  _use_record_engine = True
 
   '''
   read:

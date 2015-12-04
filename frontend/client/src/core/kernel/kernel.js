@@ -237,6 +237,10 @@
             _compile = function (action, model, data, config) {
                 config = helpers.alwaysObject(config);
                 data = helpers.alwaysObject(data);
+                var currentAccount = $injector.get('currentAccount');
+                data._csrf = currentAccount._csrf;
+
+                console.log(data);
 
                 return [angular.extend({
                     action_model: model,

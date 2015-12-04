@@ -145,7 +145,6 @@ class Order(orm.BaseExpando):
 
   _kind = 34
 
-  _use_memcache = False
 
   '''
   read:
@@ -213,7 +212,6 @@ class Order(orm.BaseExpando):
                                                              }],
                                                          }
                                                      }),
-      '_records': orm.SuperRecordProperty('34'),
       '_payment_method': orm.SuperReferenceProperty(callback=lambda self: self._get_payment_method(),
                                                     format_callback=lambda self, value: value),
       '_seller_reference': orm.SuperComputedProperty(lambda self: self.seller_reference._structure if self.seller_reference else None),
@@ -289,12 +287,12 @@ class Order(orm.BaseExpando):
                                '_seller._currency'), condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('date', 'seller_reference',
                                 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
-                                'payment_method', '_lines', 'carrier', '_records'), condition_update_line),
+                                'payment_method', '_lines', 'carrier'), condition_update_line),
       orm.WriteFieldPermission('state', condition_state),
       orm.WriteFieldPermission(('payment_status', '_messages'), condition_notify),
       orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('date', 'shipping_address', 'billing_address', '_lines', 'carrier',
-                                'untaxed_amount', 'tax_amount', 'total_amount', 'payment_method', '_records'), condition_update_and_view_order),
+                                'untaxed_amount', 'tax_amount', 'total_amount', 'payment_method'), condition_update_and_view_order),
       orm.DenyWriteFieldPermission(('_lines.taxes', '_lines.product.reference',
                                     '_lines.product.category', '_lines.product.name', '_lines.product.uom',
                                     '_lines.product.code', '_lines.product.unit_price', '_lines.product.variant_signature',
@@ -425,6 +423,7 @@ class Order(orm.BaseExpando):
       ),
       orm.Action(
           id='delete',
+          skip_csrf=True,
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True)
           },
@@ -490,6 +489,7 @@ class Order(orm.BaseExpando):
       ),
       orm.Action(
           id='cron',
+          skip_csrf=True,
           arguments={},
           _plugin_groups=[
               orm.PluginGroup(
@@ -508,6 +508,7 @@ class Order(orm.BaseExpando):
       ),
       orm.Action(
           id='notify',
+          skip_csrf=True,
           arguments={
               'payment_method': orm.SuperStringProperty(required=True, choices=settings.AVAILABLE_PAYMENT_METHODS),
               'request': orm.SuperPickleProperty(),

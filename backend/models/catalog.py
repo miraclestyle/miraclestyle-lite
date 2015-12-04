@@ -27,9 +27,6 @@ class CatalogProductCategory(orm.BaseModel):
 
   _kind = 24
 
-  _use_record_engine = False
-  _use_memcache = False
-
   parent_record = orm.SuperKeyProperty('1', kind='24')
   name = orm.SuperStringProperty('2', required=True)
   state = orm.SuperStringProperty('3', repeated=True)
@@ -52,6 +49,7 @@ class CatalogProductCategory(orm.BaseModel):
   _actions = [
       orm.Action(
           id='update',
+          skip_csrf=True,
           arguments={},
           _plugin_groups=[
               orm.PluginGroup(
@@ -155,7 +153,6 @@ class CatalogProductStockContainer(orm.BaseModel):
   _kind = 134
 
   _use_rule_engine = False
-  _use_memcache = False
 
   stocks = orm.SuperLocalStructuredProperty(CatalogProductStock, '1', repeated=True, indexed=False)
 
@@ -165,7 +162,6 @@ class CatalogProductInstance(orm.BaseExpando):
   _kind = 27
 
   _use_rule_engine = False
-  _use_memcache = False
 
   sequence = orm.SuperIntegerProperty('1', required=True, indexed=True)
   variant_options = orm.SuperStringProperty('2', repeated=True, indexed=True)
@@ -214,7 +210,6 @@ class CatalogProduct(orm.BaseExpando):
   _kind = 28
 
   _use_rule_engine = False
-  _use_memcache = False
 
   category = orm.SuperKeyProperty('1', kind='24', required=True, indexed=False)
   name = orm.SuperStringProperty('2', required=True, indexed=False)
@@ -286,7 +281,6 @@ class CatalogImage(orm.Image):
   _kind = 30
 
   _use_rule_engine = False
-  _use_memcache = False
 
   sequence = orm.SuperIntegerProperty('7', required=True, indexed=True)
   pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
@@ -311,17 +305,6 @@ class CatalogImage(orm.Image):
 class Catalog(orm.BaseExpando):
 
   _kind = 31
-
-  _use_memcache = False
-
-  '''
-  Cache definitions:
-  search:
-    search_31: admin, all
-    search_31_<catalog.account.id>
-  read:
-    read_31_<catalog.id>
-  '''
 
   DELETE_CACHE_POLICY = {
       # only delete public cache when user saves published or indexed catalog
@@ -370,8 +353,7 @@ class Catalog(orm.BaseExpando):
                                                                 }],
                                                             }
                                                         }),
-      '_seller': orm.SuperReferenceStructuredProperty('23', autoload=True, callback=lambda self: self.key.parent().get_async()),
-      '_records': orm.SuperRecordProperty('31')
+      '_seller': orm.SuperReferenceStructuredProperty('23', autoload=True, callback=lambda self: self.key.parent().get_async())
   }
 
   def condition_not_guest(account, **kwargs):
@@ -497,7 +479,7 @@ class Catalog(orm.BaseExpando):
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                'state', 'cover', '_images'), condition_not_guest_and_owner_or_root),
       orm.WriteFieldPermission(('name', 'published_date', 'discontinue_date', 'cover',
-                                '_images', '_images.pricetags', '_records'), condition_not_guest_and_owner_and_draft),
+                                '_images', '_images.pricetags'), condition_not_guest_and_owner_and_draft),
       orm.DenyWriteFieldPermission(('_images.image', '_images.content_type',
                                     '_images.size', '_images.gs_object_name',
                                     '_images.serving_url',
@@ -508,12 +490,10 @@ class Catalog(orm.BaseExpando):
                                     '_images.pricetags._product._instances.images.size', '_images.pricetags._product._instances.images.gs_object_name',
                                     '_images.pricetags._product._instances.images.serving_url'), condition_deny_write_field_permission),
       orm.WriteFieldPermission(('_images'), condition_write_images),
-      orm.WriteFieldPermission(('_records', '_images.pricetags._product._stock'), condition_not_guest_and_owner_and_published),
+      orm.WriteFieldPermission(('_images.pricetags._product._stock',), condition_not_guest_and_owner_and_published),
       orm.WriteFieldPermission('state', condition_write_state),
       orm.ReadFieldPermission(('name', 'published_date', 'discontinue_date', 'updated',
                                'state', 'cover', '_images'), condition_published_or_discontinued),
-      orm.ReadFieldPermission('_records', condition_root),
-      orm.WriteFieldPermission('_records', condition_root),
       orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._content', '_seller._currency'), condition_true),
       orm.WriteFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                 'state', 'cover', 'cost', '_images'), condition_duplicate)
@@ -705,8 +685,8 @@ class Catalog(orm.BaseExpando):
           ]
       ),
       orm.Action(
-          # marketing.Delete() plugin deems this action to allways execute in taskqueue!
           id='delete',
+          skip_csrf=True,
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True)
           },
@@ -837,6 +817,7 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='account_discontinue',
+          skip_csrf=True,
           arguments={
               'account': orm.SuperKeyProperty(kind='11', required=True)
           },
@@ -893,6 +874,7 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='cron',
+          skip_csrf=True,
           arguments={},
           _plugin_groups=[
               orm.PluginGroup(
@@ -935,6 +917,7 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='catalog_process_duplicate',
+          skip_csrf=True,
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True),
               'channel': orm.SuperStringProperty(required=True)
@@ -990,6 +973,7 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='catalog_pricetag_process_duplicate',
+          skip_csrf=True,
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True),
               'channel': orm.SuperStringProperty(required=True),

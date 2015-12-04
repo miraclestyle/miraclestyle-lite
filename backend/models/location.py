@@ -18,10 +18,6 @@ class Country(orm.BaseModel):
 
   _kind = 12
 
-  _use_record_engine = False
-  _use_cache = True
-  _use_memcache = False
-
   code = orm.SuperStringProperty('1', required=True, indexed=False)
   name = orm.SuperStringProperty('2', required=True)
   active = orm.SuperBooleanProperty('3', required=True, default=True)
@@ -44,6 +40,7 @@ class Country(orm.BaseModel):
   _actions = [
       orm.Action(
           id='update',
+          skip_csrf=True,
           arguments={},
           _plugin_groups=[
               orm.PluginGroup(
@@ -98,10 +95,6 @@ class Country(orm.BaseModel):
 class CountrySubdivision(orm.BaseModel):
 
   _kind = 13
-
-  _use_record_engine = False
-  _use_cache = True
-  _use_memcache = False
 
   parent_record = orm.SuperKeyProperty('1', kind='13', indexed=False)
   code = orm.SuperStringProperty('2', required=True, indexed=False)
