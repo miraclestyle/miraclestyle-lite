@@ -72,6 +72,12 @@ indexes:
   - name: '__key__'
     direction: desc
 
+# Catalog state and order by discontinue_date -- CatalogCronDiscontinue plugin
+- kind: '31'
+  properties:
+  - name: '6'
+  - name: '5'
+
 # Unit active and order by name ASC
 - kind: '17'
   properties:
