@@ -20255,6 +20255,7 @@ angular.module('app')
                                         } else {
                                             models['34'].setCache(sellerCacheKey, response);
                                         }
+                                        return response;
                                     });
                                 };
 
