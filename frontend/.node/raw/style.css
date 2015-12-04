@@ -1419,7 +1419,7 @@ span.first.month-part {
     padding-right: 8px;
 }
 
-.datepicker-pop .modal-dialog {
+body > div.modal.md-dialog.ng-isolate-scope.modal-medium.datepicker-pop .modal-dialog {
     width: auto;
 }
 
@@ -1428,7 +1428,7 @@ span.first.month-part {
     display:block;
 }
 
-.datepicker-pop .modal-dialog {
+body > div.modal.md-dialog.ng-isolate-scope.modal-medium.datepicker-pop .modal-dialog {
     min-width: 300px;
 }.ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
     border-color: rgba(255, 0, 0, 0.87);

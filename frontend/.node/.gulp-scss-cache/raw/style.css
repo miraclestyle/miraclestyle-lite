@@ -1190,14 +1190,14 @@ span.first.month-part {
   padding-left: 8px;
   padding-right: 8px; }
 
-.datepicker-pop .modal-dialog {
+body > div.modal.md-dialog.ng-isolate-scope.modal-medium.datepicker-pop .modal-dialog {
   width: auto; }
 
 .title-above .pager button .md-icon,
 .time-inputs .choicer .time-control button .md-icon {
   display: block; }
 
-.datepicker-pop .modal-dialog {
+body > div.modal.md-dialog.ng-isolate-scope.modal-medium.datepicker-pop .modal-dialog {
   min-width: 300px; }
 
 .ng-dirty.ng-invalid-required, .ng-dirty.ng-invalid {
