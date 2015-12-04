@@ -496,7 +496,7 @@ class Catalog(orm.BaseExpando):
                                'state', 'cover', '_images'), condition_published_or_discontinued),
       orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._content', '_seller._currency'), condition_true),
       orm.WriteFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
-                                'state', 'cover', 'cost', '_images'), condition_duplicate)
+                                'state', 'cover', '_images'), condition_duplicate)
   ]
 
   _actions = [
