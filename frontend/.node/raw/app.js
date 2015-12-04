@@ -957,6 +957,10 @@ if (window.DEBUG) {
             _compile = function (action, model, data, config) {
                 config = helpers.alwaysObject(config);
                 data = helpers.alwaysObject(data);
+                var currentAccount = $injector.get('currentAccount');
+                data._csrf = currentAccount._csrf;
+
+                console.log(data);
 
                 return [angular.extend({
                     action_model: model,
@@ -1787,7 +1791,8 @@ if (window.DEBUG) {
             catalogNotFound: 'This catalog does not exist.',
             catalogProductNotFound: 'This catalog product does not exist.',
             failedAccessingAccount: 'Failed accessing account.',
-            outOfStockLinesRemoved: 'Out of stock products removed from the cart.'
+            outOfStockLinesRemoved: 'Out of stock products removed from the cart.',
+            invalidCsrf: 'Invalid request. Please reload your browser.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -1883,6 +1888,9 @@ if (window.DEBUG) {
             },
             not_found: function (fields) {
                 return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
+            },
+            invalid_csrf: function () {
+                return GLOBAL_CONFIG.snackbar.messages.invalidCsrf;
             },
             invalid_image_type: 'You have supplied incorrect type of image format.',
             invalid_model: 'You have requested access to resource that does not exist,',
