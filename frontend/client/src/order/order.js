@@ -143,7 +143,7 @@
                                             if (config && config.noLines) {
                                                 $scope.order._lines = lines;
                                             }
-                                            if (response.data.line_deleted_out_of_stock) {
+                                            if (response.data.line_deleted_out_of_stock && response.data.line_deleted_out_of_stock.length) {
                                                 angular.forEach($scope.order._lines.concat(), function (value, key) {
                                                     if ($.inArray(value.key, response.data.line_deleted_out_of_stock) !== -1) {
                                                         $scope.order._lines.remove(value);
