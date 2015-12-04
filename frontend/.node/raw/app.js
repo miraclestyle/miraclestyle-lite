@@ -960,8 +960,6 @@ if (window.DEBUG) {
                 var currentAccount = $injector.get('currentAccount');
                 data._csrf = currentAccount._csrf;
 
-                console.log(data);
-
                 return [angular.extend({
                     action_model: model,
                     action_id: action
@@ -1791,7 +1789,7 @@ if (window.DEBUG) {
             catalogNotFound: 'This catalog does not exist.',
             catalogProductNotFound: 'This catalog product does not exist.',
             failedAccessingAccount: 'Failed accessing account.',
-            outOfStockLinesRemoved: 'Out of stock products removed from the cart.',
+            outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.'
         });
 
@@ -1887,7 +1885,7 @@ if (window.DEBUG) {
                 return 'You do not have permission to perform this action.';
             },
             not_found: function (fields) {
-                return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
+                return 'Requested data ' + fields.join(', ') + ' could not be found in the database.';
             },
             invalid_csrf: function () {
                 return GLOBAL_CONFIG.snackbar.messages.invalidCsrf;
@@ -20088,7 +20086,7 @@ angular.module('app')
                                                 });
 
                                                 $scope.variantSelection.push({
-                                                    type: 'SuperStringProperty',
+                                                    type: (v.allow_custom_value ? 'SuperTextProperty' : 'SuperStringProperty'),
                                                     choices: (v.allow_custom_value ? null : v.options),
                                                     code_name: 'option_' + i,
                                                     ui: {
@@ -20123,7 +20121,7 @@ angular.module('app')
                                                         buildVariantSignature.push(v.name + ': ' + v.option);
                                                         $scope.currentVariationPure.push(d);
                                                     } else if (!angular.isString(v.option) || !v.option.length) {
-                                                        //return;
+                                                        v.option = '';
                                                     }
                                                     $scope.currentVariation.push(d);
                                                 });
@@ -20581,10 +20579,10 @@ angular.module('app')
                                             $scope.canAddToCart = true;
                                         }
 
-                                        $scope.orderLineCount = response.data.entity._lines.length;
-                                        if ($scope.orderLineCount === 0) {
+                                        if (response.data.entity._lines.length === 0 && $scope.orderLineCount > 1) {
                                             deleteOrder();
                                         }
+                                        $scope.orderLineCount = response.data.entity._lines.length;
 
                                         snackbar.showK('cartUpdated');
                                     })['finally'](function () {
