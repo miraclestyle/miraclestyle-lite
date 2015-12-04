@@ -6,3 +6,4 @@ cron:
 - description: Catalog Lifecycle Support
   url: /api/catalog/cron
   schedule: every 1 hours
+  target: backend
