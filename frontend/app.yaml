@@ -9,18 +9,18 @@ handlers:
 # @todo must hide client .apps, and /src for production version
 - url: /client
   static_dir: client
-  expiration: "364d 5h"
+  expiration: "360d 5h"
   application_readable: true
 
 - url: /favicon\.ico
   static_files: client/dist/favicon.png
   upload: client/dist/favicon.png
-  expiration: "364d 5h"
+  expiration: "360d 5h"
 
 - url: /robots\.txt
   static_files: client/dist/robots.txt
   upload: client/dist/robots.txt
-  expiration: "364d 5h"
+  expiration: "360d 5h"
 
 - url: /.*
   script: http.app
