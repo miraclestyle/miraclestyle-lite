@@ -486,10 +486,9 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission(('catalog_duplicate'), condition_not_guest_and_owner_and_published),
       orm.ExecuteActionPermission('publish', condition_publish),
       orm.ExecuteActionPermission('discontinue', condition_discontinue),
-      orm.ExecuteActionPermission('account_discontinue', condition_taskqueue),
       orm.ExecuteActionPermission('sudo', condition_root),
-      orm.ExecuteActionPermission(('catalog_process_duplicate', 'catalog_pricetag_process_duplicate',
-                                   'delete', 'cron'), condition_taskqueue),
+      orm.ExecuteActionPermission(('account_discontinue', 'catalog_process_duplicate', 
+                                   'catalog_pricetag_process_duplicate', 'delete', 'cron'), condition_taskqueue),
       # field permissions
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                'state', 'cover', '_images'), condition_not_guest_and_owner_or_root),
