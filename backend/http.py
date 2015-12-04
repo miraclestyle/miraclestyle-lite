@@ -239,6 +239,13 @@ class AccountLogout(RequestHandler):
     self.redirect('/')
 
 
+class CatalogCron(RequestHandler):
+
+  def respond(self):
+    input = {'action_model': '31', 'action_id': 'cron'}
+    iom.Engine.run(input)
+
+
 class OrderNotify(RequestHandler):
 
   def respond(self, payment_method):
@@ -250,15 +257,23 @@ class OrderNotify(RequestHandler):
     iom.Engine.run(input)
 
 
+class OrderCron(RequestHandler):
+
+  def respond(self):
+    input = {'action_model': '34', 'action_id': 'cron'}
+    iom.Engine.run(input)
+
+
 ROUTES = [('/api/endpoint', Endpoint),
           ('/api/model_meta', ModelMeta),
           ('/api/task/io_engine_run', IOEngineRun),
-          ('/api/cron/seller', IOEngineRun),
           ('/api/install', Install),
           ('/api/account/login', AccountLogin),
           ('/api/account/login/<provider>', AccountLogin),
           ('/api/account/logout', AccountLogout),
-          ('/api/order/notify/<payment_method>', OrderNotify)]
+          ('/api/catalog/cron', CatalogCron),
+          ('/api/order/notify/<payment_method>', OrderNotify),
+          ('/api/order/cron', OrderCron)]
 
 
 # Test Handlers
