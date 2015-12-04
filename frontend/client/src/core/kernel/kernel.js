@@ -240,8 +240,6 @@
                 var currentAccount = $injector.get('currentAccount');
                 data._csrf = currentAccount._csrf;
 
-                console.log(data);
-
                 return [angular.extend({
                     action_model: model,
                     action_id: action
