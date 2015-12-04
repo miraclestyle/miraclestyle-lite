@@ -6,16 +6,10 @@
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name}}</a>"
   was successfully discontinued.
 </span><br/><br/>
-{% if account._is_taskqueue %}
 <span>
   The catalog was automatically discontinued based on the "Expiration date" setting
   that was set to {{entity.discontinue_date|format_date}} UTC (Coordinated Universal Time).
 </span><br/><br/>
-{% else %}
-<span>
-  You manually requested the catalog discontinuation.
-</span><br/><br/>
-{% endif %}
 <span>
   Here are few reminders to be aware of:
 </span><br/><br/>
