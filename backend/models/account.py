@@ -384,11 +384,6 @@ class Account(orm.BaseExpando):
       )
   ]
 
-  def __init__(self, *args, **kwargs):
-    self.__is_taskqueue = False
-    self.__is_cron = False
-    return super(Account, self).__init__(*args, **kwargs)
-
   def get_output(self):
     dic = super(Account, self).get_output()
     dic.update({'_is_guest': self._is_guest,
@@ -403,11 +398,11 @@ class Account(orm.BaseExpando):
 
   @property
   def _is_taskqueue(self):
-    return self.__is_taskqueue
+    return tools.mem_temp_get('current_request_is_taskqueue')
 
   @property
   def _is_cron(self):
-    return self.__is_cron
+    return tools.mem_temp_get('current_request_is_cron')
 
   @property
   def _is_system(self):
@@ -481,12 +476,10 @@ class Account(orm.BaseExpando):
     return session
 
   def set_taskqueue(self, flag):
-    self.__is_taskqueue = flag
-    return flag
+    return tools.mem_temp_set('current_request_is_taskqueue', flag)
 
   def set_cron(self, flag):
-    self.__is_cron = flag
-    return flag
+    return tools.mem_temp_set('current_request_is_cron', flag)
 
   @classmethod
   def set_current_account(cls, account, session=None):
