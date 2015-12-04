@@ -1,11 +1,4 @@
 #!/bin/bash
-#
-git pull
-
-if [ "$1" = "frontend" ] || [ "$1" = "all" ]; then
-sh build.sh
-fi
-
 git add -A
 if [ "$1" = "frontend" ]; then
     git commit -m"deploy frontend"
@@ -14,6 +7,13 @@ elif [ "$1" = "backend" ]; then
 elif [ "$1" = "all" ]; then
     git commit -m"deploy all"
 fi
+git pull
+
+if [ "$1" = "frontend" ] || [ "$1" = "all" ]; then
+sh build.sh
+fi
+git add -A
+git commit -m"build"
 git push
 
 if [ "$1" = "backend" ] || [ "$1" = "all" ]; then

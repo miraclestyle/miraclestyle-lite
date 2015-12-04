@@ -1076,8 +1076,6 @@ class OrderStockManagement(orm.BaseModel):
           continue
         real_product_key = OrderProduct.get_partial_reference_key_path(line_product.reference)
         line._product = yield real_product_key.get_async()
-        if line._product:
-          line._product._stock.read_async()
     get_products().get_result()
 
     for line in context._order._lines.value:
@@ -1093,6 +1091,7 @@ class OrderStockManagement(orm.BaseModel):
       stocks = None
       out_of_stock = False
       product._stock.read()
+      product.variants.read()
       if product._stock.value and product._stock.value.stocks.value:  # if user defined any stocks
         stocks = product._stock.value.stocks.value
       if variant_signature:
