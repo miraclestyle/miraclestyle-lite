@@ -546,7 +546,7 @@
                 return 'You do not have permission to perform this action.';
             },
             not_found: function (fields) {
-                return 'Requested data ' + fields.join(', ') + ' could not be found in database.';
+                return 'Requested data ' + fields.join(', ') + ' could not be found in the database.';
             },
             invalid_csrf: function () {
                 return GLOBAL_CONFIG.snackbar.messages.invalidCsrf;
