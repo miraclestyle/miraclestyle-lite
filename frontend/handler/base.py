@@ -492,6 +492,8 @@ class RequestHandler(webapp2.RequestHandler):
 
   def dispatch(self):
     self.template['base_url'] = self.request.host_url
+    if 'build' not in self.template:
+        self.template['build'] = True
     try:
       self.before()
       super(RequestHandler, self).dispatch()

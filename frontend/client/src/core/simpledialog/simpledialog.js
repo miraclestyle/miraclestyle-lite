@@ -38,8 +38,8 @@
                 emptyHashery();
             },
             queue: function (cb) {
-                if (window.isChromeApp) {
-                    return;
+                if (window.isChromeApp || window.isCordovaApp) {
+                    //return;
                 }
                 var hashPrefix = 'context-monitor-',
                     lastHash = window.location.hash,

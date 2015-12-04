@@ -185,7 +185,8 @@
 
                     fn = function watchServingUrl(nv, ov) {
                         if (nv !== ov) {
-                            if (window.isChromeApp && path) {
+                            // false = window.isChromeApp
+                            if (false && path) {
                                 URL.revokeObjectURL(path);
                             }
                             var img = element,
@@ -206,7 +207,8 @@
                                 path = helpers.url.handleProtocol(scope.image.serving_url) + (scope.config.size === true ? '' : '=s' + scope.config.size);
                                 img.on('load', done)
                                     .on('error', error);
-                                if (!window.isChromeApp) {
+                                // !window.isChromeApp
+                                if (true) {
                                     img.attr('src', path);
                                 } else {
                                     $http.get(path, {

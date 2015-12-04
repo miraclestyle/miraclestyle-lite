@@ -3,9 +3,8 @@ if (!window.ng) {
         return fn;
     };
 }
-
+window.isCordovaApp = !!window.cordova;
 window.isChromeApp = window.chrome && chrome.app && chrome.app.runtime;
-window._chromeLocalStorage = null;
 window.getLocalStorage = function () {
     if (!window.isChromeApp) {
         return window.localStorage;
@@ -23,7 +22,6 @@ window.getLocalStorage = function () {
         return window._chromeLocalStorage;
     }
 };
-
 function Steady(opts) {
     if (!opts) throw new Error('missing options');
     if (!opts.handler) throw new Error('missing handler parameter');
@@ -539,7 +537,7 @@ if (!Array.prototype.indexOf) {
         }
     });
 
-    var host = (window.isChromeApp ? 'https://x-arcanum-801.appspot.com' : window.location.protocol + '//' + window.location.host),
+    var host = ((window.isChromeApp || window.isCordovaApp) ? 'https://x-arcanum-801.appspot.com' : window.location.protocol + '//' + window.location.host),
         // global configuration for the application
         // this config file will expand
         GLOBAL_CONFIG = {
@@ -649,10 +647,11 @@ if (!Array.prototype.indexOf) {
         .config(ng(function ($httpProvider, $locationProvider, $compileProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
-            $locationProvider.html5Mode(!window.isChromeApp);
-            if (window.isChromeApp) {
-                $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|chrome-extension):/);
-            }
+            // !(window.isChromeApp || window.isCordovaApp)
+            $locationProvider.html5Mode(((window.isChromeApp || window.isCordovaApp) ? {
+                  enabled: true,
+                  requireBase: false
+                } : true));
         }));
     angular.module('app', GLOBAL_CONFIG.modules);
 
@@ -676,7 +675,16 @@ $(function () {
 /* Bootstrap, it will try to load current account and model data and then bootstrap the application. */
 (function () {
     'use strict';
-    angular.element(document).ready(function () {
+    var ready = function (cb) {
+        if (window.isCordovaApp) {
+            return document.addEventListener('deviceready', function () {
+                $(cb);
+            }, false);
+        } else {
+            return $(document).ready(cb);
+        }
+    };
+    ready(function () {
         var failure = function (response) {
                 if (response.status === -1) {
                     return; // this is canceled request

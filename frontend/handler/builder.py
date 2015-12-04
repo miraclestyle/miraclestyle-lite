@@ -32,8 +32,11 @@ class BuildAngularIndexHTML(base.Angular):
   def respond(self):
     init = settings.DEBUG
     settings.DEBUG = False
+    data = {'static_dir': self._static_dir}
+    if self.request.get('cordova'):
+      data['build'] = 'cordova'
     self.response.headers['Content-Type'] = 'text/plain; charset=utf8'
-    self.render(self.base_template, {'static_dir': self._static_dir})
+    self.render(self.base_template, data)
     settings.DEBUG = init
 
 
