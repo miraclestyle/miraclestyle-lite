@@ -389,13 +389,15 @@
                 }
 
             };
-        })).directive('compatibilityMaker', ng(function (modelsUtil) {
+        })).directive('compatibilityMaker', ng(function (modelsUtil, currentAccount) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs, ctrl) {
                     var fn = function () {
                         var newval = scope.$eval(attrs.compatibilityMaker),
-                            stringified = modelsUtil.argumentsToJson(newval);
+                            stringified;
+                        newval._csrf = currentAccount._csrf;
+                        stringified = modelsUtil.argumentsToJson(newval);
                         element.val(stringified);
                     };
                     scope.$watch(attrs.compatibilityMaker, fn);

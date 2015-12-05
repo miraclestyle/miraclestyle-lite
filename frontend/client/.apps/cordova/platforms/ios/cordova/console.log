@@ -596,3 +596,32 @@ To disable web storage backup to iCloud, set the BackupWebStorage preference to 
 
 2015-12-05 19:19:52.518 Miraclestyle[99529:1718004] Resetting plugins due to page load.
 2015-12-05 19:19:53.560 Miraclestyle[99529:1718004] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/26BD435E-322E-41C2-8977-27A8A62588B8/Miraclestyle.app/www/index.html
+2015-12-05 19:53:35.822 Miraclestyle[2482:1743036] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 19:53:35.823 Miraclestyle[2482:1743036] Multi-tasking -> Device: YES, App: YES
+2015-12-05 19:53:35.825 Miraclestyle[2482:1743036] Unlimited access to network resources
+2015-12-05 19:53:35.830 Miraclestyle[2482:1743036] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 19:53:35.897 Miraclestyle[2482:1743036] [CDVTimer][file] 3.509998ms
+2015-12-05 19:53:35.898 Miraclestyle[2482:1743036] [CDVTimer][TotalPluginStartup] 3.829002ms
+2015-12-05 19:53:36.177 Miraclestyle[2482:1743036] Resetting plugins due to page load.
+2015-12-05 19:53:36.919 Miraclestyle[2482:1743036] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/7E8305F8-FDCC-456F-B340-93BDF025E139/Miraclestyle.app/www/index.html
+2015-12-05 19:54:11.343 Miraclestyle[2482:1743036] THREAD WARNING: ['InAppBrowser'] took '119.232910' ms. Plugin should use a background thread.
+2015-12-05 19:54:33.435 Miraclestyle[2482:1743036] Passed in type public.item doesn't conform to either public.content or public.data. If you are exporting a new type, please ensure that it conforms to an appropriate parent type.
+2015-12-05 19:54:33.599 Miraclestyle[2482:1743036] the behavior of the UICollectionViewFlowLayout is not defined because:
+2015-12-05 19:54:33.599 Miraclestyle[2482:1743036] the item width must be less than the width of the UICollectionView minus the section insets left and right values, minus the content insets left and right values.
+2015-12-05 19:54:33.602 Miraclestyle[2482:1743036] The relevant UICollectionViewFlowLayout instance is <_UIAlertControllerCollectionViewFlowLayout: 0x7af084e0>, and it is attached to <UICollectionView: 0x7c3fb600; frame = (0 44; 10 0); clipsToBounds = YES; gestureRecognizers = <NSArray: 0x7af08c70>; animations = { bounds.origin=<CASpringAnimation: 0x7b01ed50>; bounds.size=<CASpringAnimation: 0x7b0376d0>; position=<CASpringAnimation: 0x7b03fe70>; }; layer = <CALayer: 0x7af089c0>; contentOffset: {0, 0}; contentSize: {0, 0}> collection view layout: <_UIAlertControllerCollectionViewFlowLayout: 0x7af084e0>.
+2015-12-05 19:54:33.602 Miraclestyle[2482:1743036] Make a symbolic breakpoint at UICollectionViewFlowLayoutBreakForInvalidSizes to catch this in the debugger.
+2015-12-05 19:55:15.233 Miraclestyle[2482:1743036] Passed in type public.item doesn't conform to either public.content or public.data. If you are exporting a new type, please ensure that it conforms to an appropriate parent type.
+2015-12-05 19:55:15.253 Miraclestyle[2482:1743036] the behavior of the UICollectionViewFlowLayout is not defined because:
+2015-12-05 19:55:15.253 Miraclestyle[2482:1743036] the item width must be less than the width of the UICollectionView minus the section insets left and right values, minus the content insets left and right values.
+2015-12-05 19:55:15.253 Miraclestyle[2482:1743036] The relevant UICollectionViewFlowLayout instance is <_UIAlertControllerCollectionViewFlowLayout: 0x7aedd2d0>, and it is attached to <UICollectionView: 0x7bba8e00; frame = (0 44; 10 0); clipsToBounds = YES; gestureRecognizers = <NSArray: 0x7b79ea40>; animations = { bounds.origin=<CASpringAnimation: 0x7b6274e0>; bounds.size=<CASpringAnimation: 0x7b627590>; position=<CASpringAnimation: 0x7b6db850>; }; layer = <CALayer: 0x7aeaded0>; contentOffset: {0, 0}; contentSize: {0, 0}> collection view layout: <_UIAlertControllerCollectionViewFlowLayout: 0x7aedd2d0>.
+2015-12-05 19:55:15.253 Miraclestyle[2482:1743036] Make a symbolic breakpoint at UICollectionViewFlowLayoutBreakForInvalidSizes to catch this in the debugger.
+2015-12-05 19:55:35.689 Miraclestyle[2482:1744108] Communications error: <OS_xpc_error: <error: 0x3257534> { count = 1, contents =
+	"XPCErrorDescription" => <string: 0x3257734> { length = 22, contents = "Connection interrupted" }
+}>
