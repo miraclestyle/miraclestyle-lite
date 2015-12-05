@@ -376,6 +376,9 @@
                                         });
                                     } else {
                                         $scope.productManager.quantity = 1;
+                                        $scope.isInStock = $scope.getAvailability(true);
+                                        $scope.stockText = $scope.getAvailability();
+                                        $scope.quantityIncrement = $scope.isInStock;
                                     }
                                 };
 
