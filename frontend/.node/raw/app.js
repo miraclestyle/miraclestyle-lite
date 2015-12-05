@@ -660,11 +660,11 @@ if (!Array.prototype.indexOf) {
         .config(ng(function ($httpProvider, $locationProvider, $compileProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
-            var html5Mode = ((!window.ENGINE.DESKTOP.ACTIVE) ? {
+            /*{
                   enabled: true,
                   requireBase: false
-                } : true);
-            console.log(html5Mode);
+                }*/
+            var html5Mode = ((!window.ENGINE.DESKTOP.ACTIVE) ? false : true);
             $locationProvider.html5Mode(html5Mode);
         }));
     angular.module('app', GLOBAL_CONFIG.modules);
