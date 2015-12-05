@@ -203,7 +203,7 @@
                                 var resolved = $q.defer();
                                 resolved.resolve();
                                 $scope.$state.promise(function () {
-                                    return (select.search.ready || resolved.promise);
+                                    return ((select.search && select.search.ready) ? select.search.ready : resolved.promise);
                                 }, function () {
                                     $scope.select = select;
                                 });
@@ -680,7 +680,7 @@
                                 resolved.resolve();
                                 if ($scope.$state) {
                                     $scope.$state.promise(function () {
-                                        return (select.search.ready || resolved.promise);
+                                        return ((select.search && select.search.ready) ? select.search.ready : resolved.promise);
                                     }, process);
                                 } else {
                                     process();
