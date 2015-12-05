@@ -11305,12 +11305,28 @@ function msieversion() {
                                         };
                                     }
                                     config.ui.specifics.search.missing = function (id) {
+                                        var defer,
+                                            selectedIsArray = angular.isArray(id),
+                                            hasAll = true;
                                         if (id === null || id === undefined || !id.length) {
-                                            var defer = $q.defer();
+                                            defer = $q.defer();
                                             defer.resolve();
                                             return defer.promise;
                                         }
-                                        var selectedIsArray = angular.isArray(id);
+                                        if (selectedIsArray) {
+                                            angular.forEach(selectedIsArray, function (key) {
+                                                if (angular.isUndefined(config.ui.specifics._mapEntities[key])) {
+                                                    hasAll = false;
+                                                }
+                                            });
+                                        } else {
+                                            hasAll = angular.isDefined(config.ui.specifics._mapEntities[id]);
+                                        }
+                                        if (hasAll) {
+                                            defer = $q.defer();
+                                            defer.resolve(config.ui.specifics.entities);
+                                            return defer.promise;
+                                        }
                                         return model.actions.search({
                                             search: {
                                                 keys: (selectedIsArray ? id : [id])
