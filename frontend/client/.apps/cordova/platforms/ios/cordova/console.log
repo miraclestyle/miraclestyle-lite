@@ -177,3 +177,24 @@ To disable web storage backup to iCloud, set the BackupWebStorage preference to 
 2015-12-05 12:50:14.198 Miraclestyle[78222:1530732] Finished load of: https://www.google.ba/webhp?output=search
 2015-12-05 12:50:28.792 Miraclestyle[78222:1530732] Resetting plugins due to page load.
 2015-12-05 12:50:29.162 Miraclestyle[78222:1530732] Finished load of: https://www.google.ba/webhp?output=search
+2015-12-05 13:57:07.805 Miraclestyle[84352:1582581] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 13:57:07.806 Miraclestyle[84352:1582581] Multi-tasking -> Device: YES, App: YES
+2015-12-05 13:57:07.808 Miraclestyle[84352:1582581] Unlimited access to network resources
+2015-12-05 13:57:07.811 Miraclestyle[84352:1582581] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 13:57:08.043 Miraclestyle[84352:1582581] Resetting plugins due to page load.
+2015-12-05 13:57:08.454 Miraclestyle[84352:1582581] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/37B5F483-E1D9-470A-8B87-B5C2AA5598E8/Miraclestyle.app/www/index.html
+2015-12-05 13:57:18.208 Miraclestyle[84352:1582581] Resetting plugins due to page load.
+2015-12-05 13:57:18.636 Miraclestyle[84352:1582581] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/37B5F483-E1D9-470A-8B87-B5C2AA5598E8/Miraclestyle.app/www/index.html
+2015-12-05 13:57:24.327 Miraclestyle[84352:1582581] Resetting plugins due to page load.
+2015-12-05 13:57:24.635 Miraclestyle[84352:1582581] Failed to load webpage with error: The operation couldn’t be completed. (NSURLErrorDomain error -999.)
+2015-12-05 13:57:24.636 Miraclestyle[84352:1582581] Resetting plugins due to page load.
+2015-12-05 13:57:24.961 Miraclestyle[84352:1582581] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/37B5F483-E1D9-470A-8B87-B5C2AA5598E8/Miraclestyle.app/www/index.html
+2015-12-05 13:57:24.977 Miraclestyle[84352:1582581] Resetting plugins due to page load.
+2015-12-05 13:57:25.328 Miraclestyle[84352:1582581] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/37B5F483-E1D9-470A-8B87-B5C2AA5598E8/Miraclestyle.app/www/index.html

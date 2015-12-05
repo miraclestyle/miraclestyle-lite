@@ -550,7 +550,7 @@ if (!Array.prototype.indexOf) {
         }
     });
 
-    var host = (!window.ENGINE.DESKTOP.ACTIVE ? window.ENGINE.SERVER.URL : window.location.protocol + '//' + window.location.host),
+    var host = ((!window.ENGINE.DESKTOP.ACTIVE) ? window.ENGINE.SERVER.URL : window.location.protocol + '//' + window.location.host),
         // global configuration for the application
         // this config file will expand
         GLOBAL_CONFIG = {
@@ -660,10 +660,12 @@ if (!Array.prototype.indexOf) {
         .config(ng(function ($httpProvider, $locationProvider, $compileProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
-            $locationProvider.html5Mode((!(window.ENGINE.DESKTOP.ACTIVE) ? {
+            var html5Mode = ((!window.ENGINE.DESKTOP.ACTIVE) ? {
                   enabled: true,
                   requireBase: false
-                } : true));
+                } : true);
+            console.log(html5Mode);
+            $locationProvider.html5Mode(html5Mode);
         }));
     angular.module('app', GLOBAL_CONFIG.modules);
 
