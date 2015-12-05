@@ -19,7 +19,7 @@ window.ENGINE = {
 };
 window.ENGINE.DESKTOP.ACTIVE = !(window.ENGINE.CHROMEAPP.ACTIVE || window.ENGINE.CORDOVA.ACTIVE);
 window.getLocalStorage = function () {
-    if (!window.ENGINE.CHROMEAPP.ACTIVE) {
+    if (!window.ENGINE.DESKTOP.ACTIVE) {
         return window.localStorage;
     }
     if (window.ENGINE.CHROMEAPP.ACTIVE) {
@@ -660,11 +660,11 @@ if (!Array.prototype.indexOf) {
         .config(ng(function ($httpProvider, $locationProvider, $compileProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
-            /*{
+            var html5Mode = ((!window.ENGINE.DESKTOP.ACTIVE) ? {
                   enabled: true,
                   requireBase: false
-                }*/
-            var html5Mode = ((!window.ENGINE.DESKTOP.ACTIVE) ? false : true);
+                } : true);
+            console.log(html5Mode);
             $locationProvider.html5Mode(html5Mode);
         }));
     angular.module('app', GLOBAL_CONFIG.modules);
@@ -17514,7 +17514,7 @@ function msieversion() {
                             }];
 
                             $scope.getIcon = function (soc) {
-                                return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                                return (window.ENGINE.DESKTOP.ACTIVE ? '/' : '') + 'client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
                             };
 
                             $scope.share = function (soc) {
@@ -18050,7 +18050,7 @@ angular.module('app')
                                     }*/];
 
                                     $scope.getIcon = function (soc) {
-                                        return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                                        return (window.ENGINE.DESKTOP.ACTIVE ? '/' : '') + 'client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
                                     };
 
                                     $scope.authorization_urls = login.data.authorization_urls;
