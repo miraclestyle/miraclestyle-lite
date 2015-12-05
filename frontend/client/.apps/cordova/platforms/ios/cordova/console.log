@@ -198,3 +198,18 @@ To disable web storage backup to iCloud, set the BackupWebStorage preference to 
 2015-12-05 13:57:24.961 Miraclestyle[84352:1582581] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/37B5F483-E1D9-470A-8B87-B5C2AA5598E8/Miraclestyle.app/www/index.html
 2015-12-05 13:57:24.977 Miraclestyle[84352:1582581] Resetting plugins due to page load.
 2015-12-05 13:57:25.328 Miraclestyle[84352:1582581] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/37B5F483-E1D9-470A-8B87-B5C2AA5598E8/Miraclestyle.app/www/index.html
+2015-12-05 14:04:03.102 Miraclestyle[85261:1590621] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 14:04:03.104 Miraclestyle[85261:1590621] Multi-tasking -> Device: YES, App: YES
+2015-12-05 14:04:03.106 Miraclestyle[85261:1590621] Unlimited access to network resources
+2015-12-05 14:04:03.110 Miraclestyle[85261:1590621] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 14:04:03.480 Miraclestyle[85261:1590621] Resetting plugins due to page load.
+2015-12-05 14:04:04.297 Miraclestyle[85261:1590621] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/D95DC3F9-5DEF-47B7-A896-E453AE402E44/Miraclestyle.app/www/index.html
+2015-12-05 14:04:18.252 Miraclestyle[85261:1590621] Resetting plugins due to page load.
+2015-12-05 14:04:18.609 Miraclestyle[85261:1590621] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/D95DC3F9-5DEF-47B7-A896-E453AE402E44/Miraclestyle.app/www/index.html
