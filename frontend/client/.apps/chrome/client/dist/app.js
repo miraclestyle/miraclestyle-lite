@@ -16583,7 +16583,7 @@ function msieversion() {
 }());(function () {
     'use strict';
     angular.module('app')
-        .directive('selectInputMultiple', ['$timeout', 'underscoreTemplate', '$modal', function ($timeout, underscoreTemplate, $modal) {
+        .directive('selectInputMultiple', ['$timeout', 'underscoreTemplate', '$q', '$modal', function ($timeout, underscoreTemplate, $q, $modal) {
             return {
                 require: ['ngModel', '^?form'],
                 link: function (scope, element, attrs, ctrls) {
@@ -16782,8 +16782,10 @@ function msieversion() {
                             fullScreen: false,
                             backdrop: true,
                             controller: ['$scope', function ($scope) {
+                                var resolved = $q.defer();
+                                resolved.resolve();
                                 $scope.$state.promise(function () {
-                                    return select.search.ready;
+                                    return (select.search.ready || resolved.promise);
                                 }, function () {
                                     $scope.select = select;
                                 });
@@ -17256,10 +17258,11 @@ function msieversion() {
                                         }
                                     };
                                     $scope.select = select;
-                                };
+                                }, resolved = $q.defer();
+                                resolved.resolve();
                                 if ($scope.$state) {
                                     $scope.$state.promise(function () {
-                                        return select.search.ready;
+                                        return (select.search.ready || resolved.promise);
                                     }, process);
                                 } else {
                                     process();
