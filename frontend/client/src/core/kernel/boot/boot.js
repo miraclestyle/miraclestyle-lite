@@ -610,9 +610,9 @@ if (!Array.prototype.indexOf) {
                 confirmations: {},
                 alerts: {}
             },
-            defaultImage: '/client/dist/static/240x240_placeholder.png',
-            defaultLogo: '/client/dist/static/720x300_placeholder.png',
-            defaultCatalogCover: '/client/dist/static/240x240_placeholder.png',
+            defaultImage: 'client/dist/static/240x240_placeholder.png',
+            defaultLogo: 'client/dist/static/720x300_placeholder.png',
+            defaultCatalogCover: 'client/dist/static/240x240_placeholder.png',
             grid: {
                 maxWidth: 240,
                 minWidth: 180,

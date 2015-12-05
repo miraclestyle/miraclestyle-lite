@@ -138,7 +138,7 @@
 
             helpers.sideNav.setup($rootScope.site.toolbar.menu, 'left');
         }))
-        .controller('AboutController', ng(function ($scope) {
+        .controller('AboutController', ng(function ($scope, helpers) {
             $scope.socials = [{
                 name: 'Facebook',
                 key: 'facebook',
@@ -178,7 +178,7 @@
             };
 
             $scope.getIcon = function (soc) {
-                return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
             };
 
             $scope.setPageToolbarTitle('about');

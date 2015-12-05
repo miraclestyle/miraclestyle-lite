@@ -63,6 +63,12 @@
                     }
                 },
                 url: {
+                    local: function (path) {
+                        if (window.ENGINE.CORDOVA.ACTIVE) {
+                            return cordova.file.applicationDirectory + 'www/' + path;
+                        }
+                        return '/' + path;
+                    },
                     abs: function (part) {
                         return GLOBAL_CONFIG.host + '/' + part;
                     },
@@ -202,7 +208,7 @@
                                     if (!defaultImage) {
                                         defaultImage = 'defaultImage';
                                     }
-                                    img.attr('src', GLOBAL_CONFIG[defaultImage]);
+                                    img.attr('src', helpers.url.local(GLOBAL_CONFIG[defaultImage]));
                                     done();
                                 };
 

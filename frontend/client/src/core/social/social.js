@@ -47,7 +47,7 @@
                             }];
 
                             $scope.getIcon = function (soc) {
-                                return (window.ENGINE.DESKTOP.ACTIVE ? '/' : '') + 'client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                                return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
                             };
 
                             $scope.share = function (soc) {

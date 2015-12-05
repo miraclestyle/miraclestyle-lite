@@ -8,6 +8,11 @@
     <feature name="InAppBrowser">
         <param name="android-package" value="org.apache.cordova.inappbrowser.InAppBrowser" />
     </feature>
+    <preference name="AndroidPersistentFileLocation" value="Internal" />
+    <feature name="File">
+        <param name="android-package" value="org.apache.cordova.file.FileUtils" />
+        <param name="onload" value="true" />
+    </feature>
     <allow-intent href="market:*" />
     <name>Miraclestyle</name>
     <description>
