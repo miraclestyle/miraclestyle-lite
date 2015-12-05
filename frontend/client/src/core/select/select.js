@@ -200,7 +200,9 @@
                             fullScreen: false,
                             backdrop: true,
                             controller: ng(function ($scope) {
-                                $scope.$state.instant(function () {
+                                $scope.$state.promise(function () {
+                                    return select.search.ready;
+                                }, function () {
                                     $scope.select = select;
                                 });
                                 $scope.$on('$destroy', function () {
@@ -674,7 +676,9 @@
                                     $scope.select = select;
                                 };
                                 if ($scope.$state) {
-                                    $scope.$state.instant(process);
+                                    $scope.$state.promise(function () {
+                                        return select.search.ready;
+                                    }, process);
                                 } else {
                                     process();
                                 }
