@@ -260,3 +260,79 @@ To disable web storage backup to iCloud, set the BackupWebStorage preference to 
 2015-12-05 14:12:45.496 Miraclestyle[86224:1600058] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/45FF5D87-43A8-42CA-B30D-C194974E4CFB/Miraclestyle.app/www/index.html
 2015-12-05 14:13:24.790 Miraclestyle[86224:1600058] Resetting plugins due to page load.
 2015-12-05 14:13:25.204 Miraclestyle[86224:1600058] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/45FF5D87-43A8-42CA-B30D-C194974E4CFB/Miraclestyle.app/www/index.html
+2015-12-05 14:16:14.842 Miraclestyle[86610:1603280] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 14:16:14.843 Miraclestyle[86610:1603280] Multi-tasking -> Device: YES, App: YES
+2015-12-05 14:16:14.845 Miraclestyle[86610:1603280] Unlimited access to network resources
+2015-12-05 14:16:14.849 Miraclestyle[86610:1603280] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 14:16:15.041 Miraclestyle[86610:1603280] Resetting plugins due to page load.
+2015-12-05 14:16:15.473 Miraclestyle[86610:1603280] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/7183E17C-DDA1-4B7E-8F6F-9FD34555552C/Miraclestyle.app/www/index.html
+2015-12-05 14:16:26.412 Miraclestyle[86610:1603280] Resetting plugins due to page load.
+2015-12-05 14:16:26.798 Miraclestyle[86610:1603280] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/7183E17C-DDA1-4B7E-8F6F-9FD34555552C/Miraclestyle.app/www/index.html
+2015-12-05 14:17:37.970 Miraclestyle[86850:1605647] DiskCookieStorage changing policy from 2 to 0, cookie file: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Data/Application/F1446660-B239-4368-AE8D-D0F59432639C/Library/Cookies/io.cordova.hellocordova.binarycookies
+2015-12-05 14:17:38.077 Miraclestyle[86850:1605647] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 14:17:38.077 Miraclestyle[86850:1605647] Multi-tasking -> Device: YES, App: YES
+2015-12-05 14:17:38.081 Miraclestyle[86850:1605647] Unlimited access to network resources
+2015-12-05 14:17:38.085 Miraclestyle[86850:1605647] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 14:17:38.503 Miraclestyle[86850:1605647] Resetting plugins due to page load.
+2015-12-05 14:17:38.953 Miraclestyle[86850:1605647] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/81FF4A41-137A-4D77-8EB1-54B37901A532/Miraclestyle.app/www/index.html
+2015-12-05 14:17:53.742 Miraclestyle[86850:1605647] Resetting plugins due to page load.
+2015-12-05 14:17:54.115 Miraclestyle[86850:1605647] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/81FF4A41-137A-4D77-8EB1-54B37901A532/Miraclestyle.app/www/index.html
+2015-12-05 14:18:41.902 Miraclestyle[87014:1606945] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 14:18:41.904 Miraclestyle[87014:1606945] Multi-tasking -> Device: YES, App: YES
+2015-12-05 14:18:41.906 Miraclestyle[87014:1606945] Unlimited access to network resources
+2015-12-05 14:18:41.910 Miraclestyle[87014:1606945] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 14:18:42.176 Miraclestyle[87014:1606945] Resetting plugins due to page load.
+2015-12-05 14:18:42.696 Miraclestyle[87014:1606945] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/79167B84-B9C5-4B53-B164-BE95D9A8BC5B/Miraclestyle.app/www/index.html
+2015-12-05 14:19:11.920 Miraclestyle[87014:1606945] Resetting plugins due to page load.
+2015-12-05 14:19:12.327 Miraclestyle[87014:1606945] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/79167B84-B9C5-4B53-B164-BE95D9A8BC5B/Miraclestyle.app/www/index.html
+2015-12-05 14:20:02.318 Miraclestyle[87142:1607986] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 14:20:02.319 Miraclestyle[87142:1607986] Multi-tasking -> Device: YES, App: YES
+2015-12-05 14:20:02.321 Miraclestyle[87142:1607986] Unlimited access to network resources
+2015-12-05 14:20:02.325 Miraclestyle[87142:1607986] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 14:20:02.518 Miraclestyle[87142:1607986] Resetting plugins due to page load.
+2015-12-05 14:20:02.933 Miraclestyle[87142:1607986] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/47DFBD68-2819-4EE5-B23C-EAFABEB6BC95/Miraclestyle.app/www/index.html
+2015-12-05 14:20:13.191 Miraclestyle[87142:1607986] Resetting plugins due to page load.
+2015-12-05 14:20:13.585 Miraclestyle[87142:1607986] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/47DFBD68-2819-4EE5-B23C-EAFABEB6BC95/Miraclestyle.app/www/index.html
+2015-12-05 14:22:34.190 Miraclestyle[87392:1610045] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 14:22:34.191 Miraclestyle[87392:1610045] Multi-tasking -> Device: YES, App: YES
+2015-12-05 14:22:34.193 Miraclestyle[87392:1610045] Unlimited access to network resources
+2015-12-05 14:22:34.197 Miraclestyle[87392:1610045] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 14:22:34.364 Miraclestyle[87392:1610045] Resetting plugins due to page load.
+2015-12-05 14:22:35.470 Miraclestyle[87392:1610045] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/B69FF53E-FD43-44F9-93A4-F276C952E3F3/Miraclestyle.app/www/index.html
+2015-12-05 14:22:41.439 Miraclestyle[87392:1610045] Resetting plugins due to page load.
+2015-12-05 14:22:42.239 Miraclestyle[87392:1610045] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/B69FF53E-FD43-44F9-93A4-F276C952E3F3/Miraclestyle.app/www/index.html
