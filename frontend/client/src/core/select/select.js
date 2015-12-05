@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     angular.module('app')
-        .directive('selectInputMultiple', ng(function ($timeout, underscoreTemplate, $modal) {
+        .directive('selectInputMultiple', ng(function ($timeout, underscoreTemplate, $q, $modal) {
             return {
                 require: ['ngModel', '^?form'],
                 link: function (scope, element, attrs, ctrls) {
@@ -200,8 +200,10 @@
                             fullScreen: false,
                             backdrop: true,
                             controller: ng(function ($scope) {
+                                var resolved = $q.defer();
+                                resolved.resolve();
                                 $scope.$state.promise(function () {
-                                    return select.search.ready;
+                                    return (select.search.ready || resolved.promise);
                                 }, function () {
                                     $scope.select = select;
                                 });
@@ -674,10 +676,11 @@
                                         }
                                     };
                                     $scope.select = select;
-                                };
+                                }, resolved = $q.defer();
+                                resolved.resolve();
                                 if ($scope.$state) {
                                     $scope.$state.promise(function () {
-                                        return select.search.ready;
+                                        return (select.search.ready || resolved.promise);
                                     }, process);
                                 } else {
                                     process();
