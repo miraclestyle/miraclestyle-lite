@@ -14608,9 +14608,6 @@ function msieversion() {
                     }
                     scope.size = attrs.size;
                     scope.$isRendered = true;
-                    scope.$renderComplete = function () {
-                        $timeout(ready, 50, false);
-                    };
                     // Observe function will be called on next digest cycle after compilation, ensuring that the DOM is ready.
                     // In order to use this way of finding whether DOM is ready, we need to observe a scope property used in modal's template.
                     ready = function () {
@@ -16785,7 +16782,9 @@ function msieversion() {
                             fullScreen: false,
                             backdrop: true,
                             controller: ng(function ($scope) {
-                                $scope.$state.instant(function () {
+                                $scope.$state.promise(function () {
+                                    return select.search.ready;
+                                }, function () {
                                     $scope.select = select;
                                 });
                                 $scope.$on('$destroy', function () {
@@ -17259,7 +17258,9 @@ function msieversion() {
                                     $scope.select = select;
                                 };
                                 if ($scope.$state) {
-                                    $scope.$state.instant(process);
+                                    $scope.$state.promise(function () {
+                                        return select.search.ready;
+                                    }, process);
                                 } else {
                                     process();
                                 }
