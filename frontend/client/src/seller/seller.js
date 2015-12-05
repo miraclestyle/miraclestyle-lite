@@ -824,12 +824,12 @@
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;
                     return (function ($scope) {
-                        var sellerUrl = $state.href('seller-info', {
+                        var sellerUrl = $state.engineHref('seller-info', {
                                 key: seller.parent.key
                             }, {
                                 absolute: true
                             }),
-                            embedSellerUrl = $state.href('embed-seller-info', {
+                            embedSellerUrl = $state.engineHref('embed-seller-info', {
                                 key: seller.parent.key
                             }, {
                                 absolute: true

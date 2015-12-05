@@ -3,13 +3,26 @@ if (!window.ng) {
         return fn;
     };
 }
-window.isCordovaApp = !!window.cordova;
-window.isChromeApp = window.chrome && chrome.app && chrome.app.runtime;
+window.ENGINE = {
+    SERVER: {
+        URL: 'https://x-arcanum-801.appspot.com'
+    },
+    CORDOVA: {
+        ACTIVE: !!window.cordova
+    },
+    CHROMEAPP: {
+        ACTIVE: window.chrome && chrome.app && chrome.app.runtime
+    },
+    DESKTOP: {
+        ACTIVE: true
+    }
+};
+window.ENGINE.DESKTOP.ACTIVE = !(window.ENGINE.CHROMEAPP.ACTIVE || window.ENGINE.CORDOVA.ACTIVE);
 window.getLocalStorage = function () {
-    if (!window.isChromeApp) {
+    if (!window.ENGINE.CHROMEAPP.ACTIVE) {
         return window.localStorage;
     }
-    if (window.isChromeApp) {
+    if (window.ENGINE.CHROMEAPP.ACTIVE) {
         if (!window._chromeLocalStorage) {
             window._chromeLocalStorage = {
                 _data       : {},
@@ -537,7 +550,7 @@ if (!Array.prototype.indexOf) {
         }
     });
 
-    var host = ((window.isChromeApp || window.isCordovaApp) ? 'https://x-arcanum-801.appspot.com' : window.location.protocol + '//' + window.location.host),
+    var host = (!window.ENGINE.DESKTOP.ACTIVE ? window.ENGINE.SERVER.URL : window.location.protocol + '//' + window.location.host),
         // global configuration for the application
         // this config file will expand
         GLOBAL_CONFIG = {
@@ -647,8 +660,7 @@ if (!Array.prototype.indexOf) {
         .config(ng(function ($httpProvider, $locationProvider, $compileProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
-            // !(window.isChromeApp || window.isCordovaApp)
-            $locationProvider.html5Mode(((window.isChromeApp || window.isCordovaApp) ? {
+            $locationProvider.html5Mode((!(window.ENGINE.DESKTOP.ACTIVE) ? {
                   enabled: true,
                   requireBase: false
                 } : true));
@@ -676,7 +688,7 @@ $(function () {
 (function () {
     'use strict';
     var ready = function (cb) {
-        if (window.isCordovaApp) {
+        if (window.ENGINE.CORDOVA.ACTIVE) {
             return document.addEventListener('deviceready', function () {
                 $(cb);
             }, false);

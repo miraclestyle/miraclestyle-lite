@@ -196,6 +196,13 @@
             });
 
     })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
+        $state.engineHref = function () {
+            var path = $state.href.apply($state, arguments);
+            if (window.ENGINE.DESKTOP.ACTIVE) {
+                return path;
+            }
+            return GLOBAL_CONFIG.host + path;
+        };
         $rootScope.$on('$stateChangeSuccess',
             function (event, toState, toParams, fromState, fromParams) {
                 if (toState.title) {

@@ -868,19 +868,19 @@
                                     }());
 
 
-                                    $scope.notifyUrl = $state.href('order-notify', {
+                                    $scope.notifyUrl = $state.engineHref('order-notify', {
                                         method: 'paypal'
                                     }, {
                                         absolute: true
                                     });
 
-                                    $scope.completePath = $state.href('order-payment-success', {
+                                    $scope.completePath = $state.engineHref('order-payment-success', {
                                         key: $scope.order.key
                                     }, {
                                         absolute: true
                                     });
 
-                                    $scope.cancelPath = $state.href('order-payment-canceled', {
+                                    $scope.cancelPath = $state.engineHref('order-payment-canceled', {
                                         key: $scope.order.key
                                     }, {
                                         absolute: true

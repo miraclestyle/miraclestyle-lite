@@ -210,7 +210,7 @@
                                         return;
                                     }
                                     var key = (config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-' + ($scope.currentVariation.length ? 'variant-' : '') + 'view',
-                                        productUrl = $state.href(key, {
+                                        productUrl = $state.engineHref(key, {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
                                             pricetag_id: $scope.catalog._images[0].pricetags[0].id,
@@ -526,7 +526,7 @@
 
                                 $scope.addToCart = function () {
                                     if (currentAccount._is_guest) {
-                                        models['11'].login($state.href((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
+                                        models['11'].login($state.engineHref((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
                                             pricetag_id: $scope.catalog._images[0].pricetags[0].id,
@@ -691,12 +691,12 @@
                                 var imagesReader,
                                     accessImages,
                                     loadProduct,
-                                    catalogUrl = $state.href('catalog-view', {
+                                    catalogUrl = $state.engineHref('catalog-view', {
                                         key: $scope.catalog.key
                                     }, {
                                         absolute: true
                                     }),
-                                    embedCatalogUrl = $state.href('embed-catalog-view', {
+                                    embedCatalogUrl = $state.engineHref('embed-catalog-view', {
                                         key: $scope.catalog.key
                                     }, {
                                         absolute: true
@@ -768,7 +768,7 @@
 
                                 $scope.displayCart = function () {
                                     if (currentAccount._is_guest) {
-                                        models['11'].login($state.href((config.hideClose ? 'embed-' : '') + 'catalog-order-view', {
+                                        models['11'].login($state.engineHref((config.hideClose ? 'embed-' : '') + 'catalog-order-view', {
                                             key: $scope.catalog.key
                                         }));
                                         return;

@@ -117,7 +117,7 @@
                             backdrop: true,
                             controller: ng(function ($scope) {
                                 $scope.$state.promise(function () {
-                                    return $http.post($state.href('login', {
+                                    return $http.post($state.engineHref('login', {
                                         provider: '1'
                                     }, {
                                         disableUI: false
@@ -214,7 +214,7 @@
                                     };
 
                                     $scope.login = function (soc) {
-                                        $http.post($state.href('login', {
+                                        $http.post($state.engineHref('login', {
                                             provider: soc.key
                                         }), {
                                             action_id: 'login',
@@ -294,7 +294,7 @@
                                             var redirect_to = $state.href('login-provider-connected', {
                                                 provider: getProvider(identity)
                                             });
-                                            $http.post($state.href('login', {
+                                            $http.post($state.engineHref('login', {
                                                 provider: getProvider(identity)
                                             }), {
                                                 action_id: 'login',
@@ -303,7 +303,7 @@
                                             }).then(function (response) {
                                                 var data = response.data;
                                                 if (data && !data.errors && data.authorization_url) {
-                                                    window.location.href = data.authorization_url;
+                                                    window.location.href = data.authorization_url; // @todo this must be a popup
                                                 } else {
                                                     modals.alert('failedGeneratingAuthorizaitonUrl');
                                                 }

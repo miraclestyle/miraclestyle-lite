@@ -3,13 +3,26 @@ if (!window.ng) {
         return fn;
     };
 }
-window.isCordovaApp = !!window.cordova;
-window.isChromeApp = window.chrome && chrome.app && chrome.app.runtime;
+window.ENGINE = {
+    SERVER: {
+        URL: 'https://x-arcanum-801.appspot.com'
+    },
+    CORDOVA: {
+        ACTIVE: !!window.cordova
+    },
+    CHROMEAPP: {
+        ACTIVE: window.chrome && chrome.app && chrome.app.runtime
+    },
+    DESKTOP: {
+        ACTIVE: true
+    }
+};
+window.ENGINE.DESKTOP.ACTIVE = !(window.ENGINE.CHROMEAPP.ACTIVE || window.ENGINE.CORDOVA.ACTIVE);
 window.getLocalStorage = function () {
-    if (!window.isChromeApp) {
+    if (!window.ENGINE.CHROMEAPP.ACTIVE) {
         return window.localStorage;
     }
-    if (window.isChromeApp) {
+    if (window.ENGINE.CHROMEAPP.ACTIVE) {
         if (!window._chromeLocalStorage) {
             window._chromeLocalStorage = {
                 _data       : {},
@@ -537,7 +550,7 @@ if (!Array.prototype.indexOf) {
         }
     });
 
-    var host = ((window.isChromeApp || window.isCordovaApp) ? 'https://x-arcanum-801.appspot.com' : window.location.protocol + '//' + window.location.host),
+    var host = (!window.ENGINE.DESKTOP.ACTIVE ? window.ENGINE.SERVER.URL : window.location.protocol + '//' + window.location.host),
         // global configuration for the application
         // this config file will expand
         GLOBAL_CONFIG = {
@@ -647,8 +660,7 @@ if (!Array.prototype.indexOf) {
         .config(ng(function ($httpProvider, $locationProvider, $compileProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
-            // !(window.isChromeApp || window.isCordovaApp)
-            $locationProvider.html5Mode(((window.isChromeApp || window.isCordovaApp) ? {
+            $locationProvider.html5Mode((!(window.ENGINE.DESKTOP.ACTIVE) ? {
                   enabled: true,
                   requireBase: false
                 } : true));
@@ -676,7 +688,7 @@ $(function () {
 (function () {
     'use strict';
     var ready = function (cb) {
-        if (window.isCordovaApp) {
+        if (window.ENGINE.CORDOVA.ACTIVE) {
             return document.addEventListener('deviceready', function () {
                 $(cb);
             }, false);
@@ -6106,8 +6118,8 @@ function msieversion() {
                 emptyHashery();
             },
             queue: function (cb) {
-                if (window.isChromeApp || window.isCordovaApp) {
-                    //return;
+                if (!window.ENGINE.DESKTOP.ACTIVE) {
+                    return;
                 }
                 var hashPrefix = 'context-monitor-',
                     lastHash = window.location.hash,
@@ -17995,7 +18007,7 @@ angular.module('app')
                             backdrop: true,
                             controller: ng(function ($scope) {
                                 $scope.$state.promise(function () {
-                                    return $http.post($state.href('login', {
+                                    return $http.post($state.engineHref('login', {
                                         provider: '1'
                                     }, {
                                         disableUI: false
@@ -18092,7 +18104,7 @@ angular.module('app')
                                     };
 
                                     $scope.login = function (soc) {
-                                        $http.post($state.href('login', {
+                                        $http.post($state.engineHref('login', {
                                             provider: soc.key
                                         }), {
                                             action_id: 'login',
@@ -18172,7 +18184,7 @@ angular.module('app')
                                             var redirect_to = $state.href('login-provider-connected', {
                                                 provider: getProvider(identity)
                                             });
-                                            $http.post($state.href('login', {
+                                            $http.post($state.engineHref('login', {
                                                 provider: getProvider(identity)
                                             }), {
                                                 action_id: 'login',
@@ -18181,7 +18193,7 @@ angular.module('app')
                                             }).then(function (response) {
                                                 var data = response.data;
                                                 if (data && !data.errors && data.authorization_url) {
-                                                    window.location.href = data.authorization_url;
+                                                    window.location.href = data.authorization_url; // @todo this must be a popup
                                                 } else {
                                                     modals.alert('failedGeneratingAuthorizaitonUrl');
                                                 }
@@ -20215,7 +20227,7 @@ angular.module('app')
                                         return;
                                     }
                                     var key = (config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-' + ($scope.currentVariation.length ? 'variant-' : '') + 'view',
-                                        productUrl = $state.href(key, {
+                                        productUrl = $state.engineHref(key, {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
                                             pricetag_id: $scope.catalog._images[0].pricetags[0].id,
@@ -20531,7 +20543,7 @@ angular.module('app')
 
                                 $scope.addToCart = function () {
                                     if (currentAccount._is_guest) {
-                                        models['11'].login($state.href((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
+                                        models['11'].login($state.engineHref((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
                                             key: $scope.catalog.key,
                                             image_id: $scope.catalog._images[0].id,
                                             pricetag_id: $scope.catalog._images[0].pricetags[0].id,
@@ -20696,12 +20708,12 @@ angular.module('app')
                                 var imagesReader,
                                     accessImages,
                                     loadProduct,
-                                    catalogUrl = $state.href('catalog-view', {
+                                    catalogUrl = $state.engineHref('catalog-view', {
                                         key: $scope.catalog.key
                                     }, {
                                         absolute: true
                                     }),
-                                    embedCatalogUrl = $state.href('embed-catalog-view', {
+                                    embedCatalogUrl = $state.engineHref('embed-catalog-view', {
                                         key: $scope.catalog.key
                                     }, {
                                         absolute: true
@@ -20773,7 +20785,7 @@ angular.module('app')
 
                                 $scope.displayCart = function () {
                                     if (currentAccount._is_guest) {
-                                        models['11'].login($state.href((config.hideClose ? 'embed-' : '') + 'catalog-order-view', {
+                                        models['11'].login($state.engineHref((config.hideClose ? 'embed-' : '') + 'catalog-order-view', {
                                             key: $scope.catalog.key
                                         }));
                                         return;
@@ -22005,19 +22017,19 @@ angular.module('app')
                                     }());
 
 
-                                    $scope.notifyUrl = $state.href('order-notify', {
+                                    $scope.notifyUrl = $state.engineHref('order-notify', {
                                         method: 'paypal'
                                     }, {
                                         absolute: true
                                     });
 
-                                    $scope.completePath = $state.href('order-payment-success', {
+                                    $scope.completePath = $state.engineHref('order-payment-success', {
                                         key: $scope.order.key
                                     }, {
                                         absolute: true
                                     });
 
-                                    $scope.cancelPath = $state.href('order-payment-canceled', {
+                                    $scope.cancelPath = $state.engineHref('order-payment-canceled', {
                                         key: $scope.order.key
                                     }, {
                                         absolute: true
@@ -22873,12 +22885,12 @@ angular.module('app')
                     config = helpers.alwaysObject(config);
                     var removedOrAdded = config.removedOrAdded;
                     return (function ($scope) {
-                        var sellerUrl = $state.href('seller-info', {
+                        var sellerUrl = $state.engineHref('seller-info', {
                                 key: seller.parent.key
                             }, {
                                 absolute: true
                             }),
-                            embedSellerUrl = $state.href('embed-seller-info', {
+                            embedSellerUrl = $state.engineHref('embed-seller-info', {
                                 key: seller.parent.key
                             }, {
                                 absolute: true
@@ -23365,6 +23377,13 @@ angular.module('app')
             });
 
     })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
+        $state.engineHref = function () {
+            var path = $state.href.apply($state, arguments);
+            if (window.ENGINE.DESKTOP.ACTIVE) {
+                return path;
+            }
+            return GLOBAL_CONFIG.host + path;
+        };
         $rootScope.$on('$stateChangeSuccess',
             function (event, toState, toParams, fromState, fromParams) {
                 if (toState.title) {

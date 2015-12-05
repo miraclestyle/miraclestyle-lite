@@ -35,7 +35,8 @@ class Context(orm.BaseModel):
     context.output['is_guest'] = context.account._is_guest
     action = context.action
     if not action.skip_csrf:
-      if context.account._csrf != context.raw_input.get('_csrf'):
+      csrf = context.raw_input.get('_csrf')
+      if csrf != '_____skipcsrf_____' and context.account._csrf != context.raw_input.get('_csrf'):
         raise ValueError({'invalid_csrf': True})
 
 

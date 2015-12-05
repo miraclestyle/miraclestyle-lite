@@ -19,6 +19,7 @@ def get(**kwds):
 def post(**kwds):
   kwds['method'] = urlfetch.POST
   if 'payload' in kwds:
+    kwds['payload']['_csrf'] = '_____skipcsrf_____'
     kwds['payload'] = json.dumps(kwds['payload'])
   if 'headers' not in kwds:
     kwds['headers'] = {}

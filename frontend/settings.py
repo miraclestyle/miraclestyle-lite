@@ -267,6 +267,18 @@ def build(templates=True, statics=True, js_and_css=True, write=False, vendors=Tr
     while proc.wait():
       break
 
+    import urllib
+
+    for provider, spec, path in (('chrome', '', os.path.join(CLIENT_DIR, '.apps', 'chrome', 'index.html')),
+                                 ('cordova', '?cordova=1', os.path.join(CLIENT_DIR, '.apps', 'cordova', 'www', 'index.html'))):
+      try:
+        content = urllib.urlopen('http://x-arcanum-801.appspot.com/build/angular/index.html%s' % spec).read()
+        with read(path, 'w') as f:
+          f.write(content)
+        print('Finished writing %s' % path)
+      except Exception as e:
+        print('Failed building index.html for %s. Error %s' % (provider, e))
+
   return buff
 
 if __name__ == '__main__':
