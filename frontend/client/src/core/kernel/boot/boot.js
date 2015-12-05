@@ -8,7 +8,7 @@ window.ENGINE = {
         URL: 'https://x-arcanum-801.appspot.com'
     },
     CORDOVA: {
-        ACTIVE: !!window.cordova
+        ACTIVE: 'cordova' in window
     },
     CHROMEAPP: {
         ACTIVE: window.chrome && chrome.app && chrome.app.runtime

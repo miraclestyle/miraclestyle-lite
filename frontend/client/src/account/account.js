@@ -175,7 +175,6 @@
                                                 if (window.ENGINE.CORDOVA.ACTIVE) {
                                                     url = e.originalEvent.url;
                                                 }
-                                                console.log(url);
                                                 if (popup.closed) {
                                                     clearInterval(pollTimer);
                                                     if (!loggedIn) {
@@ -207,7 +206,7 @@
                                                     });
                                                 };
                                                 try {
-                                                    if (!window.ENGINE.CORDOVA) {
+                                                    if (!window.ENGINE.CORDOVA.ACTIVE) {
                                                         url = popup.document.URL;
                                                     }
                                                     if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
