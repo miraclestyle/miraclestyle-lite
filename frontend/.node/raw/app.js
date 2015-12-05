@@ -8,7 +8,7 @@ window.ENGINE = {
         URL: 'https://x-arcanum-801.appspot.com'
     },
     CORDOVA: {
-        ACTIVE: !!window.cordova
+        ACTIVE: 'cordova' in window
     },
     CHROMEAPP: {
         ACTIVE: window.chrome && chrome.app && chrome.app.runtime
@@ -18078,7 +18078,6 @@ angular.module('app')
                                                 if (window.ENGINE.CORDOVA.ACTIVE) {
                                                     url = e.originalEvent.url;
                                                 }
-                                                console.log(url);
                                                 if (popup.closed) {
                                                     clearInterval(pollTimer);
                                                     if (!loggedIn) {
@@ -18110,7 +18109,7 @@ angular.module('app')
                                                     });
                                                 };
                                                 try {
-                                                    if (!window.ENGINE.CORDOVA) {
+                                                    if (!window.ENGINE.CORDOVA.ACTIVE) {
                                                         url = popup.document.URL;
                                                     }
                                                     if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
