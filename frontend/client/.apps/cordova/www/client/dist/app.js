@@ -610,9 +610,9 @@ if (!Array.prototype.indexOf) {
                 confirmations: {},
                 alerts: {}
             },
-            defaultImage: '/client/dist/static/240x240_placeholder.png',
-            defaultLogo: '/client/dist/static/720x300_placeholder.png',
-            defaultCatalogCover: '/client/dist/static/240x240_placeholder.png',
+            defaultImage: 'client/dist/static/240x240_placeholder.png',
+            defaultLogo: 'client/dist/static/720x300_placeholder.png',
+            defaultCatalogCover: 'client/dist/static/240x240_placeholder.png',
             grid: {
                 maxWidth: 240,
                 minWidth: 180,
@@ -12829,6 +12829,12 @@ function msieversion() {
                     }
                 },
                 url: {
+                    local: function (path) {
+                        if (window.ENGINE.CORDOVA.ACTIVE) {
+                            return cordova.file.applicationDirectory + 'www/' + path;
+                        }
+                        return '/' + path;
+                    },
                     abs: function (part) {
                         return GLOBAL_CONFIG.host + '/' + part;
                     },
@@ -12968,7 +12974,7 @@ function msieversion() {
                                     if (!defaultImage) {
                                         defaultImage = 'defaultImage';
                                     }
-                                    img.attr('src', GLOBAL_CONFIG[defaultImage]);
+                                    img.attr('src', helpers.url.local(GLOBAL_CONFIG[defaultImage]));
                                     done();
                                 };
 
@@ -17517,7 +17523,7 @@ function msieversion() {
                             }];
 
                             $scope.getIcon = function (soc) {
-                                return (window.ENGINE.DESKTOP.ACTIVE ? '/' : '') + 'client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                                return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
                             };
 
                             $scope.share = function (soc) {
@@ -18053,7 +18059,7 @@ angular.module('app')
                                     }*/];
 
                                     $scope.getIcon = function (soc) {
-                                        return (window.ENGINE.DESKTOP.ACTIVE ? '/' : '') + 'client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                                        return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
                                     };
 
                                     $scope.authorization_urls = login.data.authorization_urls;
@@ -21012,7 +21018,7 @@ angular.module('app')
 
             helpers.sideNav.setup($rootScope.site.toolbar.menu, 'left');
         }])
-        .controller('AboutController', ['$scope', function ($scope) {
+        .controller('AboutController', ['$scope', 'helpers', function ($scope, helpers) {
             $scope.socials = [{
                 name: 'Facebook',
                 key: 'facebook',
@@ -21052,7 +21058,7 @@ angular.module('app')
             };
 
             $scope.getIcon = function (soc) {
-                return '/client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png';
+                return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
             };
 
             $scope.setPageToolbarTitle('about');
