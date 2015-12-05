@@ -625,3 +625,39 @@ To disable web storage backup to iCloud, set the BackupWebStorage preference to 
 2015-12-05 19:55:35.689 Miraclestyle[2482:1744108] Communications error: <OS_xpc_error: <error: 0x3257534> { count = 1, contents =
 	"XPCErrorDescription" => <string: 0x3257734> { length = 22, contents = "Connection interrupted" }
 }>
+2015-12-05 19:57:22.069 Miraclestyle[2896:1746339] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 19:57:22.070 Miraclestyle[2896:1746339] Multi-tasking -> Device: YES, App: YES
+2015-12-05 19:57:22.072 Miraclestyle[2896:1746339] Unlimited access to network resources
+2015-12-05 19:57:22.077 Miraclestyle[2896:1746339] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 19:57:22.144 Miraclestyle[2896:1746339] [CDVTimer][file] 4.433990ms
+2015-12-05 19:57:22.145 Miraclestyle[2896:1746339] [CDVTimer][TotalPluginStartup] 5.322993ms
+2015-12-05 19:57:22.471 Miraclestyle[2896:1746339] Resetting plugins due to page load.
+2015-12-05 19:57:23.475 Miraclestyle[2896:1746339] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/8C5CD5E9-A5C8-42F0-A73E-930CC3EE2DF1/Miraclestyle.app/www/index.html
+2015-12-05 19:57:35.149 Miraclestyle[2896:1746339] THREAD WARNING: ['InAppBrowser'] took '33.809326' ms. Plugin should use a background thread.
+2015-12-05 19:57:46.484 Miraclestyle[2896:1746339] Passed in type public.item doesn't conform to either public.content or public.data. If you are exporting a new type, please ensure that it conforms to an appropriate parent type.
+2015-12-05 19:57:46.562 Miraclestyle[2896:1746339] the behavior of the UICollectionViewFlowLayout is not defined because:
+2015-12-05 19:57:46.562 Miraclestyle[2896:1746339] the item width must be less than the width of the UICollectionView minus the section insets left and right values, minus the content insets left and right values.
+2015-12-05 19:57:46.563 Miraclestyle[2896:1746339] The relevant UICollectionViewFlowLayout instance is <_UIAlertControllerCollectionViewFlowLayout: 0x7b0ac7c0>, and it is attached to <UICollectionView: 0x7a24cc00; frame = (0 44; 10 0); clipsToBounds = YES; gestureRecognizers = <NSArray: 0x79611200>; animations = { bounds.origin=<CASpringAnimation: 0x7b0adb90>; bounds.size=<CASpringAnimation: 0x7b0afd60>; position=<CASpringAnimation: 0x7b0afe90>; }; layer = <CALayer: 0x7b066cb0>; contentOffset: {0, 0}; contentSize: {0, 0}> collection view layout: <_UIAlertControllerCollectionViewFlowLayout: 0x7b0ac7c0>.
+2015-12-05 19:57:46.563 Miraclestyle[2896:1746339] Make a symbolic breakpoint at UICollectionViewFlowLayoutBreakForInvalidSizes to catch this in the debugger.
+2015-12-05 19:58:39.115 Miraclestyle[2896:1746339] Passed in type public.item doesn't conform to either public.content or public.data. If you are exporting a new type, please ensure that it conforms to an appropriate parent type.
+2015-12-05 19:58:39.138 Miraclestyle[2896:1746339] the behavior of the UICollectionViewFlowLayout is not defined because:
+2015-12-05 19:58:39.138 Miraclestyle[2896:1746339] the item width must be less than the width of the UICollectionView minus the section insets left and right values, minus the content insets left and right values.
+2015-12-05 19:58:39.139 Miraclestyle[2896:1746339] The relevant UICollectionViewFlowLayout instance is <_UIAlertControllerCollectionViewFlowLayout: 0x7b724650>, and it is attached to <UICollectionView: 0x79bc1e00; frame = (0 44; 10 0); clipsToBounds = YES; gestureRecognizers = <NSArray: 0x7b714680>; animations = { bounds.origin=<CASpringAnimation: 0x7b71cbb0>; bounds.size=<CASpringAnimation: 0x7b71cc60>; position=<CASpringAnimation: 0x7b71cd70>; }; layer = <CALayer: 0x7b72b1c0>; contentOffset: {0, 0}; contentSize: {0, 0}> collection view layout: <_UIAlertControllerCollectionViewFlowLayout: 0x7b724650>.
+2015-12-05 19:58:39.139 Miraclestyle[2896:1746339] Make a symbolic breakpoint at UICollectionViewFlowLayoutBreakForInvalidSizes to catch this in the debugger.
+2015-12-05 19:59:27.597 Miraclestyle[2896:1746339] -[WebActionDisablingCALayerDelegate willBeRemoved]: unrecognized selector sent to instance 0x79644560
+2015-12-05 19:59:27.599 Miraclestyle[2896:1746339] *** WebKit discarded an uncaught exception in the webView:willRemoveScrollingLayer:withContentsLayer:forNode: delegate: <NSInvalidArgumentException> -[WebActionDisablingCALayerDelegate willBeRemoved]: unrecognized selector sent to instance 0x79644560
+2015-12-05 20:00:24.453 Miraclestyle[2896:1746339] Passed in type public.item doesn't conform to either public.content or public.data. If you are exporting a new type, please ensure that it conforms to an appropriate parent type.
+2015-12-05 20:00:24.473 Miraclestyle[2896:1746339] the behavior of the UICollectionViewFlowLayout is not defined because:
+2015-12-05 20:00:24.473 Miraclestyle[2896:1746339] the item width must be less than the width of the UICollectionView minus the section insets left and right values, minus the content insets left and right values.
+2015-12-05 20:00:24.474 Miraclestyle[2896:1746339] The relevant UICollectionViewFlowLayout instance is <_UIAlertControllerCollectionViewFlowLayout: 0x796e0cc0>, and it is attached to <UICollectionView: 0x79c90200; frame = (0 44; 10 0); clipsToBounds = YES; gestureRecognizers = <NSArray: 0x796f3e30>; animations = { bounds.origin=<CASpringAnimation: 0x7b719450>; bounds.size=<CASpringAnimation: 0x7b7193b0>; position=<CASpringAnimation: 0x79606b90>; }; layer = <CALayer: 0x7b7ea2f0>; contentOffset: {0, 0}; contentSize: {0, 0}> collection view layout: <_UIAlertControllerCollectionViewFlowLayout: 0x796e0cc0>.
+2015-12-05 20:00:24.474 Miraclestyle[2896:1746339] Make a symbolic breakpoint at UICollectionViewFlowLayoutBreakForInvalidSizes to catch this in the debugger.
+2015-12-05 20:01:21.607 Miraclestyle[2896:1746339] -[WebActionDisablingCALayerDelegate willBeRemoved]: unrecognized selector sent to instance 0x79644560
+2015-12-05 20:01:21.609 Miraclestyle[2896:1746339] *** WebKit discarded an uncaught exception in the webView:willRemoveScrollingLayer:withContentsLayer:forNode: delegate: <NSInvalidArgumentException> -[WebActionDisablingCALayerDelegate willBeRemoved]: unrecognized selector sent to instance 0x79644560
+2015-12-05 20:03:22.657 Miraclestyle[2896:1749970] Connection to assetsd was interrupted or assetsd died
