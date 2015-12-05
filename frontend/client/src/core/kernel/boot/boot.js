@@ -19,7 +19,7 @@ window.ENGINE = {
 };
 window.ENGINE.DESKTOP.ACTIVE = !(window.ENGINE.CHROMEAPP.ACTIVE || window.ENGINE.CORDOVA.ACTIVE);
 window.getLocalStorage = function () {
-    if (!window.ENGINE.DESKTOP.ACTIVE) {
+    if (!window.ENGINE.CHROMEAPP.ACTIVE) {
         return window.localStorage;
     }
     if (window.ENGINE.CHROMEAPP.ACTIVE) {
@@ -664,7 +664,6 @@ if (!Array.prototype.indexOf) {
                   enabled: true,
                   requireBase: false
                 } : true);
-            console.log(html5Mode);
             $locationProvider.html5Mode(html5Mode);
         }));
     angular.module('app', GLOBAL_CONFIG.modules);
