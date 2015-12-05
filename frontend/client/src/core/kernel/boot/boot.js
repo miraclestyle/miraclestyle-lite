@@ -692,6 +692,7 @@ $(function () {
     var ready = function (cb) {
         if (window.ENGINE.CORDOVA.ACTIVE) {
             return document.addEventListener('deviceready', function () {
+                window.open = cordova.InAppBrowser.open;
                 $(cb);
             }, false);
         } else {

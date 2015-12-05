@@ -692,6 +692,7 @@ $(function () {
     var ready = function (cb) {
         if (window.ENGINE.CORDOVA.ACTIVE) {
             return document.addEventListener('deviceready', function () {
+                window.open = cordova.InAppBrowser.open;
                 $(cb);
             }, false);
         } else {
@@ -12814,6 +12815,9 @@ function msieversion() {
                 },
                 popup: {
                     openCentered: function (url, title) {
+                        if (window.ENGINE.CORDOVA.ACTIVE) {
+                            return window.open(url, '_blank', 'location=yes');
+                        }
                         var w = $(window).width() / 1.3,
                             h = $(window).height() / 1.3,
                             left = (screen.width / 2) - (w / 2),
@@ -18060,8 +18064,14 @@ angular.module('app')
                                     $scope.loginPopup = function (soc) {
                                         var popup = helpers.popup.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
                                             loggedIn = false,
+                                            pollTimer,
                                             loading = false,
-                                            pollTimer = window.setInterval(function () {
+                                            handle = function (e) {
+                                                var url = '';
+                                                if (window.ENGINE.CORDOVA.ACTIVE) {
+                                                    url = e.originalEvent.url;
+                                                }
+                                                console.log(url);
                                                 if (popup.closed) {
                                                     clearInterval(pollTimer);
                                                     if (!loggedIn) {
@@ -18093,7 +18103,10 @@ angular.module('app')
                                                     });
                                                 };
                                                 try {
-                                                    if (popup.document.URL.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
+                                                    if (!window.ENGINE.CORDOVA) {
+                                                        url = popup.document.URL;
+                                                    }
+                                                    if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
                                                         clearInterval(pollTimer);
                                                         check();
                                                     }
@@ -18102,24 +18115,12 @@ angular.module('app')
                                                         check();
                                                     }
                                                 }
-                                            }, 500);
-                                    };
-
-                                    $scope.login = function (soc) {
-                                        $http.post($state.engineHref('login', {
-                                            provider: soc.key
-                                        }), {
-                                            action_id: 'login',
-                                            action_model: '11',
-                                            redirect_to: redirect_to
-                                        }).then(function (response) {
-                                            var data = response.data;
-                                            if (data && !data.errors && data.authorization_urls) {
-                                                window.top.location.href = data.authorization_url;
-                                            } else {
-                                                modals.alert('failedGeneratingAuthorizaitonUrl');
-                                            }
-                                        });
+                                            };
+                                        if (window.ENGINE.CORDOVA.ACTIVE) {
+                                            $(popup).on('loadstart', handle);
+                                        } else {
+                                            pollTimer = window.setInterval(handle, 500);
+                                        }
                                     };
                                 });
                             }]

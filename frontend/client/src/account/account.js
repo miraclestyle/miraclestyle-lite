@@ -168,8 +168,14 @@
                                     $scope.loginPopup = function (soc) {
                                         var popup = helpers.popup.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
                                             loggedIn = false,
+                                            pollTimer,
                                             loading = false,
-                                            pollTimer = window.setInterval(function () {
+                                            handle = function (e) {
+                                                var url = '';
+                                                if (window.ENGINE.CORDOVA.ACTIVE) {
+                                                    url = e.originalEvent.url;
+                                                }
+                                                console.log(url);
                                                 if (popup.closed) {
                                                     clearInterval(pollTimer);
                                                     if (!loggedIn) {
@@ -201,7 +207,10 @@
                                                     });
                                                 };
                                                 try {
-                                                    if (popup.document.URL.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
+                                                    if (!window.ENGINE.CORDOVA) {
+                                                        url = popup.document.URL;
+                                                    }
+                                                    if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
                                                         clearInterval(pollTimer);
                                                         check();
                                                     }
@@ -210,24 +219,12 @@
                                                         check();
                                                     }
                                                 }
-                                            }, 500);
-                                    };
-
-                                    $scope.login = function (soc) {
-                                        $http.post($state.engineHref('login', {
-                                            provider: soc.key
-                                        }), {
-                                            action_id: 'login',
-                                            action_model: '11',
-                                            redirect_to: redirect_to
-                                        }).then(function (response) {
-                                            var data = response.data;
-                                            if (data && !data.errors && data.authorization_urls) {
-                                                window.top.location.href = data.authorization_url;
-                                            } else {
-                                                modals.alert('failedGeneratingAuthorizaitonUrl');
-                                            }
-                                        });
+                                            };
+                                        if (window.ENGINE.CORDOVA.ACTIVE) {
+                                            $(popup).on('loadstart', handle);
+                                        } else {
+                                            pollTimer = window.setInterval(handle, 500);
+                                        }
                                     };
                                 });
                             })

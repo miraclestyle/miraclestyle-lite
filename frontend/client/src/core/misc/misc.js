@@ -48,6 +48,9 @@
                 },
                 popup: {
                     openCentered: function (url, title) {
+                        if (window.ENGINE.CORDOVA.ACTIVE) {
+                            return window.open(url, '_blank', 'location=yes');
+                        }
                         var w = $(window).width() / 1.3,
                             h = $(window).height() / 1.3,
                             left = (screen.width / 2) - (w / 2),
