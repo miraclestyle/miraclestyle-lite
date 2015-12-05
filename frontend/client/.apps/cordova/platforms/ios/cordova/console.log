@@ -532,3 +532,41 @@ To disable web storage backup to iCloud, set the BackupWebStorage preference to 
 2015-12-05 18:12:29.919 Miraclestyle[95231:1679304] Resetting plugins due to page load.
 2015-12-05 18:12:29.919 Miraclestyle[95231:1679304] IAB.close() called but it was already closed.
 2015-12-05 18:12:30.548 Miraclestyle[95231:1679304] Failed to load webpage with error: The network connection was lost.
+2015-12-05 18:21:49.297 Miraclestyle[96447:1690786] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 18:21:49.302 Miraclestyle[96447:1690786] Multi-tasking -> Device: YES, App: YES
+2015-12-05 18:21:49.319 Miraclestyle[96447:1690786] Unlimited access to network resources
+2015-12-05 18:21:49.334 Miraclestyle[96447:1690786] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 18:21:50.482 Miraclestyle[96447:1690786] Resetting plugins due to page load.
+2015-12-05 18:21:51.886 Miraclestyle[96447:1690786] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/B3EF0D36-53C5-40F9-B80E-D7831F04972E/Miraclestyle.app/www/index.html
+2015-12-05 18:27:53.250 Miraclestyle[96883:1694757] Apache Cordova native platform version 3.9.2 is starting.
+2015-12-05 18:27:53.251 Miraclestyle[96883:1694757] Multi-tasking -> Device: YES, App: YES
+2015-12-05 18:27:53.253 Miraclestyle[96883:1694757] Unlimited access to network resources
+2015-12-05 18:27:53.257 Miraclestyle[96883:1694757] 
+
+Started backup to iCloud! Please be careful.
+Your application might be rejected by Apple if you store too much data.
+For more information please read "iOS Data Storage Guidelines" at:
+https://developer.apple.com/icloud/documentation/data-storage/
+To disable web storage backup to iCloud, set the BackupWebStorage preference to "local" in the Cordova config.xml file
+
+2015-12-05 18:27:53.443 Miraclestyle[96883:1694757] Resetting plugins due to page load.
+2015-12-05 18:27:54.258 Miraclestyle[96883:1694757] Finished load of: file:///Users/admin/Library/Developer/CoreSimulator/Devices/4CDD25DC-FE71-4458-9B3E-906416079098/data/Containers/Bundle/Application/AC08CFCD-2671-46E7-B36A-89ACEE46C9C1/Miraclestyle.app/www/index.html
+2015-12-05 18:38:31.187 Miraclestyle[96883:1694757] Resetting plugins due to page load.
+2015-12-05 18:38:31.190 Miraclestyle[96883:1694757] Failed to load webpage with error: Frame load interrupted
+2015-12-05 18:38:39.168 Miraclestyle[96883:1694757] Resetting plugins due to page load.
+2015-12-05 18:38:39.170 Miraclestyle[96883:1694757] Failed to load webpage with error: Frame load interrupted
+2015-12-05 18:38:44.476 Miraclestyle[96883:1694757] Resetting plugins due to page load.
+2015-12-05 18:38:44.482 Miraclestyle[96883:1694757] Failed to load webpage with error: Frame load interrupted
+2015-12-05 18:38:56.545 Miraclestyle[96883:1694757] Resetting plugins due to page load.
+2015-12-05 18:38:56.548 Miraclestyle[96883:1694757] Failed to load webpage with error: Frame load interrupted
+2015-12-05 18:38:57.322 Miraclestyle[96883:1694757] Resetting plugins due to page load.
+2015-12-05 18:38:57.324 Miraclestyle[96883:1694757] Failed to load webpage with error: Frame load interrupted
+2015-12-05 18:39:07.148 Miraclestyle[96883:1694757] Resetting plugins due to page load.
+2015-12-05 18:39:07.151 Miraclestyle[96883:1694757] Failed to load webpage with error: Frame load interrupted
