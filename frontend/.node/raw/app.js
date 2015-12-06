@@ -12787,13 +12787,23 @@ function msieversion() {
                     realEventTarget: function (target) {
                         var theTarget = $(target),
                             parentTarget = theTarget.parents('.grid-item:first'),
-                            cardParent = theTarget.parents('.card:first');
+                            cardParent = theTarget.parents('.card:first'),
+                            buttonParent = theTarget.parents('button:first'),
+                            aParent = theTarget.parents('button:first');
                         if (!theTarget.hasClass('grid-item') && parentTarget.length) {
-                            target = parentTarget.get(0);
+                            return parentTarget.get(0);
                         }
 
                         if (cardParent.length) {
-                            target = cardParent.get(0);
+                            return cardParent.get(0);
+                        }
+
+                        if (buttonParent.length) {
+                            return buttonParent.get(0);
+                        }
+
+                        if (aParent.length) {
+                            return aParent.get(0);
                         }
 
                         return target;
