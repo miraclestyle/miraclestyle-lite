@@ -97,8 +97,8 @@
                 }, 0, false);
             }
         };
-    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', 'animationGenerator', '$rootScope',
-        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, animationGenerator, $rootScope) {
+    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', '$animateCss', 'animationGenerator', '$rootScope',
+        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, $animateCss, animationGenerator, $rootScope) {
             return {
                 restrict: 'EA',
                 scope: {
@@ -138,6 +138,11 @@
                         if (isSlide) {
                             cb = function () {
                                 element.addClass(where + ' slide drawer visible in');
+                                /*
+                                $animateCss(element, {
+                                    addClass: 'in'
+                                }).start().done(function () {
+                                });*/
                             };
                         } else if (isConfirmation) {
                             modal = element.find('.modal-dialog');
@@ -187,7 +192,6 @@
                                 element.addClass('fade in');
                             };
                         }
-
                         element.oneAnimationEnd(function () {
                             setTimeout(function () {
                                 element.addClass('visible');
@@ -307,12 +311,13 @@
                 openedWindows.remove(modalInstance);
 
                 //remove window DOM element
-                backdropDomEl.removeClass('in').addClass('out').oneAnimationEnd(function () {
+                backdropDomEl.oneAnimationEnd(function () {
                     backdropDomEl.remove();
                     backdropScope.$destroy();
                     modalWindow.backdropScope = undefined;
                     modalWindow.backdropDomEl = undefined;
-                });
+                }).removeClass('in').addClass('out');
+
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);

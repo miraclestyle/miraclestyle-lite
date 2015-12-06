@@ -91,7 +91,7 @@
     }
     SidenavService.$inject = ["$mdComponentRegistry", "$q"];
 
-    function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor) {
+    function SidenavDirective($timeout, $animateCss, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor) {
         return {
             restrict: 'E',
             scope: {
@@ -218,13 +218,13 @@
                 if (isOpen) {
                     element.removeClass('invisible out');
                     backdrop.removeClass('out');
-                    promises.push($animate.addClass(backdrop, 'in').then(backdropComplete));
-                    promises.push($animate.addClass(element, 'in').then(complete));
+                    promises.push($animateCss(backdrop, {addClass: 'in'}).start().done(backdropComplete));
+                    promises.push($animateCss(element, {addClass: 'in'}).start().done(complete));
                 } else {
                     element.removeClass('in');
                     backdrop.removeClass('in');
-                    promises.push($animate.addClass(backdrop, 'out').then(backdropComplete));
-                    promises.push($animate.addClass(element, 'out').then(complete));
+                    promises.push($animateCss(backdrop, {addClass: 'out'}).start().done(backdropComplete));
+                    promises.push($animateCss(element, {addClass: 'out'}).start().done(complete));
                 }
                 promise = $q.all(promises);
                 return promise;
@@ -299,7 +299,7 @@
 
         }
     }
-    SidenavDirective.$inject = ["$timeout", "$animate", "$parse", "$mdMedia", "$mdConstant", "$compile", "$q", "$document", "mdContextualMonitor"];
+    SidenavDirective.$inject = ["$timeout", "$animateCss", "$parse", "$mdMedia", "$mdConstant", "$compile", "$q", "$document", "mdContextualMonitor"];
 
     /*
      * @private

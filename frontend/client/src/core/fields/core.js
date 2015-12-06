@@ -396,7 +396,9 @@
                     var fn = function () {
                         var newval = scope.$eval(attrs.compatibilityMaker),
                             stringified;
-                        newval._csrf = currentAccount._csrf;
+                        if (angular.isObject(newval)) {
+                            newval._csrf = currentAccount._csrf;
+                        }
                         stringified = modelsUtil.argumentsToJson(newval);
                         element.val(stringified);
                     };

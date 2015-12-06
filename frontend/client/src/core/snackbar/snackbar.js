@@ -46,7 +46,7 @@
                 });
             }
         };
-    })).directive('snackbar', ng(function (snackbar, $timeout, $animate, $q) {
+    })).directive('snackbar', ng(function (snackbar, $timeout, $animate, $animateCss, $q) {
         return {
             scope: true,
             require: 'snackbar',
@@ -64,17 +64,10 @@
 
                 snackbar.animating = false;
                 snackbar.hide = function () {
-                    var defer = $q.defer();
-                    $animate.removeClass($scope.element, 'in');
-                    if (!$scope.element.hasClass('out')) {
-                        $animate.addClass($scope.element, 'out').then(function () {
-                            defer.resolve();
-                        });
-                        digest();
-                    } else {
-                        defer.resolve();
-                    }
-                    return defer.promise;
+                    $scope.element.removeClass('in');
+                    return $animateCss($scope.element, {
+                        addClass: 'out'
+                    }).start();
                 };
                 snackbar.show = function (config) {
                     if (!angular.isObject(config)) {
@@ -93,12 +86,11 @@
                         }
                         return $scope.size;
                     };
-                    digest();
-                    snackbar.animating = true;
-                    return snackbar.hide().then(function () {
-                        $animate.removeClass($scope.element, 'out');
-                        return $animate.addClass($scope.element, 'in').then(function () {
-                            snackbar.animating = false;
+                    return snackbar.hide().done(function () {
+                        $scope.element.removeClass('out');
+                        return $animateCss($scope.element, {
+                            addClass: 'in'
+                        }).start().done(function () {
                             if (config.hideAfter) {
                                 if (timer) {
                                     clearTimeout(timer);
@@ -106,6 +98,8 @@
                                 timer = setTimeout(function () {
                                     snackbar.hide();
                                 }, config.hideAfter);
+
+                                digest();
                             }
                         });
                     });

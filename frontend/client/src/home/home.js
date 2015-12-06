@@ -62,9 +62,9 @@
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    element.addClass('fade out').oneAnimationEnd(function () {
+                    element.oneAnimationEnd(function () {
                         element.addClass('ng-hide');
-                    });
+                    }).addClass('fade out');
                 }
             };
         }))

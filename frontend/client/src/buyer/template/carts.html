@@ -1,7 +1,7 @@
 <div class="list list-padding">
     <div autoload-on-vertical-scroll-end="search"
          grid-scale="{square: false, margin:1, maxWidth:240, minWidth:180, maxHeight:100, minHeight:75}"
-         ng-show="!helpers.models.isEntityListEmpty(search.results)"
+         ng-show="search.loader.loaded && !helpers.models.isEntityListEmpty(search.results)"
          class="grid-wrapper clearfix">
         <div ng-repeat="order in search.results track by $index" 
              grid-scale-item 
@@ -19,7 +19,7 @@
         </div>
     </div>
     <!-- help -->
-    <div ng-show="helpers.models.isEntityListEmpty(search.results) && search.loaded" 
+    <div ng-show="helpers.models.isEntityListEmpty(search.results) && search.loader.loaded" 
          help-render="listHelp"></div>
     <!-- end help -->
     <div load-more-button="search.loader"></div>

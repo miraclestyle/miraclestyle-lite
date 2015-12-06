@@ -924,6 +924,7 @@
                                         more: null,
                                         cursor: null,
                                         firstLoad: true,
+                                        loaded: false,
                                         args: theConfig.args,
                                         load: function (loadConfig) {
                                             loadConfig = helpers.alwaysObject(loadConfig);
@@ -971,6 +972,7 @@
                                             })['finally'](function (response) {
                                                 paginate.loading = false;
                                                 paginate.firstLoad = false;
+                                                paginate.loaded = true;
                                             });
                                             return promise;
                                         }
