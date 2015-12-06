@@ -6623,6 +6623,66 @@ function msieversion() {
 
                 snackbar.animating = false;
                 snackbar.hide = function () {
+                    var defer = $q.defer();
+                    $animate.removeClass($scope.element, 'in');
+                    if (!$scope.element.hasClass('out')) {
+                        $animate.addClass($scope.element, 'out').then(function () {
+                            defer.resolve();
+                        });
+                        digest();
+                    } else {
+                        defer.resolve();
+                    }
+                    return defer.promise;
+                };
+                snackbar.show = function (config) {
+                    if (!angular.isObject(config)) {
+                        config = {
+                            message: config
+                        };
+                    }
+                    $scope.message = config.message;
+                    if (!config.hideAfter) {
+                        config.hideAfter = (($scope.message.length / 16) * 2000) + 500;
+                    }
+                    $scope.size = config.size;
+                    $scope.calculateSize = function () {
+                        if (!$scope.size) {
+                            return $scope.element.find('.brief').height() > 16 ? 2 : 1;
+                        }
+                        return $scope.size;
+                    };
+                    digest();
+                    snackbar.animating = true;
+                    return snackbar.hide().then(function () {
+                        $animate.removeClass($scope.element, 'out');
+                        return $animate.addClass($scope.element, 'in').then(function () {
+                            snackbar.animating = false;
+                            if (config.hideAfter) {
+                                if (timer) {
+                                    clearTimeout(timer);
+                                }
+                                timer = setTimeout(function () {
+                                    snackbar.hide();
+                                }, config.hideAfter);
+                            }
+                        });
+                    });
+                };
+            }],
+            controller2: ['$scope', function ($scope) {
+                var digest = function () {
+                        if (!$scope.$$phase) {
+                            $scope.$digest();
+                        }
+                    },
+                    timer;
+                $scope.message = '';
+                $scope.size = 1;
+                $scope.element = null;
+
+                snackbar.animating = false;
+                snackbar.hide = function () {
                     $scope.element.removeClass('in');
                     return $animateCss($scope.element, {
                         addClass: 'out'
