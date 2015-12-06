@@ -19000,11 +19000,9 @@ angular.module('app')
                         afterSave = function ($scope) {
                             $scope.setAction('catalog_upload_images');
                             $scope.dialog.toolbar.templateActionsUrl = 'catalog/manage_actions.html';
-                            callback($scope.entity);
                         },
                         afterUploadComplete = function ($scope) {
                             $scope.setAction('update');
-                            callback($scope.entity);
                         },
                         noComplete = function ($scope) {
                             afterUploadComplete($scope);
@@ -19070,6 +19068,12 @@ angular.module('app')
                                     angular.forEach($scope.dequeueChannel, function (cb) {
                                         cb();
                                     });
+                                });
+
+                                $scope.$watch('entity.id', function (newValue) {
+                                    if (newValue) {
+                                        callback($scope.entity);
+                                    }
                                 });
 
                                 $scope.actions = {
