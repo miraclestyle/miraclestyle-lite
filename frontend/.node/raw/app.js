@@ -5834,7 +5834,7 @@ function msieversion() {
     }
     SidenavService.$inject = ["$mdComponentRegistry", "$q"];
 
-    function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor) {
+    function SidenavDirective($timeout, $animateCss, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor) {
         return {
             restrict: 'E',
             scope: {
@@ -5961,13 +5961,13 @@ function msieversion() {
                 if (isOpen) {
                     element.removeClass('invisible out');
                     backdrop.removeClass('out');
-                    promises.push($animate.addClass(backdrop, 'in').then(backdropComplete));
-                    promises.push($animate.addClass(element, 'in').then(complete));
+                    promises.push($animateCss(backdrop, {addClass: 'in'}).start().done(backdropComplete));
+                    promises.push($animateCss(element, {addClass: 'in'}).start().done(complete));
                 } else {
                     element.removeClass('in');
                     backdrop.removeClass('in');
-                    promises.push($animate.addClass(backdrop, 'out').then(backdropComplete));
-                    promises.push($animate.addClass(element, 'out').then(complete));
+                    promises.push($animateCss(backdrop, {addClass: 'out'}).start().done(backdropComplete));
+                    promises.push($animateCss(element, {addClass: 'out'}).start().done(complete));
                 }
                 promise = $q.all(promises);
                 return promise;
@@ -6042,7 +6042,7 @@ function msieversion() {
 
         }
     }
-    SidenavDirective.$inject = ["$timeout", "$animate", "$parse", "$mdMedia", "$mdConstant", "$compile", "$q", "$document", "mdContextualMonitor"];
+    SidenavDirective.$inject = ["$timeout", "$animateCss", "$parse", "$mdMedia", "$mdConstant", "$compile", "$q", "$document", "mdContextualMonitor"];
 
     /*
      * @private
@@ -6605,7 +6605,7 @@ function msieversion() {
                 });
             }
         };
-    })).directive('snackbar', ng(function (snackbar, $timeout, $animate, $q) {
+    })).directive('snackbar', ng(function (snackbar, $timeout, $animate, $animateCss, $q) {
         return {
             scope: true,
             require: 'snackbar',
@@ -6623,17 +6623,10 @@ function msieversion() {
 
                 snackbar.animating = false;
                 snackbar.hide = function () {
-                    var defer = $q.defer();
-                    $animate.removeClass($scope.element, 'in');
-                    if (!$scope.element.hasClass('out')) {
-                        $animate.addClass($scope.element, 'out').then(function () {
-                            defer.resolve();
-                        });
-                        digest();
-                    } else {
-                        defer.resolve();
-                    }
-                    return defer.promise;
+                    $scope.element.removeClass('in');
+                    return $animateCss($scope.element, {
+                        addClass: 'out'
+                    }).start();
                 };
                 snackbar.show = function (config) {
                     if (!angular.isObject(config)) {
@@ -6652,12 +6645,11 @@ function msieversion() {
                         }
                         return $scope.size;
                     };
-                    digest();
-                    snackbar.animating = true;
-                    return snackbar.hide().then(function () {
-                        $animate.removeClass($scope.element, 'out');
-                        return $animate.addClass($scope.element, 'in').then(function () {
-                            snackbar.animating = false;
+                    return snackbar.hide().done(function () {
+                        $scope.element.removeClass('out');
+                        return $animateCss($scope.element, {
+                            addClass: 'in'
+                        }).start().done(function () {
                             if (config.hideAfter) {
                                 if (timer) {
                                     clearTimeout(timer);
@@ -6665,6 +6657,8 @@ function msieversion() {
                                 timer = setTimeout(function () {
                                     snackbar.hide();
                                 }, config.hideAfter);
+
+                                digest();
                             }
                         });
                     });
@@ -10759,7 +10753,9 @@ function msieversion() {
                     var fn = function () {
                         var newval = scope.$eval(attrs.compatibilityMaker),
                             stringified;
-                        newval._csrf = currentAccount._csrf;
+                        if (angular.isObject(newval)) {
+                            newval._csrf = currentAccount._csrf;
+                        }
                         stringified = modelsUtil.argumentsToJson(newval);
                         element.val(stringified);
                     };
@@ -14600,8 +14596,8 @@ function msieversion() {
                 }, 0, false);
             }
         };
-    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', 'animationGenerator', '$rootScope',
-        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, animationGenerator, $rootScope) {
+    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', '$animateCss', 'animationGenerator', '$rootScope',
+        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, $animateCss, animationGenerator, $rootScope) {
             return {
                 restrict: 'EA',
                 scope: {
@@ -14641,6 +14637,11 @@ function msieversion() {
                         if (isSlide) {
                             cb = function () {
                                 element.addClass(where + ' slide drawer visible in');
+                                /*
+                                $animateCss(element, {
+                                    addClass: 'in'
+                                }).start().done(function () {
+                                });*/
                             };
                         } else if (isConfirmation) {
                             modal = element.find('.modal-dialog');
@@ -14690,7 +14691,6 @@ function msieversion() {
                                 element.addClass('fade in');
                             };
                         }
-
                         element.oneAnimationEnd(function () {
                             setTimeout(function () {
                                 element.addClass('visible');
@@ -14810,12 +14810,13 @@ function msieversion() {
                 openedWindows.remove(modalInstance);
 
                 //remove window DOM element
-                backdropDomEl.removeClass('in').addClass('out').oneAnimationEnd(function () {
+                backdropDomEl.oneAnimationEnd(function () {
                     backdropDomEl.remove();
                     backdropScope.$destroy();
                     modalWindow.backdropScope = undefined;
                     modalWindow.backdropDomEl = undefined;
-                });
+                }).removeClass('in').addClass('out');
+
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
@@ -16200,6 +16201,7 @@ function msieversion() {
                                         more: null,
                                         cursor: null,
                                         firstLoad: true,
+                                        loaded: false,
                                         args: theConfig.args,
                                         load: function (loadConfig) {
                                             loadConfig = helpers.alwaysObject(loadConfig);
@@ -16247,6 +16249,7 @@ function msieversion() {
                                             })['finally'](function (response) {
                                                 paginate.loading = false;
                                                 paginate.firstLoad = false;
+                                                paginate.loaded = true;
                                             });
                                             return promise;
                                         }
@@ -20963,9 +20966,9 @@ angular.module('app')
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    element.addClass('fade out').oneAnimationEnd(function () {
+                    element.oneAnimationEnd(function () {
                         element.addClass('ng-hide');
-                    });
+                    }).addClass('fade out');
                 }
             };
         }))
