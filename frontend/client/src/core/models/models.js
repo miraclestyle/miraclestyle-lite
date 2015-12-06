@@ -923,7 +923,7 @@
                                         loading: false,
                                         more: null,
                                         cursor: null,
-                                        firstLoad: true,
+                                        firstLoad: (angular.isDefined(config.firstLoad) ? config.firstLoad : true),
                                         loaded: false,
                                         args: theConfig.args,
                                         load: function (loadConfig) {
