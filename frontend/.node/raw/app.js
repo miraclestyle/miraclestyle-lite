@@ -14291,12 +14291,6 @@ function msieversion() {
                         },
                         hide = function (fast) {
                             requests -= 1;
-                            if (top().hasClass('ng-hide')) {
-                                return;
-                            }
-                            if (!(requests < 1)) {
-                                return;
-                            }
                             var s = slide(),
                                 anim = animation();
                             if (s.length) {
@@ -14309,16 +14303,20 @@ function msieversion() {
                                     return;
                                 }
                                 anim.oneTransitionEnd(function () {
-                                    top().addClass('ng-hide');
-                                    s.removeClass('in out');
+                                    if (!(requests < 1)) {
+                                        s.removeClass('out').addClass('in');
+                                    } else {
+                                        top().addClass('ng-hide');
+                                        s.removeClass('in out');
+                                    }
                                 });
                                 s.addClass('out');
                             }
                         },
                         show = function () {
+                            requests += 1;
                             top().removeClass('ng-hide');
                             if (slide().length) {
-                                requests += 1;
                                 var s = slide();
                                 if (!s.hasClass('in')) {
                                     setTimeout(function () {
@@ -14574,6 +14572,12 @@ function msieversion() {
             var clickElement = options.popFrom;
             return (clickElement ? $(clickElement) : clickElement);
         },
+        hidePrevModal = function (element) {
+            element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
+        },
+        showPrevModal = function (element) {
+            element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
+        },
         getPositionOverClickElement = function (clickElement, element) {
             var clickRect = clickElement[0].getBoundingClientRect(),
                 modalRect = element[0].getBoundingClientRect(),
@@ -14770,6 +14774,9 @@ function msieversion() {
                                 scope.$broadcast('modalOpened');
                                 scope.$apply();
                                 $rootScope.$broadcast('disableUI', false);
+                                if (scope.modalOptions.fullScreen) {
+                                    hidePrevModal(element);
+                                }
                             });
                         });
 
@@ -14823,6 +14830,10 @@ function msieversion() {
                     inclass = 'in',
                     outclass = 'out',
                     popin = domEl.data('animator');
+
+                if (scope.modalOptions.fullScreen) {
+                    showPrevModal(domEl);
+                }
 
                 if (clickElement && popin) {
                     spec = getPositionOverClickElement(clickElement, domEl);
@@ -18533,8 +18544,6 @@ angular.module('app')
                         if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewCart || isBuyerViewOrder) {
                             maybeOpenOrder();
                         }
-
-                        $scope.search.loaded = true;
                     }
                 });
                 $scope.search.loader.load();
@@ -22280,12 +22289,8 @@ angular.module('app')
                         }]
                     }
                 },
-                error: function (response) {
-                    $scope.search.loaded = true;
-                },
                 complete: function (response) {
                     $scope.search.results.extend(response.data.entities);
-                    $scope.search.loaded = true;
                 }
             });
             $scope.search.loader.load();
@@ -22371,8 +22376,6 @@ angular.module('app')
                     if (isSellerOrderView) {
                         maybeOpenOrder();
                     }
-
-                    $scope.search.loaded = true;
                 }
             });
             $scope.search.loader.load();
