@@ -16683,6 +16683,26 @@ function msieversion() {
 }());(function () {
     'use strict';
     angular.module('app')
+        .directive('selectInputScrollToActive', ng(function ($timeout) {
+            return {
+                link: function (scope, element, attrs) {
+                    scope.$watch(function () {
+                        return scope.$eval(attrs.selectInputScrollToActive);
+                    }, function (newValue, oldValue, scope) {
+                        $timeout(function () {
+                            if (newValue) {
+                                var scrollElement = element.parents('.fixed-height:first'),
+                                    active = scrollElement.find('.list-row-is-active:first');
+                                if (!active.length) {
+                                    return;
+                                }
+                                scrollElement.scrollTop(active.get(0).offsetTop);
+                            }
+                        }, 0, false);
+                    });
+                }
+            };
+        }))
         .directive('selectInputMultiple', ng(function ($timeout, underscoreTemplate, $q, $modal) {
             return {
                 require: ['ngModel', '^?form'],
