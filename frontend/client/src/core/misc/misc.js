@@ -1451,12 +1451,6 @@
                         },
                         hide = function (fast) {
                             requests -= 1;
-                            if (top().hasClass('ng-hide')) {
-                                return;
-                            }
-                            if (!(requests < 1)) {
-                                return;
-                            }
                             var s = slide(),
                                 anim = animation();
                             if (s.length) {
@@ -1469,16 +1463,20 @@
                                     return;
                                 }
                                 anim.oneTransitionEnd(function () {
-                                    top().addClass('ng-hide');
-                                    s.removeClass('in out');
+                                    if (!(requests < 1)) {
+                                        s.removeClass('out').addClass('in');
+                                    } else {
+                                        top().addClass('ng-hide');
+                                        s.removeClass('in out');
+                                    }
                                 });
                                 s.addClass('out');
                             }
                         },
                         show = function () {
+                            requests += 1;
                             top().removeClass('ng-hide');
                             if (slide().length) {
-                                requests += 1;
                                 var s = slide();
                                 if (!s.hasClass('in')) {
                                     setTimeout(function () {

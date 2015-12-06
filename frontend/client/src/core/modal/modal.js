@@ -5,6 +5,12 @@
             var clickElement = options.popFrom;
             return (clickElement ? $(clickElement) : clickElement);
         },
+        hidePrevModal = function (element) {
+            element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
+        },
+        showPrevModal = function (element) {
+            element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
+        },
         getPositionOverClickElement = function (clickElement, element) {
             var clickRect = clickElement[0].getBoundingClientRect(),
                 modalRect = element[0].getBoundingClientRect(),
@@ -201,6 +207,9 @@
                                 scope.$broadcast('modalOpened');
                                 scope.$apply();
                                 $rootScope.$broadcast('disableUI', false);
+                                if (scope.modalOptions.fullScreen) {
+                                    hidePrevModal(element);
+                                }
                             });
                         });
 
@@ -254,6 +263,10 @@
                     inclass = 'in',
                     outclass = 'out',
                     popin = domEl.data('animator');
+
+                if (scope.modalOptions.fullScreen) {
+                    showPrevModal(domEl);
+                }
 
                 if (clickElement && popin) {
                     spec = getPositionOverClickElement(clickElement, domEl);

@@ -163,8 +163,6 @@
                         if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewCart || isBuyerViewOrder) {
                             maybeOpenOrder();
                         }
-
-                        $scope.search.loaded = true;
                     }
                 });
                 $scope.search.loader.load();

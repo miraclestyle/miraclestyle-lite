@@ -117,12 +117,8 @@
                         }]
                     }
                 },
-                error: function (response) {
-                    $scope.search.loaded = true;
-                },
                 complete: function (response) {
                     $scope.search.results.extend(response.data.entities);
-                    $scope.search.loaded = true;
                 }
             });
             $scope.search.loader.load();
@@ -208,8 +204,6 @@
                     if (isSellerOrderView) {
                         maybeOpenOrder();
                     }
-
-                    $scope.search.loaded = true;
                 }
             });
             $scope.search.loader.load();
