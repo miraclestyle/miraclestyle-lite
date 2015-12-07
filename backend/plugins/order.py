@@ -42,7 +42,7 @@ class OrderCronNotify(orm.BaseModel):
     OrderMessage = context.models['35']
     # query all trackers that pass the timeout, meaning that none touched the log_message of the order
     notify = OrderNotifyTracker.query().get()
-    count = OrderNotifyTracker.query().count(2) # test if there is more than 1 record
+    count = OrderNotifyTracker.query().count(2) # test if there is more than 1 record to allow continuous workload
     key = orm.Key(urlsafe=notify.key_id_str)
     context.notify_buyer = False
     context.notify_seller = False
@@ -54,19 +54,29 @@ class OrderCronNotify(orm.BaseModel):
         data = {'action_id': 'cron_notify',
                 'action_model': '34'}
         context._callbacks.append(('callback', data))
-    if not passes:
+
+    if notify.timeout > datetime.datetime.now():
+      context.notify = None
+      # do not delete this notify because it's not expired yet
       schedule()
       return
-    if notify.timeout < datetime.datetime.now() + datetime.timedelta(minutes=10):
+    if not passes:
+      # if the buyer or seller do not need any notifications, delete the tracker
       schedule()
       return
     order = key.get()
     if not order:
+      # this notifier does not have order, delete it
       schedule()
       return
     context._order = order
     context.entity = order
     context.notify = notify
+    context.notify_count = OrderMessage.query(OrderMessage.created < notify.timeout, ancestor=key).count()
+    if not context.notify_count:
+      # this tracker will be deleted because it does not have any messages that need sending
+      schedule()
+      return
     if notify.buyer:
       context.notify_buyer = notify.key._root.get()
       if context.notify_buyer:
@@ -79,9 +89,7 @@ class OrderCronNotify(orm.BaseModel):
     if not context.notify_count: # do not send any mails if there are no new messages
       context.notify_buyer = False
       context.notify_seller = False
-    if count > 1:
-      # schedule another task to handle the next order
-      schedule()
+    schedule()
 
 
 class OrderNotifyTrackerSet(orm.BaseModel):
