@@ -40,63 +40,83 @@ class OrderCronNotify(orm.BaseModel):
       self.cfg = {}
     OrderNotifyTracker = context.models['136']
     OrderMessage = context.models['35']
+    page_size = self.cfg.get('page_size', 10)
+    static_values = self.cfg.get('s', {})
+    dynamic_values = self.cfg.get('d', {})
+    values = {'account': context.account, 'input': context.input, 'action': context.action}
+    values.update(static_values)
+    for key, value in dynamic_values.iteritems():
+      values[key] = tools.get_attr(context, value)
     # query all trackers that pass the timeout, meaning that none touched the log_message of the order
-    notify = OrderNotifyTracker.query().get()
-    count = OrderNotifyTracker.query().count(2) # test if there is more than 1 record to allow continuous workload
-    key = orm.Key(urlsafe=notify.key_id_str)
-    context.notify_buyer = False
-    context.notify_seller = False
-    context.notify_count = 0
-    passes = any([notify.buyer, notify.seller])
-    def schedule():
-      if count > 1:
-        # schedule another task to handle the next order
-        data = {'action_id': 'cron_notify',
-                'action_model': '34'}
-        context._callbacks.append(('callback', data))
-
-    if notify.timeout > datetime.datetime.now():
-      context.notify = None
-      # do not delete this notify because it's not expired yet
-      schedule()
-      return
-    if not passes:
-      # if the buyer or seller do not need any notifications, delete the tracker
-      schedule()
-      return
-    order = key.get()
-    if not order:
-      # this notifier does not have order, delete it
-      schedule()
-      return
-    context._order = order
-    context.entity = order
-    context.notify = notify
-    context.notify_count = OrderMessage.query(OrderMessage.created < notify.timeout, ancestor=key).count()
-    if not context.notify_count:
-      # this tracker will be deleted because it does not have any messages that need sending
-      schedule()
-      return
-    if notify.buyer:
-      context.notify_buyer = notify.key._root.get()
-      if context.notify_buyer:
-        context.notify_buyer.read()
-    if notify.seller:
-      context.notify_seller = order.seller_reference._root.get()
-      if context.notify_seller:
-        context.notify_seller.read()
-    context.notify_count = OrderMessage.query(OrderMessage.created < notify.timeout, ancestor=key).count()
-    if not context.notify_count: # do not send any mails if there are no new messages
-      context.notify_buyer = False
-      context.notify_seller = False
-    schedule()
+    trackers = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).fetch(page_size)
+    count = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).count(page_size + 2) # test if there is more than 2 after this one to allow `continue` workload
+    delete_trackers = []
+    send_mails = []
+    def delete_tracker(tracker):
+      delete_trackers.append(tracker.key)
+    for tracker in trackers:
+      order_key = orm.Key(urlsafe=tracker.key_id_str)
+      tracker_buyer = False
+      tracker_seller = False
+      tracker_count = 0
+      passes = any([tracker.buyer, tracker.seller])
+      if not passes:
+        # if the buyer or seller do not need any notifications, delete the tracker
+        delete_tracker(tracker)
+        continue
+      order = order_key.get()
+      if not order:
+        # this notifier does not have order, delete it
+        delete_tracker(tracker)
+        continue
+      _order = order
+      entity = order
+      tracker_count = OrderMessage.query(OrderMessage.created > tracker.timeout, ancestor=order_key).count()
+      if not tracker_count:
+        # this tracker will be deleted because it does not have any messages that need sending
+        delete_tracker(tracker)
+        continue
+      if tracker.buyer:
+        tracker_buyer = order_key._root.get()
+        if tracker_buyer:
+          tracker_buyer.read()
+          tracker_buyer = tracker_buyer._primary_email
+      if tracker.seller:
+        tracker_seller = order.seller_reference._root.get()
+        if tracker_seller:
+          tracker_seller.read()
+          tracker_seller = tracker_seller._primary_email
+      send_mails.append((tracker, tracker_seller, tracker_buyer, tracker_count, order))
+    if delete_trackers:
+      orm.transaction(lambda: orm.delete_multi(delete_trackers), xg=True)
+    def send_in_transaciton(tracker, data): # @note, this is slow, but only way to ensure that mail is 100% sent - app engine has tendency to "stop working" so we have to do this
+      tracker.key.delete() # if it fails, it wont send mail
+      tools.mail_send(data, render=False) # if this fails, it will not delete the entity and it will re-try again sometime
+    for send in send_mails:
+      tracker, seller, buyer, tracker_count, order = send
+      for to in [seller, buyer]:
+        if to:
+          data = {'recipient': to, 'count': tracker_count, 'entity': order}
+          data.update(values)
+          tools.render_subject_and_body_templates(data) # avoid reads in transaction - this might happen if template has .foo.bar.read() stuff
+          orm.transaction(lambda: send_in_transaciton(tracker, data), xg=True)
+    if count > (page_size + 1):
+      # schedule another task to handle the next order
+      data = {'action_id': 'cron_notify',
+              'action_model': '34'}
+      context._callbacks.append(('callback', data))
 
 
 class OrderNotifyTrackerSet(orm.BaseModel):
 
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
     # at this moment it will set timeout of 10 minutes
     OrderNotifyTracker = context.models['136']
+    minutes = self.cfg.get('minutes', 10)
     seller = None
     buyer = None
     if context.account.key == context._order.key._root:
@@ -108,7 +128,7 @@ class OrderNotifyTrackerSet(orm.BaseModel):
     elif context.account._root_admin:
       buyer = True
       seller = True
-    new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=datetime.datetime.now() + datetime.timedelta(minutes=10), buyer=buyer, seller=seller)
+    new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=datetime.datetime.now() + datetime.timedelta(minutes=minutes), buyer=buyer, seller=seller)
     new_tracker.put()
 
 

@@ -214,7 +214,9 @@
                   </button>
               </div>
                 <div ng-if="helpers.models.isEntityListEmpty(order._messages)" help-render="GLOBAL_CONFIG.emptyHelp.cartMessages"></div>
-                <div class="messages-list">
+                <div class="messages-list"> 
+
+                    <div load-more-button="messages.reader"></div>
                     
                     <div ng-click="messages.resendMaybe(message)" class="message-row clearfix" ng-repeat="message in order._messages" ng-init="
                           isYou = !message._agent || message._agent.key === currentAccount.key;

@@ -24,7 +24,7 @@ import settings
 from .util import normalize
 from .debug import log
 
-__all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url', 'render_template',
+__all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url', 'render_template', 'render_subject_and_body_templates',
            'channel_create', 'json_dumps', 'json_loads', 'mail_send', 'http_send', 'channel_send', 'secure_cookie']
 
 
@@ -206,28 +206,32 @@ def channel_create(token):
   return channel.create_channel(token)
 
 
+def render_subject_and_body_templates(data):
+  data['body'] = render_template(data['body'], data).strip()
+  data['subject'] = render_template(data['subject'], data).strip()
+  return data
+
 # @note We have to consider http://sendgrid.com/partner/google
-def mail_send(data):
+def mail_send(data, render=True):
   message_sender = data.get('sender', None)
   if not message_sender:
     raise ValueError('`sender` not found in data')
-  body = render_template(data['body'], data).strip()
-  subject = render_template(data['subject'], data).strip()
+  if render:
+    render_subject_and_body_templates(data)
   if settings.DEBUG:
-    log.debug([subject, body])
+    log.debug([data['subject'], data['body']])
   message = mail.EmailMessage()
   message.sender = message_sender
   message.bcc = data['recipient']
-  message.subject = subject
-  message.html = body
+  message.subject = data['subject']
+  message.html = data['body']
   message.body = message.html
   message.check_initialized()
   message.send()
 
 
 def http_send(data):
-  data['subject'] = render_template(data['subject'], data).strip()
-  data['body'] = render_template(data['body'], data).strip()
+  render_subject_and_body_templates(data)
   urlfetch.fetch(data['recipient'], json.dumps(data), deadline=60, method=urlfetch.POST)
 
 

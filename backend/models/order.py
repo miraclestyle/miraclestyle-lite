@@ -29,8 +29,8 @@ class OrderNotifyTracker(orm.BaseModel):
   _use_rule_engine = False
 
   timeout = orm.SuperDateTimeProperty('1', required=True)
-  buyer = orm.SuperBooleanProperty('2', default=False)
-  seller = orm.SuperBooleanProperty('3', default=True)
+  buyer = orm.SuperBooleanProperty('2', default=False, indexed=False)
+  seller = orm.SuperBooleanProperty('3', default=True, indexed=False)
 
 
 class OrderTax(orm.BaseModel):
@@ -597,20 +597,6 @@ class Order(orm.BaseExpando):
                   transactional=False,
                   plugins=[
                       Write(),
-                      # send message to either seller or buyer depending on who sent it
-                      # if admin sends message, both buyer and seller must get it too
-                      Notify(cfg={'condition': lambda account, **kwargs: account._root_admin, # users always get direct messages from root admins
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'seller' : True,
-                                        'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
-                                        'body': notifications.ORDER_LOG_MESSAGE_BODY},
-                                  'd': {'recipient': '_order.seller_email'}}),
-                      Notify(cfg={'condition': lambda account, **kwargs: account._root_admin,
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'seller' : False,
-                                        'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
-                                        'body': notifications.ORDER_LOG_MESSAGE_BODY},
-                                  'd': {'recipient': '_order.buyer_email'}}),
                       Set(cfg={'d': {'output.entity': '_order'}}),
                       OrderNotifyTrackerSet(),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
@@ -628,25 +614,10 @@ class Order(orm.BaseExpando):
                       Read(),
                       RulePrepare(),
                       RuleExec(),
-                      OrderCronNotify()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Delete(cfg={'path': 'notify'}), # always delete notify instance
-                      Notify(cfg={'condition': lambda recipient, **kwargs: recipient,
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_NEW_MESSAGES_SUBJECT,
-                                        'body': notifications.ORDER_NEW_MESSAGES_BODY},
-                                        'seller' : True,
-                                  'd': {'recipient': 'notify_seller', 'count': 'notify_count'}}),
-                      Notify(cfg={'condition': lambda recipient, **kwargs: recipient,
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'seller' : False,
-                                        'subject': notifications.ORDER_NEW_MESSAGES_SUBJECT,
-                                        'body': notifications.ORDER_NEW_MESSAGES_BODY},
-                                  'd': {'recipient': 'notify_buyer', 'count': 'notify_count'}}),
+                      OrderCronNotify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                                             'subject': notifications.ORDER_NEW_MESSAGES_SUBJECT,
+                                             'body': notifications.ORDER_NEW_MESSAGES_BODY}}),
+
                       CallbackExec()
                   ]
               )
