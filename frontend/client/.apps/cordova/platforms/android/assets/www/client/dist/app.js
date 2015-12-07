@@ -5834,7 +5834,7 @@ function msieversion() {
     }
     SidenavService.$inject = ["$mdComponentRegistry", "$q"];
 
-    function SidenavDirective($timeout, $animate, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor) {
+    function SidenavDirective($timeout, $animateCss, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor) {
         return {
             restrict: 'E',
             scope: {
@@ -5961,13 +5961,13 @@ function msieversion() {
                 if (isOpen) {
                     element.removeClass('invisible out');
                     backdrop.removeClass('out');
-                    promises.push($animate.addClass(backdrop, 'in').then(backdropComplete));
-                    promises.push($animate.addClass(element, 'in').then(complete));
+                    promises.push($animateCss(backdrop, {addClass: 'in'}).start().done(backdropComplete));
+                    promises.push($animateCss(element, {addClass: 'in'}).start().done(complete));
                 } else {
                     element.removeClass('in');
                     backdrop.removeClass('in');
-                    promises.push($animate.addClass(backdrop, 'out').then(backdropComplete));
-                    promises.push($animate.addClass(element, 'out').then(complete));
+                    promises.push($animateCss(backdrop, {addClass: 'out'}).start().done(backdropComplete));
+                    promises.push($animateCss(element, {addClass: 'out'}).start().done(complete));
                 }
                 promise = $q.all(promises);
                 return promise;
@@ -6042,7 +6042,7 @@ function msieversion() {
 
         }
     }
-    SidenavDirective.$inject = ["$timeout", "$animate", "$parse", "$mdMedia", "$mdConstant", "$compile", "$q", "$document", "mdContextualMonitor"];
+    SidenavDirective.$inject = ["$timeout", "$animateCss", "$parse", "$mdMedia", "$mdConstant", "$compile", "$q", "$document", "mdContextualMonitor"];
 
     /*
      * @private
@@ -6605,7 +6605,7 @@ function msieversion() {
                 });
             }
         };
-    }]).directive('snackbar', ['snackbar', '$timeout', '$animate', '$q', function (snackbar, $timeout, $animate, $q) {
+    }]).directive('snackbar', ['snackbar', '$timeout', '$animate', '$animateCss', '$q', function (snackbar, $timeout, $animate, $animateCss, $q) {
         return {
             scope: true,
             require: 'snackbar',
@@ -6665,6 +6665,60 @@ function msieversion() {
                                 timer = setTimeout(function () {
                                     snackbar.hide();
                                 }, config.hideAfter);
+                            }
+                        });
+                    });
+                };
+            }],
+            controller2: ['$scope', function ($scope) {
+                var digest = function () {
+                        if (!$scope.$$phase) {
+                            $scope.$digest();
+                        }
+                    },
+                    timer;
+                $scope.message = '';
+                $scope.size = 1;
+                $scope.element = null;
+
+                snackbar.animating = false;
+                snackbar.hide = function () {
+                    $scope.element.removeClass('in');
+                    return $animateCss($scope.element, {
+                        addClass: 'out'
+                    }).start();
+                };
+                snackbar.show = function (config) {
+                    if (!angular.isObject(config)) {
+                        config = {
+                            message: config
+                        };
+                    }
+                    $scope.message = config.message;
+                    if (!config.hideAfter) {
+                        config.hideAfter = (($scope.message.length / 16) * 2000) + 500;
+                    }
+                    $scope.size = config.size;
+                    $scope.calculateSize = function () {
+                        if (!$scope.size) {
+                            return $scope.element.find('.brief').height() > 16 ? 2 : 1;
+                        }
+                        return $scope.size;
+                    };
+                    return snackbar.hide().done(function () {
+                        $scope.element.removeClass('out');
+                        return $animateCss($scope.element, {
+                            addClass: 'in'
+                        }).start().done(function () {
+                            if (config.hideAfter) {
+                                if (timer) {
+                                    clearTimeout(timer);
+                                }
+                                timer = setTimeout(function () {
+                                    snackbar.hide();
+                                }, config.hideAfter);
+
+                                digest();
                             }
                         });
                     });
@@ -10759,7 +10813,9 @@ function msieversion() {
                     var fn = function () {
                         var newval = scope.$eval(attrs.compatibilityMaker),
                             stringified;
-                        newval._csrf = currentAccount._csrf;
+                        if (angular.isObject(newval)) {
+                            newval._csrf = currentAccount._csrf;
+                        }
                         stringified = modelsUtil.argumentsToJson(newval);
                         element.val(stringified);
                     };
@@ -11305,12 +11361,28 @@ function msieversion() {
                                         };
                                     }
                                     config.ui.specifics.search.missing = function (id) {
+                                        var defer,
+                                            selectedIsArray = angular.isArray(id),
+                                            hasAll = true;
                                         if (id === null || id === undefined || !id.length) {
-                                            var defer = $q.defer();
+                                            defer = $q.defer();
                                             defer.resolve();
                                             return defer.promise;
                                         }
-                                        var selectedIsArray = angular.isArray(id);
+                                        if (selectedIsArray) {
+                                            angular.forEach(selectedIsArray, function (key) {
+                                                if (angular.isUndefined(config.ui.specifics._mapEntities[key])) {
+                                                    hasAll = false;
+                                                }
+                                            });
+                                        } else {
+                                            hasAll = angular.isDefined(config.ui.specifics._mapEntities[id]);
+                                        }
+                                        if (hasAll) {
+                                            defer = $q.defer();
+                                            defer.resolve(config.ui.specifics.entities);
+                                            return defer.promise;
+                                        }
                                         return model.actions.search({
                                             search: {
                                                 keys: (selectedIsArray ? id : [id])
@@ -12775,13 +12847,23 @@ function msieversion() {
                     realEventTarget: function (target) {
                         var theTarget = $(target),
                             parentTarget = theTarget.parents('.grid-item:first'),
-                            cardParent = theTarget.parents('.card:first');
+                            cardParent = theTarget.parents('.card:first'),
+                            buttonParent = theTarget.parents('button:first'),
+                            aParent = theTarget.parents('button:first');
                         if (!theTarget.hasClass('grid-item') && parentTarget.length) {
-                            target = parentTarget.get(0);
+                            return parentTarget.get(0);
                         }
 
                         if (cardParent.length) {
-                            target = cardParent.get(0);
+                            return cardParent.get(0);
+                        }
+
+                        if (buttonParent.length) {
+                            return buttonParent.get(0);
+                        }
+
+                        if (aParent.length) {
+                            return aParent.get(0);
                         }
 
                         return target;
@@ -14209,12 +14291,6 @@ function msieversion() {
                         },
                         hide = function (fast) {
                             requests -= 1;
-                            if (top().hasClass('ng-hide')) {
-                                return;
-                            }
-                            if (!(requests < 1)) {
-                                return;
-                            }
                             var s = slide(),
                                 anim = animation();
                             if (s.length) {
@@ -14227,16 +14303,20 @@ function msieversion() {
                                     return;
                                 }
                                 anim.oneTransitionEnd(function () {
-                                    top().addClass('ng-hide');
-                                    s.removeClass('in out');
+                                    if (!(requests < 1)) {
+                                        s.removeClass('out').addClass('in');
+                                    } else {
+                                        top().addClass('ng-hide');
+                                        s.removeClass('in out');
+                                    }
                                 });
                                 s.addClass('out');
                             }
                         },
                         show = function () {
+                            requests += 1;
                             top().removeClass('ng-hide');
                             if (slide().length) {
-                                requests += 1;
                                 var s = slide();
                                 if (!s.hasClass('in')) {
                                     setTimeout(function () {
@@ -14492,6 +14572,12 @@ function msieversion() {
             var clickElement = options.popFrom;
             return (clickElement ? $(clickElement) : clickElement);
         },
+        hidePrevModal = function (element) {
+            element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
+        },
+        showPrevModal = function (element) {
+            element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
+        },
         getPositionOverClickElement = function (clickElement, element) {
             var clickRect = clickElement[0].getBoundingClientRect(),
                 modalRect = element[0].getBoundingClientRect(),
@@ -14584,8 +14670,8 @@ function msieversion() {
                 }, 0, false);
             }
         };
-    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', 'animationGenerator', '$rootScope',
-        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, animationGenerator, $rootScope) {
+    }]).directive('modalWindow', ['$modalStack', '$timeout', '$$rAF', '$mdConstant', '$q', '$animate', '$animateCss', 'animationGenerator', '$rootScope',
+        function ($modalStack, $timeout, $$rAF, $mdConstant, $q, $animate, $animateCss, animationGenerator, $rootScope) {
             return {
                 restrict: 'EA',
                 scope: {
@@ -14608,9 +14694,6 @@ function msieversion() {
                     }
                     scope.size = attrs.size;
                     scope.$isRendered = true;
-                    scope.$renderComplete = function () {
-                        $timeout(ready, 50, false);
-                    };
                     // Observe function will be called on next digest cycle after compilation, ensuring that the DOM is ready.
                     // In order to use this way of finding whether DOM is ready, we need to observe a scope property used in modal's template.
                     ready = function () {
@@ -14628,6 +14711,11 @@ function msieversion() {
                         if (isSlide) {
                             cb = function () {
                                 element.addClass(where + ' slide drawer visible in');
+                                /*
+                                $animateCss(element, {
+                                    addClass: 'in'
+                                }).start().done(function () {
+                                });*/
                             };
                         } else if (isConfirmation) {
                             modal = element.find('.modal-dialog');
@@ -14677,7 +14765,6 @@ function msieversion() {
                                 element.addClass('fade in');
                             };
                         }
-
                         element.oneAnimationEnd(function () {
                             setTimeout(function () {
                                 element.addClass('visible');
@@ -14687,6 +14774,9 @@ function msieversion() {
                                 scope.$broadcast('modalOpened');
                                 scope.$apply();
                                 $rootScope.$broadcast('disableUI', false);
+                                if (scope.modalOptions.fullScreen) {
+                                    hidePrevModal(element);
+                                }
                             });
                         });
 
@@ -14740,6 +14830,10 @@ function msieversion() {
                     inclass = 'in',
                     outclass = 'out',
                     popin = domEl.data('animator');
+
+                if (scope.modalOptions.fullScreen) {
+                    showPrevModal(domEl);
+                }
 
                 if (clickElement && popin) {
                     spec = getPositionOverClickElement(clickElement, domEl);
@@ -14797,12 +14891,13 @@ function msieversion() {
                 openedWindows.remove(modalInstance);
 
                 //remove window DOM element
-                backdropDomEl.removeClass('in').addClass('out').oneAnimationEnd(function () {
+                backdropDomEl.oneAnimationEnd(function () {
                     backdropDomEl.remove();
                     backdropScope.$destroy();
                     modalWindow.backdropScope = undefined;
                     modalWindow.backdropDomEl = undefined;
-                });
+                }).removeClass('in').addClass('out');
+
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
@@ -16186,7 +16281,8 @@ function msieversion() {
                                         loading: false,
                                         more: null,
                                         cursor: null,
-                                        firstLoad: true,
+                                        firstLoad: (angular.isDefined(config.firstLoad) ? config.firstLoad : true),
+                                        loaded: false,
                                         args: theConfig.args,
                                         load: function (loadConfig) {
                                             loadConfig = helpers.alwaysObject(loadConfig);
@@ -16234,6 +16330,7 @@ function msieversion() {
                                             })['finally'](function (response) {
                                                 paginate.loading = false;
                                                 paginate.firstLoad = false;
+                                                paginate.loaded = true;
                                             });
                                             return promise;
                                         }
@@ -16586,7 +16683,27 @@ function msieversion() {
 }());(function () {
     'use strict';
     angular.module('app')
-        .directive('selectInputMultiple', ['$timeout', 'underscoreTemplate', '$modal', function ($timeout, underscoreTemplate, $modal) {
+        .directive('selectInputScrollToActive', ['$timeout', function ($timeout) {
+            return {
+                link: function (scope, element, attrs) {
+                    scope.$watch(function () {
+                        return scope.$eval(attrs.selectInputScrollToActive);
+                    }, function (newValue, oldValue, scope) {
+                        $timeout(function () {
+                            if (newValue) {
+                                var scrollElement = element.parents('.fixed-height:first'),
+                                    active = scrollElement.find('.list-row-is-active:first');
+                                if (!active.length) {
+                                    return;
+                                }
+                                scrollElement.scrollTop(active.get(0).offsetTop);
+                            }
+                        }, 0, false);
+                    });
+                }
+            };
+        }])
+        .directive('selectInputMultiple', ['$timeout', 'underscoreTemplate', '$q', '$modal', function ($timeout, underscoreTemplate, $q, $modal) {
             return {
                 require: ['ngModel', '^?form'],
                 link: function (scope, element, attrs, ctrls) {
@@ -16785,7 +16902,11 @@ function msieversion() {
                             fullScreen: false,
                             backdrop: true,
                             controller: ['$scope', function ($scope) {
-                                $scope.$state.instant(function () {
+                                var resolved = $q.defer();
+                                resolved.resolve();
+                                $scope.$state.promise(function () {
+                                    return ((select.search && select.search.ready) ? select.search.ready : resolved.promise);
+                                }, function () {
                                     $scope.select = select;
                                 });
                                 $scope.$on('$destroy', function () {
@@ -17257,9 +17378,12 @@ function msieversion() {
                                         }
                                     };
                                     $scope.select = select;
-                                };
+                                }, resolved = $q.defer();
+                                resolved.resolve();
                                 if ($scope.$state) {
-                                    $scope.$state.instant(process);
+                                    $scope.$state.promise(function () {
+                                        return ((select.search && select.search.ready) ? select.search.ready : resolved.promise);
+                                    }, process);
                                 } else {
                                     process();
                                 }
@@ -18440,8 +18564,6 @@ angular.module('app')
                         if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewCart || isBuyerViewOrder) {
                             maybeOpenOrder();
                         }
-
-                        $scope.search.loaded = true;
                     }
                 });
                 $scope.search.loader.load();
@@ -18878,11 +19000,9 @@ angular.module('app')
                         afterSave = function ($scope) {
                             $scope.setAction('catalog_upload_images');
                             $scope.dialog.toolbar.templateActionsUrl = 'catalog/manage_actions.html';
-                            callback($scope.entity);
                         },
                         afterUploadComplete = function ($scope) {
                             $scope.setAction('update');
-                            callback($scope.entity);
                         },
                         noComplete = function ($scope) {
                             afterUploadComplete($scope);
@@ -18948,6 +19068,12 @@ angular.module('app')
                                     angular.forEach($scope.dequeueChannel, function (cb) {
                                         cb();
                                     });
+                                });
+
+                                $scope.$watch('entity.id', function (newValue) {
+                                    if (newValue) {
+                                        callback($scope.entity);
+                                    }
                                 });
 
                                 $scope.actions = {
@@ -20943,9 +21069,9 @@ angular.module('app')
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    element.addClass('fade out').oneAnimationEnd(function () {
+                    element.oneAnimationEnd(function () {
                         element.addClass('ng-hide');
-                    });
+                    }).addClass('fade out');
                 }
             };
         }])
@@ -22187,12 +22313,8 @@ angular.module('app')
                         }]
                     }
                 },
-                error: function (response) {
-                    $scope.search.loaded = true;
-                },
                 complete: function (response) {
                     $scope.search.results.extend(response.data.entities);
-                    $scope.search.loaded = true;
                 }
             });
             $scope.search.loader.load();
@@ -22278,8 +22400,6 @@ angular.module('app')
                     if (isSellerOrderView) {
                         maybeOpenOrder();
                     }
-
-                    $scope.search.loaded = true;
                 }
             });
             $scope.search.loader.load();

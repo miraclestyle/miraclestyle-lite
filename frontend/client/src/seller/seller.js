@@ -65,10 +65,13 @@
             if (!entity.key) {
                 return;
             }
-            if (!_.findWhere($scope.search.results, {
+            var find = _.findWhere($scope.search.results, {
                     key: entity.key
-                })) {
+                });
+            if (!find) {
                 $scope.search.results.unshift(entity);
+            } else {
+                $.extend(find, entity);
             }
         };
 
@@ -92,8 +95,7 @@
 
         $scope.search = {
             results: [],
-            loader: {},
-            loaded: false
+            loader: {}
         };
 
         models['23'].current().then(function (response) {
