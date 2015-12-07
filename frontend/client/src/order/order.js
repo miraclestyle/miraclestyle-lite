@@ -487,6 +487,7 @@
                                         stateChanged: function (state) {
                                             $scope.messages.sync.toggle(state);
                                         },
+                                        seen: false,
                                         sync: {
                                             timer: null,
                                             active: false,
@@ -645,6 +646,12 @@
                                                 it[isOpen ? 'close' : 'open']().then(function () {
                                                     $scope.messages.toggling = false;
                                                     $scope.messages.open = !isOpen;
+                                                    if ($scope.messages.open && !$scope.messages.seen) {
+                                                        $scope.messages.seen = true;
+                                                        models['34'].actions.see_messages({}, {
+                                                            disableUI: false
+                                                        });
+                                                    }
                                                 });
                                             });
                                         }

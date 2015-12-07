@@ -88,10 +88,12 @@ class OrderCronNotify(orm.BaseModel):
           tracker_seller = tracker_seller._primary_email
       send_mails.append((tracker, tracker_seller, tracker_buyer, tracker_count, order))
     if delete_trackers:
+      tools.log.debug('Delete %s trackers' % delete_trackers)
       orm.transaction(lambda: orm.delete_multi(delete_trackers), xg=True)
     def send_in_transaciton(tracker, data): # @note, this is slow, but only way to ensure that mail is 100% sent - app engine has tendency to "stop working" so we have to do this
       tracker.key.delete() # if it fails, it wont send mail
       tools.mail_send(data, render=False) # if this fails, it will not delete the entity and it will re-try again sometime
+    tools.log.debug('Sending %s trackers' % len(send_mails))
     for send in send_mails:
       tracker, seller, buyer, tracker_count, order = send
       for to in [seller, buyer]:
