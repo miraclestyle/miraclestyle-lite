@@ -41,17 +41,28 @@ class OrderCronNotify(orm.BaseModel):
     OrderNotifyTracker = context.models['136']
     OrderMessage = context.models['35']
     # query all trackers that pass the timeout, meaning that none touched the log_message of the order
-    notify = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).get()
-    count = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).count(2) # test if there is more than 1 record
+    notify = OrderNotifyTracker.query().get()
+    count = OrderNotifyTracker.query().count(2) # test if there is more than 1 record
     key = orm.Key(urlsafe=notify.key_id_str)
     context.notify_buyer = False
     context.notify_seller = False
     context.notify_count = 0
     passes = any([notify.buyer, notify.seller])
+    def schedule():
+      if count > 1:
+        # schedule another task to handle the next order
+        data = {'action_id': 'cron_notify',
+                'action_model': '34'}
+        context._callbacks.append(('callback', data))
     if not passes:
+      schedule()
+      return
+    if notify.timeout < datetime.datetime.now() + datetime.timedelta(minutes=10):
+      schedule()
       return
     order = key.get()
     if not order:
+      schedule()
       return
     context._order = order
     context.entity = order
@@ -70,9 +81,7 @@ class OrderCronNotify(orm.BaseModel):
       context.notify_seller = False
     if count > 1:
       # schedule another task to handle the next order
-      data = {'action_id': 'cron_notify',
-              'action_model': '34'}
-      context._callbacks.append(('callback', data))
+      schedule()
 
 
 class OrderNotifyTrackerSet(orm.BaseModel):

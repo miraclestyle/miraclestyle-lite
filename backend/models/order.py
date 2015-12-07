@@ -634,7 +634,7 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   transactional=True,
                   plugins=[
-                      Delete(cfg={'path': 'notify'}),
+                      Delete(cfg={'path': 'notify'}), # always delete notify instance
                       Notify(cfg={'condition': lambda recipient, **kwargs: recipient,
                                   's': {'sender': settings.NOTIFY_EMAIL,
                                         'subject': notifications.ORDER_NEW_MESSAGES_SUBJECT,
