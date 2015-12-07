@@ -21825,7 +21825,7 @@ angular.module('app')
                                                         sync.timer = null;
                                                         sync.run();
                                                     });
-                                                }, 2000);
+                                                }, 10000);
                                             },
                                         },
                                         draft: {
@@ -21868,10 +21868,10 @@ angular.module('app')
                                             $scope.order._messages.push(newMessage);
                                             $scope.container.messages.$setSubmitted(true);
                                             $scope.container.messages.$setPristine(true);
+                                            $scope.messages.forceReflow();
                                             return models['34'].actions[action](copydraft, {
                                                 disableUI: false
                                             }).then(function (response) {
-                                                $scope.messages.forceReflow();
                                                 if (!response.data.entity) {
                                                     return;
                                                 }
