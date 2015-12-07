@@ -2680,11 +2680,9 @@
                     ripple.css(worker.style);
 
                     $timeout(function () {
-                        $$rAF(function () {
-                            ripple.addClass(cls);
-                            ripple.oneAnimationEnd(function () {
-                                ripple.remove();
-                            });
+                        ripple.addClass(cls);
+                        ripple.oneAnimationEnd(function () {
+                            ripple.remove();
                         });
                     }, 0, false);
 

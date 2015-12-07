@@ -8,8 +8,7 @@
                         var theTarget = $(target),
                             parentTarget = theTarget.parents('.grid-item:first'),
                             cardParent = theTarget.parents('.card:first'),
-                            buttonParent = theTarget.parents('button:first'),
-                            aParent = theTarget.parents('button:first');
+                            buttonParent = theTarget.parents('button:first');
                         if (!theTarget.hasClass('grid-item') && parentTarget.length) {
                             return parentTarget.get(0);
                         }
@@ -20,10 +19,6 @@
 
                         if (buttonParent.length) {
                             return buttonParent.get(0);
-                        }
-
-                        if (aParent.length) {
-                            return aParent.get(0);
                         }
 
                         return target;
