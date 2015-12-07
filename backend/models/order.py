@@ -615,8 +615,8 @@ class Order(orm.BaseExpando):
                       RulePrepare(),
                       RuleExec(),
                       OrderCronNotify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
-                                             'subject': notifications.ORDER_NEW_MESSAGES_SUBJECT,
-                                             'body': notifications.ORDER_NEW_MESSAGES_BODY}}),
+                                                 'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
+                                                 'body': notifications.ORDER_LOG_MESSAGE_BODY}}),
 
                       CallbackExec()
                   ]
