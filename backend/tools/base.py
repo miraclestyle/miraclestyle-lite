@@ -214,7 +214,7 @@ def mail_send(data):
   body = render_template(data['body'], data).strip()
   subject = render_template(data['subject'], data).strip()
   if settings.DEBUG:
-    log.debug(subject, body)
+    log.debug([subject, body])
   message = mail.EmailMessage()
   message.sender = message_sender
   message.bcc = data['recipient']

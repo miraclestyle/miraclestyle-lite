@@ -105,6 +105,9 @@ class OrderNotifyTrackerSet(orm.BaseModel):
     elif context.acccount.key == context._order.seller_reference._root:
       buyer = True
       seller = False
+    elif context.account._root_admin:
+      buyer = True
+      seller = True
     new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=datetime.datetime.now() + datetime.timedelta(minutes=10), buyer=buyer, seller=seller)
     new_tracker.put()
 

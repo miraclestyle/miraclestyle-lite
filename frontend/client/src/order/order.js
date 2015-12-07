@@ -589,6 +589,8 @@
                                                 };
                                             $scope.messages.draft.message = '';
                                             $scope.order._messages.push(newMessage);
+                                            $scope.container.messages.$setSubmitted(true);
+                                            $scope.container.messages.$setPristine(true);
                                             return models['34'].actions[action](copydraft, {
                                                 disableUI: false
                                             }).then(function (response) {
@@ -604,7 +606,7 @@
                                             });
                                         },
                                         forceReflow: function () {
-                                            $scope.messages.sent = !$scope.messages.sent;
+                                            $scope.messages.sent = new Date().getTime();
                                         },
                                         sidebarID: 'messages' + _.uniqueId(),
                                         logMessage: function () {
@@ -613,10 +615,11 @@
                                                 return;
                                             }
                                             if ($scope.container.messages.$valid) {
+                                                $scope.messages.sync.stop();
                                                 return this.send('log_message').then(function (response) {
-                                                    $scope.container.messages.$setSubmitted(true);
-                                                    $scope.container.messages.$setPristine(true);
                                                     return response;
+                                                })['finally'](function () {
+                                                    $scope.messages.sync.start();
                                                 });
                                             }
                                             helpers.form.wakeUp($scope.container.messages, false, true);
