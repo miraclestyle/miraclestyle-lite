@@ -1,6 +1,6 @@
 {% if account.key == entity.seller_reference._root and entity.state == 'cart' %}
-You have a new message from seller "{{entity._seller.value.name}}."
+You have new messages from seller "{{entity._seller.value.name}}."
 {% endif %}
 {% if account.key != entity.seller_reference._root or entity.state != 'cart' %}
-You have a new message on your order "#{{entity.key_id}}."
+You have new messages on your order "#{{entity.key_id}}."
 {% endif %}
