@@ -5265,11 +5265,9 @@ function msieversion() {
                     ripple.css(worker.style);
 
                     $timeout(function () {
-                        $$rAF(function () {
-                            ripple.addClass(cls);
-                            ripple.oneAnimationEnd(function () {
-                                ripple.remove();
-                            });
+                        ripple.addClass(cls);
+                        ripple.oneAnimationEnd(function () {
+                            ripple.remove();
                         });
                     }, 0, false);
 
@@ -12848,8 +12846,7 @@ function msieversion() {
                         var theTarget = $(target),
                             parentTarget = theTarget.parents('.grid-item:first'),
                             cardParent = theTarget.parents('.card:first'),
-                            buttonParent = theTarget.parents('button:first'),
-                            aParent = theTarget.parents('button:first');
+                            buttonParent = theTarget.parents('button:first');
                         if (!theTarget.hasClass('grid-item') && parentTarget.length) {
                             return parentTarget.get(0);
                         }
@@ -12860,10 +12857,6 @@ function msieversion() {
 
                         if (buttonParent.length) {
                             return buttonParent.get(0);
-                        }
-
-                        if (aParent.length) {
-                            return aParent.get(0);
                         }
 
                         return target;
