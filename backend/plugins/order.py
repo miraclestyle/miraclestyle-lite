@@ -80,12 +80,10 @@ class OrderCronNotify(orm.BaseModel):
         tracker_buyer = order_key._root.get()
         if tracker_buyer:
           tracker_buyer.read()
-          tracker_buyer = tracker_buyer._primary_email
       if tracker.seller:
         tracker_seller = order.seller_reference._root.get()
         if tracker_seller:
           tracker_seller.read()
-          tracker_seller = tracker_seller._primary_email
       send_mails.append((tracker, tracker_seller, tracker_buyer, tracker_count, order))
     if delete_trackers:
       tools.log.debug('Delete %s trackers' % delete_trackers)
@@ -98,7 +96,7 @@ class OrderCronNotify(orm.BaseModel):
       tracker, seller, buyer, tracker_count, order = send
       for to in [seller, buyer]:
         if to:
-          data = {'recipient': to, 'count': tracker_count, 'entity': order}
+          data = {'recipient': to._primary_email, 'account': to, 'count': tracker_count, 'entity': order}
           data.update(values)
           tools.render_subject_and_body_templates(data) # avoid reads in transaction - this might happen if template has .foo.bar.read() stuff
           orm.transaction(lambda: send_in_transaciton(tracker, data), xg=True)
@@ -127,9 +125,6 @@ class OrderNotifyTrackerSet(orm.BaseModel):
     elif context.account.key == context._order.seller_reference._root:
       buyer = True
       seller = False
-    elif context.account._root_admin:
-      buyer = True
-      seller = True
     new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=datetime.datetime.now() + datetime.timedelta(minutes=minutes), buyer=buyer, seller=seller)
     new_tracker.put()
 
