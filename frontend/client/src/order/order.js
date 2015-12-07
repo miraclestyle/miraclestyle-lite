@@ -648,7 +648,9 @@
                                                     $scope.messages.open = !isOpen;
                                                     if ($scope.messages.open && !$scope.messages.seen) {
                                                         $scope.messages.seen = true;
-                                                        models['34'].actions.see_messages({}, {
+                                                        models['34'].actions.see_messages({
+                                                            key: $scope.order.key
+                                                        }, {
                                                             disableUI: false
                                                         });
                                                     }
