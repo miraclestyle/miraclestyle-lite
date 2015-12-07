@@ -124,7 +124,7 @@ class OrderNotifyTrackerSet(orm.BaseModel):
     if context.account.key == context._order.key._root:
       buyer = False
       seller = True
-    elif context.acccount.key == context._order.seller_reference._root:
+    elif context.account.key == context._order.seller_reference._root:
       buyer = True
       seller = False
     elif context.account._root_admin:
