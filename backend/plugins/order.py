@@ -24,6 +24,74 @@ class PluginError(errors.BaseKeyValueError):
   KEY = 'plugin_error'
 
 
+
+class OrderCronNotify(orm.BaseModel):
+
+  cfg = orm.SuperJsonProperty(default={})
+
+  def run(self, context):
+    '''
+      Cron is run every x.
+      First cron initialization will get first tracker it finds and process it in transaction.
+      If there are more trackers, it will keep scheduling them with taskqueue until they are all sent.
+      It would be ideal if the cron was run every 6 hours or something.
+    '''
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    OrderNotifyTracker = context.models['136']
+    OrderMessage = context.models['35']
+    # query all trackers that pass the timeout, meaning that none touched the log_message of the order
+    notify = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).get()
+    count = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).count(2) # test if there is more than 1 record
+    key = orm.Key(urlsafe=notify.key_id_str)
+    context.notify_buyer = False
+    context.notify_seller = False
+    context.notify_count = 0
+    passes = any([notify.buyer, notify.seller])
+    if not passes:
+      return
+    order = key.get()
+    if not order:
+      return
+    context._order = order
+    context.entity = order
+    context.notify = notify
+    if notify.buyer:
+      context.notify_buyer = notify.key._root.get()
+      if context.notify_buyer:
+        context.notify_buyer.read()
+    if notify.seller:
+      context.notify_seller = order.seller_reference._root.get()
+      if context.notify_seller:
+        context.notify_seller.read()
+    context.notify_count = OrderMessage.query(OrderMessage.created < notify.timeout, ancestor=key).count()
+    if not context.notify_count: # do not send any mails if there are no new messages
+      context.notify_buyer = False
+      context.notify_seller = False
+    if count > 1:
+      # schedule another task to handle the next order
+      data = {'action_id': 'cron_notify',
+              'action_model': '34'}
+      context._callbacks.append(('callback', data))
+
+
+class OrderNotifyTrackerSet(orm.BaseModel):
+
+  def run(self, context):
+    # at this moment it will set timeout of 10 minutes
+    OrderNotifyTracker = context.models['136']
+    seller = None
+    buyer = None
+    if context.account.key == context._order.key._root:
+      buyer = False
+      seller = True
+    elif context.acccount.key == context._order.seller_reference._root:
+      buyer = True
+      seller = False
+    new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=datetime.datetime.now() + datetime.timedelta(minutes=10), buyer=buyer, seller=seller)
+    new_tracker.put()
+
+
 class OrderCronDelete(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -36,14 +104,15 @@ class OrderCronDelete(orm.BaseModel):
     unpaid_order_life = self.cfg.get('unpaid_order_life', 30)
     Order = context.models['34']
     orders = []
-    carts = Order.query(Order.state == 'cart',
-                        Order.created < (datetime.datetime.now() - datetime.timedelta(days=cart_life))).fetch_async(limit=limit)
-    unpaid_orders = Order.query(Order.state == 'order',
-                                Order.payment_status == None,
-                                Order.date < (datetime.datetime.now() - datetime.timedelta(days=unpaid_order_life))).fetch_async(limit=limit)
-    orders.extend(carts)
-    orders.extend(unpaid_orders)
-    orm.get_async_results(orders)
+    futures = []
+    futures.append(Order.query(Order.state == 'cart',
+                               Order.created < (datetime.datetime.now() - datetime.timedelta(days=cart_life))).fetch_async(limit=limit))
+    futures.append(Order.query(Order.state == 'order',
+                               Order.payment_status == None,
+                               Order.date < (datetime.datetime.now() - datetime.timedelta(days=unpaid_order_life))).fetch_async(limit=limit))
+    orm.get_async_results(futures)
+    orders.extend(futures[0])
+    orders.extend(futures[1])
     for order in orders:
       data = {'action_id': 'delete',
               'action_model': '34',
@@ -1136,4 +1205,3 @@ class OrderStockManagement(orm.BaseModel):
               out_of_stock = True
       if out_of_stock:
         delete_line(line)
-

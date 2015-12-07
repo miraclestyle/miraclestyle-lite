@@ -19,7 +19,18 @@ from models.unit import *
 from plugins.order import *
 
 
-__all__ = ['OrderTax', 'OrderLine', 'OrderProduct', 'OrderCarrier', 'OrderMessage', 'Order']
+__all__ = ['OrderNotifyTracker', 'OrderTax', 'OrderLine', 'OrderProduct', 'OrderCarrier', 'OrderMessage', 'Order']
+
+
+class OrderNotifyTracker(orm.BaseModel):
+
+  _kind = 136
+
+  _use_rule_engine = False
+
+  timeout = orm.SuperDateTimeProperty('1', required=True)
+  buyer = orm.SuperBooleanProperty('2', default=False)
+  seller = orm.SuperBooleanProperty('3', default=True)
 
 
 class OrderTax(orm.BaseModel):
@@ -172,7 +183,7 @@ class Order(orm.BaseExpando):
   tax_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
   payment_method = orm.SuperKeyProperty('12', required=False, indexed=False)
-  payment_status = orm.SuperStringProperty('13', required=False, indexed=False)
+  payment_status = orm.SuperStringProperty('13', required=False, indexed=True)
   carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '14')
 
   _default_indexed = False
@@ -220,8 +231,8 @@ class Order(orm.BaseExpando):
   def condition_taskqueue(account, **kwargs):
     return account._is_taskqueue
   
-  def condition_cron(account, **kwargs):
-    return account._is_cron
+  def condition_cron_or_root_admin(account, **kwargs):
+    return account._is_cron or account._root_admin
 
   def condition_not_guest_and_owner_and_cart(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -273,7 +284,9 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('delete', condition_taskqueue),
-      orm.ExecuteActionPermission('cron', condition_cron),
+      orm.ExecuteActionPermission('cron', condition_cron_or_root_admin),
+      orm.ExecuteActionPermission('cron_notify', condition_cron_or_root_admin),
+      orm.ExecuteActionPermission('see_messages', condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('notify', condition_notify),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
@@ -423,7 +436,6 @@ class Order(orm.BaseExpando):
       ),
       orm.Action(
           id='delete',
-          skip_csrf=True,
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True)
           },
@@ -489,7 +501,6 @@ class Order(orm.BaseExpando):
       ),
       orm.Action(
           id='cron',
-          skip_csrf=True,
           arguments={},
           _plugin_groups=[
               orm.PluginGroup(
@@ -508,7 +519,6 @@ class Order(orm.BaseExpando):
       ),
       orm.Action(
           id='notify',
-          skip_csrf=True,
           arguments={
               'payment_method': orm.SuperStringProperty(required=True, choices=settings.AVAILABLE_PAYMENT_METHODS),
               'request': orm.SuperPickleProperty(),
@@ -549,6 +559,24 @@ class Order(orm.BaseExpando):
               )
           ]
       ),
+      # @todo we'll see if we will use this...
+      orm.Action(
+          id='see_messages',
+          arguments={
+            'key': orm.SuperKeyProperty(kind='34', required=True)
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec(),
+                      OrderNotifyTrackerSet()
+                  ]
+              )
+          ]
+      ),
       orm.Action(
           id='log_message',
           arguments={
@@ -571,32 +599,55 @@ class Order(orm.BaseExpando):
                       Write(),
                       # send message to either seller or buyer depending on who sent it
                       # if admin sends message, both buyer and seller must get it too
-                      Notify(cfg={'condition': lambda account, **kwargs: account._root_admin,
+                      Notify(cfg={'condition': lambda account, **kwargs: account._root_admin, # users always get direct messages from root admins
                                   's': {'sender': settings.NOTIFY_EMAIL,
                                         'seller' : True,
                                         'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
                                         'body': notifications.ORDER_LOG_MESSAGE_BODY},
                                   'd': {'recipient': '_order.seller_email'}}),
                       Notify(cfg={'condition': lambda account, **kwargs: account._root_admin,
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'seller' : False,
-                                        'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
-                                        'body': notifications.ORDER_LOG_MESSAGE_BODY},
-                                  'd': {'recipient': '_order.buyer_email'}}),
-                      Notify(cfg={'condition': lambda account, entity, **kwargs: account.key == entity.key._root and not account._root_admin,
-                                  's': {'sender': settings.NOTIFY_EMAIL,
-                                        'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
-                                        'body': notifications.ORDER_LOG_MESSAGE_BODY},
-                                        'seller' : True,
-                                  'd': {'recipient': '_order.seller_email'}}),
-                      Notify(cfg={'condition': lambda account, entity, **kwargs: account.key == entity.seller_reference._root and not account._root_admin,
                                   's': {'sender': settings.NOTIFY_EMAIL,
                                         'seller' : False,
                                         'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
                                         'body': notifications.ORDER_LOG_MESSAGE_BODY},
                                   'd': {'recipient': '_order.buyer_email'}}),
                       Set(cfg={'d': {'output.entity': '_order'}}),
+                      OrderNotifyTrackerSet(),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
+                  ]
+              )
+          ]
+      ),
+      orm.Action(
+          id='cron_notify',
+          arguments={},
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec(),
+                      OrderCronNotify()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      Delete(cfg={'path': 'notify'}),
+                      Notify(cfg={'condition': lambda recipient, **kwargs: recipient,
+                                  's': {'sender': settings.NOTIFY_EMAIL,
+                                        'subject': notifications.ORDER_NEW_MESSAGES_SUBJECT,
+                                        'body': notifications.ORDER_NEW_MESSAGES_BODY},
+                                        'seller' : True,
+                                  'd': {'recipient': 'notify_seller', 'count': 'notify_count'}}),
+                      Notify(cfg={'condition': lambda recipient, **kwargs: recipient,
+                                  's': {'sender': settings.NOTIFY_EMAIL,
+                                        'seller' : False,
+                                        'subject': notifications.ORDER_NEW_MESSAGES_SUBJECT,
+                                        'body': notifications.ORDER_NEW_MESSAGES_BODY},
+                                  'd': {'recipient': 'notify_buyer', 'count': 'notify_count'}}),
+                      CallbackExec()
                   ]
               )
           ]

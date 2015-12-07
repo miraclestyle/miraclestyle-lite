@@ -36,5 +36,8 @@ CATALOG_DISCONTINUE_BODY = template('catalog/discontinue_body.html')
 ORDER_LOG_MESSAGE_SUBJECT = template('order/log_message_subject.html')
 ORDER_LOG_MESSAGE_BODY = template('order/log_message_body.html')
 
+ORDER_NEW_MESSAGES_SUBJECT = template('order/new_messages_subject.html')
+ORDER_NEW_MESSAGES_BODY = template('order/new_messages_body.html')
+
 ORDER_NOTIFY_SUBJECT = template('order/notify_subject.html')
 ORDER_NOTIFY_BODY = template('order/notify_body.html')

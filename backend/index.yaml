@@ -111,6 +111,19 @@ indexes:
   - name: '2'
     direction: desc
 
+# Order cron
+- kind: '34'
+  properties:
+  - name: '3'
+  - name: '1'
+
+# Order cron
+- kind: '34'
+  properties:
+  - name: '13'
+  - name: '3'
+  - name: '4'
+
 # Admin Order state and order by created ASC
 - kind: '34'
   properties:

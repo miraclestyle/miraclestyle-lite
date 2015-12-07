@@ -686,7 +686,6 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='delete',
-          skip_csrf=True,
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True)
           },
@@ -817,7 +816,6 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='account_discontinue',
-          skip_csrf=True,
           arguments={
               'account': orm.SuperKeyProperty(kind='11', required=True)
           },
@@ -874,7 +872,6 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='cron',
-          skip_csrf=True,
           arguments={},
           _plugin_groups=[
               orm.PluginGroup(
@@ -917,7 +914,6 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='catalog_process_duplicate',
-          skip_csrf=True,
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True),
               'channel': orm.SuperStringProperty(required=True)
@@ -973,7 +969,6 @@ class Catalog(orm.BaseExpando):
       ),
       orm.Action(
           id='catalog_pricetag_process_duplicate',
-          skip_csrf=True,
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True),
               'channel': orm.SuperStringProperty(required=True),

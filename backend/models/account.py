@@ -39,7 +39,6 @@ class AccountCacheGroup(orm.BaseModel):
   _actions = [
       orm.Action(
           id='update',
-          skip_csrf=True,
           arguments={
               'ids': orm.SuperStringProperty(repeated=True),
               'keys': orm.SuperTextProperty(), # compressed base64 encoded data
