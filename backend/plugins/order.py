@@ -105,7 +105,7 @@ class OrderCronNotify(orm.BaseModel):
       tracker, seller, buyer, account_buyer, account_seller, tracker_count, order = send
       for to in [seller, buyer]:
         if to:
-          reverse = account_buyer
+          reverse = to
           if to.key != account_buyer.key:
             reverse = account_seller
           data = {'recipient': to._primary_email, 'account': to, 'count': tracker_count, 'entity': order}
