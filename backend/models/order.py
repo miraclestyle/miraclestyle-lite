@@ -572,7 +572,7 @@ class Order(orm.BaseExpando):
                       Read(),
                       RulePrepare(),
                       RuleExec(),
-                      OrderNotifyTrackerSet(cfg={'seen': True})
+                      OrderNotifyTrackerSeen()
                   ]
               )
           ]
