@@ -43,6 +43,9 @@ class OrderCronNotify(orm.BaseModel):
     page_size = self.cfg.get('page_size', 10)
     static_values = self.cfg.get('s', {})
     dynamic_values = self.cfg.get('d', {})
+    minutes = self.cfg.get('minutes', 0)
+    seconds = self.cfg.get('seconds', 30)
+    hours = self.cfg.get('hours', 0)
     values = {'account': context.account, 'input': context.input, 'action': context.action}
     values.update(static_values)
     for key, value in dynamic_values.iteritems():
@@ -71,7 +74,7 @@ class OrderCronNotify(orm.BaseModel):
         continue
       _order = order
       entity = order
-      tracker_count = OrderMessage.query(OrderMessage.created > tracker.timeout, ancestor=order_key).count()
+      tracker_count = OrderMessage.query(OrderMessage.created > (tracker.timeout - datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours)), ancestor=order_key).count()
       if not tracker_count:
         # this tracker will be deleted because it does not have any messages that need sending
         delete_tracker('tracker count', tracker)
