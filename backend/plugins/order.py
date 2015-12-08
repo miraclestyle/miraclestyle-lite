@@ -112,6 +112,23 @@ class OrderCronNotify(orm.BaseModel):
       context._callbacks.append(('callback', data))
 
 
+class OrderNotifyTrackerSeen(orm.BaseModel):
+
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+
+  def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    # at this moment it will set timeout of 10 minutes
+    OrderNotifyTracker = context.models['136']
+    key = OrderNotifyTracker.build_key(context._order.key.urlsafe())
+    tracker = key.get()
+    is_buyer = context.account.key == context._order.key._root
+    is_seller = context.account.key == context._order.seller_reference._root
+    if tracker and ((is_buyer and tracker.buyer) or (is_seller and tracker.seller)):
+      tracker.key.delete()
+
+
 class OrderNotifyTrackerSet(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -124,19 +141,26 @@ class OrderNotifyTrackerSet(orm.BaseModel):
     minutes = self.cfg.get('minutes', 0)
     seconds = self.cfg.get('seconds', 30)
     hours = self.cfg.get('hours', 0)
-    seen = self.cfg.get('seen', False)
+    created = context._order._messages.value[-1].created
+    key = OrderNotifyTracker.build_key(context._order.key.urlsafe())
+    tracker = key.get()
+    is_buyer = context.account.key == context._order.key._root
+    is_seller = context.account.key == context._order.seller_reference._root
     seller = None
     buyer = None
-    if context.account.key == context._order.key._root:
+    if is_buyer:
       buyer = False
-      if not seen:
-        seller = True
-    elif context.account.key == context._order.seller_reference._root:
-      if not seen:
-        buyer = True
+      seller = True
+      if not (tracker and tracker.seller):
+        tracker = None
+    elif is_seller:
+      buyer = True
       seller = False
-    new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=datetime.datetime.now() + datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours), buyer=buyer, seller=seller)
-    new_tracker.put()
+      if not (tracker and tracker.buyer):
+        tracker = None
+    if not tracker:
+      new_tracker = OrderNotifyTracker(id=key, timeout=created + datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours), buyer=buyer, seller=seller)
+      new_tracker.put()
 
 
 class OrderCronDelete(orm.BaseModel):
