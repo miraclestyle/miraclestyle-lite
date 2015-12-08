@@ -52,8 +52,8 @@ class OrderCronNotify(orm.BaseModel):
     count = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).count(page_size + 2) # test if there is more than 2 after this one to allow `continue` workload
     delete_trackers = []
     send_mails = []
-    def delete_tracker(tracker):
-      delete_trackers.append(tracker.key)
+    def delete_tracker(reason, tracker):
+      delete_trackers.append((reason, tracker.key))
     for tracker in trackers:
       order_key = orm.Key(urlsafe=tracker.key_id_str)
       tracker_buyer = False
@@ -62,19 +62,19 @@ class OrderCronNotify(orm.BaseModel):
       passes = any([tracker.buyer, tracker.seller])
       if not passes:
         # if the buyer or seller do not need any notifications, delete the tracker
-        delete_tracker(tracker)
+        delete_tracker('buyer and seller is both false', tracker)
         continue
       order = order_key.get()
       if not order:
         # this notifier does not have order, delete it
-        delete_tracker(tracker)
+        delete_tracker('order not found', tracker)
         continue
       _order = order
       entity = order
       tracker_count = OrderMessage.query(OrderMessage.created > tracker.timeout, ancestor=order_key).count()
       if not tracker_count:
         # this tracker will be deleted because it does not have any messages that need sending
-        delete_tracker(tracker)
+        delete_tracker('tracker count', tracker)
         continue
       if tracker.buyer:
         tracker_buyer = order_key._root.get()
@@ -87,7 +87,7 @@ class OrderCronNotify(orm.BaseModel):
       send_mails.append((tracker, tracker_seller, tracker_buyer, tracker_count, order))
     if delete_trackers:
       tools.log.debug('Delete %s trackers' % delete_trackers)
-      orm.transaction(lambda: orm.delete_multi(delete_trackers), xg=True)
+      orm.transaction(lambda: orm.delete_multi([key in for reason, key in delete_trackers]), xg=True)
     def send_in_transaciton(tracker, data): # @note, this is slow, but only way to ensure that mail is 100% sent - app engine has tendency to "stop working" so we have to do this
       tracker.key.delete() # if it fails, it wont send mail
       tools.mail_send(data, render=False) # if this fails, it will not delete the entity and it will re-try again sometime
