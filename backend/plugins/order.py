@@ -159,7 +159,7 @@ class OrderNotifyTrackerSet(orm.BaseModel):
       if not (tracker and tracker.buyer):
         tracker = None
     if not tracker:
-      new_tracker = OrderNotifyTracker(key=key, timeout=created + datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours), buyer=buyer, seller=seller)
+      new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=created + datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours), buyer=buyer, seller=seller)
       new_tracker.put()
 
 

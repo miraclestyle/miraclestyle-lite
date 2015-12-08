@@ -602,6 +602,7 @@
                                                     return;
                                                 }
                                                 $.extend(newMessage, response.data.entity._messages[0]);
+                                                newMessage._failed = false;
                                                 locals.reactOnStateChange(response);
                                                 return response;
                                             }, function () {
@@ -620,7 +621,8 @@
                                             if ($scope.container.messages.$valid) {
                                                 $scope.messages.sentQueue += 1;
                                                 $scope.messages.sync.stop();
-                                                return this.send('log_message').then(function (response) {
+                                                var promise = this.send('log_message');
+                                                promise.then(function (response) {
                                                     return response;
                                                 })['finally'](function () {
                                                     $scope.messages.sentQueue -= 1;
@@ -628,6 +630,7 @@
                                                         $scope.messages.sync.start();
                                                     }
                                                 });
+                                                return promise;
                                             }
                                             helpers.form.wakeUp($scope.container.messages, false, true);
                                         },
