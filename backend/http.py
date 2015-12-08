@@ -263,6 +263,12 @@ class OrderCron(RequestHandler):
     input = {'action_model': '34', 'action_id': 'cron'}
     iom.Engine.run(input)
 
+class OrderCronNotify(RequestHandler):
+
+  def respond(self):
+    input = {'action_model': '34', 'action_id': 'cron_notify'}
+    iom.Engine.run(input)
+
 
 ROUTES = [('/api/endpoint', Endpoint),
           ('/api/model_meta', ModelMeta),
@@ -273,7 +279,8 @@ ROUTES = [('/api/endpoint', Endpoint),
           ('/api/account/logout', AccountLogout),
           ('/api/catalog/cron', CatalogCron),
           ('/api/order/notify/<payment_method>', OrderNotify),
-          ('/api/order/cron', OrderCron)]
+          ('/api/order/cron', OrderCron),
+          ('/api/order/cron_notify', OrderCronNotify)]
 
 
 # Test Handlers

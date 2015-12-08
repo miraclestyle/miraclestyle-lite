@@ -6,7 +6,7 @@
             transclude: true,
             replace: true
         };
-    }).directive('actionDropdown', ng(function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers) {
+    }).directive('actionDropdown', ng(function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers, $animateCss) {
         return {
             replace: true,
             transclude: true,
@@ -78,11 +78,10 @@
                                 options.resize();
                                 $(window).on('resize', options.resize);
 
-                                $$rAF(function () {
-                                    dialogEl.addClass('fade in');
-                                });
-
-                                dialogEl.oneAnimationEnd(function () {
+                                dialogEl.addClass('fade');
+                                $animateCss(dialogEl, {
+                                    addClass: 'in'
+                                }).start().done(function () {
                                     element.addClass('opacity-in');
                                     nextDefer.resolve();
                                 });
@@ -91,7 +90,7 @@
 
                             };
 
-                            $$rAF(animateSelect);
+                            animateSelect();
 
                             dialogEl.on('click', dropdown.close);
                         },

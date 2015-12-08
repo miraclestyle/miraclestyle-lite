@@ -58,13 +58,16 @@
                 }
             };
         }))
-        .directive('homeSplash', ng(function ($animate) {
+        .directive('homeSplash', ng(function ($animateCss) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    element.oneAnimationEnd(function () {
+                    element.addClass('fade');
+                    $animateCss(element, {
+                        addClass: 'out'
+                    }).start().done(function () {
                         element.addClass('ng-hide');
-                    }).addClass('fade out');
+                    });
                 }
             };
         }))

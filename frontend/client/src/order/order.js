@@ -10,7 +10,7 @@
 
                     scope.$watchGroup(scope.$eval(attrs.alwaysScrollToBottom), function (neww, old) {
                         if (JSON.stringify(neww) !== JSON.stringify(old)) {
-                            $timeout(cb, 100, 0);
+                            $timeout(cb, 300, 0);
                         }
                     });
                 }
@@ -485,7 +485,9 @@
                                         toggling: false,
                                         open: false,
                                         stateChanged: function (state) {
-                                            $scope.messages.sync.toggle(state);
+                                            $timeout(function () {
+                                                $scope.messages.sync.toggle(state);
+                                            }, 2000, 0);
                                         },
                                         seen: false,
                                         sync: {
@@ -654,6 +656,7 @@
                                                             disableUI: false
                                                         });
                                                     }
+                                                    $scope.messages.forceReflow();
                                                 });
                                             });
                                         }

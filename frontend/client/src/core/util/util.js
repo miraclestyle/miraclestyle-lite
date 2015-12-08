@@ -2501,7 +2501,7 @@
         }
         InkRippleDirective.$inject = ["$mdInkRipple", "$parse"];
 
-        function InkRippleService($window, $timeout, $parse, $$rAF) {
+        function InkRippleService($window, $timeout, $parse, $$rAF, $animateCss) {
 
             return {
                 attachButtonBehavior: attachButtonBehavior,
@@ -2640,6 +2640,7 @@
                     } else if (element[0].hasAttribute('ripple-light')) {
                         ripple.addClass('ripple-light');
                     }
+                    element.find('.ripple-active').remove(); // remove all previous ripples
                     element.append(ripple);
                     var squared = element[0].hasAttribute('md-ink-ripple-action') || element[0].hasAttribute('ripple-action');
                     if (squared) {
@@ -2680,10 +2681,9 @@
                     ripple.css(worker.style);
 
                     $timeout(function () {
-                        ripple.addClass(cls);
-                        ripple.oneAnimationEnd(function () {
-                            ripple.remove();
-                        });
+                        $animateCss(ripple, {
+                            addClass: cls
+                        }).start();
                     }, 0, false);
 
                 }
@@ -2714,7 +2714,7 @@
 
             }
         }
-        InkRippleService.$inject = ["$window", "$timeout", "$parse", "$$rAF"];
+        InkRippleService.$inject = ["$window", "$timeout", "$parse", "$$rAF", "$animateCss"];
 
         function attrNoDirective() {
             return function () {

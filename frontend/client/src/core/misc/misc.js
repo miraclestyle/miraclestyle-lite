@@ -412,7 +412,7 @@
                                     maybe,
                                     promise;
                                 if (config.reverse) {
-                                    maybe = (listenNode ? (listen.scrollTop() < (config.top || 40)) : false);
+                                    maybe = (listenNode ? (listen.scrollTop() < (config.top || 8)) : false);
                                 } else {
                                     //console.log(listenNode, viewport, listenScrollHeight, viewport - listenScrollHeight);
                                     maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
@@ -497,9 +497,16 @@
 
                         if (config.watch) {
                             scope.$watchGroup(angular.isArray(config.watch) ? config.watch : [config.watch], function (neww, old) {
-                                if (JSON.stringify(neww) !== JSON.stringify(old)) {
-                                    maybeMore();
-                                    startInterval();
+                                var fn = function () {
+                                    if (JSON.stringify(neww) !== JSON.stringify(old)) {
+                                        maybeMore();
+                                        startInterval();
+                                    }
+                                };
+                                if (config.watchTimeout) {
+                                    setTimeout(fn, config.watchTimeout);
+                                } else {
+                                    fn();
                                 }
                             });
                         } else {

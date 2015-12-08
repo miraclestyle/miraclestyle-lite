@@ -91,7 +91,7 @@
                 };
             }
         };
-    }).directive('modalBackdrop', ['$timeout', function ($timeout) {
+    }).directive('modalBackdrop', ['$timeout', '$animateCss', function ($timeout, $animateCss) {
         return {
             restrict: 'EA',
             replace: true,
@@ -99,7 +99,9 @@
             link: function (scope, element, attrs) {
                 scope.backdropClass = attrs.backdropClass || '';
                 $timeout(function () {
-                    element.addClass('in');
+                    $animateCss(element, {
+                        addClass: 'in'
+                    }).start();
                 }, 0, false);
             }
         };
@@ -140,15 +142,14 @@
                             spec,
                             iwidth,
                             iheight,
-                            animator;
+                            animator,
+                            end;
                         if (isSlide) {
                             cb = function () {
-                                element.addClass(where + ' slide drawer visible in');
-                                /*
-                                $animateCss(element, {
+                                element.addClass(where + ' slide drawer visible');
+                                return $animateCss(element, {
                                     addClass: 'in'
-                                }).start().done(function () {
-                                });*/
+                                });
                             };
                         } else if (isConfirmation) {
                             modal = element.find('.modal-dialog');
@@ -188,35 +189,37 @@
                                 '75% { top: 0px; left: 0px;}' +
                                 '100% { top: 0px; left: 0px; ' + $mdConstant.RAW_CSS.TRANSFORM + ': scale(1, 1);opacity:1;}');
                             cb = function () {
-                                element.addClass('pop ' + animator.className).data('animator', animator);
                                 $$rAF(function () {
                                     clickElement.css('opacity', 0); // separate frame for opacity
+                                });
+                                element.addClass('pop').data('animator', animator);
+                                return $animateCss(element, {
+                                    addClass: animator.className
                                 });
                             };
                         } else if (isFade) {
                             cb = function () {
-                                element.addClass('fade in');
+                                element.addClass('fade');
+                                return $animateCss(element, {addClass: 'in'});
                             };
                         }
-                        element.oneAnimationEnd(function () {
-                            setTimeout(function () {
-                                element.addClass('visible');
-                                $(window).triggerHandler('modal.visible', [element]);
-                                scope.modalOptions.opened = true;
-                                scope.$emit('modalOpened');
-                                scope.$broadcast('modalOpened');
-                                scope.$apply();
-                                $rootScope.$broadcast('disableUI', false);
-                                if (scope.modalOptions.fullScreen) {
-                                    hidePrevModal(element);
-                                }
-                            });
-                        });
+
+                        end = function () {
+                            element.addClass('visible rendered');
+                            $(window).triggerHandler('modal.visible', [element]);
+                            scope.modalOptions.opened = true;
+                            scope.$emit('modalOpened');
+                            scope.$broadcast('modalOpened');
+                            scope.$apply();
+                            $rootScope.$broadcast('disableUI', false);
+                            if (scope.modalOptions.fullScreen) {
+                                hidePrevModal(element);
+                            }
+                        };
 
                         $(window).triggerHandler('modal.open', [element]);
 
-                        $$rAF(cb);
-
+                        cb().start().done(end);
                     };
                     attrs.$observe('modalRender', function (value) {
                         if (value === 'true') {
@@ -244,8 +247,8 @@
             }
         };
     }).factory('$modalStack', ['$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
-        '$mdConstant', '$q', 'animationGenerator', '$animate', '$$rAF',
-        function ($timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q, animationGenerator, $animate, $$rAF) {
+        '$mdConstant', '$q', 'animationGenerator', '$animateCss', '$$rAF',
+        function ($timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q, animationGenerator, $animateCss, $$rAF) {
 
             var OPENED_MODAL_CLASS = 'modal-open',
                 openedWindows = $$stackedMap.createNew(),
@@ -262,6 +265,7 @@
                     animator,
                     inclass = 'in',
                     outclass = 'out',
+                    animation,
                     popin = domEl.data('animator');
 
                 if (scope.modalOptions.fullScreen) {
@@ -279,9 +283,11 @@
                     inclass = popin.className;
                 }
 
-                $$rAF(function () {
-                    domEl.removeClass(inclass).addClass(outclass);
-                });
+
+                animation = $animateCss(domEl, {
+                    removeClass: inclass,
+                    addClass: outclass
+                }).start();
 
                 demise = function (e) {
                     domEl.remove();
@@ -303,11 +309,11 @@
                     }
                 };
 
-                domEl.oneAnimationEnd(demise);
+                animation.done(demise);
 
                 setTimeout(function () {
                     if (domEl) {
-                        demise();
+                        // demise();
                     }
                 }, 600);
 
@@ -324,12 +330,15 @@
                 openedWindows.remove(modalInstance);
 
                 //remove window DOM element
-                backdropDomEl.oneAnimationEnd(function () {
+                $animateCss(backdropDomEl, {
+                    removeClass: 'in',
+                    addClass: 'out'
+                }).start().done(function () {
                     backdropDomEl.remove();
                     backdropScope.$destroy();
                     modalWindow.backdropScope = undefined;
                     modalWindow.backdropDomEl = undefined;
-                }).removeClass('in').addClass('out');
+                });
 
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
@@ -651,12 +660,14 @@
                 var time,
                     fn,
                     rawFn = function (e) {
+                        var modal = $(element).parents('.modal:first'),
+                            measure,
+                            rendered = modal.hasClass('rendered');
                         if (time) {
                             clearTimeout(time);
                         }
-                        time = setTimeout(function () {
-                            var modal = $(element).parents('.modal:first'),
-                                modalDialog = modal.find('.modal-dialog:first'),
+                        measure = function () {
+                            var modalDialog = modal.find('.modal-dialog:first'),
                                 height = (modal.hasClass('modal-medium') ? (parseInt((modalDialog.css('max-height').indexOf('%') === -1 ? modalDialog.css('max-height') : 0), 10) || modalDialog.height()) : $(window).height());
 
                             modalDialog.find('.fixed-height, .min-height, .max-height').each(function () {
@@ -679,7 +690,12 @@
                                 $(this).css(css, newHeight);
                             });
                             scope.$broadcast('modalResize');
-                        }, 50);
+                        };
+                        if (rendered) {
+                            time = setTimeout(measure, 50);
+                        } else {
+                            measure();
+                        }
                     };
 
                 fn = _.throttle(rawFn, 100);
