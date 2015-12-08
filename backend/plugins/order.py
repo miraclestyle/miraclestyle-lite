@@ -89,13 +89,11 @@ class OrderCronNotify(orm.BaseModel):
         tracker_buyer = account_buyer
         if tracker_buyer:
           tracker_buyer.read()
-      else:
         account = account_seller
       if tracker.seller:
         tracker_seller = account_seller
         if tracker_seller:
           tracker_seller.read()
-      else:
         account = account_buyer
       send_mails.append((tracker, tracker_seller, tracker_buyer, account, tracker_count, order))
     if delete_trackers:
