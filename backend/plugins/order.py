@@ -108,7 +108,7 @@ class OrderCronNotify(orm.BaseModel):
           reverse = to
           if to.key != account_buyer.key:
             reverse = account_seller
-          data = {'recipient': to._primary_email, 'account': to, 'count': tracker_count, 'entity': order}
+          data = {'recipient': to._primary_email, 'account': reverse, 'count': tracker_count, 'entity': order}
           tools.log.debug(data)
           data.update(values)
           tools.render_subject_and_body_templates(data) # avoid reads in transaction - this might happen if template has .foo.bar.read() stuff
