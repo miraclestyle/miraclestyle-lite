@@ -61,6 +61,8 @@ class OrderCronNotify(orm.BaseModel):
       order_key = orm.Key(urlsafe=tracker.key_id_str)
       tracker_buyer = False
       tracker_seller = False
+      account_buyer = False
+      account_seller = False
       tracker_count = 0
       passes = any([tracker.buyer, tracker.seller])
       if not passes:
@@ -81,15 +83,17 @@ class OrderCronNotify(orm.BaseModel):
         # this tracker will be deleted because it does not have any messages that need sending
         delete_tracker('tracker count', tracker)
         continue
+      account_buyer = order_key._root.get()
+      account_seller = order.seller_reference._root.get()
       if tracker.buyer:
-        tracker_buyer = order_key._root.get()
+        tracker_buyer = account_buyer
         if tracker_buyer:
           tracker_buyer.read()
       if tracker.seller:
-        tracker_seller = order.seller_reference._root.get()
+        tracker_seller = account_seller
         if tracker_seller:
           tracker_seller.read()
-      send_mails.append((tracker, tracker_seller, tracker_buyer, tracker_count, order))
+      send_mails.append((tracker, tracker_seller, tracker_buyer, account_buyer, account_seller, tracker_count, order))
     if delete_trackers:
       tools.log.debug('Delete %s trackers' % delete_trackers)
       orm.transaction(lambda: orm.delete_multi([key for reason, key in delete_trackers]), xg=True)
@@ -98,9 +102,12 @@ class OrderCronNotify(orm.BaseModel):
       tools.mail_send(data, render=False) # if this fails, it will not delete the entity and it will re-try again sometime
     tools.log.debug('Sending %s trackers' % len(send_mails))
     for send in send_mails:
-      tracker, seller, buyer, tracker_count, order = send
+      tracker, seller, buyer, account_buyer, account_seller, tracker_count, order = send
       for to in [seller, buyer]:
         if to:
+          reverse = account_buyer
+          if to.key != account_buyer.key:
+            reverse = account_seller
           data = {'recipient': to._primary_email, 'account': to, 'count': tracker_count, 'entity': order}
           tools.log.debug(data)
           data.update(values)
