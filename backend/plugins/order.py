@@ -116,7 +116,9 @@ class OrderNotifyTrackerSet(orm.BaseModel):
       self.cfg = {}
     # at this moment it will set timeout of 10 minutes
     OrderNotifyTracker = context.models['136']
-    minutes = self.cfg.get('minutes', 10)
+    minutes = self.cfg.get('minutes', 0)
+    seconds = self.cfg.get('seconds', 30)
+    hours = self.cfg.get('hours', 0)
     seen = self.cfg.get('seen', False)
     seller = None
     buyer = None
@@ -128,7 +130,7 @@ class OrderNotifyTrackerSet(orm.BaseModel):
       if not seen:
         buyer = True
       seller = False
-    new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=datetime.datetime.now() + datetime.timedelta(minutes=minutes), buyer=buyer, seller=seller)
+    new_tracker = OrderNotifyTracker(id=context._order.key.urlsafe(), timeout=datetime.datetime.now() + datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours), buyer=buyer, seller=seller)
     new_tracker.put()
 
 
