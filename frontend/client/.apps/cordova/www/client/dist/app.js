@@ -5086,7 +5086,7 @@ function msieversion() {
         }
         InkRippleDirective.$inject = ["$mdInkRipple", "$parse"];
 
-        function InkRippleService($window, $timeout, $parse, $$rAF) {
+        function InkRippleService($window, $timeout, $parse, $$rAF, $animateCss) {
 
             return {
                 attachButtonBehavior: attachButtonBehavior,
@@ -5225,6 +5225,7 @@ function msieversion() {
                     } else if (element[0].hasAttribute('ripple-light')) {
                         ripple.addClass('ripple-light');
                     }
+                    element.find('.ripple-active').remove(); // remove all previous ripples
                     element.append(ripple);
                     var squared = element[0].hasAttribute('md-ink-ripple-action') || element[0].hasAttribute('ripple-action');
                     if (squared) {
@@ -5265,10 +5266,9 @@ function msieversion() {
                     ripple.css(worker.style);
 
                     $timeout(function () {
-                        ripple.addClass(cls);
-                        ripple.oneAnimationEnd(function () {
-                            ripple.remove();
-                        });
+                        $animateCss(ripple, {
+                            addClass: cls
+                        }).start();
                     }, 0, false);
 
                 }
@@ -5299,7 +5299,7 @@ function msieversion() {
 
             }
         }
-        InkRippleService.$inject = ["$window", "$timeout", "$parse", "$$rAF"];
+        InkRippleService.$inject = ["$window", "$timeout", "$parse", "$$rAF", "$animateCss"];
 
         function attrNoDirective() {
             return function () {
@@ -6879,7 +6879,7 @@ function msieversion() {
             transclude: true,
             replace: true
         };
-    }).directive('actionDropdown', ['$simpleDialog', '$$rAF', '$mdConstant', 'underscoreTemplate', '$timeout', '$parse', '$q', 'helpers', function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers) {
+    }).directive('actionDropdown', ['$simpleDialog', '$$rAF', '$mdConstant', 'underscoreTemplate', '$timeout', '$parse', '$q', 'helpers', '$animateCss', function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers, $animateCss) {
         return {
             replace: true,
             transclude: true,
@@ -6951,11 +6951,10 @@ function msieversion() {
                                 options.resize();
                                 $(window).on('resize', options.resize);
 
-                                $$rAF(function () {
-                                    dialogEl.addClass('fade in');
-                                });
-
-                                dialogEl.oneAnimationEnd(function () {
+                                dialogEl.addClass('fade');
+                                $animateCss(dialogEl, {
+                                    addClass: 'in'
+                                }).start().done(function () {
                                     element.addClass('opacity-in');
                                     nextDefer.resolve();
                                 });
@@ -6964,7 +6963,7 @@ function msieversion() {
 
                             };
 
-                            $$rAF(animateSelect);
+                            animateSelect();
 
                             dialogEl.on('click', dropdown.close);
                         },
@@ -13250,7 +13249,7 @@ function msieversion() {
                                     maybe,
                                     promise;
                                 if (config.reverse) {
-                                    maybe = (listenNode ? (listen.scrollTop() < (config.top || 40)) : false);
+                                    maybe = (listenNode ? (listen.scrollTop() < (config.top || 8)) : false);
                                 } else {
                                     //console.log(listenNode, viewport, listenScrollHeight, viewport - listenScrollHeight);
                                     maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
@@ -13335,9 +13334,16 @@ function msieversion() {
 
                         if (config.watch) {
                             scope.$watchGroup(angular.isArray(config.watch) ? config.watch : [config.watch], function (neww, old) {
-                                if (JSON.stringify(neww) !== JSON.stringify(old)) {
-                                    maybeMore();
-                                    startInterval();
+                                var fn = function () {
+                                    if (JSON.stringify(neww) !== JSON.stringify(old)) {
+                                        maybeMore();
+                                        startInterval();
+                                    }
+                                };
+                                if (config.watchTimeout) {
+                                    setTimeout(fn, config.watchTimeout);
+                                } else {
+                                    fn();
                                 }
                             });
                         } else {
@@ -14651,7 +14657,7 @@ function msieversion() {
                 };
             }
         };
-    }).directive('modalBackdrop', ['$timeout', function ($timeout) {
+    }).directive('modalBackdrop', ['$timeout', '$animateCss', function ($timeout, $animateCss) {
         return {
             restrict: 'EA',
             replace: true,
@@ -14659,7 +14665,9 @@ function msieversion() {
             link: function (scope, element, attrs) {
                 scope.backdropClass = attrs.backdropClass || '';
                 $timeout(function () {
-                    element.addClass('in');
+                    $animateCss(element, {
+                        addClass: 'in'
+                    }).start();
                 }, 0, false);
             }
         };
@@ -14700,15 +14708,14 @@ function msieversion() {
                             spec,
                             iwidth,
                             iheight,
-                            animator;
+                            animator,
+                            end;
                         if (isSlide) {
                             cb = function () {
-                                element.addClass(where + ' slide drawer visible in');
-                                /*
-                                $animateCss(element, {
+                                element.addClass(where + ' slide drawer visible');
+                                return $animateCss(element, {
                                     addClass: 'in'
-                                }).start().done(function () {
-                                });*/
+                                });
                             };
                         } else if (isConfirmation) {
                             modal = element.find('.modal-dialog');
@@ -14748,35 +14755,37 @@ function msieversion() {
                                 '75% { top: 0px; left: 0px;}' +
                                 '100% { top: 0px; left: 0px; ' + $mdConstant.RAW_CSS.TRANSFORM + ': scale(1, 1);opacity:1;}');
                             cb = function () {
-                                element.addClass('pop ' + animator.className).data('animator', animator);
                                 $$rAF(function () {
                                     clickElement.css('opacity', 0); // separate frame for opacity
+                                });
+                                element.addClass('pop').data('animator', animator);
+                                return $animateCss(element, {
+                                    addClass: animator.className
                                 });
                             };
                         } else if (isFade) {
                             cb = function () {
-                                element.addClass('fade in');
+                                element.addClass('fade');
+                                return $animateCss(element, {addClass: 'in'});
                             };
                         }
-                        element.oneAnimationEnd(function () {
-                            setTimeout(function () {
-                                element.addClass('visible');
-                                $(window).triggerHandler('modal.visible', [element]);
-                                scope.modalOptions.opened = true;
-                                scope.$emit('modalOpened');
-                                scope.$broadcast('modalOpened');
-                                scope.$apply();
-                                $rootScope.$broadcast('disableUI', false);
-                                if (scope.modalOptions.fullScreen) {
-                                    hidePrevModal(element);
-                                }
-                            });
-                        });
+
+                        end = function () {
+                            element.addClass('visible rendered');
+                            $(window).triggerHandler('modal.visible', [element]);
+                            scope.modalOptions.opened = true;
+                            scope.$emit('modalOpened');
+                            scope.$broadcast('modalOpened');
+                            scope.$apply();
+                            $rootScope.$broadcast('disableUI', false);
+                            if (scope.modalOptions.fullScreen) {
+                                hidePrevModal(element);
+                            }
+                        };
 
                         $(window).triggerHandler('modal.open', [element]);
 
-                        $$rAF(cb);
-
+                        cb().start().done(end);
                     };
                     attrs.$observe('modalRender', function (value) {
                         if (value === 'true') {
@@ -14804,8 +14813,8 @@ function msieversion() {
             }
         };
     }).factory('$modalStack', ['$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
-        '$mdConstant', '$q', 'animationGenerator', '$animate', '$$rAF',
-        function ($timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q, animationGenerator, $animate, $$rAF) {
+        '$mdConstant', '$q', 'animationGenerator', '$animateCss', '$$rAF',
+        function ($timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q, animationGenerator, $animateCss, $$rAF) {
 
             var OPENED_MODAL_CLASS = 'modal-open',
                 openedWindows = $$stackedMap.createNew(),
@@ -14822,6 +14831,7 @@ function msieversion() {
                     animator,
                     inclass = 'in',
                     outclass = 'out',
+                    animation,
                     popin = domEl.data('animator');
 
                 if (scope.modalOptions.fullScreen) {
@@ -14839,9 +14849,11 @@ function msieversion() {
                     inclass = popin.className;
                 }
 
-                $$rAF(function () {
-                    domEl.removeClass(inclass).addClass(outclass);
-                });
+
+                animation = $animateCss(domEl, {
+                    removeClass: inclass,
+                    addClass: outclass
+                }).start();
 
                 demise = function (e) {
                     domEl.remove();
@@ -14863,11 +14875,11 @@ function msieversion() {
                     }
                 };
 
-                domEl.oneAnimationEnd(demise);
+                animation.done(demise);
 
                 setTimeout(function () {
                     if (domEl) {
-                        demise();
+                        // demise();
                     }
                 }, 600);
 
@@ -14884,12 +14896,15 @@ function msieversion() {
                 openedWindows.remove(modalInstance);
 
                 //remove window DOM element
-                backdropDomEl.oneAnimationEnd(function () {
+                $animateCss(backdropDomEl, {
+                    removeClass: 'in',
+                    addClass: 'out'
+                }).start().done(function () {
                     backdropDomEl.remove();
                     backdropScope.$destroy();
                     modalWindow.backdropScope = undefined;
                     modalWindow.backdropDomEl = undefined;
-                }).removeClass('in').addClass('out');
+                });
 
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
@@ -15211,12 +15226,14 @@ function msieversion() {
                 var time,
                     fn,
                     rawFn = function (e) {
+                        var modal = $(element).parents('.modal:first'),
+                            measure,
+                            rendered = modal.hasClass('rendered');
                         if (time) {
                             clearTimeout(time);
                         }
-                        time = setTimeout(function () {
-                            var modal = $(element).parents('.modal:first'),
-                                modalDialog = modal.find('.modal-dialog:first'),
+                        measure = function () {
+                            var modalDialog = modal.find('.modal-dialog:first'),
                                 height = (modal.hasClass('modal-medium') ? (parseInt((modalDialog.css('max-height').indexOf('%') === -1 ? modalDialog.css('max-height') : 0), 10) || modalDialog.height()) : $(window).height());
 
                             modalDialog.find('.fixed-height, .min-height, .max-height').each(function () {
@@ -15239,7 +15256,12 @@ function msieversion() {
                                 $(this).css(css, newHeight);
                             });
                             scope.$broadcast('modalResize');
-                        }, 50);
+                        };
+                        if (rendered) {
+                            time = setTimeout(measure, 50);
+                        } else {
+                            measure();
+                        }
                     };
 
                 fn = _.throttle(rawFn, 100);
@@ -21058,13 +21080,16 @@ angular.module('app')
                 }
             };
         }])
-        .directive('homeSplash', ['$animate', function ($animate) {
+        .directive('homeSplash', ['$animateCss', function ($animateCss) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    element.oneAnimationEnd(function () {
+                    element.addClass('fade');
+                    $animateCss(element, {
+                        addClass: 'out'
+                    }).start().done(function () {
                         element.addClass('ng-hide');
-                    }).addClass('fade out');
+                    });
                 }
             };
         }])
@@ -21287,7 +21312,7 @@ angular.module('app')
 
                     scope.$watchGroup(scope.$eval(attrs.alwaysScrollToBottom), function (neww, old) {
                         if (JSON.stringify(neww) !== JSON.stringify(old)) {
-                            $timeout(cb, 100, 0);
+                            $timeout(cb, 300, 0);
                         }
                     });
                 }
@@ -21762,7 +21787,9 @@ angular.module('app')
                                         toggling: false,
                                         open: false,
                                         stateChanged: function (state) {
-                                            $scope.messages.sync.toggle(state);
+                                            $timeout(function () {
+                                                $scope.messages.sync.toggle(state);
+                                            }, 2000, 0);
                                         },
                                         seen: false,
                                         sync: {
@@ -21931,6 +21958,7 @@ angular.module('app')
                                                             disableUI: false
                                                         });
                                                     }
+                                                    $scope.messages.forceReflow();
                                                 });
                                             });
                                         }
