@@ -74,7 +74,9 @@ class OrderCronNotify(orm.BaseModel):
         continue
       _order = order
       entity = order
-      tracker_count = OrderMessage.query(OrderMessage.created > (tracker.timeout - datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours)), ancestor=order_key).count()
+      timeout = (tracker.timeout - datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours))
+      tools.log.debug('timeout %s' % timeout)
+      tracker_count = OrderMessage.query(OrderMessage.created > timeout, ancestor=order_key).count()
       if not tracker_count:
         # this tracker will be deleted because it does not have any messages that need sending
         delete_tracker('tracker count', tracker)

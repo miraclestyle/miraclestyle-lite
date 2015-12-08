@@ -618,11 +618,15 @@
                                                 return;
                                             }
                                             if ($scope.container.messages.$valid) {
+                                                $scope.messages.sentQueue += 1;
                                                 $scope.messages.sync.stop();
                                                 return this.send('log_message').then(function (response) {
                                                     return response;
                                                 })['finally'](function () {
-                                                    $scope.messages.sync.start();
+                                                    $scope.messages.sentQueue -= 1;
+                                                    if ($scope.messages.sentQueue) {
+                                                        $scope.messages.sync.start();
+                                                    }
                                                 });
                                             }
                                             helpers.form.wakeUp($scope.container.messages, false, true);
