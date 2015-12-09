@@ -12468,8 +12468,7 @@ function msieversion() {
                                                     };
 
                                                 if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                    //promise = 
-                                                    config.ui.specifics.beforeSave($scope, info);
+                                                    promise = config.ui.specifics.beforeSave($scope, info);
                                                 }
 
                                                 if (promise && promise.then) {
@@ -18685,33 +18684,21 @@ angular.module('app')
                                         updatedAddress = $scope.args,
                                         promise;
                                     if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                        promise = models['13'].get(updatedAddress.region, {activitySpinner: true, disableUI: false});
-                                        promise.then(function (response) {
-                                            if (response.data.entities.length) {
-                                                updatedAddress._region = response.data.entities[0];
+                                        promise = models['13'].get(updatedAddress.region, updatedAddress.country, {disableUI: false});
+                                        promise.then(function (region) {
+                                            if (region) {
+                                                updatedAddress._region = region;
                                             }
                                         });
                                         promises.push(promise);
                                     }
 
                                     if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
-                                        promise = models['12'].actions.search(undefined, {
-                                            cache: true,
-                                            cacheType: 'local',
-                                            activitySpinner: true,
-                                            disableUI: false
-                                        });
-                                        promise.then(function (response) {
-                                            if (response.data.entities.length) {
-                                                var country = _.findWhere(response.data.entities, {
-                                                    key: updatedAddress.country
-                                                });
-                                                if (angular.isDefined(country)) {
-                                                    updatedAddress._country = country;
-                                                }
-
+                                        promise = models['12'].get(updatedAddress.country, {disableUI: false});
+                                        promise.then(function (country) {
+                                            if (country) {
+                                                updatedAddress._country = country;
                                             }
-
                                         });
 
                                         promises.push(promise);
@@ -18719,7 +18706,6 @@ angular.module('app')
                                     if (promises.length) {
                                         return $q.all(promises);
                                     }
-
                                     return false;
                                 }
                             }
@@ -21340,20 +21326,67 @@ angular.module('app')
 }());
 (function () {
     'use strict';
-    angular.module('app').run(ng(function (modelsConfig, modelsMeta) {
+    angular.module('app').run(ng(function (modelsConfig, helpers, modelsMeta) {
         modelsConfig(function (models) {
             models['12'].config.cache = true;
-            models['12'].getSubdivisions = function (countryKey, overrideConfig) {
-                var subdivisionModel = models['13'],
-                    defaultArgs = modelsMeta.getDefaultActionArguments(subdivisionModel.kind, 'search');
-                defaultArgs.ancestor = countryKey;
-                return subdivisionModel.search(defaultArgs, overrideConfig);
+            models['12'].get = function (key, opts) {
+                opts = helpers.alwaysObject(opts);
+                $.extend(opts, {
+                    cache: 'all_countries',
+                    cacheType: 'local'
+                });
+                return this.actions.search({
+                    orders: [{
+                        operator: "asc",
+                        field: "name"
+                    }],
+                    filters: [{
+                        operator: "==",
+                        field: "active",
+                        value: true
+                    }]
+                }, opts).then(function (response) {
+                    return _.findWhere(response.data.entities, {
+                        key: key
+                    });
+                });
+            };
+
+            var get13 = models['13'].get;
+            models['13'].get = function (key, countryKey, opts) {
+                if (!countryKey) {
+                    return get13.apply(this, arguments);
+                }
+                opts = helpers.alwaysObject(opts);
+                $.extend(opts, {
+                    cache: countryKey + '_all_regions',
+                    cacheType: 'local'
+                });
+                return this.actions.search({
+                    "search": {
+                        "ancestor": countryKey,
+                        "filters": [{
+                            "value": true,
+                            "field": "active",
+                            "operator": "=="
+                        }],
+                        "orders": [{
+                            "field": "name",
+                            "operator": "asc"
+                        }]
+                    }
+                }, opts).then(function (response) {
+                    return _.findWhere(response.data.entities, {
+                        key: key
+                    });
+                });
             };
 
         });
 
     }));
-}());(function () {
+}());
+(function () {
     'use strict';
     angular.module('app')
         .directive('alwaysScrollToBottom', ng(function ($timeout) {
@@ -22574,47 +22607,30 @@ angular.module('app')
                                 var promises = [],
                                     updatedAddress = $scope.args,
                                     promise;
-
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                    promise = models['13'].get(updatedAddress.region, {
-                                        activitySpinner: true,
-                                        disableUI: false
-                                    });
-                                    promise.then(function (response) {
-                                        if (response.data.entities.length) {
-                                            updatedAddress._region = response.data.entities[0];
+                                    promise = models['13'].get(updatedAddress.region, updatedAddress.country, {disableUI: false});
+                                    promise.then(function (region) {
+                                        if (region) {
+                                            updatedAddress._region = region;
                                         }
                                     });
                                     promises.push(promise);
                                 }
 
-                                if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
-                                    promise = models['12'].actions.search(undefined, {
-                                        cache: true,
-                                        cacheType: 'local',
-                                        activitySpinner: true,
-                                        disableUI: false
-                                    });
-                                    promise.then(function (response) {
-                                        if (response.data.entities.length) {
-                                            var country = _.findWhere(response.data.entities, {
-                                                key: updatedAddress.country
-                                            });
-                                            if (angular.isDefined(country)) {
-                                                updatedAddress._country = country;
-                                            }
-
+                                if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
+                                    promise = models['12'].get(updatedAddress.country, {disableUI: false});
+                                    promise.then(function (country) {
+                                        if (country) {
+                                            updatedAddress._country = country;
                                         }
-
                                     });
+
                                     promises.push(promise);
                                 }
-
                                 if (promises.length) {
                                     return $q.all(promises);
                                 }
                                 return false;
-
                             }
                         };
                     },
