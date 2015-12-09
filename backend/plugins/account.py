@@ -178,6 +178,10 @@ class AccountCacheGroupUpdate(orm.BaseModel):
     ids = [AccountCacheGroup.build_key(id) for id in context.input.get('ids')]
     groups = orm.get_multi(ids)
     save = []
+    active = []
+    delete_active = []
+    def make_active(k):
+      return '%s_active' % k
     for i, group in enumerate(groups):
       changes = False
       if not group:
@@ -188,13 +192,17 @@ class AccountCacheGroupUpdate(orm.BaseModel):
           changes = True
           if delete:
             group.keys.remove(k)
+            delete_active.append(make_active(k))
         else:
           changes = True
           group.keys.append(k)
+          active.append(make_active(k))
       if changes:
         save.append(group)
     try:
       orm.put_multi(save)
+      tools.mem_delete_multi(delete_active)
+      tools.mem_set_multi(dict((k, True) for k in active))
     except RequestTooLargeError as e: # size of entity exceeded
       if not delete:
         delete_keys = []

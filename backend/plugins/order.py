@@ -182,15 +182,11 @@ class OrderCronDelete(orm.BaseModel):
     unpaid_order_life = self.cfg.get('unpaid_order_life', 30)
     Order = context.models['34']
     orders = []
-    futures = []
-    futures.append(Order.query(Order.state == 'cart',
-                               Order.created < (datetime.datetime.now() - datetime.timedelta(days=cart_life))).fetch_async(limit=limit))
-    futures.append(Order.query(Order.state == 'order',
+    orders.extend(Order.query(Order.state == 'cart',
+                               Order.created < (datetime.datetime.now() - datetime.timedelta(days=cart_life))).fetch(limit=limit))
+    orders.extend(Order.query(Order.state == 'order',
                                Order.payment_status == None,
-                               Order.date < (datetime.datetime.now() - datetime.timedelta(days=unpaid_order_life))).fetch_async(limit=limit))
-    orm.get_async_results(futures)
-    orders.extend(futures[0])
-    orders.extend(futures[1])
+                               Order.date < (datetime.datetime.now() - datetime.timedelta(days=unpaid_order_life))).fetch(limit=limit))
     for order in orders:
       data = {'action_id': 'delete',
               'action_model': '34',

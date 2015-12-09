@@ -80,7 +80,7 @@ class Read(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
-  @tools.detail_profile('Read.%s %s', satisfy=lambda profiler, ctime: ctime.miliseconds > 1000)
+  @tools.detail_profile('Read.%s slow %s', satisfy=lambda profiler, ctime: ctime.miliseconds > 1000)
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -267,7 +267,7 @@ class Search(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
-  @tools.detail_profile('Search.%s %s', limit=50)
+  @tools.detail_profile('Search.%s slow %s', satisfy=lambda profiler, ctime: ctime.miliseconds > 1000)
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
@@ -408,6 +408,11 @@ class BaseCache(orm.BaseModel):
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
+    active = self.cfg.get('active', True)
+    if not active:
+      return
     CacheGroup = context.models[self.cfg.get('kind', '135')]
     cache = self.cfg.get('cache', [])
     group_id = self.cfg.get('group', None)
@@ -479,10 +484,12 @@ class BaseCache(orm.BaseModel):
       saver = {'do_save': do_save}
       for driver in cache_drivers:
         k = build_key(driver, key, group_key)
-        data = tools.mem_rpc_get(k)
+        data = tools.mem_get_multi(['%s_active' % k, k])
         if data:
+          if len(data) != 2:
+            return # this means that taskqueue did not finish storing the key and cache will be available as soon as possible
           try:
-            data = zlib.decompress(data)
+            data = zlib.decompress(data[k])
           except Exception as e:
             data = None
             tools.log.warn('Failed upacking memcache data for key %s in context of: using group %s, with driver %s. With input %s. Memory key deleted.' % (k, group_key, driver, context.input))
@@ -521,6 +528,8 @@ class BaseCache(orm.BaseModel):
         for group in groups:
           if group:
             keys.extend(group.keys)
+        for k in keys[:]:
+          keys.append('%s_active' % k)
         tools.mem_delete_multi(keys)
         tools.log.info('Deleted cache for group %s' % group_id)
 
