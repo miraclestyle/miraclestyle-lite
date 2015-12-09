@@ -196,7 +196,7 @@ class AccountCacheGroupUpdate(orm.BaseModel):
         else:
           changes = True
           group.keys.append(k)
-          active.append(make_active(k))
+          active.extend([make_active(kk) for kk in group.keys])
       if changes:
         save.append(group)
     try:
