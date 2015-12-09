@@ -491,7 +491,7 @@ class RequestHandler(webapp2.RequestHandler):
     self.response.write('<h1>404 Not found</h1>')
 
   def dispatch(self):
-    if settings.FORCE_SSL and not os.environ.get('HTTPS') == 'on':
+    if settings.FORCE_SSL and not os.environ.get('HTTPS') == 'on' and not (self.request.headers.get('X-AppEngine-QueueName', None) != None or self.request.headers.get('X-Appengine-Cron', None) != None):
       return self.redirect(self.request.url.replace('http://', 'https://'))
     self.template['base_url'] = self.request.host_url
     if 'build' not in self.template:
