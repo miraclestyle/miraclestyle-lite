@@ -231,8 +231,8 @@ class Order(orm.BaseExpando):
   def condition_taskqueue(account, **kwargs):
     return account._is_taskqueue
   
-  def condition_cron_or_root_admin(account, **kwargs):
-    return account._is_cron or account._root_admin
+  def condition_cron(account, **kwargs):
+    return account._is_cron
 
   def condition_not_guest_and_owner_and_cart(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -284,8 +284,7 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('delete', condition_taskqueue),
-      orm.ExecuteActionPermission('cron', condition_cron_or_root_admin),
-      orm.ExecuteActionPermission('cron_notify', condition_cron_or_root_admin),
+      orm.ExecuteActionPermission(('cron', 'cron_notify'), condition_cron),
       orm.ExecuteActionPermission('see_messages', condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('notify', condition_notify),
 
