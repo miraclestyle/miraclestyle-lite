@@ -537,6 +537,7 @@ class BaseCache(orm.BaseModel):
           keys.append('%s_active' % k)
         tools.mem_delete_multi(keys)
         tools.log.info('Deleted cache for group %s' % group_id)
+        orm.delete_multi(group_keys)
 
 
 class GetCache(BaseCache):
