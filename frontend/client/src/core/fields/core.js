@@ -67,8 +67,6 @@
                         promises = [anyway.promise];
                     }
 
-
-                    console.log('resovler', promises);
                     return $q.all(promises);
                 },
                 applyGlobalConfig: function (config) {
