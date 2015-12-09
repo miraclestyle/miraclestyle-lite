@@ -94,13 +94,11 @@ class OAuth2Client(object):
       if data is not None:
         data = urllib.urlencode(data)
       response = urlfetch.fetch(url=url, payload=data, deadline=60, method=method, headers=headers)
-      print(response.content)
       if response.status_code == status:
         return json.loads(response.content)
       else:
         raise OAuth2ResourceError(getattr(response, 'content', None))
     except (TypeError, OAuth2ResourceError) as e:
-      print(e)
       return None
 
   @property

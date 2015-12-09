@@ -1,6 +1,26 @@
 (function () {
     'use strict';
     angular.module('app')
+        .run(ng(function (currentAccount, helpers) {
+            if (!helpers.location) {
+                helpers.location = {};
+            }
+            helpers.location.updateDefaults = function (args) {
+                if (!args) {
+                    return;
+                }
+                if (!args.country && currentAccount._country) {
+                    args.country = currentAccount._country;
+                }
+
+                if (!args.region && currentAccount._region) {
+                    args.region = currentAccount._region;
+                }
+                if (!args.city && currentAccount._city) {
+                    args.city = currentAccount._city;
+                }
+            };
+        }))
         .controller('BuyerManagementController', ng(function ($scope, endpoint, currentAccount, models) {
 
             $scope.settings = function () {
@@ -179,7 +199,7 @@
                     };
                 })
             };
-        }).run(ng(function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
+        }).run(ng(function ($window, modelsEditor, helpers, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
 
             modelsConfig(function (models) {
 
@@ -278,6 +298,7 @@
                             argumentLoader: function ($scope) {
                                 var args = this.defaultArgumentLoader($scope);
                                 args.account = accountKey;
+                                helpers.location.updateDefaults(args);
                                 return args;
                             }
                         };

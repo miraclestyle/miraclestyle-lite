@@ -265,7 +265,8 @@ class Search(orm.BaseModel):
   _kind = 95
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-
+  
+  @tools.detail_profile('Search.%s %s', limit=50)
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}

@@ -109,10 +109,12 @@ class RequestHandler(webapp2.RequestHandler):
     if self.current_account is None and self.autoload_current_account:
       from models.account import Account
       unsecure = self.secure_cookie_get(settings.COOKIE_AUTH_KEY)
+      headers = self.request.headers
       Account.set_current_account_from_access_token(unsecure)
       current_account = Account.current_account()
-      current_account.set_taskqueue(self.request.headers.get('X-AppEngine-QueueName', None) != None)  # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
-      current_account.set_cron(self.request.headers.get('X-Appengine-Cron', None) != None)  # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
+      current_account.set_taskqueue(headers.get('X-AppEngine-QueueName', None) != None)  # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
+      current_account.set_cron(headers.get('X-Appengine-Cron', None) != None)  # https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
+      current_account.set_location_data({'_country': headers.get('X-AppEngine-Country'), '_city': headers.get('X-AppEngine-City'), '_region': headers.get('X-AppEngine-Region')})
       self.current_account = current_account
 
   def load_csrf(self):

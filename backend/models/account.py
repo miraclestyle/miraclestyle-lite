@@ -389,6 +389,9 @@ class Account(orm.BaseExpando):
                 '_is_system': self._is_system,
                 '_csrf': self._csrf,
                 '_root_admin': self._root_admin})
+    location = self.current_location_data()
+    if isinstance(location, dict):
+      dic.update(location)
     return dic
 
   @property
@@ -474,9 +477,24 @@ class Account(orm.BaseExpando):
     account.sessions = [session]
     return session
 
-  def set_taskqueue(self, flag):
+  @classmethod
+  def current_location_data(cls):
+    return tools.mem_temp_get('current_request_location_data')
+  
+  @classmethod
+  def set_location_data(cls, data):
+    if data:
+      if data.get('_country'):
+        data['_country'] = orm.Key('12', data['_country'].lower())
+      if data.get('_region'):
+        data['_region'] = orm.Key('13', '%s-%s' % (data['_country']._id_str, data['_region'].lower()))
+    return tools.mem_temp_set('current_request_location_data', data)
+  
+  @classmethod
+  def set_taskqueue(cls, flag):
     return tools.mem_temp_set('current_request_is_taskqueue', flag)
 
+  @classmethod
   def set_cron(self, flag):
     return tools.mem_temp_set('current_request_is_cron', flag)
 
