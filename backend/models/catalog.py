@@ -403,12 +403,6 @@ class Catalog(orm.BaseExpando):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state in ("published", "indexed")
 
-  def condition_publish(account, entity, **kwargs):
-    return account._is_taskqueue and entity._original.state not in ("published", "indexed")
-
-  def condition_discontinue(account, entity, **kwargs):
-    return account._is_taskqueue and entity._original.state != "discontinued"
-
   def condition_root(account, **kwargs):
     return account._root_admin
 
@@ -469,11 +463,9 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission(('publish', 'catalog_upload_images', 'product_upload_images',
                                    'product_instance_upload_images', 'catalog_pricetag_duplicate'), condition_not_guest_and_owner_and_draft),
       orm.ExecuteActionPermission(('catalog_duplicate'), condition_not_guest_and_owner_and_published),
-      orm.ExecuteActionPermission('publish', condition_publish),
-      orm.ExecuteActionPermission('discontinue', condition_discontinue),
       orm.ExecuteActionPermission('sudo', condition_root),
       orm.ExecuteActionPermission('cron', condition_cron),
-      orm.ExecuteActionPermission(('account_discontinue', 'catalog_process_duplicate', 
+      orm.ExecuteActionPermission(('account_discontinue', 'discontinue', 'catalog_process_duplicate', 
                                    'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue_or_root_admin),
       # field permissions
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
