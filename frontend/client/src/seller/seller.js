@@ -274,47 +274,30 @@
                                 var promises = [],
                                     updatedAddress = $scope.args,
                                     promise;
-
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                    promise = models['13'].get(updatedAddress.region, {
-                                        activitySpinner: true,
-                                        disableUI: false
-                                    });
-                                    promise.then(function (response) {
-                                        if (response.data.entities.length) {
-                                            updatedAddress._region = response.data.entities[0];
+                                    promise = models['13'].get(updatedAddress.region, updatedAddress.country, {disableUI: false});
+                                    promise.then(function (region) {
+                                        if (region) {
+                                            updatedAddress._region = region;
                                         }
                                     });
                                     promises.push(promise);
                                 }
 
-                                if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
-                                    promise = models['12'].actions.search(undefined, {
-                                        cache: true,
-                                        cacheType: 'local',
-                                        activitySpinner: true,
-                                        disableUI: false
-                                    });
-                                    promise.then(function (response) {
-                                        if (response.data.entities.length) {
-                                            var country = _.findWhere(response.data.entities, {
-                                                key: updatedAddress.country
-                                            });
-                                            if (angular.isDefined(country)) {
-                                                updatedAddress._country = country;
-                                            }
-
+                                if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
+                                    promise = models['12'].get(updatedAddress.country, {disableUI: false});
+                                    promise.then(function (country) {
+                                        if (country) {
+                                            updatedAddress._country = country;
                                         }
-
                                     });
+
                                     promises.push(promise);
                                 }
-
                                 if (promises.length) {
                                     return $q.all(promises);
                                 }
                                 return false;
-
                             }
                         };
                     },

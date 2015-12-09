@@ -891,8 +891,7 @@
                                                     };
 
                                                 if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                    //promise = 
-                                                    config.ui.specifics.beforeSave($scope, info);
+                                                    promise = config.ui.specifics.beforeSave($scope, info);
                                                 }
 
                                                 if (promise && promise.then) {
