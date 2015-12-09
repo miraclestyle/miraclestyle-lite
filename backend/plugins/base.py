@@ -491,6 +491,7 @@ class BaseCache(orm.BaseModel):
           if not cache_hit:
             continue
           if not data.get(active_k) and cache_hit:
+            tools.log.debug('Cache hit at %s but waiting for %s' % (k, active_k))
             return # this means that taskqueue did not finish storing the key and cache will be available as soon as possible
           try:
             data = zlib.decompress(data[k])

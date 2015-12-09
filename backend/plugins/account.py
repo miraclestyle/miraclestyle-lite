@@ -192,7 +192,7 @@ class AccountCacheGroupUpdate(orm.BaseModel):
           changes = True
           if delete:
             group.keys.remove(k)
-            delete_active.append(make_active(k))
+            delete_active.extend([make_active(kk) for kk in group.keys])
         else:
           changes = True
           group.keys.append(k)
