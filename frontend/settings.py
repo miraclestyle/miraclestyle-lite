@@ -12,6 +12,7 @@ import shutil
 import subprocess
 
 # META
+FORCE_SSL = True
 SITE_META_TITLE = 'Miraclestyle.com'
 SITE_META_DESCRIPTION = 'Description'
 SITE_META_KEYWORDS = 'miraclestyle,thing'
@@ -21,6 +22,7 @@ HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST
 DEBUG = False
 if HOST_NAME in DEBUG_HOST_NAMES:
   DEBUG = True
+  FORCE_SSL = False
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
@@ -32,7 +34,7 @@ ACTIVE_HANDLERS = ('misc', 'seller', 'catalog', 'home', 'builder')
 
 def get_host_url():
   http = 'http://'
-  if os.environ.get('HTTPS') == 'on':
+  if os.environ.get('HTTPS') == 'on' or FORCE_SSL:
     http = 'https://'
   return '%s%s' % (http, HOST_NAME)
 

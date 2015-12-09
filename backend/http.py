@@ -128,6 +128,8 @@ class RequestHandler(webapp2.RequestHandler):
 
   @orm.toplevel
   def dispatch(self):
+    if settings.FORCE_SSL and not os.environ.get('HTTPS') == 'on':
+      return self.redirect(self.request.url.replace('http://', 'https://'))
     # @tools.detail_profile(HTTP_PERFORMANCE_TEXT)
     dispatch_time = tools.Profile()
     if settings.LAG:

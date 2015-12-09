@@ -13,6 +13,7 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
 
 # Server side config
+FORCE_SSL = True
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DEBUG = True
 SILENCE_STDOUT = False
@@ -25,6 +26,7 @@ HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST
 if HOST_NAME in DEBUG_HOST_NAMES:
   DEBUG = True
   LAG = False # 2
+  FORCE_SSL = False
 # Notify
 NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'  # Password: xZa9hv8nbWyzk67boq4Q0
 
@@ -45,7 +47,7 @@ MAX_MESSAGE_SIZE = 1024
 
 def get_host_url():
   http = 'http://'
-  if os.environ.get('HTTPS') == 'on':
+  if os.environ.get('HTTPS') == 'on' or FORCE_SSL:
     http = 'https://'
   return '%s%s' % (http, HOST_NAME)
 

@@ -181,6 +181,7 @@
 
                     defaultSortable = {
                         disabled: false,
+                        cancel: 'input,textarea,button,select,option,[disabled]',
                         start: function (e, ui) {
                             info.scope.$broadcast('itemOrderStarted');
                         },

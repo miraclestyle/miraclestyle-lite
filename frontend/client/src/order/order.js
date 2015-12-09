@@ -466,6 +466,7 @@
                                     }
 
                                     $scope.messages = {
+                                        sentQueue: 0,
                                         isToday: function (message) {
                                             if (!message.created) {
                                                 return false;
@@ -626,7 +627,7 @@
                                                     return response;
                                                 })['finally'](function () {
                                                     $scope.messages.sentQueue -= 1;
-                                                    if ($scope.messages.sentQueue) {
+                                                    if (!$scope.messages.sentQueue) {
                                                         $scope.messages.sync.start();
                                                     }
                                                 });
@@ -825,6 +826,7 @@
                                     $scope.lineDrag = {
                                         options: {
                                             disabled: false,
+                                            cancel: 'input,textarea,button,select,option,[disabled]',
                                             axis: 'x',
                                             handle: '.sort-handle',
                                             distance: 10,

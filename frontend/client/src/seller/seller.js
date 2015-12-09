@@ -345,6 +345,7 @@
                                 start: function (e, ui) {
                                     info.scope.$broadcast('itemOrderStarted');
                                 },
+                                cancel: 'input,textarea,button,select,option,[disabled]',
                                 distance: 6,
                                 axis: false,
                                 containment: false,
@@ -702,6 +703,8 @@
                                             $scope.info.kind = $scope.args.kind;
                                             $scope.getFormBuilder();
 
+                                        } else {
+                                            $scope.$stateHiddenLoading = false;
                                         }
                                         $scope.close = function () {
                                             if (!$scope.container.form.$dirty) {

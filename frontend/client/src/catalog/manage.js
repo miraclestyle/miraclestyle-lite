@@ -935,7 +935,6 @@
                                                     },
                                                     setupSortableOptions: function () {
                                                         return {
-                                                            forcePlaceholderSize: true,
                                                             stop: function () {
                                                                 var field = $scope.fieldProduct.modelclass._instances,
                                                                     total,

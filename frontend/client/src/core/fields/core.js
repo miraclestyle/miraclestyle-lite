@@ -66,6 +66,9 @@
                         anyway.resolve();
                         promises = [anyway.promise];
                     }
+
+
+                    console.log('resovler', promises);
                     return $q.all(promises);
                 },
                 applyGlobalConfig: function (config) {
@@ -130,6 +133,10 @@
 
                         if (attrs.readonly) {
                             delete attrs['ng-disabled'];
+                        } else {
+                            if (!attrs.loading) {
+                                attrs.loading = '!' + writableCompiled;
+                            }
                         }
 
                         return attrs;
