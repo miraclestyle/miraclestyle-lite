@@ -135,7 +135,7 @@ class RequestHandler(webapp2.RequestHandler):
     self.load_current_account()
     self.load_csrf()
     self.validate_csrf()
-    if (self.autoload_current_account and (self.current_account._is_taskqueue or self.current_account._is_cron)) and (settings.FORCE_SSL and not os.environ.get('HTTPS') == 'on'):
+    if not (self.request.headers.get('X-AppEngine-QueueName', None) != None or self.request.headers.get('X-Appengine-Cron', None) != None) and (settings.FORCE_SSL and not os.environ.get('HTTPS') == 'on'):
       return self.redirect(self.request.url.replace('http://', 'https://'))
     try:
       self.before()
