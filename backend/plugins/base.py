@@ -484,9 +484,13 @@ class BaseCache(orm.BaseModel):
       saver = {'do_save': do_save}
       for driver in cache_drivers:
         k = build_key(driver, key, group_key)
-        data = tools.mem_get_multi(['%s_active' % k, k])
+        active_k = '%s_active' % k
+        data = tools.mem_get_multi([active_k, k])
         if data:
-          if len(data) != 2:
+          cache_hit = k in data
+          if not cache_hit:
+            continue
+          if not data.get(active_k) and cache_hit:
             return # this means that taskqueue did not finish storing the key and cache will be available as soon as possible
           try:
             data = zlib.decompress(data[k])
