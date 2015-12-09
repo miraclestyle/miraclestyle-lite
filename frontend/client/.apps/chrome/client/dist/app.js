@@ -21667,6 +21667,7 @@ angular.module('app')
                                         if (!addr) {
                                             return addr;
                                         }
+                                        addr._spawned = true;
                                         addr = angular.copy(addr);
                                         addr.country = null;
                                         addr.kind = '14';
@@ -21762,6 +21763,14 @@ angular.module('app')
                                             }
                                         }
                                     };
+
+                                    if (!$scope.addresses.shipping._spawned) {
+                                        helpers.location.updateDefaults($scope.addresses.shipping);
+                                    }
+
+                                    if (!$scope.addresses.billing._spawned) {
+                                        helpers.location.updateDefaults($scope.addresses.billing);
+                                    }
 
                                     $scope.payment = {
                                         method: $scope.order.payment_method
