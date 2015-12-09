@@ -11135,9 +11135,13 @@ function msieversion() {
                             cache: {
                                 query: {
                                     '24': true,
-                                    '12': true,
-                                    '13': true,
-                                    '17': true
+                                    '12': 'all_countries',
+                                    '13': function (key) {
+                                        return key + '_all_regions';
+                                    },
+                                    '17': function (key) {
+                                        return key + '_all_units';
+                                    }
                                 },
                                 type: {
                                     '12': 'local',
@@ -11192,7 +11196,7 @@ function msieversion() {
                                     }
                                     return args;
                                 },
-                                '17': function (term, searchArguments) {
+                                '17': function (term, searchArguments, cacheFn) {
                                     var searchDefaults = {
                                             search: {
                                                 filters: [{
@@ -11209,6 +11213,9 @@ function msieversion() {
                                         argument = searchDefaults.search;
 
                                     if (config.code_name === 'uom') {
+                                        if (cacheFn) {
+                                            return cacheFn('uom');
+                                        }
                                         argument.filters.unshift({
                                             value: 'Currency',
                                             field: 'measurement',
@@ -11225,6 +11232,9 @@ function msieversion() {
                                     }
 
                                     if (config.code_name === 'currency') {
+                                        if (cacheFn) {
+                                            return cacheFn('currency');
+                                        }
                                         argument.filters.push({
                                             value: 'Currency',
                                             field: 'measurement',
@@ -11232,12 +11242,19 @@ function msieversion() {
                                         });
                                     }
 
+                                    if (cacheFn) {
+                                        return cacheFn('units');
+                                    }
+
                                     return searchDefaults;
 
                                 },
-                                '13': function (term, searchArguments) {
+                                '13': function (term, searchArguments, cacheFn) {
                                     var args = info.scope.$eval(info.config.ui.parentArgs);
                                     if ((args && args.country)) {
+                                        if (cacheFn) {
+                                            return cacheFn(args.country);
+                                        }
                                         return {
                                             search: {
                                                 ancestor: args.country,
@@ -11333,6 +11350,9 @@ function msieversion() {
                     if (override.cache && angular.isDefined(override.cache.query)) {
                         opts.cache = override.cache.query;
                     }
+                    if (angular.isFunction(opts.cache)) {
+                        opts._getCache = opts.cache;
+                    }
                     if (override.cache && angular.isDefined(override.cache.type)) {
                         opts.cacheType = override.cache.type;
                     }
@@ -11349,6 +11369,9 @@ function msieversion() {
                                 } else {
                                     findArgs = args;
                                     args = findArgs(null, actionArguments);
+                                    if (angular.isFunction(opts._getCache)) {
+                                        opts.cache = findArgs(null, actionArguments, opts._getCache);
+                                    }
                                     if (finder) {
                                         config.ui.specifics.search.find = function (term) {
                                             return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
@@ -11923,6 +11946,10 @@ function msieversion() {
                             buildPaths(); // force path rebuild
 
                             modalSettings = helpers.alwaysObject(modalSettings);
+                            defaultArgs = helpers.alwaysObject(defaultArgs);
+                            if (config.ui.specifics.defaultArgs) {
+                                $.extend(defaultArgs, config.ui.specifics.defaultArgs);
+                            }
 
                             $modal.open({
                                 popFrom: (modalSettings && modalSettings.target ? helpers.clicks.realEventTarget(modalSettings.target) : undefined),
@@ -16797,11 +16824,11 @@ function msieversion() {
                         if (select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing && missing && missing.length) {
-                                    select.search.missing(missing).then(resolve);
+                                    select.search.missing(missing).then(resolve, resolve);
                                 } else {
                                     resolve();
                                 }
-                            });
+                            }, resolve);
                         } else {
                             resolve();
                         }
@@ -17096,11 +17123,11 @@ function msieversion() {
                         if (select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing && missing && missing.length) {
-                                    select.search.missing(missing).then(resolve);
+                                    select.search.missing(missing).then(resolve, resolve);
                                 } else {
                                     resolve();
                                 }
-                            });
+                            }, resolve);
                         } else {
                             resolve();
                         }
@@ -18428,19 +18455,19 @@ angular.module('app')
                 helpers.location = {};
             }
             helpers.location.updateDefaults = function (args) {
-                if (!args) {
+                if (!angular.isObject(args)) {
                     return;
                 }
                 if (!args.country && currentAccount._country) {
                     args.country = currentAccount._country;
                 }
-
                 if (!args.region && currentAccount._region) {
                     args.region = currentAccount._region;
                 }
                 if (!args.city && currentAccount._city) {
-                    args.city = currentAccount._city;
+                    args.city = _.string.capitalize(currentAccount._city);
                 }
+                return args;
             };
         }])
         .controller('BuyerManagementController', ['$scope', 'endpoint', 'currentAccount', 'models', function ($scope, endpoint, currentAccount, models) {
@@ -18720,9 +18747,12 @@ angular.module('app')
                             argumentLoader: function ($scope) {
                                 var args = this.defaultArgumentLoader($scope);
                                 args.account = accountKey;
-                                helpers.location.updateDefaults(args);
                                 return args;
                             }
+                        };
+
+                        fields.addresses.ui.specifics = {
+                            defaultArgs: helpers.location.updateDefaults({})
                         };
 
                         modelsEditor.create(config).read({}, {
