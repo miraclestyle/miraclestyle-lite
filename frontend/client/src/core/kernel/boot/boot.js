@@ -35,6 +35,15 @@ window.getLocalStorage = function () {
         return window._chromeLocalStorage;
     }
 };
+
+(function () {
+    var storage = window.getLocalStorage();
+    if (storage && storage.getItem('version') !== window.VERSION) {
+        storage.clear();
+        storage.setItem('version', window.VERSION);
+    }
+}());
+
 function Steady(opts) {
     if (!opts) throw new Error('missing options');
     if (!opts.handler) throw new Error('missing handler parameter');

@@ -433,9 +433,12 @@ def to_json(s, **kwds):
   return json.dumps(s, **kwds)
 
 
+def _get_version():
+    return str(os.environ.get('CURRENT_VERSION_ID'))
+
 def _static_dir(file_path, version=None):
   if version:
-    version = '?v=%s' % os.environ.get('CURRENT_VERSION_ID')
+    version = '?v=%s' % _get_version()
   else:
     version = ''
   return '%s/client/%s%s' % (settings.get_host_url(), file_path, version)
@@ -446,6 +449,7 @@ def _angular_include_template(path):
 
 settings.JINJA_GLOBALS.update({'static_dir': _static_dir,
                                'settings': settings,
+                               'version': _get_version,
                                'len': len,
                                'angular_include_template': _angular_include_template})
 
