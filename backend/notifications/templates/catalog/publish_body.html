@@ -16,6 +16,7 @@
 <span>
   When created, a catalog initially assumes draft state and is not accessible to the general public.
   While in draft state, a catalog can be edited.
+  A catalog in draft state aged more than 15 days is automatically deleted.
 </span><br/><br/>
 <span>
   A published catalog is accessible to the general public
@@ -25,10 +26,7 @@
   and the duplicate is ready for editing.
 </span><br/><br/>
 <span>
-  A discontinued catalog is not accessible to the general public
-  and is eventually entirely removed from the Miraclestyle app.
-  However, products of a discontinued catalog remain
-  accessible for the 180 days to those who have purchased them.
-  A discontinued catalog cannot be edited or duplicated.
+  A discontinued catalog is not accessible to anyone
+  and is entirely removed from the Miraclestyle app after 15 days.
 </span>
 {% endblock %}
