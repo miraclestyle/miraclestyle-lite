@@ -369,6 +369,10 @@
                             buildPaths(); // force path rebuild
 
                             modalSettings = helpers.alwaysObject(modalSettings);
+                            defaultArgs = helpers.alwaysObject(defaultArgs);
+                            if (config.ui.specifics.defaultArgs) {
+                                $.extend(defaultArgs, config.ui.specifics.defaultArgs);
+                            }
 
                             $modal.open({
                                 popFrom: (modalSettings && modalSettings.target ? helpers.clicks.realEventTarget(modalSettings.target) : undefined),

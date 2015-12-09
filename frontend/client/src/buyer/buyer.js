@@ -6,19 +6,19 @@
                 helpers.location = {};
             }
             helpers.location.updateDefaults = function (args) {
-                if (!args) {
+                if (!angular.isObject(args)) {
                     return;
                 }
                 if (!args.country && currentAccount._country) {
                     args.country = currentAccount._country;
                 }
-
                 if (!args.region && currentAccount._region) {
                     args.region = currentAccount._region;
                 }
                 if (!args.city && currentAccount._city) {
-                    args.city = currentAccount._city;
+                    args.city = _.string.capitalize(currentAccount._city);
                 }
+                return args;
             };
         }))
         .controller('BuyerManagementController', ng(function ($scope, endpoint, currentAccount, models) {
@@ -300,6 +300,10 @@
                                 args.account = accountKey;
                                 return args;
                             }
+                        };
+
+                        fields.addresses.ui.specifics = {
+                            defaultArgs: helpers.location.updateDefaults({})
                         };
 
                         modelsEditor.create(config).read({}, {

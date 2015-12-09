@@ -226,9 +226,13 @@
                             cache: {
                                 query: {
                                     '24': true,
-                                    '12': true,
-                                    '13': true,
-                                    '17': true
+                                    '12': 'all_countries',
+                                    '13': function (key) {
+                                        return key + '_all_regions';
+                                    },
+                                    '17': function (key) {
+                                        return key + '_all_units';
+                                    }
                                 },
                                 type: {
                                     '12': 'local',
@@ -283,7 +287,7 @@
                                     }
                                     return args;
                                 },
-                                '17': function (term, searchArguments) {
+                                '17': function (term, searchArguments, cacheFn) {
                                     var searchDefaults = {
                                             search: {
                                                 filters: [{
@@ -300,6 +304,9 @@
                                         argument = searchDefaults.search;
 
                                     if (config.code_name === 'uom') {
+                                        if (cacheFn) {
+                                            return cacheFn('uom');
+                                        }
                                         argument.filters.unshift({
                                             value: 'Currency',
                                             field: 'measurement',
@@ -316,6 +323,9 @@
                                     }
 
                                     if (config.code_name === 'currency') {
+                                        if (cacheFn) {
+                                            return cacheFn('currency');
+                                        }
                                         argument.filters.push({
                                             value: 'Currency',
                                             field: 'measurement',
@@ -323,12 +333,19 @@
                                         });
                                     }
 
+                                    if (cacheFn) {
+                                        return cacheFn('units');
+                                    }
+
                                     return searchDefaults;
 
                                 },
-                                '13': function (term, searchArguments) {
+                                '13': function (term, searchArguments, cacheFn) {
                                     var args = info.scope.$eval(info.config.ui.parentArgs);
                                     if ((args && args.country)) {
+                                        if (cacheFn) {
+                                            return cacheFn(args.country);
+                                        }
                                         return {
                                             search: {
                                                 ancestor: args.country,
@@ -424,6 +441,9 @@
                     if (override.cache && angular.isDefined(override.cache.query)) {
                         opts.cache = override.cache.query;
                     }
+                    if (angular.isFunction(opts.cache)) {
+                        opts._getCache = opts.cache;
+                    }
                     if (override.cache && angular.isDefined(override.cache.type)) {
                         opts.cacheType = override.cache.type;
                     }
@@ -440,6 +460,9 @@
                                 } else {
                                     findArgs = args;
                                     args = findArgs(null, actionArguments);
+                                    if (angular.isFunction(opts._getCache)) {
+                                        opts.cache = findArgs(null, actionArguments, opts._getCache);
+                                    }
                                     if (finder) {
                                         config.ui.specifics.search.find = function (term) {
                                             return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
