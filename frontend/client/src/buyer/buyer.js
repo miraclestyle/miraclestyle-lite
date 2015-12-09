@@ -225,6 +225,7 @@
                         $.extend(fields.addresses.ui, {
                             label: false,
                             specifics: {
+                                defaultArgs: helpers.location.updateDefaults({}),
                                 listView: 'buyer-address-list-view',
                                 listConfig: {
                                     perLine: 3
@@ -300,10 +301,6 @@
                                 args.account = accountKey;
                                 return args;
                             }
-                        };
-
-                        fields.addresses.ui.specifics = {
-                            defaultArgs: helpers.location.updateDefaults({})
                         };
 
                         modelsEditor.create(config).read({}, {
