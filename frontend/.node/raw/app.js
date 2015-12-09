@@ -10480,6 +10480,9 @@ function msieversion() {
                         anyway.resolve();
                         promises = [anyway.promise];
                     }
+
+
+                    console.log('resovler', promises);
                     return $q.all(promises);
                 },
                 applyGlobalConfig: function (config) {
@@ -10544,6 +10547,10 @@ function msieversion() {
 
                         if (attrs.readonly) {
                             delete attrs['ng-disabled'];
+                        } else {
+                            if (!attrs.loading) {
+                                attrs.loading = '!' + writableCompiled;
+                            }
                         }
 
                         return attrs;
@@ -11730,6 +11737,7 @@ function msieversion() {
 
                     defaultSortable = {
                         disabled: false,
+                        cancel: 'input,textarea,button,select,option,[disabled]',
                         start: function (e, ui) {
                             info.scope.$broadcast('itemOrderStarted');
                         },
@@ -19915,7 +19923,6 @@ angular.module('app')
                                                     },
                                                     setupSortableOptions: function () {
                                                         return {
-                                                            forcePlaceholderSize: true,
                                                             stop: function () {
                                                                 var field = $scope.fieldProduct.modelclass._instances,
                                                                     total,
@@ -21768,6 +21775,7 @@ angular.module('app')
                                     }
 
                                     $scope.messages = {
+                                        sentQueue: 0,
                                         isToday: function (message) {
                                             if (!message.created) {
                                                 return false;
@@ -21904,6 +21912,7 @@ angular.module('app')
                                                     return;
                                                 }
                                                 $.extend(newMessage, response.data.entity._messages[0]);
+                                                newMessage._failed = false;
                                                 locals.reactOnStateChange(response);
                                                 return response;
                                             }, function () {
@@ -21920,12 +21929,18 @@ angular.module('app')
                                                 return;
                                             }
                                             if ($scope.container.messages.$valid) {
+                                                $scope.messages.sentQueue += 1;
                                                 $scope.messages.sync.stop();
-                                                return this.send('log_message').then(function (response) {
+                                                var promise = this.send('log_message');
+                                                promise.then(function (response) {
                                                     return response;
                                                 })['finally'](function () {
-                                                    $scope.messages.sync.start();
+                                                    $scope.messages.sentQueue -= 1;
+                                                    if (!$scope.messages.sentQueue) {
+                                                        $scope.messages.sync.start();
+                                                    }
                                                 });
+                                                return promise;
                                             }
                                             helpers.form.wakeUp($scope.container.messages, false, true);
                                         },
@@ -22120,6 +22135,7 @@ angular.module('app')
                                     $scope.lineDrag = {
                                         options: {
                                             disabled: false,
+                                            cancel: 'input,textarea,button,select,option,[disabled]',
                                             axis: 'x',
                                             handle: '.sort-handle',
                                             distance: 10,
@@ -22574,6 +22590,7 @@ angular.module('app')
                                 start: function (e, ui) {
                                     info.scope.$broadcast('itemOrderStarted');
                                 },
+                                cancel: 'input,textarea,button,select,option,[disabled]',
                                 distance: 6,
                                 axis: false,
                                 containment: false,
@@ -22931,6 +22948,8 @@ angular.module('app')
                                             $scope.info.kind = $scope.args.kind;
                                             $scope.getFormBuilder();
 
+                                        } else {
+                                            $scope.$stateHiddenLoading = false;
                                         }
                                         $scope.close = function () {
                                             if (!$scope.container.form.$dirty) {
