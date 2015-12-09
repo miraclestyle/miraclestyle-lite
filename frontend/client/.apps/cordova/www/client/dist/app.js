@@ -18423,6 +18423,26 @@ angular.module('app')
 (function () {
     'use strict';
     angular.module('app')
+        .run(['currentAccount', 'helpers', function (currentAccount, helpers) {
+            if (!helpers.location) {
+                helpers.location = {};
+            }
+            helpers.location.updateDefaults = function (args) {
+                if (!args) {
+                    return;
+                }
+                if (!args.country && currentAccount._country) {
+                    args.country = currentAccount._country;
+                }
+
+                if (!args.region && currentAccount._region) {
+                    args.region = currentAccount._region;
+                }
+                if (!args.city && currentAccount._city) {
+                    args.city = currentAccount._city;
+                }
+            };
+        }])
         .controller('BuyerManagementController', ['$scope', 'endpoint', 'currentAccount', 'models', function ($scope, endpoint, currentAccount, models) {
 
             $scope.settings = function () {
@@ -18601,7 +18621,7 @@ angular.module('app')
                     };
                 }]
             };
-        }).run(['$window', 'modelsEditor', 'modelsMeta', '$q', 'modelsConfig', 'currentAccount', 'endpoint', function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
+        }).run(['$window', 'modelsEditor', 'helpers', 'modelsMeta', '$q', 'modelsConfig', 'currentAccount', 'endpoint', function ($window, modelsEditor, helpers, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
 
             modelsConfig(function (models) {
 
@@ -18700,6 +18720,7 @@ angular.module('app')
                             argumentLoader: function ($scope) {
                                 var args = this.defaultArgumentLoader($scope);
                                 args.account = accountKey;
+                                helpers.location.updateDefaults(args);
                                 return args;
                             }
                         };
