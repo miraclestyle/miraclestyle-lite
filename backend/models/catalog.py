@@ -384,8 +384,8 @@ class Catalog(orm.BaseExpando):
       return False
     return account._root_admin or valid_search()
 
-  def condition_published_or_discontinued(entity, **kwargs):
-    return entity._original.state in ("published", "discontinued", "indexed")
+  def condition_published_or_indexed(entity, **kwargs):
+    return entity._original.state in ("published", "indexed")
 
   def condition_update(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -464,7 +464,7 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission('prepare', condition_not_guest),
       orm.ExecuteActionPermission(('create', 'read'), condition_not_guest_and_owner_or_root),
       orm.ExecuteActionPermission('search', condition_search),
-      orm.ExecuteActionPermission('read', condition_published_or_discontinued),
+      orm.ExecuteActionPermission('read', condition_published_or_indexed),
       orm.ExecuteActionPermission('update', condition_update),
       orm.ExecuteActionPermission(('publish', 'catalog_upload_images', 'product_upload_images',
                                    'product_instance_upload_images', 'catalog_pricetag_duplicate'), condition_not_guest_and_owner_and_draft),
@@ -493,7 +493,7 @@ class Catalog(orm.BaseExpando):
       orm.WriteFieldPermission(('_images.pricetags._product._stock',), condition_not_guest_and_owner_and_published),
       orm.WriteFieldPermission('state', condition_write_state),
       orm.ReadFieldPermission(('name', 'published_date', 'discontinue_date', 'updated',
-                               'state', 'cover', '_images'), condition_published_or_discontinued),
+                               'state', 'cover', '_images'), condition_published_or_indexed),
       orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._content', '_seller._currency'), condition_true),
       orm.WriteFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                 'state', 'cover', '_images'), condition_duplicate)
