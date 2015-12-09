@@ -94,11 +94,11 @@
                         if (select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing && missing && missing.length) {
-                                    select.search.missing(missing).then(resolve);
+                                    select.search.missing(missing).then(resolve, resolve);
                                 } else {
                                     resolve();
                                 }
-                            });
+                            }, resolve);
                         } else {
                             resolve();
                         }
@@ -393,11 +393,11 @@
                         if (select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing && missing && missing.length) {
-                                    select.search.missing(missing).then(resolve);
+                                    select.search.missing(missing).then(resolve, resolve);
                                 } else {
                                     resolve();
                                 }
-                            });
+                            }, resolve);
                         } else {
                             resolve();
                         }
