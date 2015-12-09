@@ -79,7 +79,8 @@ class Read(orm.BaseModel):
   _kind = 88
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default=[])
-
+  
+  @tools.detail_profile('Read.%s %s', satisfy=lambda profiler, ctime: ctime.miliseconds > 1000)
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}

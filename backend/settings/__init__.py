@@ -18,6 +18,7 @@ DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 DEBUG = True
 SILENCE_STDOUT = False
 DO_LOGS = True  # logging on application level
+PROFILE_SLOW_ACTIONS = True
 PROFILING = False  # profiling of every function call using cProfile. Debug must be on
 PROFILING_SORT = ('cumulative', )  # 'time'
 DEBUG_HOST_NAMES = ['localhost:9982', '0.0.0.0:9982', 'universal-trail-608.appspot.com']

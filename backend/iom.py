@@ -194,13 +194,12 @@ class Engine:
   def execute_action(cls, context, input):
     action_time = tools.Profile()
     tools.log.debug('Action: %s.%s' % (context.model.__name__, context.action.key_id_str))
-
     def execute_plugins(plugins):
       for plugin in plugins:
-        tools.log.debug('Plugin: %s.%s' % (plugin.__module__, plugin.__class__.__name__))
+        module = plugin.__module__
         plugin_time = tools.Profile()
         plugin.run(context)
-        tools.log.debug('Executed in %sms' % plugin_time.miliseconds)
+        tools.log.debug('Plugin: %s.%s in %sms' % (module, plugin.__class__.__name__, plugin_time.miliseconds))
     if hasattr(context.model, 'get_plugin_groups') and callable(context.model.get_plugin_groups):
       try:
         plugin_groups = context.model.get_plugin_groups(context.action)

@@ -12,7 +12,7 @@ import pstats
 
 from .debug import log
 
-__all__ = ['Profile', 'profile', 'detail_profile']
+__all__ = ['Profile', 'profile', 'detail_profile', 'detail_profile_stop', 'detail_profile_start']
 
 
 def compute(start):
@@ -39,8 +39,19 @@ def profile(message=None):
     return inner
   return decorator
 
+def detail_profile_start():
+  profiler = cProfile.Profile()
+  profiler.enable()
+  return profiler
 
-def detail_profile(message=None, limit=None, satisfiy=None, logger=None):
+def detail_profile_stop(profiler, limit=None):
+  profiler.disable()
+  string_io = cStringIO.StringIO()
+  stats = pstats.Stats(profiler, stream=string_io).sort_stats('cumulative')
+  stats.print_stats(limit)
+  return string_io
+
+def detail_profile(message=None, limit=None, satisfy=None, logger=None):
   def decorator(func):
     def inner(*args, **kwargs):
       ctime = Profile()
@@ -48,8 +59,8 @@ def detail_profile(message=None, limit=None, satisfiy=None, logger=None):
       profiler.enable()
       result = func(*args, **kwargs)
       profiler.disable()
-      if satisfiy is not None:
-        if not satisfiy(profiler, ctime):
+      if satisfy is not None:
+        if not satisfy(profiler, ctime):
           return
       string_io = cStringIO.StringIO()
       stats = pstats.Stats(profiler, stream=string_io).sort_stats('cumulative')
