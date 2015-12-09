@@ -298,7 +298,6 @@
                             argumentLoader: function ($scope) {
                                 var args = this.defaultArgumentLoader($scope);
                                 args.account = accountKey;
-                                helpers.location.updateDefaults(args);
                                 return args;
                             }
                         };

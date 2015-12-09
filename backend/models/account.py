@@ -486,8 +486,8 @@ class Account(orm.BaseExpando):
     if data:
       if data.get('_country'):
         data['_country'] = orm.Key('12', data['_country'].lower())
-      if data.get('_region'):
-        data['_region'] = orm.Key('13', '%s-%s' % (data['_country']._id_str, data['_region'].lower()))
+        if data.get('_region'):
+          data['_region'] = orm.Key('13', '%s-%s' % (data['_country']._id_str, data['_region'].lower()), ancestor=data['_country'])
     return tools.mem_temp_set('current_request_location_data', data)
   
   @classmethod
