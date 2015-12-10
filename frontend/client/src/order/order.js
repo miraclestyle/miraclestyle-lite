@@ -620,6 +620,7 @@
                                             if (justMessage) {
                                                 return newMessage;
                                             }
+                                            console.log(copydraft.message);
                                             return models['34'].actions[action](copydraft, {
                                                 disableUI: false
                                             }).then(success, failure);
@@ -628,7 +629,7 @@
                                             $scope.messages.sent = new Date().getTime();
                                         },
                                         sidebarID: 'messages' + _.uniqueId(),
-                                        logMessagePromise: null,
+                                        logMessages: [],
                                         logMessage: function () {
                                             var that = this;
                                             if (!$scope.order._lines.length) {
@@ -639,6 +640,11 @@
                                                 $scope.messages.sentQueue += 1;
                                                 $scope.messages.sync.stop();
                                                 var finall = function () {
+                                                        if ($scope.messages.logMessages.length) {
+                                                            var cb = $scope.messages.logMessages.shift();
+                                                            console.log(cb);
+                                                            cb();
+                                                        }
                                                         $scope.messages.sentQueue -= 1;
                                                         if (!$scope.messages.sentQueue) {
                                                             $scope.messages.sync.start();
@@ -647,20 +653,19 @@
                                                     },
                                                     promise,
                                                     prepare;
-                                                if ($scope.messages.logMessagePromise) {
+                                                if ($scope.messages.logMessages.length > 0) {
                                                     prepare = that.send('log_message', true);
-                                                    promise = $scope.messages.logMessagePromise['finally'](function () {
+                                                    $scope.messages.logMessages.push(function () {
                                                         var nextPromise = that.send('log_message', false, prepare);
-                                                        $scope.messages.logMessagePromise = nextPromise;
                                                         nextPromise['finally'](finall);
-                                                        return nextPromise;
                                                     });
                                                     return promise;
                                                 }
                                                 promise = this.send('log_message');
-                                                $scope.messages.logMessagePromise = promise;
+                                                var fn = function () {};
+                                                $scope.messages.logMessages.push(fn);
                                                 promise['finally'](function () {
-                                                    $scope.messages.logMessagePromise = null;
+                                                    $scope.messages.logMessages.remove(fn);
                                                     finall.apply(this, arguments);
                                                 });
                                                 return promise;
@@ -905,6 +910,8 @@
                                                             if (!(response && response.then)) {
                                                                 snackbar.showK('cartUpdated');
                                                             }
+                                                        }, function () {
+                                                            line._state = null;
                                                         });
                                                     });
                                                 });
