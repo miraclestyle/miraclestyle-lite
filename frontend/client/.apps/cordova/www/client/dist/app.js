@@ -21787,7 +21787,11 @@ angular.module('app')
                                             }).key;
                                             return models['13'].actions.search({
                                                 search: {
-                                                    keys: [[['12', addr.country_code.toLowerCase(), '13', addr.region_code.toLowerCase()]]]
+                                                    keys: [
+                                                        [
+                                                            ['12', addr.country_code.toLowerCase(), '13', addr.region_code.toLowerCase()]
+                                                        ]
+                                                    ]
                                                 }
                                             }, {
                                                 cache: true,
@@ -22026,29 +22030,35 @@ angular.module('app')
                                                 message._failed = true;
                                             });
                                         },
-                                        send: function (action) {
-                                            var copydraft = angular.copy($scope.messages.draft),
-                                                newMessage = {
+                                        send: function (action, justMessage, message) {
+                                            var copydraft = message || angular.copy($scope.messages.draft),
+                                                newMessage = (message || $.extend(copydraft, {
                                                     body: copydraft.message
+                                                })),
+                                                success = function (response) {
+                                                    if (!response.data.entity) {
+                                                        return;
+                                                    }
+                                                    $.extend(newMessage, response.data.entity._messages[0]);
+                                                    newMessage._failed = false;
+                                                    locals.reactOnStateChange(response);
+                                                    return response;
+                                                }, failure = function () {
+                                                    newMessage._failed = true;
                                                 };
-                                            $scope.messages.draft.message = '';
-                                            $scope.order._messages.push(newMessage);
+                                            if (!message) {
+                                                $scope.messages.draft.message = '';
+                                                $scope.order._messages.push(newMessage);
+                                            }
                                             $scope.container.messages.$setSubmitted(true);
                                             $scope.container.messages.$setPristine(true);
                                             $scope.messages.forceReflow();
+                                            if (justMessage) {
+                                                return newMessage;
+                                            }
                                             return models['34'].actions[action](copydraft, {
                                                 disableUI: false
-                                            }).then(function (response) {
-                                                if (!response.data.entity) {
-                                                    return;
-                                                }
-                                                $.extend(newMessage, response.data.entity._messages[0]);
-                                                newMessage._failed = false;
-                                                locals.reactOnStateChange(response);
-                                                return response;
-                                            }, function () {
-                                                newMessage._failed = true;
-                                            });
+                                            }).then(success, failure);
                                         },
                                         forceReflow: function () {
                                             $scope.messages.sent = new Date().getTime();
@@ -22065,15 +22075,18 @@ angular.module('app')
                                                 $scope.messages.sentQueue += 1;
                                                 $scope.messages.sync.stop();
                                                 var finall = function () {
-                                                    $scope.messages.sentQueue -= 1;
-                                                    if (!$scope.messages.sentQueue) {
-                                                        $scope.messages.sync.start();
-                                                        $scope.messages.sentQueue = 0;
-                                                    }
-                                                }, promise;
+                                                        $scope.messages.sentQueue -= 1;
+                                                        if (!$scope.messages.sentQueue) {
+                                                            $scope.messages.sync.start();
+                                                            $scope.messages.sentQueue = 0;
+                                                        }
+                                                    },
+                                                    promise,
+                                                    prepare;
                                                 if ($scope.messages.logMessagePromise) {
-                                                    promise = $scope.messages.logMessagePromise.then(function () {
-                                                        var nextPromise = that.send('log_message');
+                                                    prepare = that.send('log_message', true);
+                                                    promise = $scope.messages.logMessagePromise['finally'](function () {
+                                                        var nextPromise = that.send('log_message', false, prepare);
                                                         nextPromise['finally'](finall);
                                                         return nextPromise;
                                                     });
@@ -22148,10 +22161,11 @@ angular.module('app')
                                         update: function (extra, config) {
                                             config = helpers.alwaysObject(config);
                                             var data = {
-                                                key: $scope.order.key,
-                                                payment_method: $scope.payment.method,
-                                                _lines: $scope.order._lines
-                                            }, deleteMaybe, promise;
+                                                    key: $scope.order.key,
+                                                    payment_method: $scope.payment.method,
+                                                    _lines: $scope.order._lines
+                                                },
+                                                deleteMaybe, promise;
                                             $.extend(data, extra);
                                             deleteMaybe = function () {
                                                 var allDeleted = true;
