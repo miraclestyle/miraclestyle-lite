@@ -21,7 +21,7 @@ DO_LOGS = True  # logging on application level
 PROFILE_SLOW_ACTIONS = True
 PROFILING = False  # profiling of every function call using cProfile. Debug must be on
 PROFILING_SORT = ('cumulative', )  # 'time'
-DEBUG_HOST_NAMES = ['localhost:9982', '0.0.0.0:9982', 'universal-trail-608.appspot.com']
+DEBUG_HOST_NAMES = ['localhost:9982', '0.0.0.0:9982', 'themiraclestyle-testing-site.appspot.com']
 LAG = False
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 if HOST_NAME in DEBUG_HOST_NAMES:
@@ -32,7 +32,7 @@ if HOST_NAME in DEBUG_HOST_NAMES:
 NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'  # Password: xZa9hv8nbWyzk67boq4Q0
 
 # User settings.
-ROOT_ADMINS = ('elvinkosova@gmail.com', 'vertazzar@gmail.com', 'edis.sehalic@gmail.com')
+ROOT_ADMINS = ('elvin@miraclestyle.com', 'edis@miraclestyle.com')
 
 SEARCH_PAGE = 10
 
@@ -67,7 +67,7 @@ PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 # BLOB Handling
 BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 # Cloud storage path settings.
-BUCKET_PATH = 'x-arcanum-801.appspot.com'
+BUCKET_PATH = 'themiraclestyle-testing-site.appspot.com'
 
 OAUTH2_REDIRECT_URI = HOST_URL
 if DEVELOPMENT_SERVER:
@@ -75,8 +75,8 @@ if DEVELOPMENT_SERVER:
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
-    'client_id': '659759206787-v5nj4qd1k6trkv6kttkc9rt92ojkcvtu.apps.googleusercontent.com',
-    'client_secret': 'NiPPgts3FGMcICryDRn05X3x',
+    'client_id': '262487344336-vkpvegjrp7q3isfr73vod7q9m0piu9gd.apps.googleusercontent.com',
+    'client_secret': 'AtUlgzsKycfOueKYUrX6CYIn',
     'scope': " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
     'authorization_uri': 'https://accounts.google.com/o/oauth2/auth',
     'token_uri': 'https://accounts.google.com/o/oauth2/token',
