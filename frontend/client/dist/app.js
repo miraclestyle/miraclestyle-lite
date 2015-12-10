@@ -14322,16 +14322,13 @@ function msieversion() {
                     var top = function () {
                             return element.find(':first');
                         },
-                        requests = 0,
                         hide = function () {
-                            requests -= 1;
-                            if (!(requests < 1)) {
+                            if (!(scope.contentSpinner.requests < 1)) {
                                 return;
                             }
                             top().addClass('ng-hide');
                         },
                         show = function () {
-                            requests += 1;
                             top().removeClass('ng-hide');
                         };
                     scope.contentSpinner.hide.push(hide);
@@ -14352,7 +14349,6 @@ function msieversion() {
                     var top = function () {
                             return element.find(':first');
                         },
-                        requests = 0,
                         slide = function () {
                             return top().find('.progress:first');
                         },
@@ -14360,7 +14356,6 @@ function msieversion() {
                             return slide().find('.progress:first');
                         },
                         hide = function (fast) {
-                            requests -= 1;
                             var s = slide(),
                                 anim = animation();
                             if (s.length) {
@@ -14373,7 +14368,7 @@ function msieversion() {
                                     return;
                                 }
                                 anim.oneTransitionEnd(function () {
-                                    if (!(requests < 1)) {
+                                    if (!(scope.activitySpinner.requests < 1)) {
                                         s.removeClass('out').addClass('in');
                                     } else {
                                         top().addClass('ng-hide');
@@ -14384,7 +14379,6 @@ function msieversion() {
                             }
                         },
                         show = function () {
-                            requests += 1;
                             top().removeClass('ng-hide');
                             if (slide().length) {
                                 var s = slide();
@@ -21192,8 +21186,10 @@ angular.module('app')
             $rootScope.contentSpinner = {
                 hide: [],
                 show: [],
+                requests: 0,
                 last: null,
                 stop: function () {
+                    this.requests -= 1;
                     if (this.hide) {
                         var length = this.hide.length - 1;
                         angular.forEach(this.hide, function (cb, i) {
@@ -21206,6 +21202,7 @@ angular.module('app')
                     }
                 },
                 start: function () {
+                    this.requests += 1;
                     var max = this.hide.length - 1;
                     angular.forEach(this.hide, function (cb, i) {
                         if (i === max) {
@@ -22063,7 +22060,6 @@ angular.module('app')
                                             if (justMessage) {
                                                 return newMessage;
                                             }
-                                            console.log(copydraft.message);
                                             return models['34'].actions[action](copydraft, {
                                                 disableUI: false
                                             }).then(success, failure);
@@ -22085,7 +22081,6 @@ angular.module('app')
                                                 var finall = function () {
                                                         if ($scope.messages.logMessages.length) {
                                                             var cb = $scope.messages.logMessages.shift();
-                                                            console.log(cb);
                                                             cb();
                                                         }
                                                         $scope.messages.sentQueue -= 1;
