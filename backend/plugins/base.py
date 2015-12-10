@@ -482,11 +482,11 @@ class BaseCache(orm.BaseModel):
           tools.log.error('Failed saving response because it\'s over 1mb, with queue keys %s, using group %s, with drivers %s. With input %s' % (queue, group_key, cache_drivers, context.input))
           write = False  # failed writing this one, because size is over 1mb -- this can be fixed by chunking the `data`, but for now we dont need it
       saver = {'do_save': do_save}
+      found = None
       for driver in cache_drivers:
         k = build_key(driver, key, group_key)
         active_k = '%s_active' % k
         data = tools.mem_get_multi([active_k, k])
-        found = None
         if data:
           cache_hit = k in data
           if not cache_hit:

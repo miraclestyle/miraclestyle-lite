@@ -618,7 +618,9 @@
                                             $scope.messages.sent = new Date().getTime();
                                         },
                                         sidebarID: 'messages' + _.uniqueId(),
+                                        logMessagePromise: null,
                                         logMessage: function () {
+                                            var that = this;
                                             if (!$scope.order._lines.length) {
                                                 snackbar.showK('messangerDisabledWhenEmpty');
                                                 return;
@@ -626,15 +628,26 @@
                                             if ($scope.container.messages.$valid) {
                                                 $scope.messages.sentQueue += 1;
                                                 $scope.messages.sync.stop();
-                                                var promise = this.send('log_message');
-                                                promise.then(function (response) {
-                                                    return response;
-                                                })['finally'](function () {
+                                                var finall = function () {
                                                     $scope.messages.sentQueue -= 1;
                                                     if (!$scope.messages.sentQueue) {
                                                         $scope.messages.sync.start();
                                                         $scope.messages.sentQueue = 0;
                                                     }
+                                                }, promise;
+                                                if ($scope.messages.logMessagePromise) {
+                                                    promise = $scope.messages.logMessagePromise.then(function () {
+                                                        var nextPromise = that.send('log_message');
+                                                        nextPromise['finally'](finall);
+                                                        return nextPromise;
+                                                    });
+                                                    return promise;
+                                                }
+                                                promise = this.send('log_message');
+                                                $scope.messages.logMessagePromise = promise;
+                                                promise['finally'](function () {
+                                                    $scope.messages.logMessagePromise = null;
+                                                    finall.apply(this, arguments);
                                                 });
                                                 return promise;
                                             }

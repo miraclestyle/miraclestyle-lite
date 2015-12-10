@@ -560,6 +560,9 @@
             connection_refused: function () {
                 return 'Failed to establish connection.';
             },
+            invalid_response: function () {
+                return 'Server failed to respond, please try again.';
+            },
             traceback: function (trace) {
                 var parse = $.parseHTML(trace);
                 return $(parse).filter('pre').text();
