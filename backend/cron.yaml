@@ -15,5 +15,5 @@ cron:
 
 - description: Order messages notify
   url: /api/order/cron_notify
-  schedule: every 1 hours
+  schedule: every 15 minutes
   target: backend
