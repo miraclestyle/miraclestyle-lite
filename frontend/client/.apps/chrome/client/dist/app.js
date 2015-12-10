@@ -5271,13 +5271,14 @@ function msieversion() {
                         };
                     }
 
-
                     ripple.css(worker.style);
 
                     $timeout(function () {
                         $animateCss(ripple, {
                             addClass: cls
-                        }).start();
+                        }).start().done(function () {
+                            ripple.removeClass(cls);
+                        });
                     }, 0, false);
 
                 }
@@ -11786,6 +11787,8 @@ function msieversion() {
                         whatSortMeans: function () {
                             modals.alert('howToSort');
                         },
+                        forcePlaceholderSize: true,
+                        forceHelperSize: true,
                         handle: '.sort-handle',
                         tolerance: 'pointer',
                         helper: 'clone',
