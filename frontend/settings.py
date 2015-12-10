@@ -274,7 +274,7 @@ def build(templates=True, statics=True, js_and_css=True, write=False, vendors=Tr
     for provider, spec, path in (('chrome', '', os.path.join(CLIENT_DIR, '.apps', 'chrome', 'index.html')),
                                  ('cordova', '?cordova=1', os.path.join(CLIENT_DIR, '.apps', 'cordova', 'www', 'index.html'))):
       try:
-        content = urllib.urlopen('http://x-arcanum-801.appspot.com/build/angular/index.html%s' % spec).read()
+        content = urllib.urlopen('http://themiraclestyle-testing-site.appspot.com/build/angular/index.html%s' % spec).read()
         with read(path, 'w') as f:
           f.write(content)
         print('Finished writing %s' % path)
