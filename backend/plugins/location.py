@@ -57,7 +57,7 @@ class CountryUpdateWrite(orm.BaseModel):
             continue
           if sub_child.text:
             dic[name] = sub_child.text
-        country = Country(name=dic['name'], id=dic['id'], code=dic['code'], active=True, sequence=i)
+        country = Country(name=dic['name'], id=dic['id'], code=dic['code'], active=True)
         country._use_rule_engine = False
         country._use_record_engine = False
         country._use_memcache = False

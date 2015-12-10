@@ -215,7 +215,7 @@
                                                     }
                                                 } catch (ignore) {
                                                     if (ignore instanceof DOMException) {
-                                                        check();
+                                                        // check();
                                                     }
                                                 }
                                             };

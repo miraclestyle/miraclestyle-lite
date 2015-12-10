@@ -490,7 +490,7 @@ class BaseCache(orm.BaseModel):
           cache_hit = k in data
           if not cache_hit:
             continue
-          if not data.get(active_k) and cache_hit:
+          if group_key and cache_hit and not data.get(active_k):
             tools.log.debug('Cache hit at %s but waiting for %s' % (k, active_k))
             return # this means that taskqueue did not finish storing the key and cache will be available as soon as possible
           try:
@@ -498,7 +498,7 @@ class BaseCache(orm.BaseModel):
           except Exception as e:
             data = None
             tools.log.warn('Failed upacking memcache data for key %s in context of: using group %s, with driver %s. With input %s. Memory key deleted.' % (k, group_key, driver, context.input))
-            tools.mem_rpc_delete(k)
+            tools.mem_delete_multi([k, active_k])
           break
       if data:
         context.cache = {'value': data}

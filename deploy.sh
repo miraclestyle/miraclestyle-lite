@@ -17,18 +17,18 @@ git commit -m"build"
 git push
 
 if [ "$1" = "backend" ] || [ "$1" = "all" ]; then
-    appcfg.py update backend/app.yaml
+    appcfg.py update backend/app.yaml --noauth_local_webserver
 else
     echo "Just updating frontend..."
 fi
 
 if [ "$1" = "frontend" ] || [ "$1" = "all" ]; then
-    appcfg.py update frontend/app.yaml
+    appcfg.py update frontend/app.yaml --noauth_local_webserver
 else
     echo "Just updating backend..."
 fi
 
 if [ "$2" = "index" ]; then
-    appcfg.py update_dispatch .
-    appcfg.py update_indexes backend
+    appcfg.py update_dispatch . --noauth_local_webserver
+    appcfg.py update_indexes backend --noauth_local_webserver
 fi
