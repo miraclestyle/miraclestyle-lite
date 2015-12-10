@@ -118,7 +118,13 @@
                                     });
                                 }, function ($scope, response) {
 
-                                    $scope.close = function () {
+                                    $scope.close = function (override) {
+                                        if (override !== true && $scope.messages.logMessages.length) {
+                                            modals.confirm('discard', function () {
+                                                $scope.close(true);
+                                            });
+                                            return;
+                                        }
                                         var promise = $scope.$close();
                                         promise.then(config.afterClose || angular.noop);
                                         return promise;
