@@ -17,7 +17,7 @@ SITE_META_TITLE = 'Miraclestyle.com'
 SITE_META_DESCRIPTION = 'Description'
 SITE_META_KEYWORDS = 'miraclestyle,thing'
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
-DEBUG_HOST_NAMES = ['localhost:9982', '192.168.0.100:9982', '0.0.0.0:9982', 'universal-trail-608.appspot.com']
+DEBUG_HOST_NAMES = ['localhost:9982', '192.168.0.100:9982', '0.0.0.0:9982', 'themiraclestyle-testing-site.appspot.com']
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 DEBUG = False
 if HOST_NAME in DEBUG_HOST_NAMES:
