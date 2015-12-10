@@ -105,13 +105,16 @@ class OrderCronNotify(orm.BaseModel):
     tools.log.debug('Sending %s trackers' % len(send_mails))
     for send in send_mails:
       tracker, seller, buyer, account, tracker_count, order = send
-      for to in [seller, buyer]:
-        if to:
-          data = {'recipient': to._primary_email, 'account': account, 'count': tracker_count, 'entity': order}
-          tools.log.debug(data)
-          data.update(values)
-          tools.render_subject_and_body_templates(data) # avoid reads in transaction - this might happen if template has .foo.bar.read() stuff
-          orm.transaction(lambda: send_in_transaciton(tracker, data), xg=True)
+      seller = False
+      to = buyer
+      if seller:
+        seller = True
+        to = seller
+      data = {'recipient': to._primary_email, 'account': account, 'seller': seller, 'count': tracker_count, 'entity': order}
+      tools.log.debug(data)
+      data.update(values)
+      tools.render_subject_and_body_templates(data) # avoid reads in transaction - this might happen if template has .foo.bar.read() stuff
+      orm.transaction(lambda: send_in_transaciton(tracker, data), xg=True)
     if count > (page_size + 1):
       # schedule another task to handle the next order
       data = {'action_id': 'cron_notify',

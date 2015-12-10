@@ -345,15 +345,10 @@
                                         addr.kind = '14';
                                         delete addr.key;
                                         addr.region = null;
-                                        models['12'].actions.search({
-                                            search: {
-                                                keys: [[['12', addr.country_code.toLowerCase()]]]
-                                            }
-                                        }, {
-                                            cache: true,
-                                            disableUI: false
-                                        }).then(function (response) {
-                                            addr.country = response.data.entities[0].key;
+                                        models['12'].all().then(function (response) {
+                                            addr.country = _.findWhere(response.data.entities, {
+                                                id: addr.country_code.toLowerCase()
+                                            }).key;
                                             return models['13'].actions.search({
                                                 search: {
                                                     keys: [[['12', addr.country_code.toLowerCase(), '13', addr.region_code.toLowerCase()]]]
@@ -638,6 +633,7 @@
                                                     $scope.messages.sentQueue -= 1;
                                                     if (!$scope.messages.sentQueue) {
                                                         $scope.messages.sync.start();
+                                                        $scope.messages.sentQueue = 0;
                                                     }
                                                 });
                                                 return promise;
