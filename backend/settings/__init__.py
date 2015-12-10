@@ -21,7 +21,7 @@ DO_LOGS = True  # logging on application level
 PROFILE_SLOW_ACTIONS = True
 PROFILING = False  # profiling of every function call using cProfile. Debug must be on
 PROFILING_SORT = ('cumulative', )  # 'time'
-DEBUG_HOST_NAMES = ['localhost:9982', '0.0.0.0:9982', 'themiraclestyle-testing-site.appspot.com']
+DEBUG_HOST_NAMES = ['localhost:9982', '0.0.0.0:9982']
 LAG = False
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 if HOST_NAME in DEBUG_HOST_NAMES:
