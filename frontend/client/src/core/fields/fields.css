@@ -20,6 +20,10 @@
     z-index: 2;
 }
 
+button[disabled] .fake-button input.upload {
+    cursor: not-allowed;
+}
+
 md-item-content md-checkbox {
     margin: 0px;
 }

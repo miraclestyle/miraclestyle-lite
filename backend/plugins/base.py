@@ -486,6 +486,7 @@ class BaseCache(orm.BaseModel):
         k = build_key(driver, key, group_key)
         active_k = '%s_active' % k
         data = tools.mem_get_multi([active_k, k])
+        found = None
         if data:
           cache_hit = k in data
           if not cache_hit:
@@ -494,14 +495,14 @@ class BaseCache(orm.BaseModel):
             tools.log.debug('Cache hit at %s but waiting for %s' % (k, active_k))
             return # this means that taskqueue did not finish storing the key and cache will be available as soon as possible
           try:
-            data = zlib.decompress(data[k])
+            found = zlib.decompress(data[k])
           except Exception as e:
-            data = None
+            found = None
             tools.log.warn('Failed upacking memcache data for key %s in context of: using group %s, with driver %s. With input %s. Memory key deleted.' % (k, group_key, driver, context.input))
             tools.mem_delete_multi([k, active_k])
           break
-      if data:
-        context.cache = {'value': data}
+      if found:
+        context.cache = {'value': found}
         raise orm.TerminateAction('Got cache with key %s from %s drivers using group %s.' % (k, cache_drivers, group_key))
       else:
         keys = []

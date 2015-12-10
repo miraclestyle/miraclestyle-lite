@@ -49,6 +49,12 @@
 
                     var that = element,
                         form = that.parents('form:first'),
+                        click = function (e) {
+                            if (element.parents('button[disabled]:first').length) {
+                                e.preventDefault();
+                                return false;
+                            }
+                        },
                         change = function () {
 
                             if (!that.val()) {
@@ -74,7 +80,8 @@
                         return false;
                     }
 
-                    $(element).on('change', change);
+                    element.on('change', change)
+                           .on('click', click);
 
                     scope.$on('$destroy', function () {
                         $(element).off('change', change);
