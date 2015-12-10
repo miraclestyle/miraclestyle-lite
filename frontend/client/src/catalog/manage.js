@@ -332,12 +332,14 @@
 
                                             $scope.droppableOptions = {
                                                 accept: '.catalog-new-pricetag',
-                                                tolerance: 'pointer'
+                                                tolerance: 'pointer',
+                                                cancel: "input,textarea,button,select,option,[disabled]"
                                             };
 
                                             $scope.draggableOptions = {
                                                 containment: '.image-slider-outer',
-                                                distance: 6
+                                                distance: 6,
+                                                cancel: "input,textarea,button,select,option,[disabled]"
                                             };
 
                                             $scope.newPricetagDraggableOptions = {revert: function (element) {

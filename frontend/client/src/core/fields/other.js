@@ -57,6 +57,8 @@
 
                             endpoint.post('blob_upload_url', '11', {
                                 upload_url: endpoint.url
+                            }, {
+                                disableUI: false
                             }).then(function (response) {
                                 form.attr('action', response.data.upload_url);
                                 ctrl.$setDirty();

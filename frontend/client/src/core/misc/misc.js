@@ -316,6 +316,9 @@
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.draggableClick),
                         click = function (event, tap) {
+                            if (element.attr('disabled')) {
+                                return;
+                            }
                             if (element.hasClass('dragged') && !tap) {
                                 element.removeClass('dragged');
                                 return;

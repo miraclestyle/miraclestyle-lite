@@ -189,6 +189,7 @@ class Engine:
           raise
     if len(input_error):
       raise InputError(input_error)
+    print(context.input.get('logo'))
 
   @classmethod
   def execute_action(cls, context, input):

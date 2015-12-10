@@ -180,7 +180,7 @@ angular.module('app')
                             content = angular.fromJson(bodyContent.innerText || bodyContent.textContent);
                         } catch (e) {
                             // Fall back to html if json parse failed
-                            content = bodyContent.innerHTML;
+                            content = {errors: {invalid_response: true}};
                             $log.warn('Response is not valid JSON');
                         }
 
