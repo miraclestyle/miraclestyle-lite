@@ -1,4 +1,4 @@
-application: x-arcanum-801
+application: themiraclestyle-testing-site
 
 dispatch:
   - url: '*/api/*'
