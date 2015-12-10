@@ -6,6 +6,7 @@
                 helpers.location = {};
             }
             helpers.location.updateDefaults = function (args) {
+                return; // disable
                 if (!angular.isObject(args)) {
                     return;
                 }
