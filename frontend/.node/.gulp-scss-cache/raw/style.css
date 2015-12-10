@@ -1241,6 +1241,9 @@ a.sort-handle {
   margin: 0px;
   line-height: initial; }
 
+a.sort-handle[disabled] {
+  cursor: not-allowed; }
+
 [ui-sortable] > a.sort-handle:not(.no-move) {
   cursor: move; }
 
