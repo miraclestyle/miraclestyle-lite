@@ -18298,7 +18298,7 @@ angular.module('app')
                                                     }
                                                 } catch (ignore) {
                                                     if (ignore instanceof DOMException) {
-                                                        check();
+                                                        // check();
                                                     }
                                                 }
                                             };
@@ -21338,7 +21338,7 @@ angular.module('app')
     angular.module('app').run(ng(function (modelsConfig, helpers, modelsMeta) {
         modelsConfig(function (models) {
             models['12'].config.cache = true;
-            models['12'].get = function (key, opts) {
+            models['12'].all = function (opts) {
                 opts = helpers.alwaysObject(opts);
                 $.extend(opts, {
                     cache: 'all_countries',
@@ -21354,7 +21354,11 @@ angular.module('app')
                         field: "active",
                         value: true
                     }]
-                }, opts).then(function (response) {
+                }, opts);
+
+            };
+            models['12'].get = function (key, opts) {
+                return this.all(opts).then(function (response) {
                     return _.findWhere(response.data.entities, {
                         key: key
                     });
@@ -21362,10 +21366,7 @@ angular.module('app')
             };
 
             var get13 = models['13'].get;
-            models['13'].get = function (key, countryKey, opts) {
-                if (!countryKey) {
-                    return get13.apply(this, arguments);
-                }
+            models['13'].all = function (countryKey, opts) {
                 opts = helpers.alwaysObject(opts);
                 $.extend(opts, {
                     cache: countryKey + '_all_regions',
@@ -21384,7 +21385,13 @@ angular.module('app')
                             "operator": "asc"
                         }]
                     }
-                }, opts).then(function (response) {
+                }, opts);
+            };
+            models['13'].get = function (key, countryKey, opts) {
+                if (!countryKey) {
+                    return get13.apply(this, arguments);
+                }
+                return this.all(countryKey, opts).then(function (response) {
                     return _.findWhere(response.data.entities, {
                         key: key
                     });
@@ -21742,15 +21749,10 @@ angular.module('app')
                                         addr.kind = '14';
                                         delete addr.key;
                                         addr.region = null;
-                                        models['12'].actions.search({
-                                            search: {
-                                                keys: [[['12', addr.country_code.toLowerCase()]]]
-                                            }
-                                        }, {
-                                            cache: true,
-                                            disableUI: false
-                                        }).then(function (response) {
-                                            addr.country = response.data.entities[0].key;
+                                        models['12'].all().then(function (response) {
+                                            addr.country = _.findWhere(response.data.entities, {
+                                                id: addr.country_code.toLowerCase()
+                                            }).key;
                                             return models['13'].actions.search({
                                                 search: {
                                                     keys: [[['12', addr.country_code.toLowerCase(), '13', addr.region_code.toLowerCase()]]]
@@ -22035,6 +22037,7 @@ angular.module('app')
                                                     $scope.messages.sentQueue -= 1;
                                                     if (!$scope.messages.sentQueue) {
                                                         $scope.messages.sync.start();
+                                                        $scope.messages.sentQueue = 0;
                                                     }
                                                 });
                                                 return promise;
