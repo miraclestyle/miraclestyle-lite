@@ -191,6 +191,8 @@
                         whatSortMeans: function () {
                             modals.alert('howToSort');
                         },
+                        forcePlaceholderSize: true,
+                        forceHelperSize: true,
                         handle: '.sort-handle',
                         tolerance: 'pointer',
                         helper: 'clone',

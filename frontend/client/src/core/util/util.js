@@ -2677,13 +2677,14 @@
                         };
                     }
 
-
                     ripple.css(worker.style);
 
                     $timeout(function () {
                         $animateCss(ripple, {
                             addClass: cls
-                        }).start();
+                        }).start().done(function () {
+                            ripple.removeClass(cls);
+                        });
                     }, 0, false);
 
                 }

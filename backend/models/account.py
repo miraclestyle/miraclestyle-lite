@@ -484,7 +484,7 @@ class Account(orm.BaseExpando):
   @classmethod
   def set_location_data(cls, data):
     if data:
-      if data.get('_country'):
+      if data.get('_country') and data.get('_country').lower() != 'zz':
         data['_country'] = orm.Key('12', data['_country'].lower())
         if data.get('_region'):
           data['_region'] = orm.Key('13', '%s-%s' % (data['_country']._id_str, data['_region'].lower()), parent=data['_country'])
