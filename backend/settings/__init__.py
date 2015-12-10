@@ -15,7 +15,7 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input an
 # Server side config
 FORCE_SSL = True
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
-DEBUG = True
+DEBUG = False
 SILENCE_STDOUT = False
 DO_LOGS = True  # logging on application level
 PROFILE_SLOW_ACTIONS = True
