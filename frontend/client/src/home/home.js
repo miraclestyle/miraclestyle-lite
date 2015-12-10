@@ -89,8 +89,10 @@
             $rootScope.contentSpinner = {
                 hide: [],
                 show: [],
+                requests: 0,
                 last: null,
                 stop: function () {
+                    this.requests -= 1;
                     if (this.hide) {
                         var length = this.hide.length - 1;
                         angular.forEach(this.hide, function (cb, i) {
@@ -103,6 +105,7 @@
                     }
                 },
                 start: function () {
+                    this.requests += 1;
                     var max = this.hide.length - 1;
                     angular.forEach(this.hide, function (cb, i) {
                         if (i === max) {

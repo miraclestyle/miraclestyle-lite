@@ -626,7 +626,6 @@
                                             if (justMessage) {
                                                 return newMessage;
                                             }
-                                            console.log(copydraft.message);
                                             return models['34'].actions[action](copydraft, {
                                                 disableUI: false
                                             }).then(success, failure);
@@ -648,7 +647,6 @@
                                                 var finall = function () {
                                                         if ($scope.messages.logMessages.length) {
                                                             var cb = $scope.messages.logMessages.shift();
-                                                            console.log(cb);
                                                             cb();
                                                         }
                                                         $scope.messages.sentQueue -= 1;

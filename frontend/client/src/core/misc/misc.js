@@ -1417,16 +1417,13 @@
                     var top = function () {
                             return element.find(':first');
                         },
-                        requests = 0,
                         hide = function () {
-                            requests -= 1;
-                            if (!(requests < 1)) {
+                            if (!(scope.contentSpinner.requests < 1)) {
                                 return;
                             }
                             top().addClass('ng-hide');
                         },
                         show = function () {
-                            requests += 1;
                             top().removeClass('ng-hide');
                         };
                     scope.contentSpinner.hide.push(hide);
@@ -1447,7 +1444,6 @@
                     var top = function () {
                             return element.find(':first');
                         },
-                        requests = 0,
                         slide = function () {
                             return top().find('.progress:first');
                         },
@@ -1455,7 +1451,6 @@
                             return slide().find('.progress:first');
                         },
                         hide = function (fast) {
-                            requests -= 1;
                             var s = slide(),
                                 anim = animation();
                             if (s.length) {
@@ -1468,7 +1463,7 @@
                                     return;
                                 }
                                 anim.oneTransitionEnd(function () {
-                                    if (!(requests < 1)) {
+                                    if (!(scope.activitySpinner.requests < 1)) {
                                         s.removeClass('out').addClass('in');
                                     } else {
                                         top().addClass('ng-hide');
@@ -1479,7 +1474,6 @@
                             }
                         },
                         show = function () {
-                            requests += 1;
                             top().removeClass('ng-hide');
                             if (slide().length) {
                                 var s = slide();
