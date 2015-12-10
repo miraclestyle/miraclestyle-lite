@@ -10975,6 +10975,8 @@ function msieversion() {
 
                             endpoint.post('blob_upload_url', '11', {
                                 upload_url: endpoint.url
+                            }, {
+                                disableUI: false
                             }).then(function (response) {
                                 form.attr('action', response.data.upload_url);
                                 ctrl.$setDirty();
@@ -13194,6 +13196,9 @@ function msieversion() {
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.draggableClick),
                         click = function (event, tap) {
+                            if (element.attr('disabled')) {
+                                return;
+                            }
                             if (element.hasClass('dragged') && !tap) {
                                 element.removeClass('dragged');
                                 return;
@@ -18002,7 +18007,7 @@ angular.module('app')
                             content = angular.fromJson(bodyContent.innerText || bodyContent.textContent);
                         } catch (e) {
                             // Fall back to html if json parse failed
-                            content = bodyContent.innerHTML;
+                            content = {errors: {invalid_response: true}};
                             $log.warn('Response is not valid JSON');
                         }
 
@@ -19361,12 +19366,14 @@ angular.module('app')
 
                                             $scope.droppableOptions = {
                                                 accept: '.catalog-new-pricetag',
-                                                tolerance: 'pointer'
+                                                tolerance: 'pointer',
+                                                cancel: "input,textarea,button,select,option,[disabled]"
                                             };
 
                                             $scope.draggableOptions = {
                                                 containment: '.image-slider-outer',
-                                                distance: 6
+                                                distance: 6,
+                                                cancel: "input,textarea,button,select,option,[disabled]"
                                             };
 
                                             $scope.newPricetagDraggableOptions = {revert: function (element) {
