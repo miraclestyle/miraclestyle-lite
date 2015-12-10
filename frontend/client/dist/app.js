@@ -18493,6 +18493,7 @@ angular.module('app')
                 helpers.location = {};
             }
             helpers.location.updateDefaults = function (args) {
+                return; // disable
                 if (!angular.isObject(args)) {
                     return;
                 }
@@ -22087,6 +22088,7 @@ angular.module('app')
                                                     prepare = that.send('log_message', true);
                                                     promise = $scope.messages.logMessagePromise['finally'](function () {
                                                         var nextPromise = that.send('log_message', false, prepare);
+                                                        $scope.messages.logMessagePromise = nextPromise;
                                                         nextPromise['finally'](finall);
                                                         return nextPromise;
                                                     });
