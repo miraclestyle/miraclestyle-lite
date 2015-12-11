@@ -608,6 +608,8 @@ class SeoOrAngular(AngularBlank):
 
 
 def autohttps(s):
+    if not isinstance(s, basestring):
+        return ''
     if os.environ.get('HTTPS') == 'on':
         return s.replace('http://', 'https://')
     return s
