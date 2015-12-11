@@ -1200,7 +1200,7 @@ if (window.DEBUG) {
                         modelsUtil = $injector.get('modelsUtil'),
                         shouldSpin = rejection.config.activitySpinner === true,
                         enableUI = function () {
-                            $rootScope.$broadcast('disableUI', false);
+                            $rootScope.disableUI(false);
                         },
                         reject,
                         models,
@@ -1209,7 +1209,7 @@ if (window.DEBUG) {
                         $timeout,
                         overrideSnackbarError,
                         currentAccount = $injector.get('currentAccount'),
-                        shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
+                        shouldDisable = (rejection.config.disableUI === true);
 
                     if (shouldSpin) {
                         $rootScope.activitySpinner.stop();
@@ -1304,10 +1304,10 @@ if (window.DEBUG) {
                     response: handleResponse,
                     responseError: handleResponse,
                     request: function (config) {
-                        var shouldDisable = (config.disableUI === undefined || config.disableUI === true),
+                        var shouldDisable = config.disableUI === true,
                             shouldSpin = config.activitySpinner === true;
                         if (shouldDisable) {
-                            $rootScope.$broadcast('disableUI', true);
+                            $rootScope.disableUI(true);
                         }
                         if (shouldSpin) {
                             $rootScope.activitySpinner.start();
@@ -10997,8 +10997,6 @@ function msieversion() {
 
                             endpoint.post('blob_upload_url', '11', {
                                 upload_url: endpoint.url
-                            }, {
-                                disableUI: false
                             }).then(function (response) {
                                 form.attr('action', response.data.upload_url);
                                 ctrl.$setDirty();
@@ -11312,9 +11310,7 @@ function msieversion() {
                         model = models[config.kind],
                         search = {},
                         args,
-                        opts = {
-                            disableUI: false
-                        },
+                        opts = {},
                         override = config.ui.specifics.override || {},
                         repackMemory = function () {
                             config.ui.specifics._mapEntities = {};
@@ -12372,7 +12368,8 @@ function msieversion() {
                                                 }
                                                 // create rpc from root args's action model and action id
                                                 promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     $scope.response = response;
@@ -14751,7 +14748,7 @@ function msieversion() {
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    $rootScope.$broadcast('disableUI', true);
+                    $rootScope.disableUI(true);
                     var clickElement = getClickElement(scope.modalOptions),
                         ready;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
@@ -14842,7 +14839,7 @@ function msieversion() {
                             scope.$emit('modalOpened');
                             scope.$broadcast('modalOpened');
                             scope.$apply();
-                            $rootScope.$broadcast('disableUI', false);
+                            $rootScope.disableUI(false);
                             if (scope.modalOptions.fullScreen) {
                                 hidePrevModal(element);
                             }
@@ -15486,7 +15483,9 @@ function msieversion() {
 
                         $scope.config.confirm = function () {
                             if ($scope.validateForm()) {
-                                var promise = models[entity.kind].actions.sudo($scope.args);
+                                var promise = models[entity.kind].actions.sudo($scope.args, {
+                                    disableUI: true
+                                });
                                 promise.then(function (response) {
                                     if (config.onConfirm) {
                                         config.onConfirm(response.data.entity);
@@ -16109,7 +16108,8 @@ function msieversion() {
                                         }
                                         config.prepareReadArguments($scope);
                                         var promise = models[config.kind].actions[$scope.args.action_id]($scope.args, {
-                                            activitySpinner: true
+                                            activitySpinner: true,
+                                            disableUI: true
                                         });
 
                                         promise.then(function (response) {
@@ -16375,9 +16375,6 @@ function msieversion() {
                                             }
                                             theConfig.args.search.options.start_cursor = loadConfig.runLast ? null : this.cursor;
                                             this.loading = !loadConfig.runLast;
-                                            $.extend(theConfig.config, {
-                                                disableUI: false
-                                            });
                                             promise = that.actions[theConfig.action || 'search'](theConfig.args, theConfig.config);
                                             promise.error(function (response) {
                                                 paginate.more = false;
@@ -16549,9 +16546,6 @@ function msieversion() {
                                         if (!loadConfig.rpcOptions) {
                                             loadConfig.rpcOptions = {};
                                         }
-                                        $.extend(loadConfig.rpcOptions, {
-                                            disableUI: false
-                                        });
 
                                         promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc, loadConfig.rpcOptions));
 
@@ -18003,7 +17997,7 @@ angular.module('app')
                         }
 
                         scope.$broadcast('ngUploadSubmit');
-                        $rootScope.$broadcast('disableUI', true);
+                        $rootScope.disableUI(true);
 
                     });
 
@@ -18062,7 +18056,7 @@ angular.module('app')
                                 errorFn(scope, response);
                             }
                         }
-                        $rootScope.$broadcast('disableUI', false);
+                        $rootScope.disableUI(false);
 
                         if (noErrors) {
                             scope.$broadcast('ngUploadComplete', content);
@@ -18226,8 +18220,6 @@ angular.module('app')
                                 $scope.$state.promise(function () {
                                     return $http.post($state.engineHref('login', {
                                         provider: '1'
-                                    }, {
-                                        disableUI: false
                                     }), {
                                         action_id: 'login',
                                         action_model: '11',
@@ -18464,6 +18456,8 @@ angular.module('app')
                         var that = this;
                         that.actions.logout({
                             key: accountKey
+                        }, {
+                            disableUI: true
                         }).then(function (response) {
                             endpoint.removeCache();
                             $.extend(currentAccount, response.data.entity);
@@ -18537,7 +18531,7 @@ angular.module('app')
                         }
                         models['34'].actions.read({
                             key: $state.params.key
-                        }, {disableUI: false}).then(function (response) {
+                        }).then(function (response) {
                             if (gorder) {
                                 helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'ui']);
                             }
@@ -18718,7 +18712,7 @@ angular.module('app')
                                         updatedAddress = $scope.args,
                                         promise;
                                     if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                        promise = models['13'].get(updatedAddress.region, updatedAddress.country, {disableUI: false});
+                                        promise = models['13'].get(updatedAddress.region, updatedAddress.country);
                                         promise.then(function (region) {
                                             if (region) {
                                                 updatedAddress._region = region;
@@ -18728,7 +18722,7 @@ angular.module('app')
                                     }
 
                                     if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
-                                        promise = models['12'].get(updatedAddress.country, {disableUI: false});
+                                        promise = models['12'].get(updatedAddress.country);
                                         promise.then(function (country) {
                                             if (country) {
                                                 updatedAddress._country = country;
@@ -19172,7 +19166,8 @@ angular.module('app')
                                                 models['31'].actions.publish({
                                                     key: $scope.entity.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogPublished');
                                                     updateState(response.data.entity);
@@ -19185,7 +19180,8 @@ angular.module('app')
                                                 models['31'].actions.discontinue({
                                                     key: $scope.entity.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogDiscontinued');
                                                     updateState(response.data.entity);
@@ -19202,8 +19198,6 @@ angular.module('app')
                                                             read_arguments: {
                                                                 cover: {}
                                                             }
-                                                        }, {
-                                                            disableUI: false
                                                         }).then(function (response) {
                                                             snackbar.showK('catalogDuplicated');
                                                             callback(response.data.entity);
@@ -19216,7 +19210,7 @@ angular.module('app')
                                                         channel: response.token
                                                     }, {
                                                         activitySpinner: true,
-                                                        disableUI: false
+                                                        disableUI: true
                                                     });
                                                 });
                                             });
@@ -19781,8 +19775,6 @@ angular.module('app')
                                                                                     }
                                                                                 }
                                                                             }
-                                                                        }, {
-                                                                            disableUI: false
                                                                         }).then(function (response2) {
 
                                                                             var image = _.findWhere($scope.args._images, {
@@ -19793,7 +19785,6 @@ angular.module('app')
                                                                                     if (!_.findWhere(image.pricetags, {
                                                                                             key: response.pricetag_key
                                                                                         })) {
-                                                                                        console.log(response);
                                                                                         image.pricetags.push(value);
                                                                                     }
                                                                                 });
@@ -19820,7 +19811,7 @@ angular.module('app')
                                                                         }
                                                                     }, {
                                                                         activitySpinner: true,
-                                                                        disableUI: false
+                                                                        disableUI: true
                                                                     });
                                                                 });
                                                             });
@@ -20102,7 +20093,8 @@ angular.module('app')
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args, {
                                                     activitySpinner: !hideSpinner,
-                                                    timeout: timeout
+                                                    timeout: timeout,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {
@@ -20308,8 +20300,6 @@ angular.module('app')
                                 return that.actions.read({
                                     key: catalogKey,
                                     read_arguments: readArguments
-                                }, {
-                                    disableUI: false
                                 }).then(function (response) {
                                     var catalog = response.data.entity,
                                         fakeScope = (function () {
@@ -20576,11 +20566,7 @@ angular.module('app')
                                                     }
                                                 }
                                             }
-                                        }, {
-                                            disableUI: false
-                                        }) : models['34'].current(sellerKey, {
-                                            disableUI: false
-                                        })).then(function (response) {
+                                        }) : models['34'].current(sellerKey)).then(function (response) {
                                             var order = response.data.entity;
                                             $scope.order = order;
                                             if (order.id) {
@@ -20804,6 +20790,7 @@ angular.module('app')
                                             quantity: $scope.productManager.quantity,
                                             variant_signature: $scope.currentVariation
                                         }, {
+                                            disableUI: true,
                                             handleError: GLOBAL_CONFIG.backendErrorHandling.productOutOfStock
                                         });
                                     }).then(function (response) {
@@ -20898,7 +20885,6 @@ angular.module('app')
                                         }
                                     }
                                 }, {
-                                    disableUI: false,
                                     ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
@@ -21547,13 +21533,12 @@ angular.module('app')
                                 };
                                 $scope.$state.promise(function () {
                                     return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
-                                        disableUI: false,
                                         ignoreErrors: 2
                                     });
                                 }, function ($scope, response) {
 
                                     $scope.close = function (override) {
-                                        if (override !== true && $scope.messages.logMessages.length) {
+                                        if (override !== true && ($scope.messages && $scope.messages.logMessages.length)) {
                                             modals.confirm('discard', function () {
                                                 $scope.close(true);
                                             });
@@ -21798,8 +21783,7 @@ angular.module('app')
                                                     ]
                                                 }
                                             }, {
-                                                cache: true,
-                                                disableUI: false
+                                                cache: true
                                             }).then(function (response) {
                                                 addr.region = response.data.entities[0].key;
                                             });
@@ -21977,8 +21961,6 @@ angular.module('app')
                                                                 _agent: {}
                                                             }
                                                         }
-                                                    }, {
-                                                        disableUI: false
                                                     }).then(function (response) {
                                                         var map = {},
                                                             changed = false,
@@ -22020,9 +22002,7 @@ angular.module('app')
                                             var newMessage = angular.copy(message);
                                             newMessage.key = $scope.order.key;
                                             newMessage.message = newMessage.body;
-                                            return models['34'].actions.log_message(newMessage, {
-                                                disableUI: false
-                                            }).then(function (response) {
+                                            return models['34'].actions.log_message(newMessage).then(function (response) {
                                                 $scope.messages.forceReflow();
                                                 if (!response.data.entity) {
                                                     return;
@@ -22060,9 +22040,7 @@ angular.module('app')
                                             if (justMessage) {
                                                 return newMessage;
                                             }
-                                            return models['34'].actions[action](copydraft, {
-                                                disableUI: false
-                                            }).then(success, failure);
+                                            return models['34'].actions[action](copydraft).then(success, failure);
                                         },
                                         forceReflow: function () {
                                             $scope.messages.sent = new Date().getTime();
@@ -22135,8 +22113,6 @@ angular.module('app')
                                                         $scope.messages.seen = true;
                                                         models['34'].actions.see_messages({
                                                             key: $scope.order.key
-                                                        }, {
-                                                            disableUI: false
                                                         });
                                                     }
                                                     $scope.messages.forceReflow();
@@ -22584,6 +22560,18 @@ angular.module('app')
             loaded: false
         };
 
+        $scope.$watch(function maybeRemoveSearchResult() {
+            var maybe = false;
+            $scope.search.results.iremove(function (ent) {
+                var truth = (!ent.id || ent._state === 'deleted') || (ent.state === 'order' && carts);
+                if (!maybe) {
+                    maybe = truth;
+                }
+                return truth;
+            });
+            return maybe;
+        }, angular.noop);
+
         $scope.view = function (order, $event) {
             models['34'].manageModal(order, order._seller, undefined, {
                 sellerMode: carts,
@@ -22689,7 +22677,7 @@ angular.module('app')
                                     updatedAddress = $scope.args,
                                     promise;
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                    promise = models['13'].get(updatedAddress.region, updatedAddress.country, {disableUI: false});
+                                    promise = models['13'].get(updatedAddress.region, updatedAddress.country);
                                     promise.then(function (region) {
                                         if (region) {
                                             updatedAddress._region = region;
@@ -22699,7 +22687,7 @@ angular.module('app')
                                 }
 
                                 if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
-                                    promise = models['12'].get(updatedAddress.country, {disableUI: false});
+                                    promise = models['12'].get(updatedAddress.country);
                                     promise.then(function (country) {
                                         if (country) {
                                             updatedAddress._country = country;
@@ -23311,7 +23299,6 @@ angular.module('app')
                                         _content: {}
                                     }
                                 }, {
-                                    disableUI: false,
                                     ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
@@ -23712,6 +23699,10 @@ angular.module('app')
             });
 
     })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
+        $rootScope.disableUI = function (state) {
+            $rootScope.disableUIState = state;
+            $rootScope.$broadcast('disableUI', state);
+        };
         $state.engineHref = function () {
             var path = $state.href.apply($state, arguments);
             if (window.ENGINE.DESKTOP.ACTIVE) {
