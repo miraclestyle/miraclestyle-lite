@@ -343,6 +343,9 @@
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
+                    if (!openedWindows.length()) {
+                        $rootScope.overlays = false;
+                    }
                     $(window).triggerHandler('modal.close');
                     defer.resolve();
                 });
@@ -404,6 +407,7 @@
                 openedWindows.top().value.modalDomEl = modalDomEl;
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
+                $rootScope.overlays = true;
 
                 if (!modal.noEscape) {
                     modalInstance.esc = function (e) {

@@ -1616,6 +1616,7 @@
                                 });
                             }, 30000);
                         };
+                    scope.thing = attrs.pollResultsThing;
                     scope.newItems = [];
                     scope.seeNewItems = function () {
                         scope.config.results.prepend(scope.newItems);
