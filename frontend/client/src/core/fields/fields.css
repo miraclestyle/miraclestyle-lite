@@ -20,7 +20,7 @@
     z-index: 2;
 }
 
-button[disabled] .fake-button input.upload {
+button[disabled] input.upload {
     cursor: not-allowed;
 }
 
