@@ -120,7 +120,7 @@ class CatalogProductView(base.SeoOrAngular):
     data = self.api_endpoint(payload=data)
     catalog = data['entity']
     product = catalog['_images'][0]['pricetags'][0]['_product']
-    if product['variants']
+
     if as_variant and product['_instances']:
       for k, v in product['_instances'][0].items():
         if k in product and v:
