@@ -465,7 +465,7 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission(('catalog_duplicate'), condition_not_guest_and_owner_and_published),
       orm.ExecuteActionPermission(('read', 'sudo'), condition_root),
       orm.ExecuteActionPermission('cron', condition_cron),
-      orm.ExecuteActionPermission(('account_discontinue', 'discontinue', 'catalog_process_duplicate', 
+      orm.ExecuteActionPermission(('account_discontinue', 'sudo_discontinue', 'cron_discontinue', 'catalog_process_duplicate', 
                                    'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue),
       # field permissions
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
@@ -777,7 +777,37 @@ class Catalog(orm.BaseExpando):
           ]
       ),
       orm.Action(
-          id='discontinue',
+          id='sudo_discontinue',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='31', required=True)
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      Set(cfg={'s': {'_catalog.state': 'discontinued'}}),
+                      RulePrepare(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      Write(),
+                      RulePrepare(),
+                      Set(cfg={'d': {'output.entity': '_catalog'}}),
+                      # notify owner when catalog gets discontinued
+                      Notify(cfg={'s': {'subject': notifications.CATALOG_SUDO_SUBJECT,
+                                        'body': notifications.CATALOG_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
+                                  'd': {'recipient': '_catalog.root_entity._primary_email'}}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
+                  ]
+              )
+          ]
+      ),
+      orm.Action(
+          id='cron_discontinue',
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True)
           },
