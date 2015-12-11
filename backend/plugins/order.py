@@ -83,7 +83,7 @@ class OrderCronNotify(orm.BaseModel):
     def send_in_transaciton(tracker, data): # @note, this is slow, but only way to ensure that mail is 100% sent - app engine has tendency to "stop working" so we have to do this
       tracker.key.delete() # if it fails, it wont send mail
       tools.mail_send(data, render=False) # if this fails, it will not delete the entity and it will re-try again sometime
-    tools.log.debug('Sending %s trackers' % len(send_mails))
+    tools.log.debug('Sending %s trackers' % len(notifications))
     for notification in notifications:
       tracker, message_count, order = notification
       buyer = order.key_root.get()
