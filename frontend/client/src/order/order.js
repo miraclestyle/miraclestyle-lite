@@ -801,7 +801,8 @@
                                                 var promise = models['34'].actions['delete']({
                                                     key: $scope.order.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     locals.updateLiveEntity(response);
