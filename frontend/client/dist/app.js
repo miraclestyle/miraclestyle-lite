@@ -14518,6 +14518,7 @@ function msieversion() {
                                 });
                             }, 30000);
                         };
+                    scope.thing = attrs.pollResultsThing;
                     scope.newItems = [];
                     scope.seeNewItems = function () {
                         scope.config.results.prepend(scope.newItems);
@@ -14971,6 +14972,9 @@ function msieversion() {
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
+                    if (!openedWindows.length()) {
+                        $rootScope.overlays = false;
+                    }
                     $(window).triggerHandler('modal.close');
                     defer.resolve();
                 });
@@ -15032,6 +15036,7 @@ function msieversion() {
                 openedWindows.top().value.modalDomEl = modalDomEl;
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
+                $rootScope.overlays = true;
 
                 if (!modal.noEscape) {
                     modalInstance.esc = function (e) {
@@ -22221,7 +22226,8 @@ angular.module('app')
                                                 var promise = models['34'].actions['delete']({
                                                     key: $scope.order.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     locals.updateLiveEntity(response);
