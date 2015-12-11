@@ -1219,7 +1219,7 @@ body > div.modal.md-dialog.ng-isolate-scope.modal-medium.datepicker-pop .modal-d
   filter: alpha(opacity=0);
   z-index: 2; }
 
-button[disabled] .fake-button input.upload {
+button[disabled] input.upload {
   cursor: not-allowed; }
 
 md-item-content md-checkbox {

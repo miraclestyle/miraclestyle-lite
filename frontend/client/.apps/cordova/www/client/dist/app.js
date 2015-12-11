@@ -19210,7 +19210,7 @@ angular.module('app')
                                                         });
                                                     }
                                                 }).then(function (response) {
-                                                    $scope.dequeueChannel.push(response.channel[1]);
+                                                    //$scope.dequeueChannel.push(response.channel[1]);
                                                     models['31'].actions.catalog_duplicate({
                                                         key: $scope.entity.key,
                                                         channel: response.token
