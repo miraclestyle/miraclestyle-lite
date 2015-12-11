@@ -148,8 +148,6 @@
                                                             read_arguments: {
                                                                 cover: {}
                                                             }
-                                                        }, {
-                                                            disableUI: false
                                                         }).then(function (response) {
                                                             snackbar.showK('catalogDuplicated');
                                                             callback(response.data.entity);
@@ -161,8 +159,7 @@
                                                         key: $scope.entity.key,
                                                         channel: response.token
                                                     }, {
-                                                        activitySpinner: true,
-                                                        disableUI: false
+                                                        activitySpinner: true
                                                     });
                                                 });
                                             });
@@ -727,8 +724,6 @@
                                                                                     }
                                                                                 }
                                                                             }
-                                                                        }, {
-                                                                            disableUI: false
                                                                         }).then(function (response2) {
 
                                                                             var image = _.findWhere($scope.args._images, {
@@ -739,7 +734,6 @@
                                                                                     if (!_.findWhere(image.pricetags, {
                                                                                             key: response.pricetag_key
                                                                                         })) {
-                                                                                        console.log(response);
                                                                                         image.pricetags.push(value);
                                                                                     }
                                                                                 });
@@ -765,8 +759,7 @@
                                                                             }
                                                                         }
                                                                     }, {
-                                                                        activitySpinner: true,
-                                                                        disableUI: false
+                                                                        activitySpinner: true
                                                                     });
                                                                 });
                                                             });
@@ -1048,7 +1041,8 @@
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args, {
                                                     activitySpinner: !hideSpinner,
-                                                    timeout: timeout
+                                                    timeout: timeout,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {

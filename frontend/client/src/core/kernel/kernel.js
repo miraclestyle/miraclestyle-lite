@@ -458,7 +458,7 @@
                         $timeout,
                         overrideSnackbarError,
                         currentAccount = $injector.get('currentAccount'),
-                        shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
+                        shouldDisable = (rejection.config.disableUI === true);
 
                     if (shouldSpin) {
                         $rootScope.activitySpinner.stop();
@@ -553,7 +553,7 @@
                     response: handleResponse,
                     responseError: handleResponse,
                     request: function (config) {
-                        var shouldDisable = (config.disableUI === undefined || config.disableUI === true),
+                        var shouldDisable = config.disableUI === true,
                             shouldSpin = config.activitySpinner === true;
                         if (shouldDisable) {
                             $rootScope.$broadcast('disableUI', true);

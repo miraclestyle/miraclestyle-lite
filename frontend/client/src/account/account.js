@@ -119,8 +119,6 @@
                                 $scope.$state.promise(function () {
                                     return $http.post($state.engineHref('login', {
                                         provider: '1'
-                                    }, {
-                                        disableUI: false
                                     }), {
                                         action_id: 'login',
                                         action_model: '11',

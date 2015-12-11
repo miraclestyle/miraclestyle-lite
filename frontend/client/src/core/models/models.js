@@ -671,7 +671,8 @@
                                         }
                                         config.prepareReadArguments($scope);
                                         var promise = models[config.kind].actions[$scope.args.action_id]($scope.args, {
-                                            activitySpinner: true
+                                            activitySpinner: true,
+                                            disableUI: true
                                         });
 
                                         promise.then(function (response) {
@@ -937,9 +938,6 @@
                                             }
                                             theConfig.args.search.options.start_cursor = loadConfig.runLast ? null : this.cursor;
                                             this.loading = !loadConfig.runLast;
-                                            $.extend(theConfig.config, {
-                                                disableUI: false
-                                            });
                                             promise = that.actions[theConfig.action || 'search'](theConfig.args, theConfig.config);
                                             promise.error(function (response) {
                                                 paginate.more = false;
@@ -1111,9 +1109,6 @@
                                         if (!loadConfig.rpcOptions) {
                                             loadConfig.rpcOptions = {};
                                         }
-                                        $.extend(loadConfig.rpcOptions, {
-                                            disableUI: false
-                                        });
 
                                         promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc, loadConfig.rpcOptions));
 

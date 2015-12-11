@@ -56,7 +56,7 @@
                         }
                         models['34'].actions.read({
                             key: $state.params.key
-                        }, {disableUI: false}).then(function (response) {
+                        }).then(function (response) {
                             if (gorder) {
                                 helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'ui']);
                             }
@@ -237,7 +237,7 @@
                                         updatedAddress = $scope.args,
                                         promise;
                                     if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                        promise = models['13'].get(updatedAddress.region, updatedAddress.country, {disableUI: false});
+                                        promise = models['13'].get(updatedAddress.region, updatedAddress.country);
                                         promise.then(function (region) {
                                             if (region) {
                                                 updatedAddress._region = region;
@@ -247,7 +247,7 @@
                                     }
 
                                     if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
-                                        promise = models['12'].get(updatedAddress.country, {disableUI: false});
+                                        promise = models['12'].get(updatedAddress.country);
                                         promise.then(function (country) {
                                             if (country) {
                                                 updatedAddress._country = country;

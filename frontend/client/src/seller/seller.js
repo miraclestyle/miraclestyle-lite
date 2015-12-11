@@ -275,7 +275,7 @@
                                     updatedAddress = $scope.args,
                                     promise;
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                    promise = models['13'].get(updatedAddress.region, updatedAddress.country, {disableUI: false});
+                                    promise = models['13'].get(updatedAddress.region, updatedAddress.country);
                                     promise.then(function (region) {
                                         if (region) {
                                             updatedAddress._region = region;
@@ -285,7 +285,7 @@
                                 }
 
                                 if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
-                                    promise = models['12'].get(updatedAddress.country, {disableUI: false});
+                                    promise = models['12'].get(updatedAddress.country);
                                     promise.then(function (country) {
                                         if (country) {
                                             updatedAddress._country = country;
@@ -897,7 +897,6 @@
                                         _content: {}
                                     }
                                 }, {
-                                    disableUI: false,
                                     ignoreErrors: 2
                                 });
                             }, function ($scope, response) {

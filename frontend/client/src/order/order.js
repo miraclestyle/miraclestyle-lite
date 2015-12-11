@@ -113,13 +113,12 @@
                                 };
                                 $scope.$state.promise(function () {
                                     return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
-                                        disableUI: false,
                                         ignoreErrors: 2
                                     });
                                 }, function ($scope, response) {
 
                                     $scope.close = function (override) {
-                                        if (override !== true && $scope.messages.logMessages.length) {
+                                        if (override !== true && ($scope.messages && $scope.messages.logMessages.length)) {
                                             modals.confirm('discard', function () {
                                                 $scope.close(true);
                                             });
@@ -364,8 +363,7 @@
                                                     ]
                                                 }
                                             }, {
-                                                cache: true,
-                                                disableUI: false
+                                                cache: true
                                             }).then(function (response) {
                                                 addr.region = response.data.entities[0].key;
                                             });
@@ -543,8 +541,6 @@
                                                                 _agent: {}
                                                             }
                                                         }
-                                                    }, {
-                                                        disableUI: false
                                                     }).then(function (response) {
                                                         var map = {},
                                                             changed = false,
@@ -586,9 +582,7 @@
                                             var newMessage = angular.copy(message);
                                             newMessage.key = $scope.order.key;
                                             newMessage.message = newMessage.body;
-                                            return models['34'].actions.log_message(newMessage, {
-                                                disableUI: false
-                                            }).then(function (response) {
+                                            return models['34'].actions.log_message(newMessage).then(function (response) {
                                                 $scope.messages.forceReflow();
                                                 if (!response.data.entity) {
                                                     return;
@@ -626,9 +620,7 @@
                                             if (justMessage) {
                                                 return newMessage;
                                             }
-                                            return models['34'].actions[action](copydraft, {
-                                                disableUI: false
-                                            }).then(success, failure);
+                                            return models['34'].actions[action](copydraft).then(success, failure);
                                         },
                                         forceReflow: function () {
                                             $scope.messages.sent = new Date().getTime();
@@ -701,8 +693,6 @@
                                                         $scope.messages.seen = true;
                                                         models['34'].actions.see_messages({
                                                             key: $scope.order.key
-                                                        }, {
-                                                            disableUI: false
                                                         });
                                                     }
                                                     $scope.messages.forceReflow();

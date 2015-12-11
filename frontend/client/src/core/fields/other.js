@@ -63,8 +63,6 @@
 
                             endpoint.post('blob_upload_url', '11', {
                                 upload_url: endpoint.url
-                            }, {
-                                disableUI: false
                             }).then(function (response) {
                                 form.attr('action', response.data.upload_url);
                                 ctrl.$setDirty();
@@ -378,9 +376,7 @@
                         model = models[config.kind],
                         search = {},
                         args,
-                        opts = {
-                            disableUI: false
-                        },
+                        opts = {},
                         override = config.ui.specifics.override || {},
                         repackMemory = function () {
                             config.ui.specifics._mapEntities = {};

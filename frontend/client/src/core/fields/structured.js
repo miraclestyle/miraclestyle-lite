@@ -761,7 +761,8 @@
                                                 }
                                                 // create rpc from root args's action model and action id
                                                 promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     $scope.response = response;

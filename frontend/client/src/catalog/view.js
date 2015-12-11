@@ -66,8 +66,6 @@
                                 return that.actions.read({
                                     key: catalogKey,
                                     read_arguments: readArguments
-                                }, {
-                                    disableUI: false
                                 }).then(function (response) {
                                     var catalog = response.data.entity,
                                         fakeScope = (function () {
@@ -334,11 +332,7 @@
                                                     }
                                                 }
                                             }
-                                        }, {
-                                            disableUI: false
-                                        }) : models['34'].current(sellerKey, {
-                                            disableUI: false
-                                        })).then(function (response) {
+                                        }) : models['34'].current(sellerKey)).then(function (response) {
                                             var order = response.data.entity;
                                             $scope.order = order;
                                             if (order.id) {
@@ -656,7 +650,6 @@
                                         }
                                     }
                                 }, {
-                                    disableUI: false,
                                     ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
