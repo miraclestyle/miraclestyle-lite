@@ -49,7 +49,9 @@ Like Twitter, Pinterest requires an approval process to enable Rich Pin function
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="{{title}}" />
+{% if image %}
 <meta name="twitter:image" content="{{image}}">
+{% endif %}
 
 
 {# for facebook, we dont have anything else than article 
@@ -63,7 +65,9 @@ facebook, pinterest and google + uses these
 <meta property="og:type"                         content="article" /> 
 <meta property="og:url"                          content="{{path}}" /> 
 <meta property="og:title"                        content="{{title}}" /> 
+{% if image %}
 <meta property="og:image"                        content="{{image|autohttps}}" />
+{% endif %}
 <meta property="og:updated_time"                 content="{{updated}}" />
 
 

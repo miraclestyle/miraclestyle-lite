@@ -65,18 +65,8 @@ class CatalogProductView(base.SeoOrAngular):
         }
     }
 
-    variant = kwargs.get('variant')
-    raw_variant = variant
-    as_variant = False
-    if variant:
-      variant = json.loads(base64.b64decode(variant.replace('-', '=')))
-      if variant:
-        as_variant = True
-        variant_shell = []
-        for v in variant:
-          k, kv = v.iteritems().next()
-          variant_shell.append('%s: %s' % (k, kv))
-        data = {
+    def variant_data(variant_shell):
+      return {
             "action_model": "31",
             "action_id": "read",
             "key": catalog_key,
@@ -110,6 +100,19 @@ class CatalogProductView(base.SeoOrAngular):
                 }
             }
         }
+
+    variant = kwargs.get('variant')
+    raw_variant = variant
+    as_variant = False
+    if variant:
+      variant = json.loads(base64.b64decode(variant.replace('-', '=')))
+      if variant:
+        as_variant = True
+        variant_shell = []
+        for v in variant:
+          k, kv = v.iteritems().next()
+          variant_shell.append('%s: %s' % (k, kv))
+        data = variant_data(variant_shell)
 
     data = self.api_endpoint(payload=data)
     catalog = data['entity']

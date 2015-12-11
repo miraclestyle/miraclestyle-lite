@@ -46,8 +46,10 @@
 
 <meta property="og:type"                         content="product" /> 
 <meta property="og:url"                          content="{{path}}" /> 
-<meta property="og:title"                        content="{{title}}" /> 
+<meta property="og:title"                        content="{{title}}" />
+{% if image %}
 <meta property="og:image"                        content="{{image|autohttps}}" />
+{% endif %}
 <meta property="og:updated_time"                 content="{{updated}}" />
 <meta property="product:price:amount"   content="{{price}}" /> 
 <meta property="product:price:currency" content="{{currency.code}}" /> 
