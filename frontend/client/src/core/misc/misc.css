@@ -508,6 +508,10 @@ body {
     color: rgba(0, 0, 0, 0.87);
 }
 
+.headline.text-center {
+    text-align: center;
+}
+
 .display1 {
     font-size: 34px;
     font-weight: 400;
