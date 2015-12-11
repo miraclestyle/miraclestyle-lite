@@ -9895,7 +9895,7 @@ function msieversion() {
                                     var next = this._hours + inc;
                                     if (next == -1) {
                                         next = (scope._hours24 ? 23 : 12);
-                                    } else if ((scope._hours24 ? next > 24 : next > 12)) {
+                                    } else if ((scope._hours24 ? next > 23 : next > 11)) {
                                         next = 0;
                                     }
                                     this._hours = scope._hours24 ? Math.max(0, Math.min(23, next)) : Math.max(1, Math.min(12, next));
