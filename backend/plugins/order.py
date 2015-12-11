@@ -52,20 +52,15 @@ class OrderCronNotify(orm.BaseModel):
       values[key] = tools.get_attr(context, value)
     # query all trackers that pass the timeout, meaning that none touched the log_message of the order
     trackers = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).fetch(page_size)
-    count = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).count(page_size + 2) # test if there is more than 2 after this one to allow `continue` workload
+    tracker_count = OrderNotifyTracker.query(OrderNotifyTracker.timeout < datetime.datetime.now()).count(page_size + 2) # test if there is more than 2 after this one to allow `continue` workload
     delete_trackers = []
-    send_mails = []
+    notifications = []
     def delete_tracker(reason, tracker):
       delete_trackers.append((reason, tracker.key))
     for tracker in trackers:
       order_key = orm.Key(urlsafe=tracker.key_id_str)
-      tracker_buyer = False
-      tracker_seller = False
-      account_buyer = False
-      account_seller = False
-      tracker_count = 0
-      passes = any([tracker.buyer, tracker.seller])
-      if not passes:
+      message_count = 0
+      if not any([tracker.buyer, tracker.seller]):
         # if the buyer or seller do not need any notifications, delete the tracker
         delete_tracker('buyer and seller is both false', tracker)
         continue
@@ -74,28 +69,14 @@ class OrderCronNotify(orm.BaseModel):
         # this notifier does not have order, delete it
         delete_tracker('order not found', tracker)
         continue
-      _order = order
-      entity = order
       timeout = (tracker.timeout - datetime.timedelta(minutes=minutes, seconds=seconds, hours=hours))
       tools.log.debug('timeout %s' % timeout)
-      tracker_count = OrderMessage.query(OrderMessage.created >= timeout, ancestor=order_key).count()
-      if not tracker_count:
+      message_count = OrderMessage.query(OrderMessage.created >= timeout, ancestor=order_key).count()
+      if not message_count:
         # this tracker will be deleted because it does not have any messages that need sending
-        delete_tracker('tracker count', tracker)
+        delete_tracker('no messages found', tracker)
         continue
-      account_buyer = order_key._root.get()
-      account_seller = order.seller_reference._root.get()
-      if tracker.buyer:
-        tracker_buyer = account_buyer
-        if tracker_buyer:
-          tracker_buyer.read()
-        account = account_seller
-      if tracker.seller:
-        tracker_seller = account_seller
-        if tracker_seller:
-          tracker_seller.read()
-        account = account_buyer
-      send_mails.append((tracker, tracker_seller, tracker_buyer, account, tracker_count, order))
+      notifications.append((tracker, message_count, order))
     if delete_trackers:
       tools.log.debug('Delete %s trackers' % delete_trackers)
       orm.transaction(lambda: orm.delete_multi([key for reason, key in delete_trackers]), xg=True)
@@ -103,19 +84,31 @@ class OrderCronNotify(orm.BaseModel):
       tracker.key.delete() # if it fails, it wont send mail
       tools.mail_send(data, render=False) # if this fails, it will not delete the entity and it will re-try again sometime
     tools.log.debug('Sending %s trackers' % len(send_mails))
-    for send in send_mails:
-      tracker, seller, buyer, account, tracker_count, order = send
-      seller = False
-      to = buyer
-      if seller:
-        seller = True
-        to = seller
-      data = {'recipient': to._primary_email, 'account': account, 'seller': seller, 'count': tracker_count, 'entity': order}
-      tools.log.debug(data)
+    for notification in notifications:
+      tracker, message_count, order = notification
+      buyer = order_key._root.get()
+      seller = order.seller_reference._root.get()
+      recipient = None
+      account = None
+      if tracker.buyer:
+        buyer.read()
+        recipient = buyer._primary_email
+        account = seller
+      if tracker.seller:
+        seller.read()
+        recipient = seller._primary_email
+        account = buyer
+      data = {}
       data.update(values)
+      data['recipient'] = recipient
+      data['account'] = account
+      data['seller'] = seller
+      data['count'] = message_count
+      data['entity'] = order
+      tools.log.debug(data)
       tools.render_subject_and_body_templates(data) # avoid reads in transaction - this might happen if template has .foo.bar.read() stuff
       orm.transaction(lambda: send_in_transaciton(tracker, data), xg=True)
-    if count > (page_size + 1):
+    if tracker_count > (page_size + 1):
       # schedule another task to handle the next order
       data = {'action_id': 'cron_notify',
               'action_model': '34'}
