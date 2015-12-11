@@ -406,8 +406,8 @@ class Catalog(orm.BaseExpando):
   def condition_root(account, **kwargs):
     return account._root_admin
 
-  def condition_taskqueue_or_root_admin(account, **kwargs):
-    return account._is_taskqueue or account._root_admin
+  def condition_taskqueue(account, **kwargs):
+    return account._is_taskqueue
   
   def condition_cron(account, **kwargs):
     return account._is_cron
@@ -456,17 +456,17 @@ class Catalog(orm.BaseExpando):
 
   _permissions = [
       orm.ExecuteActionPermission('prepare', condition_not_guest),
-      orm.ExecuteActionPermission(('create', 'read'), condition_not_guest_and_owner_or_root),
+      orm.ExecuteActionPermission('create', condition_not_guest_and_owner_or_root),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('read', condition_published_or_indexed),
       orm.ExecuteActionPermission('update', condition_update),
-      orm.ExecuteActionPermission(('publish', 'catalog_upload_images', 'product_upload_images',
+      orm.ExecuteActionPermission(('read', 'publish', 'catalog_upload_images', 'product_upload_images',
                                    'product_instance_upload_images', 'catalog_pricetag_duplicate'), condition_not_guest_and_owner_and_draft),
       orm.ExecuteActionPermission(('catalog_duplicate'), condition_not_guest_and_owner_and_published),
-      orm.ExecuteActionPermission('sudo', condition_root),
+      orm.ExecuteActionPermission(('read', 'sudo'), condition_root),
       orm.ExecuteActionPermission('cron', condition_cron),
-      orm.ExecuteActionPermission(('account_discontinue', 'discontinue', 'catalog_process_duplicate', 
-                                   'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue_or_root_admin),
+      orm.ExecuteActionPermission(('account_discontinue', 'sudo_discontinue', 'cron_discontinue', 'catalog_process_duplicate', 
+                                   'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue),
       # field permissions
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                'state', 'cover', '_images'), condition_not_guest_and_owner_or_root),
@@ -777,7 +777,37 @@ class Catalog(orm.BaseExpando):
           ]
       ),
       orm.Action(
-          id='discontinue',
+          id='sudo_discontinue',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='31', required=True)
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      Set(cfg={'s': {'_catalog.state': 'discontinued'}}),
+                      RulePrepare(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      Write(),
+                      RulePrepare(),
+                      Set(cfg={'d': {'output.entity': '_catalog'}}),
+                      # notify owner when catalog gets discontinued
+                      Notify(cfg={'s': {'subject': notifications.CATALOG_SUDO_SUBJECT,
+                                        'body': notifications.CATALOG_SUDO_DISCONTINUE_BODY, 'sender': settings.NOTIFY_EMAIL},
+                                  'd': {'recipient': '_catalog.root_entity._primary_email'}}),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
+                  ]
+              )
+          ]
+      ),
+      orm.Action(
+          id='cron_discontinue',
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True)
           },

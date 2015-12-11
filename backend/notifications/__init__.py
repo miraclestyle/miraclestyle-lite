@@ -29,6 +29,7 @@ CATALOG_PUBLISH_BODY = template('catalog/publish_body.html')
 
 CATALOG_SUDO_SUBJECT = template('catalog/sudo_subject.html')
 CATALOG_SUDO_BODY = template('catalog/sudo_body.html')
+CATALOG_SUDO_DISCONTINUE_BODY = template('catalog/sudo_discontinue_body.html')
 
 CATALOG_DISCONTINUE_SUBJECT = template('catalog/discontinue_subject.html')
 CATALOG_DISCONTINUE_BODY = template('catalog/discontinue_body.html')

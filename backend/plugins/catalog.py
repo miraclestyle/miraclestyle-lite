@@ -137,9 +137,8 @@ class CatalogDiscontinue(orm.BaseModel):
     if account is not None:
       catalogs = Catalog.query(Catalog.state.IN(['published', 'indexed']), ancestor=account.key).fetch(limit=4)
     for catalog in catalogs:
-      data = {'action_id': 'discontinue',
+      data = {'action_id': 'sudo_discontinue',
               'action_model': '31',
-              'message': 'Expired',
               'key': catalog.key.urlsafe()}
       context._callbacks.append(('callback', data))
     if catalogs:
@@ -161,9 +160,8 @@ class CatalogCronDiscontinue(orm.BaseModel):
     catalogs = Catalog.query(Catalog.state.IN(['published', 'indexed']),
                              Catalog.discontinue_date <= datetime.datetime.now()).fetch(limit=limit)
     for catalog in catalogs:
-      data = {'action_id': 'discontinue',
+      data = {'action_id': 'cron_discontinue',
               'action_model': '31',
-              'message': 'Expired',
               'key': catalog.key.urlsafe()}
       context._callbacks.append(('callback', data))
 
