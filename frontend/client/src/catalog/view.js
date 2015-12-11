@@ -556,6 +556,7 @@
                                             quantity: $scope.productManager.quantity,
                                             variant_signature: $scope.currentVariation
                                         }, {
+                                            disableUI: true,
                                             handleError: GLOBAL_CONFIG.backendErrorHandling.productOutOfStock
                                         });
                                     }).then(function (response) {

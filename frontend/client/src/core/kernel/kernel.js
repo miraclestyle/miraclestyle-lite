@@ -449,7 +449,7 @@
                         modelsUtil = $injector.get('modelsUtil'),
                         shouldSpin = rejection.config.activitySpinner === true,
                         enableUI = function () {
-                            $rootScope.$broadcast('disableUI', false);
+                            $rootScope.disableUI(false);
                         },
                         reject,
                         models,
@@ -556,7 +556,7 @@
                         var shouldDisable = config.disableUI === true,
                             shouldSpin = config.activitySpinner === true;
                         if (shouldDisable) {
-                            $rootScope.$broadcast('disableUI', true);
+                            $rootScope.disableUI(true);
                         }
                         if (shouldSpin) {
                             $rootScope.activitySpinner.start();

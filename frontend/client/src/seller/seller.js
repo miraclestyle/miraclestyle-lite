@@ -170,6 +170,18 @@
             loaded: false
         };
 
+        $scope.$watch(function maybeRemoveSearchResult() {
+            var maybe = false;
+            $scope.search.results.iremove(function (ent) {
+                var truth = (!ent.id || ent._state === 'deleted') || (ent.state === 'order' && carts);
+                if (!maybe) {
+                    maybe = truth;
+                }
+                return truth;
+            });
+            return maybe;
+        }, angular.noop);
+
         $scope.view = function (order, $event) {
             models['34'].manageModal(order, order._seller, undefined, {
                 sellerMode: carts,

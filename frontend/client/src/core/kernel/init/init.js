@@ -196,6 +196,10 @@
             });
 
     })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
+        $rootScope.disableUI = function (state) {
+            $rootScope.disableUIState = state;
+            $rootScope.$broadcast('disableUI', state);
+        };
         $state.engineHref = function () {
             var path = $state.href.apply($state, arguments);
             if (window.ENGINE.DESKTOP.ACTIVE) {

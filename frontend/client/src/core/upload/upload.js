@@ -157,7 +157,7 @@ angular.module('app')
                         }
 
                         scope.$broadcast('ngUploadSubmit');
-                        $rootScope.$broadcast('disableUI', true);
+                        $rootScope.disableUI(true);
 
                     });
 
@@ -216,7 +216,7 @@ angular.module('app')
                                 errorFn(scope, response);
                             }
                         }
-                        $rootScope.$broadcast('disableUI', false);
+                        $rootScope.disableUI(false);
 
                         if (noErrors) {
                             scope.$broadcast('ngUploadComplete', content);

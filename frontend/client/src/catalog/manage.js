@@ -118,7 +118,8 @@
                                                 models['31'].actions.publish({
                                                     key: $scope.entity.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogPublished');
                                                     updateState(response.data.entity);
@@ -131,7 +132,8 @@
                                                 models['31'].actions.discontinue({
                                                     key: $scope.entity.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogDiscontinued');
                                                     updateState(response.data.entity);
@@ -159,7 +161,8 @@
                                                         key: $scope.entity.key,
                                                         channel: response.token
                                                     }, {
-                                                        activitySpinner: true
+                                                        activitySpinner: true,
+                                                        disableUI: true
                                                     });
                                                 });
                                             });
@@ -759,7 +762,8 @@
                                                                             }
                                                                         }
                                                                     }, {
-                                                                        activitySpinner: true
+                                                                        activitySpinner: true,
+                                                                        disableUI: true
                                                                     });
                                                                 });
                                                             });

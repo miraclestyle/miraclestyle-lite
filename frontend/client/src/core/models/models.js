@@ -48,7 +48,9 @@
 
                         $scope.config.confirm = function () {
                             if ($scope.validateForm()) {
-                                var promise = models[entity.kind].actions.sudo($scope.args);
+                                var promise = models[entity.kind].actions.sudo($scope.args, {
+                                    disableUI: true
+                                });
                                 promise.then(function (response) {
                                     if (config.onConfirm) {
                                         config.onConfirm(response.data.entity);

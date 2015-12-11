@@ -120,7 +120,7 @@
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    $rootScope.$broadcast('disableUI', true);
+                    $rootScope.disableUI(true);
                     var clickElement = getClickElement(scope.modalOptions),
                         ready;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
@@ -211,7 +211,7 @@
                             scope.$emit('modalOpened');
                             scope.$broadcast('modalOpened');
                             scope.$apply();
-                            $rootScope.$broadcast('disableUI', false);
+                            $rootScope.disableUI(false);
                             if (scope.modalOptions.fullScreen) {
                                 hidePrevModal(element);
                             }

@@ -355,6 +355,8 @@
                         var that = this;
                         that.actions.logout({
                             key: accountKey
+                        }, {
+                            disableUI: true
                         }).then(function (response) {
                             endpoint.removeCache();
                             $.extend(currentAccount, response.data.entity);
