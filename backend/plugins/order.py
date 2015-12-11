@@ -86,7 +86,7 @@ class OrderCronNotify(orm.BaseModel):
     tools.log.debug('Sending %s trackers' % len(send_mails))
     for notification in notifications:
       tracker, message_count, order = notification
-      buyer = order_key._root.get()
+      buyer = order.key_root.get()
       seller = order.seller_reference._root.get()
       recipient = None
       account = None
