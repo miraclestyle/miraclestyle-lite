@@ -406,8 +406,8 @@ class Catalog(orm.BaseExpando):
   def condition_root(account, **kwargs):
     return account._root_admin
 
-  def condition_taskqueue_or_root_admin(account, **kwargs):
-    return account._is_taskqueue or account._root_admin
+  def condition_taskqueue(account, **kwargs):
+    return account._is_taskqueue
   
   def condition_cron(account, **kwargs):
     return account._is_cron
@@ -466,7 +466,7 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission('sudo', condition_root),
       orm.ExecuteActionPermission('cron', condition_cron),
       orm.ExecuteActionPermission(('account_discontinue', 'discontinue', 'catalog_process_duplicate', 
-                                   'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue_or_root_admin),
+                                   'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue),
       # field permissions
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                'state', 'cover', '_images'), condition_not_guest_and_owner_or_root),
