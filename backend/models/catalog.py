@@ -395,10 +395,6 @@ class Catalog(orm.BaseExpando):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "draft"
 
-  def condition_not_guest_and_owner_and_draft(account, entity, **kwargs):
-    return not account._is_guest and entity._original.key_root == account.key \
-        and entity._original.state == "draft"
-
   def condition_deny_write_field_permission(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "draft" and action.key_id_str == "update"
@@ -461,14 +457,13 @@ class Catalog(orm.BaseExpando):
   _permissions = [
       orm.ExecuteActionPermission('prepare', condition_not_guest),
       orm.ExecuteActionPermission('create', condition_not_guest_and_owner_or_root),
-      orm.ExecuteActionPermission('read', condition_not_guest_and_owner_and_draft),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('read', condition_published_or_indexed),
       orm.ExecuteActionPermission('update', condition_update),
-      orm.ExecuteActionPermission(('publish', 'catalog_upload_images', 'product_upload_images',
+      orm.ExecuteActionPermission(('read', 'publish', 'catalog_upload_images', 'product_upload_images',
                                    'product_instance_upload_images', 'catalog_pricetag_duplicate'), condition_not_guest_and_owner_and_draft),
       orm.ExecuteActionPermission(('catalog_duplicate'), condition_not_guest_and_owner_and_published),
-      orm.ExecuteActionPermission('read', 'sudo', condition_root),
+      orm.ExecuteActionPermission(('read', 'sudo'), condition_root),
       orm.ExecuteActionPermission('cron', condition_cron),
       orm.ExecuteActionPermission(('account_discontinue', 'discontinue', 'catalog_process_duplicate', 
                                    'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue),
