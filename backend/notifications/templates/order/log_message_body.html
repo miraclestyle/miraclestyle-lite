@@ -1,26 +1,26 @@
 {% extends 'base.html' %}
 
-{% macro order_link(entity, seller) -%}{{absolute_url('%s/%s/%s' % ('seller' if seller else 'buyer', 'order' if entity.state == 'order' else 'cart', entity.key_urlsafe))}}{%- endmacro %}
+{% macro order_link(entity, for_seller) -%}{{absolute_url('%s/%s/%s' % ('seller' if for_seller else 'buyer', 'cart' if entity.state == 'cart' and not for_seller else 'order', entity.key_urlsafe))}}{%- endmacro %}
 
 
 {% block body %}
 <span>
   {% if account.key == entity.key._root %}
-  Buyer left {{count}} messages on your order
-  "<a href="{{order_link(entity, seller)}}">#{{entity.key_id}}</a>."
+  Buyer left {{message_count}} {% if message_count > 1 %}messages{% else %}message{% endif %} on your order
+  "<a href="{{order_link(entity, for_seller)}}">#{{entity.key_id}}</a>."
   {% endif %}
   {% if account.key == entity.seller_reference._root %}
   {% if entity.state == 'cart' %}
   Seller
   "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name}}</a>"
-  left {{count}} messages on your
-  <a href="{{order_link(entity, seller)}}">cart</a>.
+  left {{message_count}} {% if message_count > 1 %}messages{% else %}message{% endif %} on your
+  <a href="{{order_link(entity, for_seller)}}">cart</a>.
   {% endif %}
   {% if entity.state != 'cart' %}
   Seller
   "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name}}</a>"
-  left {{count}} messages on your order
-  "<a href="{{order_link(entity, seller)}}">#{{entity.key_id}}</a>."
+  left {{message_count}} {% if message_count > 1 %}messages{% else %}message{% endif %} on your order
+  "<a href="{{order_link(entity, for_seller)}}">#{{entity.key_id}}</a>."
   {% endif %}
   {% endif %}
 </span>
