@@ -3,7 +3,7 @@
 {% block body %}
 <span>
   System received the following payment notification for your order
-  "<a href="{{absolute_url('%s/%s/%s' % ('seller' if seller else 'buyer', 'order' if entity.state == 'order' else 'cart', entity.key_urlsafe))}}">#{{entity.key_id}}</a>":
+  "<a href="{{absolute_url('%s/%s/%s' % ('seller' if for_seller else 'buyer', 'cart' if entity.state == 'cart' and not for_seller else 'order', entity.key_urlsafe))}}">#{{entity.key_id}}</a>":
 </span><br/><br/>
 <span>
   {{entity._messages.value[0].body|nl2br}}
