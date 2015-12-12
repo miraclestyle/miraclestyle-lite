@@ -194,6 +194,9 @@ md-backdrop.md-opaque {
   padding-left: 16px;
   padding-right: 16px; }
 
+.card-load-more .headline {
+  text-transform: uppercase; }
+
 md-checkbox {
   display: block;
   cursor: pointer;
