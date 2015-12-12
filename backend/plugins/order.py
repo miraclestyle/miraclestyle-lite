@@ -90,6 +90,7 @@ class OrderCronNotify(orm.BaseModel):
       seller = order.seller_reference._root.get()
       recipient = None
       account = None
+      for_seller = False
       if tracker.buyer:
         buyer.read()
         recipient = buyer._primary_email
@@ -98,13 +99,10 @@ class OrderCronNotify(orm.BaseModel):
         seller.read()
         recipient = seller._primary_email
         account = buyer
+        for_seller = True
       data = {}
       data.update(values)
-      data['recipient'] = recipient
-      data['account'] = account
-      data['seller'] = seller
-      data['count'] = message_count
-      data['entity'] = order
+      data.update({'recipient': recipient, 'account': account, 'for_seller': for_seller, 'message_count': message_count, 'entity': order})
       tools.log.debug(data)
       tools.render_subject_and_body_templates(data) # avoid reads in transaction - this might happen if template has .foo.bar.read() stuff
       orm.transaction(lambda: send_in_transaciton(tracker, data), xg=True)
