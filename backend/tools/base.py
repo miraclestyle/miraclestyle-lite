@@ -116,59 +116,8 @@ def blob_create_upload_url(upload_url, gs_bucket_name):
 JINJA_ENV = Environment(loader=FileSystemLoader([os.path.join(os.path.dirname(os.path.dirname(__file__)), 'notifications', 'templates')]))
 
 
-def _urlunsplit(scheme=None, netloc=None, path=None, query=None,
-                fragment=None):
-  """Like ``urlparse.urlunsplit``, but will escape values and urlencode and
-  sort query arguments.
-  :param scheme:
-      URI scheme, e.g., `http` or `https`.
-  :param netloc:
-      Network location, e.g., `localhost:8080` or `www.google.com`.
-  :param path:
-      URI path.
-  :param query:
-      URI query as an escaped string, or a dictionary or list of key-values
-      tuples to build a query.
-  :param fragment:
-      Fragment identifier, also known as "anchor".
-  :returns:
-      An assembled absolute or relative URI.
-  """
-  if not scheme or not netloc:
-    scheme = None
-    netloc = None
-
-  if path:
-    path = urllib.quote(_to_utf8(path))
-
-  if query and not isinstance(query, basestring):
-    if isinstance(query, dict):
-      query = query.iteritems()
-
-    # Sort args: commonly needed to build signatures for services.
-    query = urllib.urlencode(sorted(query))
-
-  if fragment:
-    fragment = urllib.quote(_to_utf8(fragment))
-  return urlparse.urlunsplit((scheme, netloc, path, query, fragment))
-
-
-def absolute_url(path, query=None, kwargs=None):
-  """Returns a URI for this route.
-  .. seealso:: :meth:`Router.build`.
-  """
-  if kwargs is None:
-    kwargs = {}
-  request = webapp2.get_request()
-  scheme = kwargs.pop('_scheme', None)
-  netloc = kwargs.pop('_netloc', None)
-  anchor = kwargs.pop('_fragment', None)
-  full = kwargs.pop('_full', True) and not scheme and not netloc
-
-  if full or scheme or netloc:
-    netloc = netloc or request.host
-    scheme = scheme or request.scheme
-  return _urlunsplit(scheme, netloc, path, query, anchor)
+def absolute_url(path):
+  return '%s/%s' % (settings.get_host_url(), path)
 
 
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
