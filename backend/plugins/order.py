@@ -348,8 +348,8 @@ class OrderProductSpecsFormat(orm.BaseModel):
         total_weight = total_weight + (product.weight * product.quantity)
       if product.volume is not None:
         total_volume = total_volume + (product.volume * product.quantity)
-    order._total_weight = total_weight
-    order._total_volume = total_volume
+    order._total_weight = tools.format_value(total_weight, weight_uom)
+    order._total_volume = tools.format_value(total_volume, volume_uom)
 
 
 # This is system plugin, which means end user can not use it!
