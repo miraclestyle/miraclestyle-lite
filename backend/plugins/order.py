@@ -531,6 +531,7 @@ class OrderNotify(orm.BaseModel):
     request = context.input['request']
     ipn = request['params']
     # validate if the request came from ipn
+    tools.log.debug('IPN: %s' % (ipn))
     ip_address = os.environ.get('REMOTE_ADDR')
     result_content = None
     valid = False
