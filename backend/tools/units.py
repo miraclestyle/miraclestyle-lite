@@ -45,7 +45,7 @@ def convert_value(value, value_uom, conversion_uom):
     raise UnitConversionError('incompatible_units')
 
 
-def round_value(value, uom, rounding=ROUND_HALF_EVEN):
+def round_value(value, uom, rounding=ROUND_HALF_UP):
   if not isinstance(value, Decimal):
     value = Decimal(value)
   if not hasattr(uom, 'rounding') or not isinstance(uom.rounding, Decimal):
@@ -53,7 +53,7 @@ def round_value(value, uom, rounding=ROUND_HALF_EVEN):
   return (value / uom.rounding).quantize(Decimal('1.'), rounding=rounding) * uom.rounding
 
 
-def format_value(value, uom, rounding=ROUND_HALF_EVEN):
+def format_value(value, uom, rounding=ROUND_HALF_UP):
   if not isinstance(value, Decimal):
     value = Decimal(value)
   if not hasattr(uom, 'digits') or not isinstance(uom.digits, (int, long)):
