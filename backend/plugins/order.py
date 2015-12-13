@@ -372,22 +372,23 @@ class OrderLineFormat(orm.BaseModel):
         line.subtotal = tools.format_value((product.unit_price * product.quantity), order.currency.value)
         discount_subtotal = tools.format_value('0', order.currency.value)
         if line.discount is not None:
-          discount = tools.format_value(line.discount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"
-          discount_amount = tools.format_value((line.subtotal * discount), order.currency.value)
-          discount_subtotal = line.subtotal - discount_amount
-        line.discount_subtotal = tools.format_value(discount_subtotal, order.currency.value)
-        tools.log.debug('Discount Amount: %s' % tools.format_value((line.subtotal * discount), order.currency.value))
+          discount_formated = tools.format_value(line.discount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"
+          discount_amount = tools.format_value((line.subtotal * discount_formated), order.currency.value)
+          discount_subtotal = tools.format_value((line.subtotal - discount_amount), order.currency.value)
+        line.discount_subtotal = discount_subtotal
+        tools.log.debug('Discount Amount: %s' % discount_amount)
         tax_subtotal = tools.format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
             if tax.type == 'proportional':
-              tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"  @note Using fixed formating here, since it's the percentage value, such as 17.00%.
-              tax_subtotal = tools.format_value((tax_subtotal + (line.discount_subtotal * tax_amount)), order.currency.value)
+              tax_formated = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"  @note Using fixed formating here, since it's the percentage value, such as 17.00%.
+              tax_amount = tools.format_value((line.discount_subtotal * tax_formated), order.currency.value)
+              tax_subtotal = tools.format_value((tax_subtotal + tax_amount), order.currency.value)
             elif tax.type == 'fixed':
               tax_amount = tools.format_value(tax.amount, order.currency.value)
               tax_subtotal = tools.format_value((tax_subtotal + tax_amount), order.currency.value)
         line.tax_subtotal = tax_subtotal
-        line.total = tools.format_value(line.discount_subtotal + line.tax_subtotal, order.currency.value)
+        line.total = tools.format_value((line.discount_subtotal + line.tax_subtotal), order.currency.value)
 
 
 # This is system plugin, which means end user can not use it!
@@ -406,13 +407,14 @@ class OrderCarrierFormat(orm.BaseModel):
       if carrier.taxes.value:
         for tax in carrier.taxes.value:
           if tax.type == 'proportional':
-            tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))
-            tax_subtotal = tax_subtotal + (carrier.subtotal * tax_amount)
+            tax_formated = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))
+            tax_amount = tools.format_value((carrier.subtotal * tax_formated), order.currency.value)
+            tax_subtotal = tools.format_value((tax_subtotal + tax_amount), order.currency.value)
           elif tax.type == 'fixed':
             tax_amount = tools.format_value(tax.amount, order.currency.value)
-            tax_subtotal = tax_subtotal + tax_amount
+            tax_subtotal = tools.format_value((tax_subtotal + tax_amount), order.currency.value)
       carrier.tax_subtotal = tax_subtotal
-      carrier.total = tools.format_value(carrier.subtotal + carrier.tax_subtotal, order.currency.value)
+      carrier.total = tools.format_value((carrier.subtotal + carrier.tax_subtotal), order.currency.value)
 
 
 # This is system plugin, which means end user can not use it!
@@ -436,17 +438,17 @@ class OrderFormat(orm.BaseModel):
       line.sequence = i
       product = line.product.value
       if product:
-        untaxed_amount = untaxed_amount + line.discount_subtotal
-        tax_amount = tax_amount + line.tax_subtotal
-        total_amount = total_amount + (line.discount_subtotal + line.tax_subtotal)  # we cannot use += for decimal its not supported
+        untaxed_amount = tools.format_value((untaxed_amount + line.discount_subtotal), order.currency.value)
+        tax_amount = tools.format_value((tax_amount + line.tax_subtotal), order.currency.value)
+        total_amount = tools.format_value((total_amount + line.total), order.currency.value)
     carrier = order.carrier.value
     if carrier:
-      untaxed_amount = untaxed_amount + carrier.subtotal
-      tax_amount = tax_amount + carrier.tax_subtotal
-      total_amount = total_amount + (carrier.subtotal + carrier.tax_subtotal)
-    order.untaxed_amount = tools.format_value(untaxed_amount, order.currency.value)
-    order.tax_amount = tools.format_value(tax_amount, order.currency.value)
-    order.total_amount = tools.format_value(total_amount, order.currency.value)
+      untaxed_amount = tools.format_value((untaxed_amount + carrier.subtotal), order.currency.value)
+      tax_amount = tools.format_value((tax_amount + carrier.tax_subtotal), order.currency.value)
+      total_amount = tools.format_value((total_amount + carrier.total), order.currency.value)
+    order.untaxed_amount = untaxed_amount
+    order.tax_amount = tax_amount
+    order.total_amount = total_amount
 
 
 # This is system plugin, which means end user can not use it!
