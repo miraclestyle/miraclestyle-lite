@@ -5,7 +5,7 @@ Created on Oct 10, 2013
 @authors:  Edis Sehalic (edis.sehalic@gmail.com), Elvin Kosova (elvinkosova@gmail.com)
 '''
 
-from decimal import Decimal, ROUND_HALF_EVEN, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_EVEN, ROUND_HALF_UP, ROUND_UP
 
 import errors
 
@@ -45,7 +45,7 @@ def convert_value(value, value_uom, conversion_uom):
     raise UnitConversionError('incompatible_units')
 
 
-def round_value(value, uom, rounding=ROUND_HALF_UP):
+def round_value(value, uom, rounding=ROUND_UP):
   if not isinstance(value, Decimal):
     value = Decimal(value)
   if not hasattr(uom, 'rounding') or not isinstance(uom.rounding, Decimal):
@@ -53,7 +53,7 @@ def round_value(value, uom, rounding=ROUND_HALF_UP):
   return (value / uom.rounding).quantize(Decimal('1.'), rounding=rounding) * uom.rounding
 
 
-def format_value(value, uom, rounding=ROUND_HALF_UP):
+def format_value(value, uom, rounding=ROUND_UP):
   if not isinstance(value, Decimal):
     value = Decimal(value)
   if not hasattr(uom, 'digits') or not isinstance(uom.digits, (int, long)):
