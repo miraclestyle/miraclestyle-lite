@@ -518,7 +518,6 @@ class OrderNotify(orm.BaseModel):
   _kind = 118
 
   def run(self, context):
-    tools.log.debug('Start OrderNotify execution!')
     order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context)  # will throw an error if the payment method does not exist
     context._order = order
     order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
@@ -532,7 +531,6 @@ class OrderNotify(orm.BaseModel):
     request = context.input['request']
     ipn = request['params']
     # validate if the request came from ipn
-    tools.log.debug('IPN: %s' % (ipn))
     ip_address = os.environ.get('REMOTE_ADDR')
     result_content = None
     valid = False
