@@ -370,20 +370,20 @@ class OrderLineFormat(orm.BaseModel):
           raise PluginError('product_does_not_bellong_to_seller')
         product.quantity = tools.format_value(product.quantity, product.uom.value)
         line.subtotal = tools.format_value((product.unit_price * product.quantity), order.currency.value)
+        discount_subtotal = tools.format_value('0', order.currency.value)
         if line.discount is not None:
           discount = tools.format_value(line.discount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"
-          line.discount_subtotal = tools.format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
-        else:
-          line.discount_subtotal = tools.format_value('0', order.currency.value)
+          discount_subtotal = tools.format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
+        line.discount_subtotal = discount_subtotal
         tax_subtotal = tools.format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
             if tax.type == 'proportional':
               tax_amount = tools.format_value(tax.amount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"  @note Using fixed formating here, since it's the percentage value, such as 17.00%.
-              tax_subtotal = tax_subtotal + (line.discount_subtotal * tax_amount)
+              tax_subtotal = tools.format_value((tax_subtotal + (line.discount_subtotal * tax_amount)), order.currency.value)
             elif tax.type == 'fixed':
               tax_amount = tools.format_value(tax.amount, order.currency.value)
-              tax_subtotal = tax_subtotal + tax_amount
+              tax_subtotal = tools.format_value((tax_subtotal + tax_amount), order.currency.value)
         line.tax_subtotal = tax_subtotal
         line.total = tools.format_value(line.discount_subtotal + line.tax_subtotal, order.currency.value)
 
