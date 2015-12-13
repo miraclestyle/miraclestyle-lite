@@ -37,6 +37,7 @@ class Context(orm.BaseModel):
     if not action.skip_csrf and not (context.account._is_taskqueue or context.account._is_cron):
       csrf = context.raw_input.get('_csrf')
       if csrf != '_____skipcsrf_____' and context.account._csrf != context.raw_input.get('_csrf'):
+        tools.log.warn('Invalid csrf sent, expected %s got %s' % (context.account._csrf, context.raw_input.get('_csrf')))
         raise ValueError({'invalid_csrf': True})
 
 
