@@ -345,11 +345,13 @@ class OrderProductSpecsFormat(orm.BaseModel):
         continue
       product = line.product.value
       if product.weight is not None:
-        total_weight = total_weight + (product.weight * product.quantity)
+        product_total_weight = tools.format_value((product.weight * product.quantity), weight_uom)
+        total_weight = tools.format_value((total_weight + product_total_weight), weight_uom)
       if product.volume is not None:
-        total_volume = total_volume + (product.volume * product.quantity)
-    order._total_weight = tools.format_value(total_weight, weight_uom)
-    order._total_volume = tools.format_value(total_volume, volume_uom)
+        product_total_volume = tools.format_value((product.volume * product.quantity), volume_uom)
+        total_volume = tools.format_value((total_volume + product_total_volume), volume_uom)
+    order._total_weight = total_weight
+    order._total_volume = total_volume
 
 
 # This is system plugin, which means end user can not use it!
