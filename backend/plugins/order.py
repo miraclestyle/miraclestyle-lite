@@ -373,8 +373,9 @@ class OrderLineFormat(orm.BaseModel):
         discount_subtotal = tools.format_value('0', order.currency.value)
         if line.discount is not None:
           discount = tools.format_value(line.discount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"
-          discount_subtotal = tools.format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
-        line.discount_subtotal = discount_subtotal
+          discount_amount = tools.format_value((line.subtotal * discount), order.currency.value)
+          discount_subtotal = line.subtotal - discount_amount
+        line.discount_subtotal = tools.format_value(discount_subtotal, order.currency.value)
         tools.log.debug('Discount Amount: %s' % tools.format_value((line.subtotal * discount), order.currency.value))
         tax_subtotal = tools.format_value('0', order.currency.value)
         if line.taxes.value:
