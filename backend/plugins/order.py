@@ -370,12 +370,11 @@ class OrderLineFormat(orm.BaseModel):
           raise PluginError('product_does_not_bellong_to_seller')
         product.quantity = tools.format_value(product.quantity, product.uom.value)
         line.subtotal = tools.format_value((product.unit_price * product.quantity), order.currency.value)
-        line.discount = tools.format_value(line.discount, Unit(digits=2))
         if line.discount is not None:
-          discount = line.discount * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"
+          discount = tools.format_value(line.discount, Unit(digits=2)) * tools.format_value('0.01', Unit(digits=2))  # or "/ tools.format_value('100', Unit(digits=2))"
           line.discount_subtotal = tools.format_value((line.subtotal - (line.subtotal * discount)), order.currency.value)
         else:
-          line.discount_subtotal = tools.format_value('0', Unit(digits=2))
+          line.discount_subtotal = tools.format_value('0', order.currency.value)
         tax_subtotal = tools.format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
