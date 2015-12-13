@@ -518,6 +518,7 @@ class Order(orm.BaseExpando):
       ),
       orm.Action(
           id='notify',
+          skip_csrf=True,
           arguments={
               'payment_method': orm.SuperStringProperty(required=True, choices=settings.AVAILABLE_PAYMENT_METHODS),
               'request': orm.SuperPickleProperty(),
@@ -558,7 +559,6 @@ class Order(orm.BaseExpando):
               )
           ]
       ),
-      # @todo we'll see if we will use this...
       orm.Action(
           id='see_messages',
           arguments={
