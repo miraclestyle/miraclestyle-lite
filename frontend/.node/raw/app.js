@@ -18585,7 +18585,7 @@ angular.module('app')
                         }, order = _.findWhere($scope.search.results, find);
                         loaded = true;
                         if (order) {
-                            return $scope.view(order, false);
+                            return $scope.view(order, false, viewOpts);
                         }
                         models['34'].manageModal(find, undefined, undefined, viewOpts).then(viewThen);
                     }, 300);
@@ -18595,6 +18595,8 @@ angular.module('app')
             if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewOrder) {
                 carts = false;
             }
+
+            viewOpts.cartModeRead = carts;
 
 
             $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
@@ -18619,14 +18621,18 @@ angular.module('app')
                 return maybe;
             }, angular.noop);
 
-            $scope.view = function (order, $event) {
+            $scope.view = function (order, $event, viewOpts) {
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
                     var opts = {
                         cartMode: carts,
+                        cartModeRead: carts,
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     }, viewPromise, directView = $event === false;
+                    if (viewOpts) {
+                        opts = viewOpts;
+                    }
                     if (directView) {
                         $.extend(opts, viewOpts);
                     }
@@ -21008,7 +21014,8 @@ angular.module('app')
                                     }
                                     models['19'].current().then(function (response) {
                                         models['34'].manageModal(undefined, $scope.catalog._seller, response.data.entity, {
-                                            cartMode: true
+                                            cartMode: true,
+                                            cartModeRead: true
                                         });
                                     });
                                 };
@@ -21491,6 +21498,7 @@ angular.module('app')
                         config = helpers.alwaysObject(config);
                         var args, that = this,
                             cartMode = config.cartMode,
+                            cartModeRead = config.cartModeRead,
                             sellerMode = config.sellerMode,
                             openDefer = $q.defer(),
                             openPromise = openDefer.promise,
@@ -21527,12 +21535,13 @@ angular.module('app')
                             };
                         }
 
+
                         modalOpen = {
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {
                                 $scope.dialog = {
                                     toolbar: {
-                                        title: (((order && order.state !== 'cart') || !cartMode) ? 'Order' : 'Cart'),
+                                        title: (((order && order.state && order.state !== 'cart') || !cartModeRead) ? 'Order' : 'Cart'),
                                         templateRight: 'order/toolbar_actions.html'
                                     }
                                 };
@@ -21557,7 +21566,7 @@ angular.module('app')
                                     if (response) {
                                         var errors = response.data.errors;
                                         if (errors && (errors.not_found || errors.malformed_key)) {
-                                            $scope.notFound = true;
+                                            $scope.notFound = cartModeRead === true ? 1 : 2;
                                             return;
                                         }
                                     }
@@ -21678,7 +21687,7 @@ angular.module('app')
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
-                                            return $scope.order.payment_status === null;
+                                            return $scope.order.payment_status === null && $scope.order.key.parent.key === currentAccount.key;
                                         },
                                         isOut: function (indx) {
                                             return $.inArray(indx, $scope.stage.out) !== -1;
@@ -21799,6 +21808,7 @@ angular.module('app')
                                     $scope.cmd = {};
                                     $scope.container = {};
                                     $scope.cartMode = cartMode;
+                                    $scope.cartModeRead = cartMode;
                                     $scope.sellerMode = sellerMode;
                                     $scope.order = response.data.entity;
                                     $scope.seller = seller;
@@ -22525,7 +22535,7 @@ angular.module('app')
     })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts',
-            isSellerOrderView = _.string.startsWith($state.current.name, 'seller'),
+            isSellerOrderView = _.string.startsWith($state.current.name, 'seller-'),
             wait = null,
             loaded = false,
             viewOpts = {
@@ -22548,7 +22558,7 @@ angular.module('app')
                     }, order = _.findWhere($scope.search.results, find);
                     loaded = true;
                     if (order) {
-                        return $scope.view(order, false);
+                        return $scope.view(order, false, viewOpts);
                     }
                     models['34'].manageModal(find, undefined, undefined, viewOpts);
                 }, 300);
@@ -22578,11 +22588,15 @@ angular.module('app')
             return maybe;
         }, angular.noop);
 
-        $scope.view = function (order, $event) {
-            models['34'].manageModal(order, order._seller, undefined, {
+        $scope.view = function (order, $event, viewOpts) {
+            var opts = {
                 sellerMode: carts,
                 popFrom: helpers.clicks.realEventTarget($event.target)
-            });
+            };
+            if (viewOpts) {
+                opts = viewOpts;
+            }
+            models['34'].manageModal(order, order._seller, undefined, opts);
         };
 
         models['23'].current().then(function (response) {
@@ -23517,11 +23531,6 @@ angular.module('app')
                 templateUrl: 'home/index.html',
                 controller: 'HomePageController'
             })
-            .state('seller-info', {
-                url: '/seller/:key',
-                controller: 'SellerInfo',
-                template: ''
-            })
             .state('embed-seller-info', {
                 url: '/embed/seller/:key',
                 controller: 'SellerEmbedInfo',
@@ -23583,27 +23592,32 @@ angular.module('app')
                 template: ''
             })
             .state('sell-catalogs', {
-                url: '/sell/catalogs',
+                url: '/seller/catalogs',
                 controller: 'SellCatalogsController',
                 templateUrl: 'catalog/list.html'
             })
             .state('sell-orders', {
-                url: '/sell/orders',
+                url: '/seller/orders',
                 controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
             })
+            .state('seller-info', {
+                url: '/seller/:key',
+                controller: 'SellerInfo',
+                template: ''
+            })
             .state('sell-carts', {
-                url: '/sell/carts',
+                url: '/seller/carts',
                 controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('buy-orders', {
-                url: '/buy/orders',
+                url: '/buyer/orders',
                 controller: 'BuyOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('buy-carts', {
-                url: '/buy/carts',
+                url: '/buyer/carts',
                 controller: 'BuyOrdersController',
                 templateUrl: 'buyer/carts.html'
             })
