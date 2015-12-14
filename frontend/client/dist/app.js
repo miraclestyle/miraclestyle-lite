@@ -21687,7 +21687,7 @@ angular.module('app')
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
-                                            return $scope.order.payment_status === null && $scope.order.key.parent.key === currentAccount.key;
+                                            return $scope.order.payment_status === null && $scope.order.parent.key === currentAccount.key;
                                         },
                                         isOut: function (indx) {
                                             return $.inArray(indx, $scope.stage.out) !== -1;
