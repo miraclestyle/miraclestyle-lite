@@ -187,7 +187,6 @@ class Account(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      GetCache(cfg=READ_CACHE_POLICY),
                       Read(cfg={'source': 'account.key'}),
                       RulePrepare(),
                       RuleExec(),
