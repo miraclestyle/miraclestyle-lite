@@ -129,7 +129,7 @@
     })).controller('SellOrdersController', ng(function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts',
-            isSellerOrderView = _.string.startsWith($state.current.name, 'seller'),
+            isSellerOrderView = _.string.startsWith($state.current.name, 'seller-'),
             wait = null,
             loaded = false,
             viewOpts = {
@@ -152,7 +152,7 @@
                     }, order = _.findWhere($scope.search.results, find);
                     loaded = true;
                     if (order) {
-                        return $scope.view(order, false);
+                        return $scope.view(order, false, viewOpts);
                     }
                     models['34'].manageModal(find, undefined, undefined, viewOpts);
                 }, 300);
@@ -182,11 +182,15 @@
             return maybe;
         }, angular.noop);
 
-        $scope.view = function (order, $event) {
-            models['34'].manageModal(order, order._seller, undefined, {
+        $scope.view = function (order, $event, viewOpts) {
+            var opts = {
                 sellerMode: carts,
                 popFrom: helpers.clicks.realEventTarget($event.target)
-            });
+            };
+            if (viewOpts) {
+                opts = viewOpts;
+            }
+            models['34'].manageModal(order, order._seller, undefined, opts);
         };
 
         models['23'].current().then(function (response) {

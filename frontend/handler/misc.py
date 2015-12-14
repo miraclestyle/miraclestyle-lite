@@ -49,11 +49,11 @@ class SupportPage(base.SeoOrAngular):
 
 
 settings.ROUTES.extend(((r'/collections', base.AngularBlank),
-                        (r'/buy/orders', base.AngularBlank),
-                        (r'/buy/carts', base.AngularBlank),
-                        (r'/sell/catalogs', base.AngularBlank),
-                        (r'/sell/orders', base.AngularBlank),
-                        (r'/sell/carts', base.AngularBlank),
+                        (r'/buyer/orders', base.AngularBlank),
+                        (r'/buyer/carts', base.AngularBlank),
+                        (r'/seller/catalogs', base.AngularBlank),
+                        (r'/seller/orders', base.AngularBlank),
+                        (r'/seller/carts', base.AngularBlank),
                         (r'/following', base.AngularBlank),
 
                         # static pages

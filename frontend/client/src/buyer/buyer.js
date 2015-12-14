@@ -105,7 +105,7 @@
                         }, order = _.findWhere($scope.search.results, find);
                         loaded = true;
                         if (order) {
-                            return $scope.view(order, false);
+                            return $scope.view(order, false, viewOpts);
                         }
                         models['34'].manageModal(find, undefined, undefined, viewOpts).then(viewThen);
                     }, 300);
@@ -115,6 +115,8 @@
             if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewOrder) {
                 carts = false;
             }
+
+            viewOpts.cartModeRead = carts;
 
 
             $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
@@ -139,14 +141,18 @@
                 return maybe;
             }, angular.noop);
 
-            $scope.view = function (order, $event) {
+            $scope.view = function (order, $event, viewOpts) {
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
                     var opts = {
                         cartMode: carts,
+                        cartModeRead: carts,
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     }, viewPromise, directView = $event === false;
+                    if (viewOpts) {
+                        opts = viewOpts;
+                    }
                     if (directView) {
                         $.extend(opts, viewOpts);
                     }

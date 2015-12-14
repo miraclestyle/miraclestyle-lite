@@ -66,6 +66,7 @@
                         config = helpers.alwaysObject(config);
                         var args, that = this,
                             cartMode = config.cartMode,
+                            cartModeRead = config.cartModeRead,
                             sellerMode = config.sellerMode,
                             openDefer = $q.defer(),
                             openPromise = openDefer.promise,
@@ -102,12 +103,13 @@
                             };
                         }
 
+
                         modalOpen = {
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {
                                 $scope.dialog = {
                                     toolbar: {
-                                        title: (((order && order.state !== 'cart') || !cartMode) ? 'Order' : 'Cart'),
+                                        title: (((order && order.state && order.state !== 'cart') || !cartModeRead) ? 'Order' : 'Cart'),
                                         templateRight: 'order/toolbar_actions.html'
                                     }
                                 };
@@ -132,7 +134,7 @@
                                     if (response) {
                                         var errors = response.data.errors;
                                         if (errors && (errors.not_found || errors.malformed_key)) {
-                                            $scope.notFound = true;
+                                            $scope.notFound = cartModeRead === true ? 1 : 2;
                                             return;
                                         }
                                     }
@@ -253,7 +255,7 @@
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
-                                            return $scope.order.payment_status === null;
+                                            return $scope.order.payment_status === null && $scope.order.key.parent.key === currentAccount.key;
                                         },
                                         isOut: function (indx) {
                                             return $.inArray(indx, $scope.stage.out) !== -1;
@@ -374,6 +376,7 @@
                                     $scope.cmd = {};
                                     $scope.container = {};
                                     $scope.cartMode = cartMode;
+                                    $scope.cartModeRead = cartMode;
                                     $scope.sellerMode = sellerMode;
                                     $scope.order = response.data.entity;
                                     $scope.seller = seller;

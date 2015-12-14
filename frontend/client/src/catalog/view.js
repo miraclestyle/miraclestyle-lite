@@ -769,7 +769,8 @@
                                     }
                                     models['19'].current().then(function (response) {
                                         models['34'].manageModal(undefined, $scope.catalog._seller, response.data.entity, {
-                                            cartMode: true
+                                            cartMode: true,
+                                            cartModeRead: true
                                         });
                                     });
                                 };

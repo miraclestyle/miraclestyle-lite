@@ -8,11 +8,6 @@
                 templateUrl: 'home/index.html',
                 controller: 'HomePageController'
             })
-            .state('seller-info', {
-                url: '/seller/:key',
-                controller: 'SellerInfo',
-                template: ''
-            })
             .state('embed-seller-info', {
                 url: '/embed/seller/:key',
                 controller: 'SellerEmbedInfo',
@@ -74,27 +69,32 @@
                 template: ''
             })
             .state('sell-catalogs', {
-                url: '/sell/catalogs',
+                url: '/seller/catalogs',
                 controller: 'SellCatalogsController',
                 templateUrl: 'catalog/list.html'
             })
             .state('sell-orders', {
-                url: '/sell/orders',
+                url: '/seller/orders',
                 controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
             })
+            .state('seller-info', {
+                url: '/seller/:key',
+                controller: 'SellerInfo',
+                template: ''
+            })
             .state('sell-carts', {
-                url: '/sell/carts',
+                url: '/seller/carts',
                 controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('buy-orders', {
-                url: '/buy/orders',
+                url: '/buyer/orders',
                 controller: 'BuyOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('buy-carts', {
-                url: '/buy/carts',
+                url: '/buyer/carts',
                 controller: 'BuyOrdersController',
                 templateUrl: 'buyer/carts.html'
             })
