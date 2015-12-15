@@ -1775,7 +1775,6 @@ if (window.DEBUG) {
             orderBuyerList: 'buyer/help/orders.html',
             cartBuyerList: 'buyer/help/carts.html',
             catalogList: 'catalog/help/list.html',
-            cart: 'order/help/empty.html',
             cartMessages: 'order/help/messages.html',
             sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
@@ -1788,7 +1787,11 @@ if (window.DEBUG) {
             duplicationInProgressCatalog: 'Catalog scheduled for duplication.',
             administered: 'Administered.',
             identityDisconnected: 'Identity disconnected.',
+            identityTaken: 'This identity is already connected to another Miraclestyle account.',
             identityConnected: 'Identity connected.',
+            identityConnectionCanceled: 'Identity connection canceled.',
+            failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
+            identityConnectionFailed: 'Identity connection failede.',
             createVariantsFirst: 'Create some variants first.',
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',
@@ -18109,21 +18112,22 @@ angular.module('app')
     // code for account
     angular.module('app').constant('LOGIN_PROVIDERS', [{
             name: 'Google',
-            id: 1
+            icon: 'googleplus',
+            key: '1'
         }, {
             name: 'Facebook',
-            id: 2
+            key: '2'
         }, {
             name: 'Linkedin',
-            id: 3
+            key: '3'
         }, {
             name: 'Twitter',
-            id: 4
+            key: '4'
         }])
         .factory('mappedLoginProviders', ['LOGIN_PROVIDERS', function (LOGIN_PROVIDERS) {
             var mappedLoginProviders = {};
             angular.forEach(LOGIN_PROVIDERS, function (value) {
-                mappedLoginProviders[value.id] = value;
+                mappedLoginProviders[value.key] = value;
             });
             return mappedLoginProviders;
         }])
@@ -18207,6 +18211,67 @@ angular.module('app')
                             };
                         });
                     },
+                    loginPopup: function (target, title, success, cancel, fail) {
+                        var popup = helpers.popup.openCentered(target, title),
+                            MATCH_LOGIN_INSTRUCTION = $state.href('login-status'),
+                            loggedIn = false,
+                            pollTimer,
+                            loading = false,
+                            handle = function (e) {
+                                var url = '',
+                                    check;
+                                if (window.ENGINE.CORDOVA.ACTIVE) {
+                                    url = e.originalEvent.url;
+                                }
+                                if (popup.closed) {
+                                    clearInterval(pollTimer);
+                                    if (!loggedIn) {
+                                        cancel();
+                                    }
+                                    return;
+                                }
+                                check = function () {
+                                    if (loading) {
+                                        return;
+                                    }
+                                    loading = true;
+                                    models['11'].actions.current_account(undefined, {
+                                        ignoreErrors: 2
+                                    }).then(function (response) {
+                                        var user = response.data.entity;
+                                        if (user && !user._is_guest) {
+                                            $.extend(currentAccount, response.data.entity);
+                                            endpoint.removeCache();
+                                            loggedIn = true;
+                                            popup.close();
+                                            success(response);
+                                        }
+                                    }, function (response) {
+                                        fail(response);
+                                    })['finally'](function () {
+                                        loading = false;
+                                    });
+                                };
+                                try {
+                                    if (!window.ENGINE.CORDOVA.ACTIVE) {
+                                        url = popup.document.URL;
+                                    }
+                                    if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
+                                        clearInterval(pollTimer);
+                                        check();
+                                    }
+                                } catch (ignore) {
+                                    if (ignore instanceof DOMException) {
+                                        // check();
+                                    }
+                                }
+                            };
+                        if (window.ENGINE.CORDOVA.ACTIVE) {
+                            $(popup).on('loadstart', handle);
+                        } else {
+                            pollTimer = window.setInterval(handle, 500);
+                        }
+                    },
                     adminManageModal: function (account, extraConfig) {
                         return this.manageModal(account, extraConfig);
                     },
@@ -18231,35 +18296,8 @@ angular.module('app')
                                         redirect_to: 'popup'
                                     });
                                 }, function ($scope, login) {
-                                    var MATCH_LOGIN_INSTRUCTION = $state.href('login-status');
 
-                                    $scope.socials = [{
-                                        name: 'Facebook',
-                                        key: '2'
-                                    }, {
-                                        name: 'Google+',
-                                        icon: 'googleplus',
-                                        key: '1'
-                                    }, {
-                                        name: 'Linkedin',
-                                        key: '3'
-                                    },/* {
-                                        name: 'Twitter',
-                                        key: '3'
-                                    }, {
-                                        name: 'Pinterest',
-                                        key: '4'
-                                    }, {
-                                        name: 'Reddit',
-                                        key: '5'
-                                    }, {
-                                        name: 'Google+',
-                                        icon: 'googleplus',
-                                        key: '1'
-                                    }, {
-                                        name: 'Tumblr',
-                                        key: '7'
-                                    }*/];
+                                    $scope.socials = LOGIN_PROVIDERS;
 
                                     $scope.getIcon = function (soc) {
                                         return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
@@ -18267,67 +18305,19 @@ angular.module('app')
 
                                     $scope.authorization_urls = login.data.authorization_urls;
 
-                                    $scope.onMessage = [];
-
                                     $scope.loginPopup = function (soc) {
-                                        var popup = helpers.popup.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
-                                            loggedIn = false,
-                                            pollTimer,
-                                            loading = false,
-                                            handle = function (e) {
-                                                var url = '';
-                                                if (window.ENGINE.CORDOVA.ACTIVE) {
-                                                    url = e.originalEvent.url;
-                                                }
-                                                if (popup.closed) {
-                                                    clearInterval(pollTimer);
-                                                    if (!loggedIn) {
-                                                        snackbar.showK('loginCanceled');
-                                                    }
-                                                    return;
-                                                }
-                                                var check = function () {
-                                                    if (loading) {
-                                                        return;
-                                                    }
-                                                    loading = true;
-                                                    models['11'].actions.current_account(undefined, {
-                                                        ignoreErrors: 2
-                                                    }).then(function (response) {
-                                                        var user = response.data.entity;
-                                                        if (!user._is_guest) {
-                                                            $.extend(currentAccount, response.data.entity);
-                                                            endpoint.removeCache();
-                                                            snackbar.showK('loginSuccess');
-                                                            loggedIn = true;
-                                                            popup.close();
-                                                            $scope.close();
-                                                        }
-                                                    }, function () {
-                                                        snackbar.showK('loginFailed');
-                                                    })['finally'](function () {
-                                                        loading = false;
-                                                    });
-                                                };
-                                                try {
-                                                    if (!window.ENGINE.CORDOVA.ACTIVE) {
-                                                        url = popup.document.URL;
-                                                    }
-                                                    if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
-                                                        clearInterval(pollTimer);
-                                                        check();
-                                                    }
-                                                } catch (ignore) {
-                                                    if (ignore instanceof DOMException) {
-                                                        // check();
-                                                    }
-                                                }
-                                            };
-                                        if (window.ENGINE.CORDOVA.ACTIVE) {
-                                            $(popup).on('loadstart', handle);
-                                        } else {
-                                            pollTimer = window.setInterval(handle, 500);
-                                        }
+                                        return models['11'].loginPopup($scope.authorization_urls[soc.key],
+                                            'Login with ' + soc.name,
+                                            function success() {
+                                                snackbar.showK('loginSuccess');
+                                                $scope.close();
+                                            },
+                                            function cancel() {
+                                                snackbar.showK('loginCanceled');
+                                            },
+                                            function fail() {
+                                                snackbar.showK('loginFailed');
+                                            });
                                     };
                                 });
                             }]
@@ -18365,9 +18355,9 @@ angular.module('app')
                                             }
                                         });
                                         angular.forEach(LOGIN_PROVIDERS, function (value) {
-                                            if (missing[value.id]) {
+                                            if (missing[value.key]) {
                                                 $scope.identities.push({
-                                                    identity: '0-' + value.id,
+                                                    identity: '0-' + value.key,
                                                     associated: false
                                                 });
                                             }
@@ -18391,21 +18381,40 @@ angular.module('app')
                                         });
                                     } else {
                                         modals.confirm('connectSignInMethod', function () {
-                                            var redirect_to = $state.href('login-provider-connected', {
-                                                provider: getProvider(identity)
-                                            });
+                                            var providerid = getProvider(identity);
                                             $http.post($state.engineHref('login', {
-                                                provider: getProvider(identity)
+                                                provider: providerid
                                             }), {
                                                 action_id: 'login',
                                                 action_model: '11',
-                                                redirect_to: redirect_to
+                                                redirect_to: 'popup'
                                             }).then(function (response) {
                                                 var data = response.data;
                                                 if (data && !data.errors && data.authorization_url) {
-                                                    window.location.href = data.authorization_url; // @todo this must be a popup
+                                                    models['11'].loginPopup(data.authorization_url,
+                                                        'Login with ' + LOGIN_PROVIDERS[providerid].name,
+                                                        function success(response) {
+                                                            $.extend($scope.entity, response.data.entity);
+                                                            recompute();
+                                                            var shown = false;
+                                                            angular.forEach($scope.identities, function (value) {
+                                                                if (!shown && value.associated && value.identity.split('-')[1] === providerid) {
+                                                                    shown = true;
+                                                                    snackbar.showK('identityConnected');
+                                                                }
+                                                            });
+                                                            if (!shown) {
+                                                                snackbar.showK('identityTaken');
+                                                            }
+                                                        },
+                                                        function cancel() {
+                                                            snackbar.showK('identityConnectionCanceled');
+                                                        },
+                                                        function fail() {
+                                                            snackbar.showK('identityConnectionFailed');
+                                                        });
                                                 } else {
-                                                    modals.alert('failedGeneratingAuthorizaitonUrl');
+                                                    snackbar.showK('failedGeneratingAuthorizaitonUrl');
                                                 }
                                             });
                                         });
@@ -21551,8 +21560,14 @@ angular.module('app')
                                     });
                                 }, function ($scope, response) {
 
+                                    $scope.messages = {
+                                        toggle: function (close) {
+                                            snackbar.showK('messangerDisabledWhenEmpty');
+                                        }
+                                    };
+
                                     $scope.close = function (override) {
-                                        if (override !== true && ($scope.messages && $scope.messages.logMessages.length)) {
+                                        if (override !== true && ($scope.messages && $scope.messages.logMessages && $scope.messages.logMessages.length)) {
                                             modals.confirm('discard', function () {
                                                 $scope.close(true);
                                             });
@@ -22379,6 +22394,11 @@ angular.module('app')
                                     }, {
                                         absolute: true
                                     });
+
+                                    if (!$scope.order._lines.length) {
+                                        $scope.notFound = 1;
+                                        return;
+                                    }
 
                                     $scope.$on('$destroy', function () {
                                         $scope.messages.sync.stop();
