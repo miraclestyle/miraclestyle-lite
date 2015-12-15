@@ -15,7 +15,6 @@ import subprocess
 FORCE_SSL = True
 SITE_META_TITLE = 'Miraclestyle - Ecommerce Platform, Online Product Catalog Publisher'
 SITE_META_DESCRIPTION = 'Create, publish and distribute your online product catalogs with MIRACLESTYLE\'S e-commerce platform, and easily sell online with catalog built in shopping cart.'
-SITE_META_KEYWORDS = 'miraclestyle, catalogs, products, mail-order catalogs'
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
 DEBUG_HOST_NAMES = ['localhost:9982', '192.168.0.100:9982', '0.0.0.0:9982']
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))

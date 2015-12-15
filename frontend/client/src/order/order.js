@@ -119,8 +119,14 @@
                                     });
                                 }, function ($scope, response) {
 
+                                    $scope.messages = {
+                                        toggle: function (close) {
+                                            snackbar.showK('messangerDisabledWhenEmpty');
+                                        }
+                                    };
+
                                     $scope.close = function (override) {
-                                        if (override !== true && ($scope.messages && $scope.messages.logMessages.length)) {
+                                        if (override !== true && ($scope.messages && $scope.messages.logMessages && $scope.messages.logMessages.length)) {
                                             modals.confirm('discard', function () {
                                                 $scope.close(true);
                                             });
@@ -947,6 +953,11 @@
                                     }, {
                                         absolute: true
                                     });
+
+                                    if (!$scope.order._lines.length) {
+                                        $scope.notFound = 1;
+                                        return;
+                                    }
 
                                     $scope.$on('$destroy', function () {
                                         $scope.messages.sync.stop();

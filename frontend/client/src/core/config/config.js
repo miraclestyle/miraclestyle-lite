@@ -405,7 +405,6 @@
             orderBuyerList: 'buyer/help/orders.html',
             cartBuyerList: 'buyer/help/carts.html',
             catalogList: 'catalog/help/list.html',
-            cart: 'order/help/empty.html',
             cartMessages: 'order/help/messages.html',
             sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
@@ -418,7 +417,11 @@
             duplicationInProgressCatalog: 'Catalog scheduled for duplication.',
             administered: 'Administered.',
             identityDisconnected: 'Identity disconnected.',
+            identityTaken: 'This identity is already connected to another Miraclestyle account.',
             identityConnected: 'Identity connected.',
+            identityConnectionCanceled: 'Identity connection canceled.',
+            failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
+            identityConnectionFailed: 'Identity connection failede.',
             createVariantsFirst: 'Create some variants first.',
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',

@@ -96,6 +96,10 @@ FACEBOOK_OAUTH2 = {
     'account_info': 'https://graph.facebook.com/me',
 }
 
+if DEBUG:
+  FACEBOOK_OAUTH2['client_id'] = '125702284258635'
+  FACEBOOK_OAUTH2['client_secret'] = 'f5bcbcfa1bec6166bedb703d69911d43'
+
 LINKEDIN_OAUTH2 = {
     'client_id': '77xclva9s9qsex',
     'client_secret': 'cYHLJehkmDGm1j9n',

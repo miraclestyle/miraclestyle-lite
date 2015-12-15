@@ -78,9 +78,14 @@ class AccountLoginInit(orm.BaseModel):
         context._email = info['email'].lower()  # we lowercase the email because datastore data searches are case sensetive
         account = context.model.query(context.model.identities.identity == context._identity_id).get()
         if account:
-          account.read()
-          context._account = account
-          context.account = account
+          own_account = context.account.key == account.key
+          if context.account._is_guest or own_account:
+            account.read()
+            context._account = account
+            context.account = account
+          elif not own_account and not context.account._is_guest:
+            context.output['taken_by_other_account'] = True
+            raise orm.TerminateAction()
     kwargs = {'account': context.account, 'action': context.action}
     tools.rule_prepare(context._account, **kwargs)
     tools.rule_exec(context._account, context.action)
@@ -120,6 +125,8 @@ class AccountLoginWrite(orm.BaseModel):
             current_identity = identity
         if not current_identity:
           entity.identities = [AccountIdentity(identity=context._identity_id, email=context._email, primary=True)]
+          if not context.account._is_guest:
+            context.output['identity_added'] = True
         session = entity.new_session()
         entity.write({'agent': entity.key, 'action': context.action.key, 'ip_address': entity.ip_address})
       context.model.set_current_account(entity, session)

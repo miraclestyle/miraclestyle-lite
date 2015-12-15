@@ -212,6 +212,7 @@ class AccountLogin(RequestHandler):
 
   def respond(self, provider=None):
     redirect_to_key = 'redirect_to'
+    do_redirect = False
     if provider is None:
       provider = 'google'
     input = self.get_input()
@@ -223,6 +224,10 @@ class AccountLogin(RequestHandler):
       self.secure_cookie_set(redirect_to_key, input.get(redirect_to_key), httponly=True)
     if 'access_token' in output:
       self.secure_cookie_set(settings.COOKIE_AUTH_KEY, output.get('access_token'), httponly=True)
+      do_redirect = True
+    if output.get('taken_by_other_account'):
+      do_redirect = True
+    if do_redirect:
       redirect_to = self.secure_cookie_get(redirect_to_key)
       if redirect_to and not redirect_to.startswith('http') and not redirect_to == 'popup':
         return self.redirect(redirect_to)
