@@ -1828,6 +1828,7 @@ if (window.DEBUG) {
             takenByOtherAccount: 'These credentials are taken by other account.',
             failedGettingEmail: 'E-mail not provided by the provider.',
             incorrectLinkSettings: 'Incorrect link settings.',
+            failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.'
         });
@@ -13001,6 +13002,19 @@ function msieversion() {
                     },
                     jsonToUrlsafe: function (str) {
                         return helpers.url.urlsafe(angular.toJson(str));
+                    },
+                    getQueryVariable: function (path, variable) {
+                        if (path.indexOf('#') !== -1) {
+                            path = path.split('#')[0];
+                        }
+                        var query = path.split('?')[1];
+                        var vars = query.split('&');
+                        for (var i = 0; i < vars.length; i++) {
+                            var pair = vars[i].split('=');
+                            if (decodeURIComponent(pair[0]) == variable) {
+                                return decodeURIComponent(pair[1]);
+                            }
+                        }
                     }
                 }
             });
@@ -18132,6 +18146,31 @@ angular.module('app')
 (function () {
     'use strict';
     // code for account
+    var resolveAccountLoginError = function (snackbar, errors) {
+        var found, oauth2error;
+        if (errors.action_denied) {
+            found = true;
+            snackbar.showK('accessDenied');
+        }
+        if (errors.oauth2_error) {
+            oauth2error = errors.oauth2_error[0];
+            if (oauth2error === 'no_email_provided') {
+                snackbar.showK('failedGettingEmail');
+            } else if (oauth2error === 'failed_access_token') {
+                snackbar.showK('incorrectAccessToken');
+            } else if (oauth2error === 'rejected_account_access') {
+                snackbar.showK('rejectedAccountAccess');
+            } else if (oauth2error === 'taken_by_other_account') {
+                snackbar.showK('takenByOtherAccount');
+            } else if (oauth2error === 'state_error') {
+                snackbar.showK('incorrectLinkSettings');
+            } else {
+                snackbar.showK('failedAuthentication');
+            }
+            found = true;
+        }
+        return found;
+    };
     angular.module('app').constant('LOGIN_PROVIDERS', [{
             name: 'Facebook',
             key: '2'
@@ -18163,8 +18202,7 @@ angular.module('app')
         }))
         .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, snackbar) {
             var data = $location.search(),
-                errors,
-                oauth2error;
+                errors;
             if (data.popup) {
                 $scope.contentSpinner.start();
                 return;
@@ -18175,23 +18213,7 @@ angular.module('app')
                 if (data.errors) {
                     errors = angular.fromJson(data.errors);
                     if (errors) {
-                        if (errors.action_denied) {
-                            snackbar.showK('accessDenied');
-                        }
-                        if (errors.oauth2_error) {
-                            oauth2error = errors.oauth2_error[0];
-                            if (oauth2error === 'no_email_provided') {
-                                snackbar.showK('failedGettingEmail');
-                            } else if (oauth2error === 'failed_access_token') {
-                                snackbar.showK('incorrectAccessToken');
-                            } else if (oauth2error === 'rejected_account_access') {
-                                snackbar.showK('rejectedAccountAccess');
-                            } else if (oauth2error === 'taken_by_other_account') {
-                                snackbar.showK('takenByOtherAccount');
-                            } else if (oauth2error === 'state_error') {
-                                snackbar.showK('incorrectLinkSettings');
-                            }
-                        }
+                        resolveAccountLoginError(snackbar, errors);
                     }
                 }
             }
@@ -18274,13 +18296,13 @@ angular.module('app')
                                     loggedIn = true;
                                     popup.close();
                                 };
-                                check = function (error) {
+                                check = function (errors) {
                                     if (loading) {
                                         return;
                                     }
-                                    if (error) {
+                                    if (errors) {
                                         destroy();
-                                        return fail(true);
+                                        return fail(errors);
                                     }
                                     loading = true;
                                     models['11'].actions.current_account(undefined, {
@@ -18305,7 +18327,7 @@ angular.module('app')
                                     }
                                     if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
                                         clearInterval(pollTimer);
-                                        check(url.indexOf('errors=') !== -1);
+                                        check(helpers.url.getQueryVariable(url, 'errors'));
                                     }
                                 } catch (ignore) {
                                     if (ignore instanceof DOMException) {
@@ -18362,8 +18384,14 @@ angular.module('app')
                                             function cancel() {
                                                 snackbar.showK('loginCanceled');
                                             },
-                                            function fail() {
-                                                snackbar.showK('loginFailed');
+                                            function fail(errors) {
+                                                var found = false;
+                                                if (errors) {
+                                                    found = resolveAccountLoginError(snackbar, angular.fromJson(errors));
+                                                }
+                                                if (!found) {
+                                                    snackbar.showK('loginFailed');
+                                                }
                                             });
                                     };
                                 });
@@ -18400,6 +18428,9 @@ angular.module('app')
                                     recompute = function () {
                                         var missing = Object.keys(mappedLoginProviders);
                                         $scope.identities = $scope.entity.identities.concat();
+                                        if (!$scope.entity.identities.length) {
+                                            $scope.entity._is_guest = true;
+                                        }
                                         angular.forEach($scope.identities, function (value) {
                                             var id = getProvider(value);
                                             if (missing[id]) {
@@ -18457,8 +18488,14 @@ angular.module('app')
                                                 function cancel() {
                                                     snackbar.showK('identityConnectionCanceled');
                                                 },
-                                                function fail() {
-                                                    snackbar.showK('identityConnectionFailed');
+                                                function fail(errors) {
+                                                    var found = false;
+                                                    if (errors) {
+                                                        found = resolveAccountLoginError(snackbar, angular.fromJson(errors));
+                                                    }
+                                                    if (!found) {
+                                                        snackbar.showK('identityConnectionFailed');
+                                                    }
                                                 });
                                         });
                                     }
@@ -18507,7 +18544,9 @@ angular.module('app')
                         return modelsEditor.create(config).openPromise(function () {
                             return $q.all([models[config.kind].actions.read({
                                 key: account.key
-                            }), $http.post($state.engineHref('login', {provider: '1'}), {
+                            }), $http.post($state.engineHref('login', {
+                                provider: '1'
+                            }), {
                                 action_id: 'login',
                                 action_model: config.kind,
                                 redirect_to: 'popup'
