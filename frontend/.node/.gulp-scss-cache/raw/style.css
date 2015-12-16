@@ -1338,7 +1338,7 @@ a.sort-handle[disabled] {
   padding-right: 16px;
   padding-left: 8px; }
 
-.color-child-when-disabled[disabled] .md-icon:not(.md-icon-color-white), .color-child-when-disabled[disabled] .first {
+.color-child-when-disabled[disabled] .md-icon:not(.md-icon-color-white), .color-child-when-disabled[disabled] .first, .color-child-when-disabled[disabled] .second {
   color: rgba(0, 0, 0, 0.38); }
 
 .color-child-when-disabled[disabled] .md-icon.md-icon-color-white {
