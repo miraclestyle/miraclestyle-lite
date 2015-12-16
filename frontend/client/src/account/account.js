@@ -1,6 +1,31 @@
 (function () {
     'use strict';
     // code for account
+    var resolveAccountError = function (snackbar, errors) {
+        var found, oauth2error;
+        if (errors.action_denied) {
+            found = true;
+            snackbar.showK('accessDenied');
+        }
+        if (errors.oauth2_error) {
+            oauth2error = errors.oauth2_error[0];
+            if (oauth2error === 'no_email_provided') {
+                snackbar.showK('failedGettingEmail');
+            } else if (oauth2error === 'failed_access_token') {
+                snackbar.showK('incorrectAccessToken');
+            } else if (oauth2error === 'rejected_account_access') {
+                snackbar.showK('rejectedAccountAccess');
+            } else if (oauth2error === 'taken_by_other_account') {
+                snackbar.showK('takenByOtherAccount');
+            } else if (oauth2error === 'state_error') {
+                snackbar.showK('incorrectLinkSettings');
+            } else {
+                snackbar.showK('');
+            }
+            found = true;
+        }
+        return found;
+    };
     angular.module('app').constant('LOGIN_PROVIDERS', [{
             name: 'Facebook',
             key: '2'
@@ -32,8 +57,7 @@
         }))
         .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, snackbar) {
             var data = $location.search(),
-                errors,
-                oauth2error;
+                errors;
             if (data.popup) {
                 $scope.contentSpinner.start();
                 return;
@@ -44,23 +68,7 @@
                 if (data.errors) {
                     errors = angular.fromJson(data.errors);
                     if (errors) {
-                        if (errors.action_denied) {
-                            snackbar.showK('accessDenied');
-                        }
-                        if (errors.oauth2_error) {
-                            oauth2error = errors.oauth2_error[0];
-                            if (oauth2error === 'no_email_provided') {
-                                snackbar.showK('failedGettingEmail');
-                            } else if (oauth2error === 'failed_access_token') {
-                                snackbar.showK('incorrectAccessToken');
-                            } else if (oauth2error === 'rejected_account_access') {
-                                snackbar.showK('rejectedAccountAccess');
-                            } else if (oauth2error === 'taken_by_other_account') {
-                                snackbar.showK('takenByOtherAccount');
-                            } else if (oauth2error === 'state_error') {
-                                snackbar.showK('incorrectLinkSettings');
-                            }
-                        }
+                       resolveAccountError(snackbar, errors);
                     }
                 }
             }
@@ -149,7 +157,7 @@
                                     }
                                     if (error) {
                                         destroy();
-                                        return fail(true);
+                                        return fail(error);
                                     }
                                     loading = true;
                                     models['11'].actions.current_account(undefined, {
@@ -174,7 +182,7 @@
                                     }
                                     if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
                                         clearInterval(pollTimer);
-                                        check(url.indexOf('errors=') !== -1);
+                                        check(helpers.url.getQueryVariable(url, 'errors'));
                                     }
                                 } catch (ignore) {
                                     if (ignore instanceof DOMException) {
@@ -231,8 +239,14 @@
                                             function cancel() {
                                                 snackbar.showK('loginCanceled');
                                             },
-                                            function fail() {
-                                                snackbar.showK('loginFailed');
+                                            function fail(errors) {
+                                                var found = false;
+                                                if (errors) {
+                                                    found = resolveAccountError(snackbar, angular.fromJson(errors));
+                                                }
+                                                if (!found) {
+                                                    snackbar.showK('loginFailed');
+                                                }
                                             });
                                     };
                                 });

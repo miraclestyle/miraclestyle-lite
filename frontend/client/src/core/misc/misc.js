@@ -91,6 +91,16 @@
                     },
                     jsonToUrlsafe: function (str) {
                         return helpers.url.urlsafe(angular.toJson(str));
+                    },
+                    getQueryVariable: function (path, variable) {
+                        var query = path.split('?')[1];
+                        var vars = query.split('&');
+                        for (var i = 0; i < vars.length; i++) {
+                            var pair = vars[i].split('=');
+                            if (decodeURIComponent(pair[0]) == variable) {
+                                return decodeURIComponent(pair[1]);
+                            }
+                        }
                     }
                 }
             });
