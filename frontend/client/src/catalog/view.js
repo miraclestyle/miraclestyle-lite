@@ -168,8 +168,6 @@
                                                             }
                                                         }
                                                     }
-                                                }, {
-                                                    disableUI: disableUI === undefined ? true : disableUI
                                                 });
                                             };
 

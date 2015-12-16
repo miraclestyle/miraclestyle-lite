@@ -2,12 +2,12 @@
     'use strict';
     // code for account
     angular.module('app').constant('LOGIN_PROVIDERS', [{
+            name: 'Facebook',
+            key: '2'
+        }, {
             name: 'Google',
             icon: 'googleplus',
             key: '1'
-        }, {
-            name: 'Facebook',
-            key: '2'
         }, {
             name: 'Linkedin',
             key: '3'
@@ -17,7 +17,8 @@
         }])
         .factory('mappedLoginProviders', ng(function (LOGIN_PROVIDERS) {
             var mappedLoginProviders = {};
-            angular.forEach(LOGIN_PROVIDERS, function (value) {
+            angular.forEach(LOGIN_PROVIDERS, function (value, i) {
+                value.sequence = i;
                 mappedLoginProviders[value.key] = value;
             });
             return mappedLoginProviders;
@@ -71,8 +72,11 @@
         })).run(ng(function (modelsConfig, channelApi, channelNotifications, currentAccount, $http, $state, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
 
             var getProvider = function (ident) {
-                return ident.identity.split('-')[1];
-            };
+                    return ident.identity.split('-')[1];
+                },
+                getLoginProvider = function (ident) {
+                    return mappedLoginProviders[getProvider(ident)];
+                };
             modelsConfig(function (models) {
 
                 $.extend(models['11'], {
@@ -228,6 +232,11 @@
                                 inDirection: false,
                                 outDirection: false
                             },
+                            extractEntity: function (response) {
+                                var ent = response[0].data.entity;
+                                ent._authorization_urls = response[1].data.authorization_urls;
+                                return ent;
+                            },
                             init: function ($scope) {
                                 var entity = $scope.entity,
                                     updateFields = ['state', 'ui.rule', 'created', 'updated'],
@@ -253,6 +262,10 @@
                                                 });
                                             }
                                         });
+
+                                        $scope.identities.sort(function (prev, next) {
+                                            return getLoginProvider(prev).sequence - getLoginProvider(next).sequence;
+                                        });
                                     };
                                 recompute();
 
@@ -273,41 +286,28 @@
                                     } else {
                                         modals.confirm('connectSignInMethod', function () {
                                             var providerid = getProvider(identity);
-                                            $http.post($state.engineHref('login', {
-                                                provider: providerid
-                                            }), {
-                                                action_id: 'login',
-                                                action_model: '11',
-                                                redirect_to: 'popup'
-                                            }).then(function (response) {
-                                                var data = response.data;
-                                                if (data && !data.errors && data.authorization_url) {
-                                                    models['11'].loginPopup(data.authorization_url,
-                                                        'Login with ' + LOGIN_PROVIDERS[providerid].name,
-                                                        function success(response) {
-                                                            $.extend($scope.entity, response.data.entity);
-                                                            recompute();
-                                                            var shown = false;
-                                                            angular.forEach($scope.identities, function (value) {
-                                                                if (!shown && value.associated && value.identity.split('-')[1] === providerid) {
-                                                                    shown = true;
-                                                                    snackbar.showK('identityConnected');
-                                                                }
-                                                            });
-                                                            if (!shown) {
-                                                                snackbar.showK('identityTaken');
-                                                            }
-                                                        },
-                                                        function cancel() {
-                                                            snackbar.showK('identityConnectionCanceled');
-                                                        },
-                                                        function fail() {
-                                                            snackbar.showK('identityConnectionFailed');
-                                                        });
-                                                } else {
-                                                    snackbar.showK('failedGeneratingAuthorizaitonUrl');
-                                                }
-                                            });
+                                            models['11'].loginPopup($scope.entity._authorization_urls[providerid],
+                                                'Login with ' + LOGIN_PROVIDERS[providerid].name,
+                                                function success(response) {
+                                                    $.extend($scope.entity, response.data.entity);
+                                                    recompute();
+                                                    var shown = false;
+                                                    angular.forEach($scope.identities, function (value) {
+                                                        if (!shown && value.associated && getProvider(value) === providerid) {
+                                                            shown = true;
+                                                            snackbar.showK('identityConnected');
+                                                        }
+                                                    });
+                                                    if (!shown) {
+                                                        snackbar.showK('identityTaken');
+                                                    }
+                                                },
+                                                function cancel() {
+                                                    snackbar.showK('identityConnectionCanceled');
+                                                },
+                                                function fail() {
+                                                    snackbar.showK('identityConnectionFailed');
+                                                });
                                         });
                                     }
                                 };
@@ -352,9 +352,15 @@
                             }
                         };
 
-                        return modelsEditor.create(config).read(account, {
-                            key: account.key
-                        });
+                        return modelsEditor.create(config).openPromise(function () {
+                            return $q.all([models[config.kind].actions.read({
+                                key: account.key
+                            }), $http.post($state.engineHref('login', {provider: '1'}), {
+                                action_id: 'login',
+                                action_model: config.kind,
+                                redirect_to: 'popup'
+                            })]);
+                        }, account);
 
                     },
                     logout: function (accountKey) {

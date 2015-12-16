@@ -844,7 +844,11 @@
                                 };
                                 if (angular.isFunction(promise)) {
                                     $scope.$state.promise(promise, function ($scope, response) {
-                                        $.extend(entity, response.data.entity);
+                                        if (angular.isFunction(config.extractEntity)) {
+                                            $.extend(entity, config.extractEntity(response));
+                                        } else {
+                                            $.extend(entity, response.data.entity);
+                                        }
                                         process($scope);
                                     });
                                 } else {

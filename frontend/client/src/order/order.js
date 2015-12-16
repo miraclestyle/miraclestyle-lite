@@ -954,10 +954,11 @@
                                         absolute: true
                                     });
 
-                                    if (!$scope.order._lines.length) {
-                                        $scope.notFound = 1;
-                                        return;
-                                    }
+                                    $scope.$watch('order._lines.length', function (neww, old) {
+                                        if (neww === 0) {
+                                            $scope.notFound = 1;
+                                        }
+                                    });
 
                                     $scope.$on('$destroy', function () {
                                         $scope.messages.sync.stop();

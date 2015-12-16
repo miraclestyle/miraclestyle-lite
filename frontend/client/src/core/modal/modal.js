@@ -538,8 +538,7 @@
                             throw new Error('One of template or templateUrl options is required.');
                         }
 
-                        var templateAndResolvePromise =
-                            $q.all([getTemplatePromise(modalOptions)].concat(getResolvePromises(modalOptions.resolve)));
+                        var templateAndResolvePromise = $q.all([getTemplatePromise(modalOptions)].concat(getResolvePromises(modalOptions.resolve)));
 
 
                         templateAndResolvePromise.then(function resolveSuccess(tplAndVars) {
