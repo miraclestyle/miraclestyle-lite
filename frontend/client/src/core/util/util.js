@@ -2538,7 +2538,8 @@
             function attach(scope, element, options) {
                 if (element.controller('mdNoInk')) return angular.noop;
 
-                var ignore = element.attr('md-ink-ripple-ignore');
+                var ignore = element.attr('md-ink-ripple-ignore'),
+                    eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click');
 
                 ignore = (ignore ? $parse(ignore)(scope) : undefined);
 
@@ -2579,10 +2580,7 @@
                 element.addClass('ripple-presence');
 
                 // expose onInput for ripple testing
-                if (options.mousedown) {
-                    element.on('$md.pressdown', onPressDown);
-                    //.on('click', onPressDown);
-                }
+                element.on(eventHandler, onPressDown);
 
 
                 // Publish self-detach method if desired...
@@ -2607,7 +2605,7 @@
                     }
                     k = setTimeout(function () {
                         onPressDown2(ev);
-                    }, (isSafari() ? 80 : 0));
+                    }, (isSafari() ? 90 : 0));
                 }
 
                 function onPressDown2(ev) {

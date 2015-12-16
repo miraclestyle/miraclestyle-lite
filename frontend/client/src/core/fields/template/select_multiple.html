@@ -47,6 +47,7 @@
                     <md-checkbox 
                         ng-repeat="item in config.ui.specifics.select.items"
                         md-ink-ripple
+                        md-ink-ripple-click="true"
                         ng-disabled="!<%=config.ui.writableCompiled %>"
                         loading="!<%=config.ui.writableCompiled %>"
                         class="list-content-tile list-row"
