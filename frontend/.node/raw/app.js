@@ -15170,8 +15170,7 @@ function msieversion() {
                             throw new Error('One of template or templateUrl options is required.');
                         }
 
-                        var templateAndResolvePromise =
-                            $q.all([getTemplatePromise(modalOptions)].concat(getResolvePromises(modalOptions.resolve)));
+                        var templateAndResolvePromise = $q.all([getTemplatePromise(modalOptions)].concat(getResolvePromises(modalOptions.resolve)));
 
 
                         templateAndResolvePromise.then(function resolveSuccess(tplAndVars) {
@@ -16287,7 +16286,11 @@ function msieversion() {
                                 };
                                 if (angular.isFunction(promise)) {
                                     $scope.$state.promise(promise, function ($scope, response) {
-                                        $.extend(entity, response.data.entity);
+                                        if (angular.isFunction(config.extractEntity)) {
+                                            $.extend(entity, config.extractEntity(response));
+                                        } else {
+                                            $.extend(entity, response.data.entity);
+                                        }
                                         process($scope);
                                     });
                                 } else {
@@ -18111,12 +18114,12 @@ angular.module('app')
     'use strict';
     // code for account
     angular.module('app').constant('LOGIN_PROVIDERS', [{
+            name: 'Facebook',
+            key: '2'
+        }, {
             name: 'Google',
             icon: 'googleplus',
             key: '1'
-        }, {
-            name: 'Facebook',
-            key: '2'
         }, {
             name: 'Linkedin',
             key: '3'
@@ -18126,7 +18129,8 @@ angular.module('app')
         }])
         .factory('mappedLoginProviders', ng(function (LOGIN_PROVIDERS) {
             var mappedLoginProviders = {};
-            angular.forEach(LOGIN_PROVIDERS, function (value) {
+            angular.forEach(LOGIN_PROVIDERS, function (value, i) {
+                value.sequence = i;
                 mappedLoginProviders[value.key] = value;
             });
             return mappedLoginProviders;
@@ -18180,8 +18184,11 @@ angular.module('app')
         })).run(ng(function (modelsConfig, channelApi, channelNotifications, currentAccount, $http, $state, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
 
             var getProvider = function (ident) {
-                return ident.identity.split('-')[1];
-            };
+                    return ident.identity.split('-')[1];
+                },
+                getLoginProvider = function (ident) {
+                    return mappedLoginProviders[getProvider(ident)];
+                };
             modelsConfig(function (models) {
 
                 $.extend(models['11'], {
@@ -18337,6 +18344,11 @@ angular.module('app')
                                 inDirection: false,
                                 outDirection: false
                             },
+                            extractEntity: function (response) {
+                                var ent = response[0].data.entity;
+                                ent._authorization_urls = response[1].data.authorization_urls;
+                                return ent;
+                            },
                             init: function ($scope) {
                                 var entity = $scope.entity,
                                     updateFields = ['state', 'ui.rule', 'created', 'updated'],
@@ -18362,6 +18374,10 @@ angular.module('app')
                                                 });
                                             }
                                         });
+
+                                        $scope.identities.sort(function (prev, next) {
+                                            return getLoginProvider(prev).sequence - getLoginProvider(next).sequence;
+                                        });
                                     };
                                 recompute();
 
@@ -18382,41 +18398,28 @@ angular.module('app')
                                     } else {
                                         modals.confirm('connectSignInMethod', function () {
                                             var providerid = getProvider(identity);
-                                            $http.post($state.engineHref('login', {
-                                                provider: providerid
-                                            }), {
-                                                action_id: 'login',
-                                                action_model: '11',
-                                                redirect_to: 'popup'
-                                            }).then(function (response) {
-                                                var data = response.data;
-                                                if (data && !data.errors && data.authorization_url) {
-                                                    models['11'].loginPopup(data.authorization_url,
-                                                        'Login with ' + LOGIN_PROVIDERS[providerid].name,
-                                                        function success(response) {
-                                                            $.extend($scope.entity, response.data.entity);
-                                                            recompute();
-                                                            var shown = false;
-                                                            angular.forEach($scope.identities, function (value) {
-                                                                if (!shown && value.associated && value.identity.split('-')[1] === providerid) {
-                                                                    shown = true;
-                                                                    snackbar.showK('identityConnected');
-                                                                }
-                                                            });
-                                                            if (!shown) {
-                                                                snackbar.showK('identityTaken');
-                                                            }
-                                                        },
-                                                        function cancel() {
-                                                            snackbar.showK('identityConnectionCanceled');
-                                                        },
-                                                        function fail() {
-                                                            snackbar.showK('identityConnectionFailed');
-                                                        });
-                                                } else {
-                                                    snackbar.showK('failedGeneratingAuthorizaitonUrl');
-                                                }
-                                            });
+                                            models['11'].loginPopup($scope.entity._authorization_urls[providerid],
+                                                'Login with ' + LOGIN_PROVIDERS[providerid].name,
+                                                function success(response) {
+                                                    $.extend($scope.entity, response.data.entity);
+                                                    recompute();
+                                                    var shown = false;
+                                                    angular.forEach($scope.identities, function (value) {
+                                                        if (!shown && value.associated && getProvider(value) === providerid) {
+                                                            shown = true;
+                                                            snackbar.showK('identityConnected');
+                                                        }
+                                                    });
+                                                    if (!shown) {
+                                                        snackbar.showK('identityTaken');
+                                                    }
+                                                },
+                                                function cancel() {
+                                                    snackbar.showK('identityConnectionCanceled');
+                                                },
+                                                function fail() {
+                                                    snackbar.showK('identityConnectionFailed');
+                                                });
                                         });
                                     }
                                 };
@@ -18461,9 +18464,15 @@ angular.module('app')
                             }
                         };
 
-                        return modelsEditor.create(config).read(account, {
-                            key: account.key
-                        });
+                        return modelsEditor.create(config).openPromise(function () {
+                            return $q.all([models[config.kind].actions.read({
+                                key: account.key
+                            }), $http.post($state.engineHref('login', {provider: '1'}), {
+                                action_id: 'login',
+                                action_model: config.kind,
+                                redirect_to: 'popup'
+                            })]);
+                        }, account);
 
                     },
                     logout: function (accountKey) {
@@ -20422,8 +20431,6 @@ angular.module('app')
                                                             }
                                                         }
                                                     }
-                                                }, {
-                                                    disableUI: disableUI === undefined ? true : disableUI
                                                 });
                                             };
 
@@ -22395,10 +22402,11 @@ angular.module('app')
                                         absolute: true
                                     });
 
-                                    if (!$scope.order._lines.length) {
-                                        $scope.notFound = 1;
-                                        return;
-                                    }
+                                    $scope.$watch('order._lines.length', function (neww, old) {
+                                        if (neww === 0) {
+                                            $scope.notFound = 1;
+                                        }
+                                    });
 
                                     $scope.$on('$destroy', function () {
                                         $scope.messages.sync.stop();
