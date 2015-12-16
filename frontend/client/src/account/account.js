@@ -114,7 +114,8 @@
                             loading = false,
                             handle = function (e) {
                                 var url = '',
-                                    check;
+                                    check,
+                                    destroy;
                                 if (window.ENGINE.CORDOVA.ACTIVE) {
                                     url = e.originalEvent.url;
                                 }
@@ -125,9 +126,18 @@
                                     }
                                     return;
                                 }
-                                check = function () {
+                                destroy = function () {
+                                    endpoint.removeCache();
+                                    loggedIn = true;
+                                    popup.close();
+                                };
+                                check = function (error) {
                                     if (loading) {
                                         return;
+                                    }
+                                    if (error) {
+                                        destroy();
+                                        return fail(true);
                                     }
                                     loading = true;
                                     models['11'].actions.current_account(undefined, {
@@ -136,12 +146,11 @@
                                         var user = response.data.entity;
                                         if (user && !user._is_guest) {
                                             $.extend(currentAccount, response.data.entity);
-                                            endpoint.removeCache();
-                                            loggedIn = true;
-                                            popup.close();
+                                            destroy();
                                             success(response);
                                         }
                                     }, function (response) {
+                                        destroy();
                                         fail(response);
                                     })['finally'](function () {
                                         loading = false;
@@ -153,7 +162,7 @@
                                     }
                                     if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
                                         clearInterval(pollTimer);
-                                        check();
+                                        check(url.indexOf('errors=') !== -1);
                                     }
                                 } catch (ignore) {
                                     if (ignore instanceof DOMException) {
