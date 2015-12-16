@@ -93,7 +93,7 @@ FACEBOOK_OAUTH2 = {
     'token_uri': 'https://graph.facebook.com/oauth/access_token',
     'redirect_uri': '%s/api/account/login/2' % OAUTH2_REDIRECT_URI,
     'type': '2',
-    'account_info': 'https://graph.facebook.com/me',
+    'account_info': 'https://graph.facebook.com/v2.5/me',
 }
 
 if DEBUG:
