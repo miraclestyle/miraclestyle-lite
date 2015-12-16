@@ -18477,7 +18477,7 @@ angular.module('app')
                                             var providerid = getProvider(identity);
                                             models['11'].loginPopup($scope.entity._authorization_urls[providerid],
                                                 'Login with ' + LOGIN_PROVIDERS[providerid].name,
-                                                function success(response, destroy) {
+                                                function success(successResponse, destroy) {
                                                     $http.post($state.engineHref('login', {
                                                         provider: '1'
                                                     }), {
@@ -18485,8 +18485,8 @@ angular.module('app')
                                                         action_model: config.kind,
                                                         redirect_to: 'popup'
                                                     }).then(function (response) {
-                                                        $.extend($scope.entity, response.data.entity);
-                                                        $scope.entity._authorization_urls = response[1].data.authorization_urls;
+                                                        $.extend($scope.entity, successResponse.data.entity);
+                                                        $scope.entity._authorization_urls = response.data.authorization_urls;
                                                         recompute();
                                                         var shown = false;
                                                         angular.forEach($scope.identities, function (value) {
