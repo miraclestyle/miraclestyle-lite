@@ -1822,7 +1822,11 @@ if (window.DEBUG) {
             orderNotFound: 'This order does not exist.',
             catalogNotFound: 'This catalog does not exist.',
             catalogProductNotFound: 'This catalog product does not exist.',
-            failedAccessingAccount: 'Failed accessing account.',
+            rejectedAccountAccess: 'You rejected access to your account.',
+            incorrectAccessToken: 'Incorrect access token. Please try again.',
+            takenByOtherAccount: 'These credentials are taken by other account.',
+            failedGettingEmail: 'E-mail not provided by the provider.',
+            incorrectLinkSettings: 'Incorrect link settings.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.'
         });
@@ -18143,7 +18147,8 @@ angular.module('app')
         }))
         .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, snackbar) {
             var data = $location.search(),
-                errors;
+                errors,
+                oauth2error;
             if (data.popup) {
                 $scope.contentSpinner.start();
                 return;
@@ -18158,7 +18163,18 @@ angular.module('app')
                             snackbar.showK('accessDenied');
                         }
                         if (errors.oauth2_error) {
-                            snackbar.showK('failedAccessingAccount');
+                            oauth2error = errors.oauth2_error[0];
+                            if (oauth2error === 'no_email_provided') {
+                                snackbar.showK('failedGettingEmail');
+                            } else if (oauth2error === 'failed_access_token') {
+                                snackbar.showK('incorrectAccessToken');
+                            } else if (oauth2error === 'rejected_account_access') {
+                                snackbar.showK('rejectedAccountAccess');
+                            } else if (oauth2error === 'taken_by_other_account') {
+                                snackbar.showK('takenByOtherAccount');
+                            } else if (oauth2error === 'state_error') {
+                                snackbar.showK('incorrectLinkSettings');
+                            }
                         }
                     }
                 }
