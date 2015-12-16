@@ -25,15 +25,15 @@
          <button 
               type="button"
               md-ink-ripple
-              ng-disabled="!entity.ui.rule.field.identities.writable"
+              loading="!entity.ui.rule.field.identities.writable"
               ng-repeat="ident in identities"
               ng-click="maybeDisconnect(ident)"
-              class="menu-item list-row list-row-has-primary"
+              class="menu-item list-row color-child-when-disabled list-row-has-primary"
               ng-class="{'list-row-two-lines': ident.email && !ident.primary,
                          'list-row-three-lines': ident.primary}">
               <div class="list-content-tile">
                 <div class="list-primary-tile">
-                   <div loading="!entity.ui.rule.field.identities.writable" class="avatar-small color-child-when-disabled">
+                   <div class="avatar-small color-child-when-disabled">
                      <div class="button-square">
                        <span ng-show="!ident.associated && ident.associated !== undefined"><icon type="check_box_outline_blank"></icon>
                        </span>
@@ -41,11 +41,11 @@
                      </div>
                    </div>
                 </div>
-                <strong class="first">{{ident.identity|formatLoginProivider}}</strong>
-                <span ng-if="ident.email" class="second ellipsis-text">
+                <strong class="first color-child-when-disabled">{{ident.identity|formatLoginProivider}}</strong>
+                <span ng-if="ident.email" class="second color-child-when-disabled ellipsis-text">
                   {{ident.email}}
                 </span>
-                <span ng-if="ident.primary" class="second">
+                <span ng-if="ident.primary" class="second color-child-when-disabled">
                   All notifications are directed to this email
                 </span>
               </div>
