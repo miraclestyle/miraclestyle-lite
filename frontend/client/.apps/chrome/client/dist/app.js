@@ -18413,7 +18413,7 @@ angular.module('app')
                                                     recompute();
                                                     var shown = false;
                                                     angular.forEach($scope.identities, function (value) {
-                                                        if (!shown && value.associated && getProvider(value) === providerid) {
+                                                        if (!shown && value.associated === undefined && getProvider(value) === providerid) {
                                                             shown = true;
                                                             snackbar.showK('identityConnected');
                                                         }
