@@ -13,7 +13,7 @@ import subprocess
 
 # META
 FORCE_SSL = True
-SITE_META_TITLE = "Ecommerce Platform, Online Product Catalog Publisher"
+SITE_META_TITLE = "E-commerce Platform, Online Product Catalog Publisher"
 SITE_META_DESCRIPTION = "Easily sell online with POS equipped product catalogs. Create, publish and distribute POS equipped product catalogs with MIRACLESTYLE'S e-commerce platform."
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
 DEBUG_HOST_NAMES = ['localhost:9982', '192.168.0.100:9982', '0.0.0.0:9982']
