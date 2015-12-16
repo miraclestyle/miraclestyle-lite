@@ -35,6 +35,15 @@ window.getLocalStorage = function () {
         return window._chromeLocalStorage;
     }
 };
+
+(function () {
+    var storage = window.getLocalStorage();
+    if (storage && storage.getItem('version') !== window.VERSION) {
+        storage.clear();
+        storage.setItem('version', window.VERSION);
+    }
+}());
+
 function Steady(opts) {
     if (!opts) throw new Error('missing options');
     if (!opts.handler) throw new Error('missing handler parameter');
@@ -566,6 +575,7 @@ if (!Array.prototype.indexOf) {
                 'timer',
                 'googlechart',
                 'btford.markdown',
+                'pasvaz.bindonce',
                 'material.core',
                 'material.core.gestures',
                 'material.components.button',
@@ -1191,7 +1201,7 @@ if (window.DEBUG) {
                         modelsUtil = $injector.get('modelsUtil'),
                         shouldSpin = rejection.config.activitySpinner === true,
                         enableUI = function () {
-                            $rootScope.$broadcast('disableUI', false);
+                            $rootScope.disableUI(false);
                         },
                         reject,
                         models,
@@ -1200,7 +1210,7 @@ if (window.DEBUG) {
                         $timeout,
                         overrideSnackbarError,
                         currentAccount = $injector.get('currentAccount'),
-                        shouldDisable = (rejection.config.disableUI === undefined || rejection.config.disableUI === true);
+                        shouldDisable = (rejection.config.disableUI === true);
 
                     if (shouldSpin) {
                         $rootScope.activitySpinner.stop();
@@ -1295,10 +1305,10 @@ if (window.DEBUG) {
                     response: handleResponse,
                     responseError: handleResponse,
                     request: function (config) {
-                        var shouldDisable = (config.disableUI === undefined || config.disableUI === true),
+                        var shouldDisable = config.disableUI === true,
                             shouldSpin = config.activitySpinner === true;
                         if (shouldDisable) {
-                            $rootScope.$broadcast('disableUI', true);
+                            $rootScope.disableUI(true);
                         }
                         if (shouldSpin) {
                             $rootScope.activitySpinner.start();
@@ -1766,7 +1776,6 @@ if (window.DEBUG) {
             orderBuyerList: 'buyer/help/orders.html',
             cartBuyerList: 'buyer/help/carts.html',
             catalogList: 'catalog/help/list.html',
-            cart: 'order/help/empty.html',
             cartMessages: 'order/help/messages.html',
             sellerProfileCatalogList: 'seller/help/profile_catalogs.html'
         });
@@ -1779,7 +1788,11 @@ if (window.DEBUG) {
             duplicationInProgressCatalog: 'Catalog scheduled for duplication.',
             administered: 'Administered.',
             identityDisconnected: 'Identity disconnected.',
+            identityTaken: 'This identity is already connected to another Miraclestyle account.',
             identityConnected: 'Identity connected.',
+            identityConnectionCanceled: 'Identity connection canceled.',
+            failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
+            identityConnectionFailed: 'This identity is already connected to another Miraclestyle account.',
             createVariantsFirst: 'Create some variants first.',
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',
@@ -1810,7 +1823,12 @@ if (window.DEBUG) {
             orderNotFound: 'This order does not exist.',
             catalogNotFound: 'This catalog does not exist.',
             catalogProductNotFound: 'This catalog product does not exist.',
-            failedAccessingAccount: 'Failed accessing account.',
+            rejectedAccountAccess: 'You rejected access to your account.',
+            incorrectAccessToken: 'Incorrect access token. Please try again.',
+            takenByOtherAccount: 'These credentials are taken by other account.',
+            failedGettingEmail: 'E-mail not provided by the provider.',
+            incorrectLinkSettings: 'Incorrect link settings.',
+            failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.'
         });
@@ -1920,6 +1938,9 @@ if (window.DEBUG) {
             },
             connection_refused: function () {
                 return 'Failed to establish connection.';
+            },
+            invalid_response: function () {
+                return 'Server failed to respond, please try again.';
             },
             traceback: function (trace) {
                 var parse = $.parseHTML(trace);
@@ -5086,7 +5107,7 @@ function msieversion() {
         }
         InkRippleDirective.$inject = ["$mdInkRipple", "$parse"];
 
-        function InkRippleService($window, $timeout, $parse, $$rAF) {
+        function InkRippleService($window, $timeout, $parse, $$rAF, $animateCss) {
 
             return {
                 attachButtonBehavior: attachButtonBehavior,
@@ -5123,7 +5144,8 @@ function msieversion() {
             function attach(scope, element, options) {
                 if (element.controller('mdNoInk')) return angular.noop;
 
-                var ignore = element.attr('md-ink-ripple-ignore');
+                var ignore = element.attr('md-ink-ripple-ignore'),
+                    eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click');
 
                 ignore = (ignore ? $parse(ignore)(scope) : undefined);
 
@@ -5164,10 +5186,7 @@ function msieversion() {
                 element.addClass('ripple-presence');
 
                 // expose onInput for ripple testing
-                if (options.mousedown) {
-                    element.on('$md.pressdown', onPressDown);
-                    //.on('click', onPressDown);
-                }
+                element.on(eventHandler, onPressDown);
 
 
                 // Publish self-detach method if desired...
@@ -5192,7 +5211,7 @@ function msieversion() {
                     }
                     k = setTimeout(function () {
                         onPressDown2(ev);
-                    }, (isSafari() ? 80 : 0));
+                    }, (isSafari() ? 90 : 0));
                 }
 
                 function onPressDown2(ev) {
@@ -5225,6 +5244,7 @@ function msieversion() {
                     } else if (element[0].hasAttribute('ripple-light')) {
                         ripple.addClass('ripple-light');
                     }
+                    element.find('.ripple-active').remove(); // remove all previous ripples
                     element.append(ripple);
                     var squared = element[0].hasAttribute('md-ink-ripple-action') || element[0].hasAttribute('ripple-action');
                     if (squared) {
@@ -5261,15 +5281,13 @@ function msieversion() {
                         };
                     }
 
-
                     ripple.css(worker.style);
 
                     $timeout(function () {
-                        $$rAF(function () {
-                            ripple.addClass(cls);
-                            ripple.oneAnimationEnd(function () {
-                                ripple.remove();
-                            });
+                        $animateCss(ripple, {
+                            addClass: cls
+                        }).start().done(function () {
+                            ripple.removeClass(cls);
                         });
                     }, 0, false);
 
@@ -5301,7 +5319,7 @@ function msieversion() {
 
             }
         }
-        InkRippleService.$inject = ["$window", "$timeout", "$parse", "$$rAF"];
+        InkRippleService.$inject = ["$window", "$timeout", "$parse", "$$rAF", "$animateCss"];
 
         function attrNoDirective() {
             return function () {
@@ -6881,7 +6899,7 @@ function msieversion() {
             transclude: true,
             replace: true
         };
-    }).directive('actionDropdown', ['$simpleDialog', '$$rAF', '$mdConstant', 'underscoreTemplate', '$timeout', '$parse', '$q', 'helpers', function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers) {
+    }).directive('actionDropdown', ['$simpleDialog', '$$rAF', '$mdConstant', 'underscoreTemplate', '$timeout', '$parse', '$q', 'helpers', '$animateCss', function ($simpleDialog, $$rAF, $mdConstant, underscoreTemplate, $timeout, $parse, $q, helpers, $animateCss) {
         return {
             replace: true,
             transclude: true,
@@ -6953,11 +6971,10 @@ function msieversion() {
                                 options.resize();
                                 $(window).on('resize', options.resize);
 
-                                $$rAF(function () {
-                                    dialogEl.addClass('fade in');
-                                });
-
-                                dialogEl.oneAnimationEnd(function () {
+                                dialogEl.addClass('fade');
+                                $animateCss(dialogEl, {
+                                    addClass: 'in'
+                                }).start().done(function () {
                                     element.addClass('opacity-in');
                                     nextDefer.resolve();
                                 });
@@ -6966,7 +6983,7 @@ function msieversion() {
 
                             };
 
-                            $$rAF(animateSelect);
+                            animateSelect();
 
                             dialogEl.on('click', dropdown.close);
                         },
@@ -9882,13 +9899,25 @@ function msieversion() {
                                 _minutes: 0,
                                 _hours: 0,
                                 _incHours: function (inc) {
-                                    this._hours = scope._hours24 ? Math.max(0, Math.min(23, this._hours + inc)) : Math.max(1, Math.min(12, this._hours + inc));
+                                    var next = this._hours + inc;
+                                    if (next == -1) {
+                                        next = (scope._hours24 ? 23 : 12);
+                                    } else if ((scope._hours24 ? next > 23 : next > 11)) {
+                                        next = 0;
+                                    }
+                                    this._hours = scope._hours24 ? Math.max(0, Math.min(23, next)) : Math.max(1, Math.min(12, next));
                                     if (isNaN(this._hours)) {
                                         return this._hours = 0;
                                     }
                                 },
                                 _incMinutes: function (inc) {
-                                    this._minutes = Math.max(0, Math.min(59, this._minutes + inc));
+                                    var next = this._minutes + inc;
+                                    if (next == -1) {
+                                        next = 59;
+                                    } else if (next > 59) {
+                                        next = 0;
+                                    }
+                                    this._minutes = Math.max(0, Math.min(59, next));
                                     if (isNaN(this._minutes)) {
                                         return this._minutes = 0;
                                     }
@@ -10483,6 +10512,7 @@ function msieversion() {
                         anyway.resolve();
                         promises = [anyway.promise];
                     }
+
                     return $q.all(promises);
                 },
                 applyGlobalConfig: function (config) {
@@ -10547,6 +10577,10 @@ function msieversion() {
 
                         if (attrs.readonly) {
                             delete attrs['ng-disabled'];
+                        } else {
+                            if (!attrs.loading) {
+                                attrs.loading = '!' + writableCompiled;
+                            }
                         }
 
                         return attrs;
@@ -10956,6 +10990,12 @@ function msieversion() {
 
                     var that = element,
                         form = that.parents('form:first'),
+                        click = function (e) {
+                            if (element.parents('button[disabled]:first').length) {
+                                e.preventDefault();
+                                return false;
+                            }
+                        },
                         change = function () {
 
                             if (!that.val()) {
@@ -10979,7 +11019,8 @@ function msieversion() {
                         return false;
                     }
 
-                    $(element).on('change', change);
+                    element.on('change', change)
+                           .on('click', click);
 
                     scope.$on('$destroy', function () {
                         $(element).off('change', change);
@@ -11133,9 +11174,13 @@ function msieversion() {
                             cache: {
                                 query: {
                                     '24': true,
-                                    '12': true,
-                                    '13': true,
-                                    '17': true
+                                    '12': 'all_countries',
+                                    '13': function (key) {
+                                        return key + '_all_regions';
+                                    },
+                                    '17': function (key) {
+                                        return key + '_all_units';
+                                    }
                                 },
                                 type: {
                                     '12': 'local',
@@ -11190,7 +11235,7 @@ function msieversion() {
                                     }
                                     return args;
                                 },
-                                '17': function (term, searchArguments) {
+                                '17': function (term, searchArguments, cacheFn) {
                                     var searchDefaults = {
                                             search: {
                                                 filters: [{
@@ -11207,6 +11252,9 @@ function msieversion() {
                                         argument = searchDefaults.search;
 
                                     if (config.code_name === 'uom') {
+                                        if (cacheFn) {
+                                            return cacheFn('uom');
+                                        }
                                         argument.filters.unshift({
                                             value: 'Currency',
                                             field: 'measurement',
@@ -11223,6 +11271,9 @@ function msieversion() {
                                     }
 
                                     if (config.code_name === 'currency') {
+                                        if (cacheFn) {
+                                            return cacheFn('currency');
+                                        }
                                         argument.filters.push({
                                             value: 'Currency',
                                             field: 'measurement',
@@ -11230,12 +11281,19 @@ function msieversion() {
                                         });
                                     }
 
+                                    if (cacheFn) {
+                                        return cacheFn('units');
+                                    }
+
                                     return searchDefaults;
 
                                 },
-                                '13': function (term, searchArguments) {
+                                '13': function (term, searchArguments, cacheFn) {
                                     var args = info.scope.$eval(info.config.ui.parentArgs);
                                     if ((args && args.country)) {
+                                        if (cacheFn) {
+                                            return cacheFn(args.country);
+                                        }
                                         return {
                                             search: {
                                                 ancestor: args.country,
@@ -11259,9 +11317,7 @@ function msieversion() {
                         model = models[config.kind],
                         search = {},
                         args,
-                        opts = {
-                            disableUI: false
-                        },
+                        opts = {},
                         override = config.ui.specifics.override || {},
                         repackMemory = function () {
                             config.ui.specifics._mapEntities = {};
@@ -11331,6 +11387,9 @@ function msieversion() {
                     if (override.cache && angular.isDefined(override.cache.query)) {
                         opts.cache = override.cache.query;
                     }
+                    if (angular.isFunction(opts.cache)) {
+                        opts._getCache = opts.cache;
+                    }
                     if (override.cache && angular.isDefined(override.cache.type)) {
                         opts.cacheType = override.cache.type;
                     }
@@ -11347,6 +11406,9 @@ function msieversion() {
                                 } else {
                                     findArgs = args;
                                     args = findArgs(null, actionArguments);
+                                    if (angular.isFunction(opts._getCache)) {
+                                        opts.cache = findArgs(null, actionArguments, opts._getCache);
+                                    }
                                     if (finder) {
                                         config.ui.specifics.search.find = function (term) {
                                             return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
@@ -11733,6 +11795,7 @@ function msieversion() {
 
                     defaultSortable = {
                         disabled: false,
+                        cancel: 'input,textarea,button,select,option,[disabled]',
                         start: function (e, ui) {
                             info.scope.$broadcast('itemOrderStarted');
                         },
@@ -11742,6 +11805,8 @@ function msieversion() {
                         whatSortMeans: function () {
                             modals.alert('howToSort');
                         },
+                        forcePlaceholderSize: true,
+                        forceHelperSize: true,
                         handle: '.sort-handle',
                         tolerance: 'pointer',
                         helper: 'clone',
@@ -11920,6 +11985,10 @@ function msieversion() {
                             buildPaths(); // force path rebuild
 
                             modalSettings = helpers.alwaysObject(modalSettings);
+                            defaultArgs = helpers.alwaysObject(defaultArgs);
+                            if (config.ui.specifics.defaultArgs) {
+                                $.extend(defaultArgs, config.ui.specifics.defaultArgs);
+                            }
 
                             $modal.open({
                                 popFrom: (modalSettings && modalSettings.target ? helpers.clicks.realEventTarget(modalSettings.target) : undefined),
@@ -12306,7 +12375,8 @@ function msieversion() {
                                                 }
                                                 // create rpc from root args's action model and action id
                                                 promise = models[$scope.sendRootArgs.action_model].actions[$scope.sendRootArgs.action_id]($scope.sendRootArgs, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     $scope.response = response;
@@ -12438,8 +12508,7 @@ function msieversion() {
                                                     };
 
                                                 if (angular.isFunction(config.ui.specifics.beforeSave)) {
-                                                    //promise = 
-                                                    config.ui.specifics.beforeSave($scope, info);
+                                                    promise = config.ui.specifics.beforeSave($scope, info);
                                                 }
 
                                                 if (promise && promise.then) {
@@ -12848,8 +12917,7 @@ function msieversion() {
                         var theTarget = $(target),
                             parentTarget = theTarget.parents('.grid-item:first'),
                             cardParent = theTarget.parents('.card:first'),
-                            buttonParent = theTarget.parents('button:first'),
-                            aParent = theTarget.parents('button:first');
+                            buttonParent = theTarget.parents('button:first');
                         if (!theTarget.hasClass('grid-item') && parentTarget.length) {
                             return parentTarget.get(0);
                         }
@@ -12860,10 +12928,6 @@ function msieversion() {
 
                         if (buttonParent.length) {
                             return buttonParent.get(0);
-                        }
-
-                        if (aParent.length) {
-                            return aParent.get(0);
                         }
 
                         return target;
@@ -12907,7 +12971,7 @@ function msieversion() {
                             top = (screen.height / 2) - (h / 2),
                             popup;
                         // toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, 
-                        popup = window.open(url, title, 'width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                        popup = window.open(url, title, 'scrollbars=1, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
                         popup.focus();
                         return popup;
                     }
@@ -12936,6 +13000,19 @@ function msieversion() {
                     },
                     jsonToUrlsafe: function (str) {
                         return helpers.url.urlsafe(angular.toJson(str));
+                    },
+                    getQueryVariable: function (path, variable) {
+                        if (path.indexOf('#') !== -1) {
+                            path = path.split('#')[0];
+                        }
+                        var query = path.split('?')[1];
+                        var vars = query.split('&');
+                        for (var i = 0; i < vars.length; i++) {
+                            var pair = vars[i].split('=');
+                            if (decodeURIComponent(pair[0]) == variable) {
+                                return decodeURIComponent(pair[1]);
+                            }
+                        }
                     }
                 }
             });
@@ -13161,6 +13238,9 @@ function msieversion() {
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.draggableClick),
                         click = function (event, tap) {
+                            if (element.attr('disabled')) {
+                                return;
+                            }
                             if (element.hasClass('dragged') && !tap) {
                                 element.removeClass('dragged');
                                 return;
@@ -13257,7 +13337,7 @@ function msieversion() {
                                     maybe,
                                     promise;
                                 if (config.reverse) {
-                                    maybe = (listenNode ? (listen.scrollTop() < (config.top || 40)) : false);
+                                    maybe = (listenNode ? (listen.scrollTop() < (config.top || 8)) : false);
                                 } else {
                                     //console.log(listenNode, viewport, listenScrollHeight, viewport - listenScrollHeight);
                                     maybe = (listenNode ? ((viewport >= listenScrollHeight) || ((viewport - listenScrollHeight) > -10)) : false);
@@ -13342,9 +13422,16 @@ function msieversion() {
 
                         if (config.watch) {
                             scope.$watchGroup(angular.isArray(config.watch) ? config.watch : [config.watch], function (neww, old) {
-                                if (JSON.stringify(neww) !== JSON.stringify(old)) {
-                                    maybeMore();
-                                    startInterval();
+                                var fn = function () {
+                                    if (JSON.stringify(neww) !== JSON.stringify(old)) {
+                                        maybeMore();
+                                        startInterval();
+                                    }
+                                };
+                                if (config.watchTimeout) {
+                                    setTimeout(fn, config.watchTimeout);
+                                } else {
+                                    fn();
                                 }
                             });
                         } else {
@@ -14252,16 +14339,13 @@ function msieversion() {
                     var top = function () {
                             return element.find(':first');
                         },
-                        requests = 0,
                         hide = function () {
-                            requests -= 1;
-                            if (!(requests < 1)) {
+                            if (!(scope.contentSpinner.requests < 1)) {
                                 return;
                             }
                             top().addClass('ng-hide');
                         },
                         show = function () {
-                            requests += 1;
                             top().removeClass('ng-hide');
                         };
                     scope.contentSpinner.hide.push(hide);
@@ -14282,7 +14366,6 @@ function msieversion() {
                     var top = function () {
                             return element.find(':first');
                         },
-                        requests = 0,
                         slide = function () {
                             return top().find('.progress:first');
                         },
@@ -14290,7 +14373,6 @@ function msieversion() {
                             return slide().find('.progress:first');
                         },
                         hide = function (fast) {
-                            requests -= 1;
                             var s = slide(),
                                 anim = animation();
                             if (s.length) {
@@ -14303,7 +14385,7 @@ function msieversion() {
                                     return;
                                 }
                                 anim.oneTransitionEnd(function () {
-                                    if (!(requests < 1)) {
+                                    if (!(scope.activitySpinner.requests < 1)) {
                                         s.removeClass('out').addClass('in');
                                     } else {
                                         top().addClass('ng-hide');
@@ -14314,7 +14396,6 @@ function msieversion() {
                             }
                         },
                         show = function () {
-                            requests += 1;
                             top().removeClass('ng-hide');
                             if (slide().length) {
                                 var s = slide();
@@ -14457,6 +14538,7 @@ function msieversion() {
                                 });
                             }, 30000);
                         };
+                    scope.thing = attrs.pollResultsThing;
                     scope.newItems = [];
                     scope.seeNewItems = function () {
                         scope.config.results.prepend(scope.newItems);
@@ -14572,11 +14654,26 @@ function msieversion() {
             var clickElement = options.popFrom;
             return (clickElement ? $(clickElement) : clickElement);
         },
+        maybeFindTarget = function (ev) {
+            if (!ev) {
+                return;
+            }
+            if (ev.target) {
+                var target = $(ev.target);
+                if (!target.attr('ng-click')) {
+                    target = target.parents('[ng-click]:first');
+                }
+                if (target.length) {
+                    return target;
+                }
+                return null;
+            }
+        },
         hidePrevModal = function (element) {
-            element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
+            //element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
         },
         showPrevModal = function (element) {
-            element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
+            //element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
         },
         getPositionOverClickElement = function (clickElement, element) {
             var clickRect = clickElement[0].getBoundingClientRect(),
@@ -14658,7 +14755,7 @@ function msieversion() {
                 };
             }
         };
-    }).directive('modalBackdrop', ['$timeout', function ($timeout) {
+    }).directive('modalBackdrop', ['$timeout', '$animateCss', function ($timeout, $animateCss) {
         return {
             restrict: 'EA',
             replace: true,
@@ -14666,7 +14763,9 @@ function msieversion() {
             link: function (scope, element, attrs) {
                 scope.backdropClass = attrs.backdropClass || '';
                 $timeout(function () {
-                    element.addClass('in');
+                    $animateCss(element, {
+                        addClass: 'in'
+                    }).start();
                 }, 0, false);
             }
         };
@@ -14685,7 +14784,7 @@ function msieversion() {
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    $rootScope.$broadcast('disableUI', true);
+                    //$rootScope.disableUI(true);
                     var clickElement = getClickElement(scope.modalOptions),
                         ready;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
@@ -14707,15 +14806,14 @@ function msieversion() {
                             spec,
                             iwidth,
                             iheight,
-                            animator;
+                            animator,
+                            end;
                         if (isSlide) {
                             cb = function () {
-                                element.addClass(where + ' slide drawer visible in');
-                                /*
-                                $animateCss(element, {
+                                element.addClass(where + ' slide drawer visible');
+                                return $animateCss(element, {
                                     addClass: 'in'
-                                }).start().done(function () {
-                                });*/
+                                });
                             };
                         } else if (isConfirmation) {
                             modal = element.find('.modal-dialog');
@@ -14755,35 +14853,37 @@ function msieversion() {
                                 '75% { top: 0px; left: 0px;}' +
                                 '100% { top: 0px; left: 0px; ' + $mdConstant.RAW_CSS.TRANSFORM + ': scale(1, 1);opacity:1;}');
                             cb = function () {
-                                element.addClass('pop ' + animator.className).data('animator', animator);
                                 $$rAF(function () {
                                     clickElement.css('opacity', 0); // separate frame for opacity
+                                });
+                                element.addClass('pop').data('animator', animator);
+                                return $animateCss(element, {
+                                    addClass: animator.className
                                 });
                             };
                         } else if (isFade) {
                             cb = function () {
-                                element.addClass('fade in');
+                                element.addClass('fade');
+                                return $animateCss(element, {addClass: 'in'});
                             };
                         }
-                        element.oneAnimationEnd(function () {
-                            setTimeout(function () {
-                                element.addClass('visible');
-                                $(window).triggerHandler('modal.visible', [element]);
-                                scope.modalOptions.opened = true;
-                                scope.$emit('modalOpened');
-                                scope.$broadcast('modalOpened');
-                                scope.$apply();
-                                $rootScope.$broadcast('disableUI', false);
-                                if (scope.modalOptions.fullScreen) {
-                                    hidePrevModal(element);
-                                }
-                            });
-                        });
+
+                        end = function () {
+                            element.addClass('visible rendered');
+                            $(window).triggerHandler('modal.visible', [element]);
+                            scope.modalOptions.opened = true;
+                            scope.$emit('modalOpened');
+                            scope.$broadcast('modalOpened');
+                            scope.$apply();
+                            //$rootScope.disableUI(false);
+                            if (scope.modalOptions.fullScreen) {
+                                hidePrevModal(element);
+                            }
+                        };
 
                         $(window).triggerHandler('modal.open', [element]);
 
-                        $$rAF(cb);
-
+                        cb().start().done(end);
                     };
                     attrs.$observe('modalRender', function (value) {
                         if (value === 'true') {
@@ -14811,8 +14911,8 @@ function msieversion() {
             }
         };
     }).factory('$modalStack', ['$timeout', '$document', '$compile', '$rootScope', '$$stackedMap', 'mdContextualMonitor',
-        '$mdConstant', '$q', 'animationGenerator', '$animate', '$$rAF',
-        function ($timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q, animationGenerator, $animate, $$rAF) {
+        '$mdConstant', '$q', 'animationGenerator', '$animateCss', '$$rAF',
+        function ($timeout, $document, $compile, $rootScope, $$stackedMap, mdContextualMonitor, $mdConstant, $q, animationGenerator, $animateCss, $$rAF) {
 
             var OPENED_MODAL_CLASS = 'modal-open',
                 openedWindows = $$stackedMap.createNew(),
@@ -14829,6 +14929,7 @@ function msieversion() {
                     animator,
                     inclass = 'in',
                     outclass = 'out',
+                    animation,
                     popin = domEl.data('animator');
 
                 if (scope.modalOptions.fullScreen) {
@@ -14846,9 +14947,11 @@ function msieversion() {
                     inclass = popin.className;
                 }
 
-                $$rAF(function () {
-                    domEl.removeClass(inclass).addClass(outclass);
-                });
+
+                animation = $animateCss(domEl, {
+                    removeClass: inclass,
+                    addClass: outclass
+                }).start();
 
                 demise = function (e) {
                     domEl.remove();
@@ -14870,11 +14973,11 @@ function msieversion() {
                     }
                 };
 
-                domEl.oneAnimationEnd(demise);
+                animation.done(demise);
 
                 setTimeout(function () {
                     if (domEl) {
-                        demise();
+                        // demise();
                     }
                 }, 600);
 
@@ -14891,16 +14994,22 @@ function msieversion() {
                 openedWindows.remove(modalInstance);
 
                 //remove window DOM element
-                backdropDomEl.oneAnimationEnd(function () {
+                $animateCss(backdropDomEl, {
+                    removeClass: 'in',
+                    addClass: 'out'
+                }).start().done(function () {
                     backdropDomEl.remove();
                     backdropScope.$destroy();
                     modalWindow.backdropScope = undefined;
                     modalWindow.backdropDomEl = undefined;
-                }).removeClass('in').addClass('out');
+                });
 
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
+                    if (!openedWindows.length()) {
+                        $rootScope.overlays = false;
+                    }
                     $(window).triggerHandler('modal.close');
                     defer.resolve();
                 });
@@ -14962,6 +15071,7 @@ function msieversion() {
                 openedWindows.top().value.modalDomEl = modalDomEl;
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
+                $rootScope.overlays = true;
 
                 if (!modal.noEscape) {
                     modalInstance.esc = function (e) {
@@ -15092,8 +15202,7 @@ function msieversion() {
                             throw new Error('One of template or templateUrl options is required.');
                         }
 
-                        var templateAndResolvePromise =
-                            $q.all([getTemplatePromise(modalOptions)].concat(getResolvePromises(modalOptions.resolve)));
+                        var templateAndResolvePromise = $q.all([getTemplatePromise(modalOptions)].concat(getResolvePromises(modalOptions.resolve)));
 
 
                         templateAndResolvePromise.then(function resolveSuccess(tplAndVars) {
@@ -15218,12 +15327,14 @@ function msieversion() {
                 var time,
                     fn,
                     rawFn = function (e) {
+                        var modal = $(element).parents('.modal:first'),
+                            measure,
+                            rendered = modal.hasClass('rendered');
                         if (time) {
                             clearTimeout(time);
                         }
-                        time = setTimeout(function () {
-                            var modal = $(element).parents('.modal:first'),
-                                modalDialog = modal.find('.modal-dialog:first'),
+                        measure = function () {
+                            var modalDialog = modal.find('.modal-dialog:first'),
                                 height = (modal.hasClass('modal-medium') ? (parseInt((modalDialog.css('max-height').indexOf('%') === -1 ? modalDialog.css('max-height') : 0), 10) || modalDialog.height()) : $(window).height());
 
                             modalDialog.find('.fixed-height, .min-height, .max-height').each(function () {
@@ -15246,7 +15357,12 @@ function msieversion() {
                                 $(this).css(css, newHeight);
                             });
                             scope.$broadcast('modalResize');
-                        }, 50);
+                        };
+                        if (rendered) {
+                            time = setTimeout(measure, 50);
+                        } else {
+                            measure();
+                        }
                     };
 
                 fn = _.throttle(rawFn, 100);
@@ -15296,11 +15412,10 @@ function msieversion() {
                     if (config.noAutoDismiss) {
                         return config.confirm.call(that);
                     }
-                    this.dismiss().then(function () {
-                        if (angular.isFunction(config.confirm)) {
-                            config.confirm.call(that);
-                        }
-                    });
+                    if (angular.isFunction(config.confirm)) {
+                        config.confirm.call(that);
+                    }
+                    this.dismiss().then(function () {}); // run callback immidiately
                 };
                 return this.create(theConfig, theConfig.modal);
             },
@@ -15406,7 +15521,9 @@ function msieversion() {
 
                         $scope.config.confirm = function () {
                             if ($scope.validateForm()) {
-                                var promise = models[entity.kind].actions.sudo($scope.args);
+                                var promise = models[entity.kind].actions.sudo($scope.args, {
+                                    disableUI: true
+                                });
                                 promise.then(function (response) {
                                     if (config.onConfirm) {
                                         config.onConfirm(response.data.entity);
@@ -16029,7 +16146,8 @@ function msieversion() {
                                         }
                                         config.prepareReadArguments($scope);
                                         var promise = models[config.kind].actions[$scope.args.action_id]($scope.args, {
-                                            activitySpinner: true
+                                            activitySpinner: true,
+                                            disableUI: true
                                         });
 
                                         promise.then(function (response) {
@@ -16199,7 +16317,11 @@ function msieversion() {
                                 };
                                 if (angular.isFunction(promise)) {
                                     $scope.$state.promise(promise, function ($scope, response) {
-                                        $.extend(entity, response.data.entity);
+                                        if (angular.isFunction(config.extractEntity)) {
+                                            $.extend(entity, config.extractEntity(response));
+                                        } else {
+                                            $.extend(entity, response.data.entity);
+                                        }
                                         process($scope);
                                     });
                                 } else {
@@ -16295,9 +16417,6 @@ function msieversion() {
                                             }
                                             theConfig.args.search.options.start_cursor = loadConfig.runLast ? null : this.cursor;
                                             this.loading = !loadConfig.runLast;
-                                            $.extend(theConfig.config, {
-                                                disableUI: false
-                                            });
                                             promise = that.actions[theConfig.action || 'search'](theConfig.args, theConfig.config);
                                             promise.error(function (response) {
                                                 paginate.more = false;
@@ -16469,9 +16588,6 @@ function msieversion() {
                                         if (!loadConfig.rpcOptions) {
                                             loadConfig.rpcOptions = {};
                                         }
-                                        $.extend(loadConfig.rpcOptions, {
-                                            disableUI: false
-                                        });
 
                                         promise = (config.read ? config.read(next) : (config.kind ? models[config.kind] : model).actions.read(readArgsRpc, loadConfig.rpcOptions));
 
@@ -16776,11 +16892,11 @@ function msieversion() {
                         if (select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing && missing && missing.length) {
-                                    select.search.missing(missing).then(resolve);
+                                    select.search.missing(missing).then(resolve, resolve);
                                 } else {
                                     resolve();
                                 }
-                            });
+                            }, resolve);
                         } else {
                             resolve();
                         }
@@ -17075,11 +17191,11 @@ function msieversion() {
                         if (select.search && select.search.ready) {
                             select.search.ready.then(function () {
                                 if (select.search.missing && missing && missing.length) {
-                                    select.search.missing(missing).then(resolve);
+                                    select.search.missing(missing).then(resolve, resolve);
                                 } else {
                                     resolve();
                                 }
-                            });
+                            }, resolve);
                         } else {
                             resolve();
                         }
@@ -17923,7 +18039,7 @@ angular.module('app')
                         }
 
                         scope.$broadcast('ngUploadSubmit');
-                        $rootScope.$broadcast('disableUI', true);
+                        $rootScope.disableUI(true);
 
                     });
 
@@ -17946,7 +18062,7 @@ angular.module('app')
                             content = angular.fromJson(bodyContent.innerText || bodyContent.textContent);
                         } catch (e) {
                             // Fall back to html if json parse failed
-                            content = bodyContent.innerHTML;
+                            content = {errors: {invalid_response: content}};
                             $log.warn('Response is not valid JSON');
                         }
 
@@ -17982,7 +18098,7 @@ angular.module('app')
                                 errorFn(scope, response);
                             }
                         }
-                        $rootScope.$broadcast('disableUI', false);
+                        $rootScope.disableUI(false);
 
                         if (noErrors) {
                             scope.$broadcast('ngUploadComplete', content);
@@ -18028,23 +18144,50 @@ angular.module('app')
 (function () {
     'use strict';
     // code for account
+    var resolveAccountLoginError = function (snackbar, errors) {
+        var found, oauth2error;
+        if (errors.action_denied) {
+            found = true;
+            snackbar.showK('accessDenied');
+        }
+        if (errors.oauth2_error) {
+            oauth2error = errors.oauth2_error[0];
+            if (oauth2error === 'no_email_provided') {
+                snackbar.showK('failedGettingEmail');
+            } else if (oauth2error === 'failed_access_token') {
+                snackbar.showK('incorrectAccessToken');
+            } else if (oauth2error === 'rejected_account_access') {
+                snackbar.showK('rejectedAccountAccess');
+            } else if (oauth2error === 'taken_by_other_account') {
+                snackbar.showK('takenByOtherAccount');
+            } else if (oauth2error === 'state_error') {
+                snackbar.showK('incorrectLinkSettings');
+            } else {
+                snackbar.showK('failedAuthentication');
+            }
+            found = true;
+        }
+        return found;
+    };
     angular.module('app').constant('LOGIN_PROVIDERS', [{
-            name: 'Google',
-            id: 1
-        }, {
             name: 'Facebook',
-            id: 2
+            key: '2'
+        }, {
+            name: 'Google',
+            icon: 'googleplus',
+            key: '1'
         }, {
             name: 'Linkedin',
-            id: 3
+            key: '3'
         }, {
             name: 'Twitter',
-            id: 4
+            key: '4'
         }])
         .factory('mappedLoginProviders', ['LOGIN_PROVIDERS', function (LOGIN_PROVIDERS) {
             var mappedLoginProviders = {};
-            angular.forEach(LOGIN_PROVIDERS, function (value) {
-                mappedLoginProviders[value.id] = value;
+            angular.forEach(LOGIN_PROVIDERS, function (value, i) {
+                value.sequence = i;
+                mappedLoginProviders[value.key] = value;
             });
             return mappedLoginProviders;
         }])
@@ -18068,12 +18211,7 @@ angular.module('app')
                 if (data.errors) {
                     errors = angular.fromJson(data.errors);
                     if (errors) {
-                        if (errors.action_denied) {
-                            snackbar.showK('accessDenied');
-                        }
-                        if (errors.oauth2_error) {
-                            snackbar.showK('failedAccessingAccount');
-                        }
+                        resolveAccountLoginError(snackbar, errors);
                     }
                 }
             }
@@ -18097,8 +18235,11 @@ angular.module('app')
         }]).run(['modelsConfig', 'channelApi', 'channelNotifications', 'currentAccount', '$http', '$state', 'endpoint', '$window', 'modelsEditor', 'GLOBAL_CONFIG', 'modelsMeta', 'modelsUtil', '$modal', 'helpers', 'modals', '$q', 'mappedLoginProviders', 'LOGIN_PROVIDERS', 'snackbar', function (modelsConfig, channelApi, channelNotifications, currentAccount, $http, $state, endpoint, $window, modelsEditor, GLOBAL_CONFIG, modelsMeta, modelsUtil, $modal, helpers, modals, $q, mappedLoginProviders, LOGIN_PROVIDERS, snackbar) {
 
             var getProvider = function (ident) {
-                return ident.identity.split('-')[1];
-            };
+                    return ident.identity.split('-')[1];
+                },
+                getLoginProvider = function (ident) {
+                    return mappedLoginProviders[getProvider(ident)];
+                };
             modelsConfig(function (models) {
 
                 $.extend(models['11'], {
@@ -18128,6 +18269,83 @@ angular.module('app')
                             };
                         });
                     },
+                    loginPopup: function (target, title, success, cancel, fail, autodestroy) {
+                        var popup = helpers.popup.openCentered(target, title),
+                            MATCH_LOGIN_INSTRUCTION = $state.href('login-status'),
+                            loggedIn = false,
+                            pollTimer,
+                            loading = false,
+                            handle = function (e) {
+                                var url = '',
+                                    check,
+                                    destroy;
+                                destroy = function () {
+                                    endpoint.removeCache();
+                                    loggedIn = true;
+                                    popup.close();
+                                };
+                                if (autodestroy) {
+                                    autodestroy = function () {
+                                        destroy();
+                                    };
+                                } else {
+                                    autodestroy = angular.noop;
+                                }
+                                if (window.ENGINE.CORDOVA.ACTIVE) {
+                                    url = e.originalEvent.url;
+                                }
+                                if (popup.closed) {
+                                    clearInterval(pollTimer);
+                                    if (!loggedIn) {
+                                        cancel();
+                                    }
+                                    return;
+                                }
+                                check = function (errors) {
+                                    if (loading) {
+                                        return;
+                                    }
+                                    if (errors) {
+                                        autodestroy();
+                                        return fail(errors, destroy);
+                                    }
+                                    loading = true;
+                                    models['11'].actions.current_account(undefined, {
+                                        ignoreErrors: 2
+                                    }).then(function (response) {
+                                        var user = response.data.entity;
+                                        if (user && !user._is_guest) {
+                                            $.extend(currentAccount, response.data.entity);
+                                            autodestroy();
+                                            success(response, destroy);
+                                        }
+                                    }, function (response) {
+                                        autodestroy();
+                                        fail(response, destroy);
+                                    })['finally'](function () {
+                                        loading = false;
+                                    });
+                                };
+                                try {
+                                    if (!window.ENGINE.CORDOVA.ACTIVE) {
+                                        url = popup.document.URL;
+                                    }
+                                    if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
+                                        clearInterval(pollTimer);
+                                        check(helpers.url.getQueryVariable(url, 'errors'));
+                                    }
+                                } catch (ignore) {
+                                    if (ignore instanceof DOMException) {
+                                        // check();
+                                    }
+                                }
+                            };
+                        if (window.ENGINE.CORDOVA.ACTIVE) {
+                            $(popup).on('loadstart', handle);
+                        } else {
+                            pollTimer = window.setInterval(handle, 500);
+                        }
+                    },
                     adminManageModal: function (account, extraConfig) {
                         return this.manageModal(account, extraConfig);
                     },
@@ -18146,43 +18364,14 @@ angular.module('app')
                                 $scope.$state.promise(function () {
                                     return $http.post($state.engineHref('login', {
                                         provider: '1'
-                                    }, {
-                                        disableUI: false
                                     }), {
                                         action_id: 'login',
                                         action_model: '11',
                                         redirect_to: 'popup'
                                     });
                                 }, function ($scope, login) {
-                                    var MATCH_LOGIN_INSTRUCTION = $state.href('login-status');
 
-                                    $scope.socials = [{
-                                        name: 'Facebook',
-                                        key: '2'
-                                    }, {
-                                        name: 'Google+',
-                                        icon: 'googleplus',
-                                        key: '1'
-                                    }, {
-                                        name: 'Linkedin',
-                                        key: '3'
-                                    },/* {
-                                        name: 'Twitter',
-                                        key: '3'
-                                    }, {
-                                        name: 'Pinterest',
-                                        key: '4'
-                                    }, {
-                                        name: 'Reddit',
-                                        key: '5'
-                                    }, {
-                                        name: 'Google+',
-                                        icon: 'googleplus',
-                                        key: '1'
-                                    }, {
-                                        name: 'Tumblr',
-                                        key: '7'
-                                    }*/];
+                                    $scope.socials = LOGIN_PROVIDERS;
 
                                     $scope.getIcon = function (soc) {
                                         return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
@@ -18190,67 +18379,25 @@ angular.module('app')
 
                                     $scope.authorization_urls = login.data.authorization_urls;
 
-                                    $scope.onMessage = [];
-
                                     $scope.loginPopup = function (soc) {
-                                        var popup = helpers.popup.openCentered($scope.authorization_urls[soc.key], 'Login with ' + soc.name),
-                                            loggedIn = false,
-                                            pollTimer,
-                                            loading = false,
-                                            handle = function (e) {
-                                                var url = '';
-                                                if (window.ENGINE.CORDOVA.ACTIVE) {
-                                                    url = e.originalEvent.url;
+                                        return models['11'].loginPopup($scope.authorization_urls[soc.key],
+                                            'Login with ' + soc.name,
+                                            function success() {
+                                                snackbar.showK('loginSuccess');
+                                                $scope.close();
+                                            },
+                                            function cancel() {
+                                                snackbar.showK('loginCanceled');
+                                            },
+                                            function fail(errors) {
+                                                var found = false;
+                                                if (errors) {
+                                                    found = resolveAccountLoginError(snackbar, angular.fromJson(errors));
                                                 }
-                                                if (popup.closed) {
-                                                    clearInterval(pollTimer);
-                                                    if (!loggedIn) {
-                                                        snackbar.showK('loginCanceled');
-                                                    }
-                                                    return;
+                                                if (!found) {
+                                                    snackbar.showK('loginFailed');
                                                 }
-                                                var check = function () {
-                                                    if (loading) {
-                                                        return;
-                                                    }
-                                                    loading = true;
-                                                    models['11'].actions.current_account(undefined, {
-                                                        ignoreErrors: 2
-                                                    }).then(function (response) {
-                                                        var user = response.data.entity;
-                                                        if (!user._is_guest) {
-                                                            $.extend(currentAccount, response.data.entity);
-                                                            endpoint.removeCache();
-                                                            snackbar.showK('loginSuccess');
-                                                            loggedIn = true;
-                                                            popup.close();
-                                                            $scope.close();
-                                                        }
-                                                    }, function () {
-                                                        snackbar.showK('loginFailed');
-                                                    })['finally'](function () {
-                                                        loading = false;
-                                                    });
-                                                };
-                                                try {
-                                                    if (!window.ENGINE.CORDOVA.ACTIVE) {
-                                                        url = popup.document.URL;
-                                                    }
-                                                    if (url.indexOf(MATCH_LOGIN_INSTRUCTION) !== -1) {
-                                                        clearInterval(pollTimer);
-                                                        check();
-                                                    }
-                                                } catch (ignore) {
-                                                    if (ignore instanceof DOMException) {
-                                                        check();
-                                                    }
-                                                }
-                                            };
-                                        if (window.ENGINE.CORDOVA.ACTIVE) {
-                                            $(popup).on('loadstart', handle);
-                                        } else {
-                                            pollTimer = window.setInterval(handle, 500);
-                                        }
+                                            });
                                     };
                                 });
                             }]
@@ -18270,6 +18417,11 @@ angular.module('app')
                                 inDirection: false,
                                 outDirection: false
                             },
+                            extractEntity: function (response) {
+                                var ent = response[0].data.entity;
+                                ent._authorization_urls = response[1].data.authorization_urls;
+                                return ent;
+                            },
                             init: function ($scope) {
                                 var entity = $scope.entity,
                                     updateFields = ['state', 'ui.rule', 'created', 'updated'],
@@ -18281,6 +18433,9 @@ angular.module('app')
                                     recompute = function () {
                                         var missing = Object.keys(mappedLoginProviders);
                                         $scope.identities = $scope.entity.identities.concat();
+                                        if (!$scope.entity.identities.length) {
+                                            $scope.entity._is_guest = true;
+                                        }
                                         angular.forEach($scope.identities, function (value) {
                                             var id = getProvider(value);
                                             if (missing[id]) {
@@ -18288,12 +18443,16 @@ angular.module('app')
                                             }
                                         });
                                         angular.forEach(LOGIN_PROVIDERS, function (value) {
-                                            if (missing[value.id]) {
+                                            if (missing[value.key]) {
                                                 $scope.identities.push({
-                                                    identity: '0-' + value.id,
+                                                    identity: '0-' + value.key,
                                                     associated: false
                                                 });
                                             }
+                                        });
+
+                                        $scope.identities.sort(function (prev, next) {
+                                            return getLoginProvider(prev).sequence - getLoginProvider(next).sequence;
                                         });
                                     };
                                 recompute();
@@ -18307,30 +18466,54 @@ angular.module('app')
                                     if (identity.email && identity.associated === undefined) {
                                         modals.confirm('disconnectSignInMethod', function () {
                                             $scope.args.disassociate.push(identity.identity);
-                                            $scope.save().then(function () {
+                                            $scope.save().then(function (response) {
+                                                $.extend($scope.entity, response.data.entity);
                                                 recompute();
                                                 snackbar.showK('identityDisconnected');
                                             });
                                         });
                                     } else {
                                         modals.confirm('connectSignInMethod', function () {
-                                            var redirect_to = $state.href('login-provider-connected', {
-                                                provider: getProvider(identity)
-                                            });
-                                            $http.post($state.engineHref('login', {
-                                                provider: getProvider(identity)
-                                            }), {
-                                                action_id: 'login',
-                                                action_model: '11',
-                                                redirect_to: redirect_to
-                                            }).then(function (response) {
-                                                var data = response.data;
-                                                if (data && !data.errors && data.authorization_url) {
-                                                    window.location.href = data.authorization_url; // @todo this must be a popup
-                                                } else {
-                                                    modals.alert('failedGeneratingAuthorizaitonUrl');
-                                                }
-                                            });
+                                            var providerid = getProvider(identity);
+                                            models['11'].loginPopup($scope.entity._authorization_urls[providerid],
+                                                'Login with ' + LOGIN_PROVIDERS[providerid].name,
+                                                function success(successResponse, destroy) {
+                                                    $http.post($state.engineHref('login', {
+                                                        provider: '1'
+                                                    }), {
+                                                        action_id: 'login',
+                                                        action_model: config.kind,
+                                                        redirect_to: 'popup'
+                                                    }).then(function (response) {
+                                                        $.extend($scope.entity, successResponse.data.entity);
+                                                        $scope.entity._authorization_urls = response.data.authorization_urls;
+                                                        recompute();
+                                                        var shown = false;
+                                                        angular.forEach($scope.identities, function (value) {
+                                                            if (!shown && value.associated === undefined && getProvider(value) === providerid) {
+                                                                shown = true;
+                                                                snackbar.showK('identityConnected');
+                                                            }
+                                                        });
+                                                        if (!shown) {
+                                                            snackbar.showK('identityTaken');
+                                                        }
+                                                        destroy();
+                                                    });
+                                                },
+                                                function cancel(destroy) {
+                                                    snackbar.showK('identityConnectionCanceled');
+                                                },
+                                                function fail(errors, destroy) {
+                                                    var found = false;
+                                                    if (errors) {
+                                                        found = resolveAccountLoginError(snackbar, angular.fromJson(errors));
+                                                    }
+                                                    if (!found) {
+                                                        snackbar.showK('identityConnectionFailed');
+                                                    }
+                                                    destroy();
+                                                }, false);
                                         });
                                     }
                                 };
@@ -18375,15 +18558,25 @@ angular.module('app')
                             }
                         };
 
-                        return modelsEditor.create(config).read(account, {
-                            key: account.key
-                        });
+                        return modelsEditor.create(config).openPromise(function () {
+                            return $q.all([models[config.kind].actions.read({
+                                key: account.key
+                            }), $http.post($state.engineHref('login', {
+                                provider: '1'
+                            }), {
+                                action_id: 'login',
+                                action_model: config.kind,
+                                redirect_to: 'popup'
+                            })]);
+                        }, account);
 
                     },
                     logout: function (accountKey) {
                         var that = this;
                         that.actions.logout({
                             key: accountKey
+                        }, {
+                            disableUI: true
                         }).then(function (response) {
                             endpoint.removeCache();
                             $.extend(currentAccount, response.data.entity);
@@ -18402,6 +18595,27 @@ angular.module('app')
 (function () {
     'use strict';
     angular.module('app')
+        .run(['currentAccount', 'helpers', function (currentAccount, helpers) {
+            if (!helpers.location) {
+                helpers.location = {};
+            }
+            helpers.location.updateDefaults = function (args) {
+                return; // disable
+                if (!angular.isObject(args)) {
+                    return;
+                }
+                if (!args.country && currentAccount._country) {
+                    args.country = currentAccount._country;
+                }
+                if (!args.region && currentAccount._region) {
+                    args.region = currentAccount._region;
+                }
+                if (!args.city && currentAccount._city) {
+                    args.city = _.string.capitalize(currentAccount._city);
+                }
+                return args;
+            };
+        }])
         .controller('BuyerManagementController', ['$scope', 'endpoint', 'currentAccount', 'models', function ($scope, endpoint, currentAccount, models) {
 
             $scope.settings = function () {
@@ -18436,7 +18650,7 @@ angular.module('app')
                         }
                         models['34'].actions.read({
                             key: $state.params.key
-                        }, {disableUI: false}).then(function (response) {
+                        }).then(function (response) {
                             if (gorder) {
                                 helpers.update(gorder, response.data.entity, ['state', 'updated', 'payment_status', 'ui']);
                             }
@@ -18485,7 +18699,7 @@ angular.module('app')
                         }, order = _.findWhere($scope.search.results, find);
                         loaded = true;
                         if (order) {
-                            return $scope.view(order, false);
+                            return $scope.view(order, false, viewOpts);
                         }
                         models['34'].manageModal(find, undefined, undefined, viewOpts).then(viewThen);
                     }, 300);
@@ -18495,6 +18709,8 @@ angular.module('app')
             if (isOrderPaymentCanceled || isOrderPaymentSuccess || isBuyerViewOrder) {
                 carts = false;
             }
+
+            viewOpts.cartModeRead = carts;
 
 
             $scope.setPageToolbarTitle('buyer.' + (carts ? 'carts' : 'orders'));
@@ -18519,14 +18735,18 @@ angular.module('app')
                 return maybe;
             }, angular.noop);
 
-            $scope.view = function (order, $event) {
+            $scope.view = function (order, $event, viewOpts) {
                 models['19'].current().then(function (response) {
                     return response.data.entity;
                 }).then(function (buyer) {
                     var opts = {
                         cartMode: carts,
+                        cartModeRead: carts,
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     }, viewPromise, directView = $event === false;
+                    if (viewOpts) {
+                        opts = viewOpts;
+                    }
                     if (directView) {
                         $.extend(opts, viewOpts);
                     }
@@ -18580,7 +18800,7 @@ angular.module('app')
                     };
                 }]
             };
-        }).run(['$window', 'modelsEditor', 'modelsMeta', '$q', 'modelsConfig', 'currentAccount', 'endpoint', function ($window, modelsEditor, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
+        }).run(['$window', 'modelsEditor', 'helpers', 'modelsMeta', '$q', 'modelsConfig', 'currentAccount', 'endpoint', function ($window, modelsEditor, helpers, modelsMeta, $q, modelsConfig, currentAccount, endpoint) {
 
             modelsConfig(function (models) {
 
@@ -18606,6 +18826,7 @@ angular.module('app')
                         $.extend(fields.addresses.ui, {
                             label: false,
                             specifics: {
+                                defaultArgs: helpers.location.updateDefaults({}),
                                 listView: 'buyer-address-list-view',
                                 listConfig: {
                                     perLine: 3
@@ -18616,33 +18837,21 @@ angular.module('app')
                                         updatedAddress = $scope.args,
                                         promise;
                                     if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                        promise = models['13'].get(updatedAddress.region, {activitySpinner: true, disableUI: false});
-                                        promise.then(function (response) {
-                                            if (response.data.entities.length) {
-                                                updatedAddress._region = response.data.entities[0];
+                                        promise = models['13'].get(updatedAddress.region, updatedAddress.country);
+                                        promise.then(function (region) {
+                                            if (region) {
+                                                updatedAddress._region = region;
                                             }
                                         });
                                         promises.push(promise);
                                     }
 
                                     if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
-                                        promise = models['12'].actions.search(undefined, {
-                                            cache: true,
-                                            cacheType: 'local',
-                                            activitySpinner: true,
-                                            disableUI: false
-                                        });
-                                        promise.then(function (response) {
-                                            if (response.data.entities.length) {
-                                                var country = _.findWhere(response.data.entities, {
-                                                    key: updatedAddress.country
-                                                });
-                                                if (angular.isDefined(country)) {
-                                                    updatedAddress._country = country;
-                                                }
-
+                                        promise = models['12'].get(updatedAddress.country);
+                                        promise.then(function (country) {
+                                            if (country) {
+                                                updatedAddress._country = country;
                                             }
-
                                         });
 
                                         promises.push(promise);
@@ -18650,7 +18859,6 @@ angular.module('app')
                                     if (promises.length) {
                                         return $q.all(promises);
                                     }
-
                                     return false;
                                 }
                             }
@@ -19083,7 +19291,8 @@ angular.module('app')
                                                 models['31'].actions.publish({
                                                     key: $scope.entity.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogPublished');
                                                     updateState(response.data.entity);
@@ -19096,7 +19305,8 @@ angular.module('app')
                                                 models['31'].actions.discontinue({
                                                     key: $scope.entity.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogDiscontinued');
                                                     updateState(response.data.entity);
@@ -19113,21 +19323,19 @@ angular.module('app')
                                                             read_arguments: {
                                                                 cover: {}
                                                             }
-                                                        }, {
-                                                            disableUI: false
                                                         }).then(function (response) {
                                                             snackbar.showK('catalogDuplicated');
                                                             callback(response.data.entity);
                                                         });
                                                     }
                                                 }).then(function (response) {
-                                                    $scope.dequeueChannel.push(response.channel[1]);
+                                                    //$scope.dequeueChannel.push(response.channel[1]);
                                                     models['31'].actions.catalog_duplicate({
                                                         key: $scope.entity.key,
                                                         channel: response.token
                                                     }, {
                                                         activitySpinner: true,
-                                                        disableUI: false
+                                                        disableUI: true
                                                     });
                                                 });
                                             });
@@ -19297,12 +19505,14 @@ angular.module('app')
 
                                             $scope.droppableOptions = {
                                                 accept: '.catalog-new-pricetag',
-                                                tolerance: 'pointer'
+                                                tolerance: 'pointer',
+                                                cancel: "input,textarea,button,select,option,[disabled]"
                                             };
 
                                             $scope.draggableOptions = {
                                                 containment: '.image-slider-outer',
-                                                distance: 6
+                                                distance: 6,
+                                                cancel: "input,textarea,button,select,option,[disabled]"
                                             };
 
                                             $scope.newPricetagDraggableOptions = {revert: function (element) {
@@ -19690,8 +19900,6 @@ angular.module('app')
                                                                                     }
                                                                                 }
                                                                             }
-                                                                        }, {
-                                                                            disableUI: false
                                                                         }).then(function (response2) {
 
                                                                             var image = _.findWhere($scope.args._images, {
@@ -19702,7 +19910,6 @@ angular.module('app')
                                                                                     if (!_.findWhere(image.pricetags, {
                                                                                             key: response.pricetag_key
                                                                                         })) {
-                                                                                        console.log(response);
                                                                                         image.pricetags.push(value);
                                                                                     }
                                                                                 });
@@ -19711,7 +19918,7 @@ angular.module('app')
                                                                         });
                                                                     }
                                                                 }).then(function (response) {
-                                                                    $scope.dequeueChannel.push(response.channel[1]);
+                                                                    //$scope.dequeueChannel.push(response.channel[1]);
                                                                     models['31'].actions.catalog_pricetag_duplicate({
                                                                         key: $scope.entity.key,
                                                                         channel: response.token,
@@ -19729,7 +19936,7 @@ angular.module('app')
                                                                         }
                                                                     }, {
                                                                         activitySpinner: true,
-                                                                        disableUI: false
+                                                                        disableUI: true
                                                                     });
                                                                 });
                                                             });
@@ -19900,7 +20107,6 @@ angular.module('app')
                                                     },
                                                     setupSortableOptions: function () {
                                                         return {
-                                                            forcePlaceholderSize: true,
                                                             stop: function () {
                                                                 var field = $scope.fieldProduct.modelclass._instances,
                                                                     total,
@@ -20012,7 +20218,8 @@ angular.module('app')
                                                 $scope.rootScope.config.prepareReadArguments($scope);
                                                 promise = models['31'].actions[$scope.args.action_id]($scope.args, {
                                                     activitySpinner: !hideSpinner,
-                                                    timeout: timeout
+                                                    timeout: timeout,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     if (!$scope.syncScheduleNext) {
@@ -20218,8 +20425,6 @@ angular.module('app')
                                 return that.actions.read({
                                     key: catalogKey,
                                     read_arguments: readArguments
-                                }, {
-                                    disableUI: false
                                 }).then(function (response) {
                                     var catalog = response.data.entity,
                                         fakeScope = (function () {
@@ -20322,8 +20527,6 @@ angular.module('app')
                                                             }
                                                         }
                                                     }
-                                                }, {
-                                                    disableUI: disableUI === undefined ? true : disableUI
                                                 });
                                             };
 
@@ -20486,11 +20689,7 @@ angular.module('app')
                                                     }
                                                 }
                                             }
-                                        }, {
-                                            disableUI: false
-                                        }) : models['34'].current(sellerKey, {
-                                            disableUI: false
-                                        })).then(function (response) {
+                                        }) : models['34'].current(sellerKey)).then(function (response) {
                                             var order = response.data.entity;
                                             $scope.order = order;
                                             if (order.id) {
@@ -20714,6 +20913,7 @@ angular.module('app')
                                             quantity: $scope.productManager.quantity,
                                             variant_signature: $scope.currentVariation
                                         }, {
+                                            disableUI: true,
                                             handleError: GLOBAL_CONFIG.backendErrorHandling.productOutOfStock
                                         });
                                     }).then(function (response) {
@@ -20808,7 +21008,6 @@ angular.module('app')
                                         }
                                     }
                                 }, {
-                                    disableUI: false,
                                     ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
@@ -20927,7 +21126,8 @@ angular.module('app')
                                     }
                                     models['19'].current().then(function (response) {
                                         models['34'].manageModal(undefined, $scope.catalog._seller, response.data.entity, {
-                                            cartMode: true
+                                            cartMode: true,
+                                            cartModeRead: true
                                         });
                                     });
                                 };
@@ -21065,13 +21265,16 @@ angular.module('app')
                 }
             };
         }])
-        .directive('homeSplash', ['$animate', function ($animate) {
+        .directive('homeSplash', ['$animateCss', function ($animateCss) {
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
-                    element.oneAnimationEnd(function () {
+                    element.addClass('fade');
+                    $animateCss(element, {
+                        addClass: 'out'
+                    }).start().done(function () {
                         element.addClass('ng-hide');
-                    }).addClass('fade out');
+                    });
                 }
             };
         }])
@@ -21093,8 +21296,10 @@ angular.module('app')
             $rootScope.contentSpinner = {
                 hide: [],
                 show: [],
+                requests: 0,
                 last: null,
                 stop: function () {
+                    this.requests -= 1;
                     if (this.hide) {
                         var length = this.hide.length - 1;
                         angular.forEach(this.hide, function (cb, i) {
@@ -21107,6 +21312,7 @@ angular.module('app')
                     }
                 },
                 start: function () {
+                    this.requests += 1;
                     var max = this.hide.length - 1;
                     angular.forEach(this.hide, function (cb, i) {
                         if (i === max) {
@@ -21269,20 +21475,74 @@ angular.module('app')
 }());
 (function () {
     'use strict';
-    angular.module('app').run(['modelsConfig', 'modelsMeta', function (modelsConfig, modelsMeta) {
+    angular.module('app').run(['modelsConfig', 'helpers', 'modelsMeta', function (modelsConfig, helpers, modelsMeta) {
         modelsConfig(function (models) {
             models['12'].config.cache = true;
-            models['12'].getSubdivisions = function (countryKey, overrideConfig) {
-                var subdivisionModel = models['13'],
-                    defaultArgs = modelsMeta.getDefaultActionArguments(subdivisionModel.kind, 'search');
-                defaultArgs.ancestor = countryKey;
-                return subdivisionModel.search(defaultArgs, overrideConfig);
+            models['12'].all = function (opts) {
+                opts = helpers.alwaysObject(opts);
+                $.extend(opts, {
+                    cache: 'all_countries',
+                    cacheType: 'local'
+                });
+                return this.actions.search({
+                    orders: [{
+                        operator: "asc",
+                        field: "name"
+                    }],
+                    filters: [{
+                        operator: "==",
+                        field: "active",
+                        value: true
+                    }]
+                }, opts);
+
+            };
+            models['12'].get = function (key, opts) {
+                return this.all(opts).then(function (response) {
+                    return _.findWhere(response.data.entities, {
+                        key: key
+                    });
+                });
+            };
+
+            var get13 = models['13'].get;
+            models['13'].all = function (countryKey, opts) {
+                opts = helpers.alwaysObject(opts);
+                $.extend(opts, {
+                    cache: countryKey + '_all_regions',
+                    cacheType: 'local'
+                });
+                return this.actions.search({
+                    "search": {
+                        "ancestor": countryKey,
+                        "filters": [{
+                            "value": true,
+                            "field": "active",
+                            "operator": "=="
+                        }],
+                        "orders": [{
+                            "field": "name",
+                            "operator": "asc"
+                        }]
+                    }
+                }, opts);
+            };
+            models['13'].get = function (key, countryKey, opts) {
+                if (!countryKey) {
+                    return get13.apply(this, arguments);
+                }
+                return this.all(countryKey, opts).then(function (response) {
+                    return _.findWhere(response.data.entities, {
+                        key: key
+                    });
+                });
             };
 
         });
 
     }]);
-}());(function () {
+}());
+(function () {
     'use strict';
     angular.module('app')
         .directive('alwaysScrollToBottom', ['$timeout', function ($timeout) {
@@ -21294,7 +21554,7 @@ angular.module('app')
 
                     scope.$watchGroup(scope.$eval(attrs.alwaysScrollToBottom), function (neww, old) {
                         if (JSON.stringify(neww) !== JSON.stringify(old)) {
-                            $timeout(cb, 100, 0);
+                            $timeout(cb, 300, 0);
                         }
                     });
                 }
@@ -21350,6 +21610,7 @@ angular.module('app')
                         config = helpers.alwaysObject(config);
                         var args, that = this,
                             cartMode = config.cartMode,
+                            cartModeRead = config.cartModeRead,
                             sellerMode = config.sellerMode,
                             openDefer = $q.defer(),
                             openPromise = openDefer.promise,
@@ -21386,23 +21647,35 @@ angular.module('app')
                             };
                         }
 
+
                         modalOpen = {
                             templateUrl: 'order/view.html',
                             controller: ['$scope', function ($scope) {
                                 $scope.dialog = {
                                     toolbar: {
-                                        title: (((order && order.state !== 'cart') || !cartMode) ? 'Order' : 'Cart'),
+                                        title: (((order && order.state && order.state !== 'cart') || !cartModeRead) ? 'Order' : 'Cart'),
                                         templateRight: 'order/toolbar_actions.html'
                                     }
                                 };
                                 $scope.$state.promise(function () {
                                     return models['34'].actions[cartMode ? 'view_order' : 'read'](args, {
-                                        disableUI: false,
                                         ignoreErrors: 2
                                     });
                                 }, function ($scope, response) {
 
-                                    $scope.close = function () {
+                                    $scope.messages = {
+                                        toggle: function (close) {
+                                            snackbar.showK('messangerDisabledWhenEmpty');
+                                        }
+                                    };
+
+                                    $scope.close = function (override) {
+                                        if (override !== true && ($scope.messages && $scope.messages.logMessages && $scope.messages.logMessages.length)) {
+                                            modals.confirm('discard', function () {
+                                                $scope.close(true);
+                                            });
+                                            return;
+                                        }
                                         var promise = $scope.$close();
                                         promise.then(config.afterClose || angular.noop);
                                         return promise;
@@ -21411,7 +21684,7 @@ angular.module('app')
                                     if (response) {
                                         var errors = response.data.errors;
                                         if (errors && (errors.not_found || errors.malformed_key)) {
-                                            $scope.notFound = true;
+                                            $scope.notFound = cartModeRead === true ? 1 : 2;
                                             return;
                                         }
                                     }
@@ -21532,7 +21805,7 @@ angular.module('app')
                                         current: 1,
                                         out: [],
                                         canShowPay: function () {
-                                            return $scope.order.payment_status === null;
+                                            return $scope.order.payment_status === null && $scope.order.parent.parent.key === currentAccount.key;
                                         },
                                         isOut: function (indx) {
                                             return $.inArray(indx, $scope.stage.out) !== -1;
@@ -21623,27 +21896,26 @@ angular.module('app')
                                         if (!addr) {
                                             return addr;
                                         }
+                                        addr._spawned = true;
                                         addr = angular.copy(addr);
                                         addr.country = null;
                                         addr.kind = '14';
                                         delete addr.key;
                                         addr.region = null;
-                                        models['12'].actions.search({
-                                            search: {
-                                                keys: [[['12', addr.country_code.toLowerCase()]]]
-                                            }
-                                        }, {
-                                            cache: true,
-                                            disableUI: false
-                                        }).then(function (response) {
-                                            addr.country = response.data.entities[0].key;
+                                        models['12'].all().then(function (response) {
+                                            addr.country = _.findWhere(response.data.entities, {
+                                                id: addr.country_code.toLowerCase()
+                                            }).key;
                                             return models['13'].actions.search({
                                                 search: {
-                                                    keys: [[['12', addr.country_code.toLowerCase(), '13', addr.region_code.toLowerCase()]]]
+                                                    keys: [
+                                                        [
+                                                            ['12', addr.country_code.toLowerCase(), '13', addr.region_code.toLowerCase()]
+                                                        ]
+                                                    ]
                                                 }
                                             }, {
-                                                cache: true,
-                                                disableUI: false
+                                                cache: true
                                             }).then(function (response) {
                                                 addr.region = response.data.entities[0].key;
                                             });
@@ -21654,6 +21926,7 @@ angular.module('app')
                                     $scope.cmd = {};
                                     $scope.container = {};
                                     $scope.cartMode = cartMode;
+                                    $scope.cartModeRead = cartMode;
                                     $scope.sellerMode = sellerMode;
                                     $scope.order = response.data.entity;
                                     $scope.seller = seller;
@@ -21719,6 +21992,14 @@ angular.module('app')
                                         }
                                     };
 
+                                    if (!$scope.addresses.shipping._spawned) {
+                                        helpers.location.updateDefaults($scope.addresses.shipping);
+                                    }
+
+                                    if (!$scope.addresses.billing._spawned) {
+                                        helpers.location.updateDefaults($scope.addresses.billing);
+                                    }
+
                                     $scope.payment = {
                                         method: $scope.order.payment_method
                                     };
@@ -21750,6 +22031,7 @@ angular.module('app')
                                     }
 
                                     $scope.messages = {
+                                        sentQueue: 0,
                                         isToday: function (message) {
                                             if (!message.created) {
                                                 return false;
@@ -21769,8 +22051,11 @@ angular.module('app')
                                         toggling: false,
                                         open: false,
                                         stateChanged: function (state) {
-                                            $scope.messages.sync.toggle(state);
+                                            $timeout(function () {
+                                                $scope.messages.sync.toggle(state);
+                                            }, 2000, 0);
                                         },
+                                        seen: false,
                                         sync: {
                                             timer: null,
                                             active: false,
@@ -21809,8 +22094,6 @@ angular.module('app')
                                                                 _agent: {}
                                                             }
                                                         }
-                                                    }, {
-                                                        disableUI: false
                                                     }).then(function (response) {
                                                         var map = {},
                                                             changed = false,
@@ -21832,7 +22115,7 @@ angular.module('app')
                                                         sync.timer = null;
                                                         sync.run();
                                                     });
-                                                }, 2000);
+                                                }, 10000);
                                             },
                                         },
                                         draft: {
@@ -21852,9 +22135,7 @@ angular.module('app')
                                             var newMessage = angular.copy(message);
                                             newMessage.key = $scope.order.key;
                                             newMessage.message = newMessage.body;
-                                            return models['34'].actions.log_message(newMessage, {
-                                                disableUI: false
-                                            }).then(function (response) {
+                                            return models['34'].actions.log_message(newMessage).then(function (response) {
                                                 $scope.messages.forceReflow();
                                                 if (!response.data.entity) {
                                                     return;
@@ -21866,42 +22147,77 @@ angular.module('app')
                                                 message._failed = true;
                                             });
                                         },
-                                        send: function (action) {
-                                            var copydraft = angular.copy($scope.messages.draft),
-                                                newMessage = {
+                                        send: function (action, justMessage, message) {
+                                            var copydraft = message || angular.copy($scope.messages.draft),
+                                                newMessage = (message || $.extend(copydraft, {
                                                     body: copydraft.message
+                                                })),
+                                                success = function (response) {
+                                                    if (!response.data.entity) {
+                                                        return;
+                                                    }
+                                                    $.extend(newMessage, response.data.entity._messages[0]);
+                                                    newMessage._failed = false;
+                                                    locals.reactOnStateChange(response);
+                                                    return response;
+                                                }, failure = function () {
+                                                    newMessage._failed = true;
                                                 };
-                                            $scope.messages.draft.message = '';
-                                            $scope.order._messages.push(newMessage);
-                                            return models['34'].actions[action](copydraft, {
-                                                disableUI: false
-                                            }).then(function (response) {
-                                                $scope.messages.forceReflow();
-                                                if (!response.data.entity) {
-                                                    return;
-                                                }
-                                                $.extend(newMessage, response.data.entity._messages[0]);
-                                                locals.reactOnStateChange(response);
-                                                return response;
-                                            }, function () {
-                                                newMessage._failed = true;
-                                            });
+                                            if (!message) {
+                                                $scope.messages.draft.message = '';
+                                                $scope.order._messages.push(newMessage);
+                                            }
+                                            $scope.container.messages.$setSubmitted(true);
+                                            $scope.container.messages.$setPristine(true);
+                                            $scope.messages.forceReflow();
+                                            if (justMessage) {
+                                                return newMessage;
+                                            }
+                                            return models['34'].actions[action](copydraft).then(success, failure);
                                         },
                                         forceReflow: function () {
-                                            $scope.messages.sent = !$scope.messages.sent;
+                                            $scope.messages.sent = new Date().getTime();
                                         },
                                         sidebarID: 'messages' + _.uniqueId(),
+                                        logMessages: [],
                                         logMessage: function () {
+                                            var that = this;
                                             if (!$scope.order._lines.length) {
                                                 snackbar.showK('messangerDisabledWhenEmpty');
                                                 return;
                                             }
                                             if ($scope.container.messages.$valid) {
-                                                return this.send('log_message').then(function (response) {
-                                                    $scope.container.messages.$setSubmitted(true);
-                                                    $scope.container.messages.$setPristine(true);
-                                                    return response;
+                                                $scope.messages.sentQueue += 1;
+                                                $scope.messages.sync.stop();
+                                                var finall = function () {
+                                                        if ($scope.messages.logMessages.length) {
+                                                            var cb = $scope.messages.logMessages.shift();
+                                                            cb();
+                                                        }
+                                                        $scope.messages.sentQueue -= 1;
+                                                        if (!$scope.messages.sentQueue) {
+                                                            $scope.messages.sync.start();
+                                                            $scope.messages.sentQueue = 0;
+                                                        }
+                                                    },
+                                                    promise,
+                                                    prepare;
+                                                if ($scope.messages.logMessages.length > 0) {
+                                                    prepare = that.send('log_message', true);
+                                                    $scope.messages.logMessages.push(function () {
+                                                        var nextPromise = that.send('log_message', false, prepare);
+                                                        nextPromise['finally'](finall);
+                                                    });
+                                                    return promise;
+                                                }
+                                                promise = this.send('log_message');
+                                                var fn = function () {};
+                                                $scope.messages.logMessages.push(fn);
+                                                promise['finally'](function () {
+                                                    $scope.messages.logMessages.remove(fn);
+                                                    finall.apply(this, arguments);
                                                 });
+                                                return promise;
                                             }
                                             helpers.form.wakeUp($scope.container.messages, false, true);
                                         },
@@ -21926,6 +22242,13 @@ angular.module('app')
                                                 it[isOpen ? 'close' : 'open']().then(function () {
                                                     $scope.messages.toggling = false;
                                                     $scope.messages.open = !isOpen;
+                                                    if ($scope.messages.open && !$scope.messages.seen) {
+                                                        $scope.messages.seen = true;
+                                                        models['34'].actions.see_messages({
+                                                            key: $scope.order.key
+                                                        });
+                                                    }
+                                                    $scope.messages.forceReflow();
                                                 });
                                             });
                                         }
@@ -21955,10 +22278,11 @@ angular.module('app')
                                         update: function (extra, config) {
                                             config = helpers.alwaysObject(config);
                                             var data = {
-                                                key: $scope.order.key,
-                                                payment_method: $scope.payment.method,
-                                                _lines: $scope.order._lines
-                                            }, deleteMaybe, promise;
+                                                    key: $scope.order.key,
+                                                    payment_method: $scope.payment.method,
+                                                    _lines: $scope.order._lines
+                                                },
+                                                deleteMaybe, promise;
                                             $.extend(data, extra);
                                             deleteMaybe = function () {
                                                 var allDeleted = true;
@@ -22030,7 +22354,8 @@ angular.module('app')
                                                 var promise = models['34'].actions['delete']({
                                                     key: $scope.order.key
                                                 }, {
-                                                    activitySpinner: true
+                                                    activitySpinner: true,
+                                                    disableUI: true
                                                 });
                                                 promise.then(function (response) {
                                                     locals.updateLiveEntity(response);
@@ -22087,6 +22412,7 @@ angular.module('app')
                                     $scope.lineDrag = {
                                         options: {
                                             disabled: false,
+                                            cancel: 'input,textarea,button,select,option,[disabled]',
                                             axis: 'x',
                                             handle: '.sort-handle',
                                             distance: 10,
@@ -22132,6 +22458,8 @@ angular.module('app')
                                                             if (!(response && response.then)) {
                                                                 snackbar.showK('cartUpdated');
                                                             }
+                                                        }, function () {
+                                                            line._state = null;
                                                         });
                                                     });
                                                 });
@@ -22168,6 +22496,12 @@ angular.module('app')
                                         key: $scope.order.key
                                     }, {
                                         absolute: true
+                                    });
+
+                                    $scope.$watch('order._lines.length', function (neww, old) {
+                                        if (neww === 0) {
+                                            $scope.notFound = 1;
+                                        }
                                     });
 
                                     $scope.$on('$destroy', function () {
@@ -22261,10 +22595,13 @@ angular.module('app')
             if (!entity.key) {
                 return;
             }
-            if (!_.findWhere($scope.search.results, {
+            var find = _.findWhere($scope.search.results, {
                     key: entity.key
-                })) {
+                });
+            if (!find) {
                 $scope.search.results.unshift(entity);
+            } else {
+                $.extend(find, entity);
             }
         };
 
@@ -22288,8 +22625,7 @@ angular.module('app')
 
         $scope.search = {
             results: [],
-            loader: {},
-            loaded: false
+            loader: {}
         };
 
         models['23'].current().then(function (response) {
@@ -22323,7 +22659,7 @@ angular.module('app')
     }]).controller('SellOrdersController', ['$scope', 'modals', 'modelsEditor', 'snackbar', 'helpers', 'currentAccount', 'GLOBAL_CONFIG', 'modelsMeta', 'models', 'modelsUtil', '$state', function ($scope, modals, modelsEditor, snackbar, helpers, currentAccount, GLOBAL_CONFIG, modelsMeta, models, modelsUtil, $state) {
 
         var carts = $state.current.name === 'sell-carts',
-            isSellerOrderView = _.string.startsWith($state.current.name, 'seller'),
+            isSellerOrderView = _.string.startsWith($state.current.name, 'seller-'),
             wait = null,
             loaded = false,
             viewOpts = {
@@ -22346,7 +22682,7 @@ angular.module('app')
                     }, order = _.findWhere($scope.search.results, find);
                     loaded = true;
                     if (order) {
-                        return $scope.view(order, false);
+                        return $scope.view(order, false, viewOpts);
                     }
                     models['34'].manageModal(find, undefined, undefined, viewOpts);
                 }, 300);
@@ -22364,11 +22700,27 @@ angular.module('app')
             loaded: false
         };
 
-        $scope.view = function (order, $event) {
-            models['34'].manageModal(order, order._seller, undefined, {
+        $scope.$watch(function maybeRemoveSearchResult() {
+            var maybe = false;
+            $scope.search.results.iremove(function (ent) {
+                var truth = (!ent.id || ent._state === 'deleted') || (ent.state === 'order' && carts);
+                if (!maybe) {
+                    maybe = truth;
+                }
+                return truth;
+            });
+            return maybe;
+        }, angular.noop);
+
+        $scope.view = function (order, $event, viewOpts) {
+            var opts = {
                 sellerMode: carts,
                 popFrom: helpers.clicks.realEventTarget($event.target)
-            });
+            };
+            if (viewOpts) {
+                opts = viewOpts;
+            }
+            models['34'].manageModal(order, order._seller, undefined, opts);
         };
 
         models['23'].current().then(function (response) {
@@ -22468,47 +22820,30 @@ angular.module('app')
                                 var promises = [],
                                     updatedAddress = $scope.args,
                                     promise;
-
                                 if (updatedAddress.region && (!updatedAddress._region || (updatedAddress.region !== updatedAddress._region.key))) {
-                                    promise = models['13'].get(updatedAddress.region, {
-                                        activitySpinner: true,
-                                        disableUI: false
-                                    });
-                                    promise.then(function (response) {
-                                        if (response.data.entities.length) {
-                                            updatedAddress._region = response.data.entities[0];
+                                    promise = models['13'].get(updatedAddress.region, updatedAddress.country);
+                                    promise.then(function (region) {
+                                        if (region) {
+                                            updatedAddress._region = region;
                                         }
                                     });
                                     promises.push(promise);
                                 }
 
-                                if (updatedAddress.country && ((!updatedAddress._country) || (updatedAddress.country !== updatedAddress._country.key))) {
-                                    promise = models['12'].actions.search(undefined, {
-                                        cache: true,
-                                        cacheType: 'local',
-                                        activitySpinner: true,
-                                        disableUI: false
-                                    });
-                                    promise.then(function (response) {
-                                        if (response.data.entities.length) {
-                                            var country = _.findWhere(response.data.entities, {
-                                                key: updatedAddress.country
-                                            });
-                                            if (angular.isDefined(country)) {
-                                                updatedAddress._country = country;
-                                            }
-
+                                if (updatedAddress.country && (!updatedAddress._country || (updatedAddress.country !== updatedAddress._country.key))) {
+                                    promise = models['12'].get(updatedAddress.country);
+                                    promise.then(function (country) {
+                                        if (country) {
+                                            updatedAddress._country = country;
                                         }
-
                                     });
+
                                     promises.push(promise);
                                 }
-
                                 if (promises.length) {
                                     return $q.all(promises);
                                 }
                                 return false;
-
                             }
                         };
                     },
@@ -22539,6 +22874,7 @@ angular.module('app')
                                 start: function (e, ui) {
                                     info.scope.$broadcast('itemOrderStarted');
                                 },
+                                cancel: 'input,textarea,button,select,option,[disabled]',
                                 distance: 6,
                                 axis: false,
                                 containment: false,
@@ -22896,6 +23232,8 @@ angular.module('app')
                                             $scope.info.kind = $scope.args.kind;
                                             $scope.getFormBuilder();
 
+                                        } else {
+                                            $scope.$stateHiddenLoading = false;
                                         }
                                         $scope.close = function () {
                                             if (!$scope.container.form.$dirty) {
@@ -23105,7 +23443,6 @@ angular.module('app')
                                         _content: {}
                                     }
                                 }, {
-                                    disableUI: false,
                                     ignoreErrors: 2
                                 });
                             }, function ($scope, response) {
@@ -23318,11 +23655,6 @@ angular.module('app')
                 templateUrl: 'home/index.html',
                 controller: 'HomePageController'
             })
-            .state('seller-info', {
-                url: '/seller/:key',
-                controller: 'SellerInfo',
-                template: ''
-            })
             .state('embed-seller-info', {
                 url: '/embed/seller/:key',
                 controller: 'SellerEmbedInfo',
@@ -23384,27 +23716,32 @@ angular.module('app')
                 template: ''
             })
             .state('sell-catalogs', {
-                url: '/sell/catalogs',
+                url: '/seller/catalogs',
                 controller: 'SellCatalogsController',
                 templateUrl: 'catalog/list.html'
             })
             .state('sell-orders', {
-                url: '/sell/orders',
+                url: '/seller/orders',
                 controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
             })
+            .state('seller-info', {
+                url: '/seller/:key',
+                controller: 'SellerInfo',
+                template: ''
+            })
             .state('sell-carts', {
-                url: '/sell/carts',
+                url: '/seller/carts',
                 controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('buy-orders', {
-                url: '/buy/orders',
+                url: '/buyer/orders',
                 controller: 'BuyOrdersController',
                 templateUrl: 'order/list.html'
             })
             .state('buy-carts', {
-                url: '/buy/carts',
+                url: '/buyer/carts',
                 controller: 'BuyOrdersController',
                 templateUrl: 'buyer/carts.html'
             })
@@ -23506,6 +23843,10 @@ angular.module('app')
             });
 
     }]).run(['$rootScope', 'modelsInfo', '$state', 'endpoint', 'models', 'currentAccount', 'GLOBAL_CONFIG', 'modelsUtil', '$animate', function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
+        $rootScope.disableUI = function (state) {
+            $rootScope.disableUIState = state;
+            $rootScope.$broadcast('disableUI', state);
+        };
         $state.engineHref = function () {
             var path = $state.href.apply($state, arguments);
             if (window.ENGINE.DESKTOP.ACTIVE) {
