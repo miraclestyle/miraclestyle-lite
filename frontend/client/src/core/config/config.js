@@ -457,6 +457,7 @@
             takenByOtherAccount: 'These credentials are taken by other account.',
             failedGettingEmail: 'E-mail not provided by the provider.',
             incorrectLinkSettings: 'Incorrect link settings.',
+            failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.'
         });

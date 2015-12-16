@@ -159,14 +159,13 @@ class AccountUpdateSet(orm.BaseModel):
             primary_canceled = True
       else:
         identity._state = None
-    no_identity = True
     if primary_canceled:
       for identity in context._account.identities.value:
         if identity._state != 'deleted':
           identity.primary = True
-          no_identity = False
           break
-    if no_identity:
+    any_identity = filter(lambda x: x._state != 'deleted', context._account.identities.value)
+    if not any_identity:
       context._account.state = 'suspended'
       tools.del_attr(context, '_account.sessions')
 

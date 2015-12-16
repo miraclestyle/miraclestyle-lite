@@ -93,6 +93,9 @@
                         return helpers.url.urlsafe(angular.toJson(str));
                     },
                     getQueryVariable: function (path, variable) {
+                        if (path.indexOf('#') !== -1) {
+                            path = path.split('#')[0];
+                        }
                         var query = path.split('?')[1];
                         var vars = query.split('&');
                         for (var i = 0; i < vars.length; i++) {

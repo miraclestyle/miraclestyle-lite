@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     // code for account
-    var resolveAccountError = function (snackbar, errors) {
+    var resolveAccountLoginError = function (snackbar, errors) {
         var found, oauth2error;
         if (errors.action_denied) {
             found = true;
@@ -20,7 +20,7 @@
             } else if (oauth2error === 'state_error') {
                 snackbar.showK('incorrectLinkSettings');
             } else {
-                snackbar.showK('');
+                snackbar.showK('failedAuthentication');
             }
             found = true;
         }
@@ -68,7 +68,7 @@
                 if (data.errors) {
                     errors = angular.fromJson(data.errors);
                     if (errors) {
-                       resolveAccountError(snackbar, errors);
+                        resolveAccountLoginError(snackbar, errors);
                     }
                 }
             }
@@ -151,13 +151,13 @@
                                     loggedIn = true;
                                     popup.close();
                                 };
-                                check = function (error) {
+                                check = function (errors) {
                                     if (loading) {
                                         return;
                                     }
-                                    if (error) {
+                                    if (errors) {
                                         destroy();
-                                        return fail(error);
+                                        return fail(errors);
                                     }
                                     loading = true;
                                     models['11'].actions.current_account(undefined, {
@@ -242,7 +242,7 @@
                                             function fail(errors) {
                                                 var found = false;
                                                 if (errors) {
-                                                    found = resolveAccountError(snackbar, angular.fromJson(errors));
+                                                    found = resolveAccountLoginError(snackbar, angular.fromJson(errors));
                                                 }
                                                 if (!found) {
                                                     snackbar.showK('loginFailed');
@@ -283,6 +283,9 @@
                                     recompute = function () {
                                         var missing = Object.keys(mappedLoginProviders);
                                         $scope.identities = $scope.entity.identities.concat();
+                                        if (!$scope.entity.identities.length) {
+                                            $scope.entity._is_guest = true;
+                                        }
                                         angular.forEach($scope.identities, function (value) {
                                             var id = getProvider(value);
                                             if (missing[id]) {
@@ -340,8 +343,14 @@
                                                 function cancel() {
                                                     snackbar.showK('identityConnectionCanceled');
                                                 },
-                                                function fail() {
-                                                    snackbar.showK('identityConnectionFailed');
+                                                function fail(errors) {
+                                                    var found = false;
+                                                    if (errors) {
+                                                        found = resolveAccountLoginError(snackbar, angular.fromJson(errors));
+                                                    }
+                                                    if (!found) {
+                                                        snackbar.showK('identityConnectionFailed');
+                                                    }
                                                 });
                                         });
                                     }
@@ -390,7 +399,9 @@
                         return modelsEditor.create(config).openPromise(function () {
                             return $q.all([models[config.kind].actions.read({
                                 key: account.key
-                            }), $http.post($state.engineHref('login', {provider: '1'}), {
+                            }), $http.post($state.engineHref('login', {
+                                provider: '1'
+                            }), {
                                 action_id: 'login',
                                 action_model: config.kind,
                                 redirect_to: 'popup'
