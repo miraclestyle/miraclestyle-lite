@@ -575,6 +575,7 @@ if (!Array.prototype.indexOf) {
                 'timer',
                 'googlechart',
                 'btford.markdown',
+                'pasvaz.bindonce',
                 'material.core',
                 'material.core.gestures',
                 'material.components.button',
@@ -1791,7 +1792,7 @@ if (window.DEBUG) {
             identityConnected: 'Identity connected.',
             identityConnectionCanceled: 'Identity connection canceled.',
             failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
-            identityConnectionFailed: 'Identity connection failed.',
+            identityConnectionFailed: 'This identity is already connected to another Miraclestyle account.',
             createVariantsFirst: 'Create some variants first.',
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',
@@ -12971,7 +12972,7 @@ function msieversion() {
                             top = (screen.height / 2) - (h / 2),
                             popup;
                         // toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, 
-                        popup = window.open(url, title, 'width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                        popup = window.open(url, title, 'scrollbars=1, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
                         popup.focus();
                         return popup;
                     }
@@ -14641,11 +14642,26 @@ function msieversion() {
             var clickElement = options.popFrom;
             return (clickElement ? $(clickElement) : clickElement);
         },
+        maybeFindTarget = function (ev) {
+            if (!ev) {
+                return;
+            }
+            if (ev.target) {
+                var target = $(ev.target);
+                if (!target.attr('ng-click')) {
+                    target = target.parents('[ng-click]:first');
+                }
+                if (target.length) {
+                    return target;
+                }
+                return null;
+            }
+        },
         hidePrevModal = function (element) {
-            element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
+            //element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
         },
         showPrevModal = function (element) {
-            element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
+            //element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
         },
         getPositionOverClickElement = function (clickElement, element) {
             var clickRect = clickElement[0].getBoundingClientRect(),
@@ -14756,7 +14772,7 @@ function msieversion() {
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    $rootScope.disableUI(true);
+                    //$rootScope.disableUI(true);
                     var clickElement = getClickElement(scope.modalOptions),
                         ready;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
@@ -14847,7 +14863,7 @@ function msieversion() {
                             scope.$emit('modalOpened');
                             scope.$broadcast('modalOpened');
                             scope.$apply();
-                            $rootScope.disableUI(false);
+                            //$rootScope.disableUI(false);
                             if (scope.modalOptions.fullScreen) {
                                 hidePrevModal(element);
                             }
