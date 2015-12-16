@@ -748,11 +748,10 @@
                     if (config.noAutoDismiss) {
                         return config.confirm.call(that);
                     }
-                    this.dismiss().then(function () {
-                        if (angular.isFunction(config.confirm)) {
-                            config.confirm.call(that);
-                        }
-                    });
+                    if (angular.isFunction(config.confirm)) {
+                        config.confirm.call(that);
+                    }
+                    this.dismiss().then(function () {}); // run callback immidiately
                 };
                 return this.create(theConfig, theConfig.modal);
             },
