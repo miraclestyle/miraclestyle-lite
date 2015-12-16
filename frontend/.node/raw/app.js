@@ -1791,7 +1791,7 @@ if (window.DEBUG) {
             identityConnected: 'Identity connected.',
             identityConnectionCanceled: 'Identity connection canceled.',
             failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
-            identityConnectionFailed: 'Identity connection failede.',
+            identityConnectionFailed: 'Identity connection failed.',
             createVariantsFirst: 'Create some variants first.',
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',
