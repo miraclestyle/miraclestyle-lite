@@ -5,7 +5,7 @@ if (!window.ng) {
 }
 window.ENGINE = {
     SERVER: {
-        URL: 'https://x-arcanum-801.appspot.com'
+        URL: 'https://themiraclestyle-testing-site.appspot.com'
     },
     CORDOVA: {
         ACTIVE: 'cordova' in window
