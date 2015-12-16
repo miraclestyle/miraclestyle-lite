@@ -72,12 +72,12 @@ class AccountLoginInit(orm.BaseModel):
       parse = getattr(self, 'parse_result_%s' % login_method, None)
       if parse:
         info = parse(info)
+      tools.log.warn(info)
       if info and 'email' in info:
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)
         context._email = info['email'].lower()  # we lowercase the email because datastore data searches are case sensetive
         account = context.model.query(context.model.identities.identity == context._identity_id).get()
-        tools.log.warn([account.key, context.account.key])
         if account:
           own_account = context.account.key == account.key
           if context.account._is_guest or own_account:
