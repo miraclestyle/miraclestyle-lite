@@ -126,7 +126,7 @@
                             };
                         });
                     },
-                    loginPopup: function (target, title, success, cancel, fail) {
+                    loginPopup: function (target, title, success, cancel, fail, autodestroy) {
                         var popup = helpers.popup.openCentered(target, title),
                             MATCH_LOGIN_INSTRUCTION = $state.href('login-status'),
                             loggedIn = false,
@@ -136,6 +136,18 @@
                                 var url = '',
                                     check,
                                     destroy;
+                                destroy = function () {
+                                    endpoint.removeCache();
+                                    loggedIn = true;
+                                    popup.close();
+                                };
+                                if (autodestroy) {
+                                    autodestroy = function () {
+                                        destroy();
+                                    };
+                                } else {
+                                    autodestroy = angular.noop;
+                                }
                                 if (window.ENGINE.CORDOVA.ACTIVE) {
                                     url = e.originalEvent.url;
                                 }
@@ -146,18 +158,13 @@
                                     }
                                     return;
                                 }
-                                destroy = function () {
-                                    endpoint.removeCache();
-                                    loggedIn = true;
-                                    popup.close();
-                                };
                                 check = function (errors) {
                                     if (loading) {
                                         return;
                                     }
                                     if (errors) {
-                                        destroy();
-                                        return fail(errors);
+                                        autodestroy();
+                                        return fail(errors, destroy);
                                     }
                                     loading = true;
                                     models['11'].actions.current_account(undefined, {
@@ -166,12 +173,12 @@
                                         var user = response.data.entity;
                                         if (user && !user._is_guest) {
                                             $.extend(currentAccount, response.data.entity);
-                                            destroy();
-                                            success(response);
+                                            autodestroy();
+                                            success(response, destroy);
                                         }
                                     }, function (response) {
-                                        destroy();
-                                        fail(response);
+                                        autodestroy();
+                                        fail(response, destroy);
                                     })['finally'](function () {
                                         loading = false;
                                     });
@@ -316,7 +323,8 @@
                                     if (identity.email && identity.associated === undefined) {
                                         modals.confirm('disconnectSignInMethod', function () {
                                             $scope.args.disassociate.push(identity.identity);
-                                            $scope.save().then(function () {
+                                            $scope.save().then(function (response) {
+                                                $.extend($scope.entity, response.data.entity);
                                                 recompute();
                                                 snackbar.showK('identityDisconnected');
                                             });
@@ -326,24 +334,34 @@
                                             var providerid = getProvider(identity);
                                             models['11'].loginPopup($scope.entity._authorization_urls[providerid],
                                                 'Login with ' + LOGIN_PROVIDERS[providerid].name,
-                                                function success(response) {
-                                                    $.extend($scope.entity, response.data.entity);
-                                                    recompute();
-                                                    var shown = false;
-                                                    angular.forEach($scope.identities, function (value) {
-                                                        if (!shown && value.associated === undefined && getProvider(value) === providerid) {
-                                                            shown = true;
-                                                            snackbar.showK('identityConnected');
+                                                function success(response, destroy) {
+                                                    $http.post($state.engineHref('login', {
+                                                        provider: '1'
+                                                    }), {
+                                                        action_id: 'login',
+                                                        action_model: config.kind,
+                                                        redirect_to: 'popup'
+                                                    }).then(function (response) {
+                                                        $.extend($scope.entity, response.data.entity);
+                                                        $scope.entity._authorization_urls = response[1].data.authorization_urls;
+                                                        recompute();
+                                                        var shown = false;
+                                                        angular.forEach($scope.identities, function (value) {
+                                                            if (!shown && value.associated === undefined && getProvider(value) === providerid) {
+                                                                shown = true;
+                                                                snackbar.showK('identityConnected');
+                                                            }
+                                                        });
+                                                        if (!shown) {
+                                                            snackbar.showK('identityTaken');
                                                         }
+                                                        destroy();
                                                     });
-                                                    if (!shown) {
-                                                        snackbar.showK('identityTaken');
-                                                    }
                                                 },
-                                                function cancel() {
+                                                function cancel(destroy) {
                                                     snackbar.showK('identityConnectionCanceled');
                                                 },
-                                                function fail(errors) {
+                                                function fail(errors, destroy) {
                                                     var found = false;
                                                     if (errors) {
                                                         found = resolveAccountLoginError(snackbar, angular.fromJson(errors));
@@ -351,7 +369,8 @@
                                                     if (!found) {
                                                         snackbar.showK('identityConnectionFailed');
                                                     }
-                                                });
+                                                    destroy();
+                                                }, false);
                                         });
                                     }
                                 };
