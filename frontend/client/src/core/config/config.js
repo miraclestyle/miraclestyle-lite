@@ -421,7 +421,7 @@
             identityConnected: 'Identity connected.',
             identityConnectionCanceled: 'Identity connection canceled.',
             failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
-            identityConnectionFailed: 'Identity connection failed.',
+            identityConnectionFailed: 'This identity is already connected to another Miraclestyle account.',
             createVariantsFirst: 'Create some variants first.',
             saveProductFirst: 'Save product first.',
             provideProperValues: 'Provide proper values in the form fields first!',
