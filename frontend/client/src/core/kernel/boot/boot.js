@@ -575,6 +575,7 @@ if (!Array.prototype.indexOf) {
                 'timer',
                 'googlechart',
                 'btford.markdown',
+                'pasvaz.bindonce',
                 'material.core',
                 'material.core.gestures',
                 'material.components.button',

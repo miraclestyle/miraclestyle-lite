@@ -92,6 +92,7 @@ def _angular_vendor_js(debug):
       env('vendor/momentjs/moment.js', 'vendor/momentjs/min/moment.min.js'),
       env('vendor/humanize-duration/humanize-duration.js'),
       env('vendor/angular-timer/dist/angular-timer.js', 'vendor/angular-timer/dist/angular-timer.min.js'),
+      env('vendor/angular-bindonce/bindonce.js', 'vendor/angular-bindonce/bindonce.min.js'),
       env('vendor/angular-google-chart/ng-google-chart.js'),
       env('vendor/angular-markdown-directive/markdown.js')
   )

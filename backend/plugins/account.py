@@ -72,7 +72,6 @@ class AccountLoginInit(orm.BaseModel):
       parse = getattr(self, 'parse_result_%s' % login_method, None)
       if parse:
         info = parse(info)
-      tools.log.warn(info.keys())
       if info and 'email' in info:
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)

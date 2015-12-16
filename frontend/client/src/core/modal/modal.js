@@ -5,11 +5,26 @@
             var clickElement = options.popFrom;
             return (clickElement ? $(clickElement) : clickElement);
         },
+        maybeFindTarget = function (ev) {
+            if (!ev) {
+                return;
+            }
+            if (ev.target) {
+                var target = $(ev.target);
+                if (!target.attr('ng-click')) {
+                    target = target.parents('[ng-click]:first');
+                }
+                if (target.length) {
+                    return target;
+                }
+                return null;
+            }
+        },
         hidePrevModal = function (element) {
-            element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
+            //element.prev().css('visibility', 'hidden').prev().css('visibility', 'hidden');
         },
         showPrevModal = function (element) {
-            element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
+            //element.prev().css('visibility', 'visible').prev().css('visibility', 'visible');
         },
         getPositionOverClickElement = function (clickElement, element) {
             var clickRect = clickElement[0].getBoundingClientRect(),
@@ -120,7 +135,7 @@
                     return tAttrs.templateUrl || 'core/modal/window.html';
                 },
                 link: function (scope, element, attrs) {
-                    $rootScope.disableUI(true);
+                    //$rootScope.disableUI(true);
                     var clickElement = getClickElement(scope.modalOptions),
                         ready;
                     element.addClass(!scope.modalOptions.fullScreen ? 'modal-medium' : ''); // add class for confirmation dialog
@@ -211,7 +226,7 @@
                             scope.$emit('modalOpened');
                             scope.$broadcast('modalOpened');
                             scope.$apply();
-                            $rootScope.disableUI(false);
+                            //$rootScope.disableUI(false);
                             if (scope.modalOptions.fullScreen) {
                                 hidePrevModal(element);
                             }

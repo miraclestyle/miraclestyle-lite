@@ -7,15 +7,16 @@
               <div class="list-subheader subheader">{{group.label}}</div>
             </li>
             <li md-ink-ripple-list
-                ng-class="{'list-row-is-active': select.isSelected(item)}"
+                bindonce="item"
+                bo-class="{'list-row-is-active': select.isSelected(item)}"
                 class="simple-dialog-option list-row list-row-one-line list-row-is-clickable-and-hoverable"
                 ng-click="select.select(item)"
-                ng-show="!select.isChecked(item)"
+                bo-show="!select.isChecked(item)"
                 item="item"
                 ng-repeat="item in group.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                 tabindex="{{$index + 2}}">
                   <div class="list-content-tile list-content-tile-one-line first">
-                        <strong class="first"><span ng-bind-html="select.view(item)"></span></strong>
+                        <strong class="first"><span bo-html="select.view(item)"></span></strong>
                   </div>
             </li>
           </ul>
@@ -23,15 +24,16 @@
           <ul ng-if="!select.hasGrouping" class="list list-padding-one-line">
 
             <li md-ink-ripple-list
-                ng-class="{'list-row-is-active': select.isSelected(item)}"
+                bindonce="item"
+                bo-class="{'list-row-is-active': select.isSelected(item)}"
                 class="simple-dialog-option list-row list-row-one-line list-row-is-clickable-and-hoverable"
                 ng-click="select.select(item)"
-                ng-show="!select.isChecked(item)"
+                bo-show="!select.isChecked(item)"
                 item="item"
                 ng-repeat="item in select.items <% if (select.search) { %><%= select.search.filter %><% } %>"
                 tabindex="{{$index + 2}}">
                   <div class="list-content-tile list-content-tile-one-line first">
-                        <strong class="first"><span ng-bind-html="select.view(item)"></span></strong>
+                        <strong class="first"><span bo-html="select.view(item)"></span></strong>
                   </div>
             </li>
           </ul>

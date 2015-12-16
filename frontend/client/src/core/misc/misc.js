@@ -62,7 +62,7 @@
                             top = (screen.height / 2) - (h / 2),
                             popup;
                         // toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=1, resizable=no, copyhistory=no, 
-                        popup = window.open(url, title, 'width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+                        popup = window.open(url, title, 'scrollbars=1, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
                         popup.focus();
                         return popup;
                     }
