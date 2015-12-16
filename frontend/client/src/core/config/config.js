@@ -452,7 +452,11 @@
             orderNotFound: 'This order does not exist.',
             catalogNotFound: 'This catalog does not exist.',
             catalogProductNotFound: 'This catalog product does not exist.',
-            failedAccessingAccount: 'Failed accessing account.',
+            rejectedAccountAccess: 'You rejected access to your account.',
+            incorrectAccessToken: 'Incorrect access token. Please try again.',
+            takenByOtherAccount: 'These credentials are taken by other account.',
+            failedGettingEmail: 'E-mail not provided by the provider.',
+            incorrectLinkSettings: 'Incorrect link settings.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.'
         });

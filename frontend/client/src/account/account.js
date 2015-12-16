@@ -32,7 +32,8 @@
         }))
         .controller('AccountLoginStatusController', ng(function ($scope, $location, $state, snackbar) {
             var data = $location.search(),
-                errors;
+                errors,
+                oauth2error;
             if (data.popup) {
                 $scope.contentSpinner.start();
                 return;
@@ -47,7 +48,18 @@
                             snackbar.showK('accessDenied');
                         }
                         if (errors.oauth2_error) {
-                            snackbar.showK('failedAccessingAccount');
+                            oauth2error = errors.oauth2_error[0];
+                            if (oauth2error === 'no_email_provided') {
+                                snackbar.showK('failedGettingEmail');
+                            } else if (oauth2error === 'failed_access_token') {
+                                snackbar.showK('incorrectAccessToken');
+                            } else if (oauth2error === 'rejected_account_access') {
+                                snackbar.showK('rejectedAccountAccess');
+                            } else if (oauth2error === 'taken_by_other_account') {
+                                snackbar.showK('takenByOtherAccount');
+                            } else if (oauth2error === 'state_error') {
+                                snackbar.showK('incorrectLinkSettings');
+                            }
                         }
                     }
                 }

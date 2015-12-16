@@ -72,6 +72,7 @@ class AccountLoginInit(orm.BaseModel):
       parse = getattr(self, 'parse_result_%s' % login_method, None)
       if parse:
         info = parse(info)
+      tools.debug.warn(info.keys())
       if info and 'email' in info:
         identity = oauth2_cfg['type']
         context._identity_id = '%s-%s' % (info['id'], identity)
@@ -84,8 +85,7 @@ class AccountLoginInit(orm.BaseModel):
             context._account = account
             context.account = account
           elif not own_account and not context.account._is_guest:
-            context.output['taken_by_other_account'] = True
-            raise orm.TerminateAction()
+            raise OAuth2Error('taken_by_other_account')
       else:
         raise OAuth2Error('no_email_provided')
     kwargs = {'account': context.account, 'action': context.action}
