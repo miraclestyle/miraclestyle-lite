@@ -332,7 +332,7 @@ class Catalog(orm.BaseExpando):
   _expando_fields = {
       'cover': orm.SuperImageLocalStructuredProperty(CatalogImage, '7', process_config={'copy': True, 'copy_name': 'cover',
                                                                                         'transform': True, 'width': 240,
-                                                                                        'height': 240, 'crop_to_fit': True})
+                                                                                        'height': 312, 'crop_to_fit': True})
   }
 
   _virtual_fields = {

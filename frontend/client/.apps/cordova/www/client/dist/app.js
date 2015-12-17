@@ -622,11 +622,11 @@ if (!Array.prototype.indexOf) {
             },
             defaultImage: 'client/dist/static/240x240_placeholder.png',
             defaultLogo: 'client/dist/static/720x300_placeholder.png',
-            defaultCatalogCover: 'client/dist/static/240x240_placeholder.png',
+            defaultCatalogCover: 'client/dist/static/240x312_placeholder.png',
             grid: {
                 maxWidth: 240,
                 minWidth: 180,
-                maxHeight: 360,
+                maxHeight: 312,
                 margin: 1
             },
             emptyHelp: {},

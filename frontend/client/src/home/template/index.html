@@ -1,14 +1,11 @@
 <div class="list list-padding">
-    <div autoload-on-vertical-scroll-end="search" ng-init="maxHeight = (sellerDetails ? 240 : 340)"
-       grid-scale="{maxHeight: maxHeight}"
+    <div autoload-on-vertical-scroll-end="search"
+       grid-scale
        ng-show="search.results.length"
        class="grid-wrapper clearfix">
         <div ng-repeat="result in search.results track by $index" grid-scale-item="{image: true}" class="grid-item grid-generator">
             <button md-ink-ripple ripple-light loading ng-click="view(result.key, $event)" class="button-transparent button-block">
-                <img class="not-pointable" display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size:240}" />
-            </button>
-            <button md-ink-ripple ripple-light ng-if="!sellerMode" loading ng-click="viewProfile(result.parent.parent.key, $event)" class="button-transparent button-block seller-logo-bellow">
-                <img class="not-pointable" display-image="result._seller.logo" display-image-config="{defaultImage: 'defaultLogo', size:240}" />
+                <img class="not-pointable" display-image="result.cover" display-image-config="{defaultImage: 'defaultCatalogCover', size: 312}" />
             </button>
         </div>
     </div>
