@@ -23408,8 +23408,10 @@ angular.module('app')
                             $modal.open({
                                 templateUrl: 'core/misc/content_view.html',
                                 controller: ng(function ($scope) {
-                                    $scope.plainText = true;
-                                    $scope.content = content;
+                                    $scope.$state.instant(function () {
+                                        $scope.plainText = true;
+                                        $scope.content = content;
+                                    });
                                 })
                             });
                         };

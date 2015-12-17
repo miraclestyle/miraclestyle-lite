@@ -77,9 +77,13 @@
                                 </div>
 
                                     <div ng-repeat="variant in variants" class="list-row list-row-two-lines no-padding">
-                                        <button ng-if="!variant.allow_custom_value" md-ink-ripple loading ng-click="setupVariantChooser(variant, $index)" type="button" class="list-row menu-item list-content-tile list-row-is-clickable">
+                                        <button ng-if="!variant.allow_custom_value" md-ink-ripple loading ng-click="setupVariantChooser(variant, $index)" type="button" class="list-row menu-item list-content-tile list-row-is-clickable list-row-two-lines list-row-has-secondary">
                                             <span class="first" ng-bind="variant.name"></span>
                                             <span class="second" ng-bind="variant.option"></span>
+
+                                             <div class="list-secondary-tile">
+                                               <div class="button-square"><icon type="chevron_right"></icon></div>
+                                             </div>
                                         </button>
                                         <div ng-if="variant.allow_custom_value">
                                              <div form-input="variantSelection[$index]"></div>
@@ -151,7 +155,7 @@
                             class="list-row list-row-is-clickable menu-item first list-content-tile block" 
                             ng-class="{'list-row-is-active': variantChooser.option === opt}" 
                             ng-click="completeVariantChooser(opt)"
-                            ng-bind="opt"></button>
+                            ng-bind="opt"> </button>
                     </div>
                 </md-content>
             </md-sidenav>
