@@ -311,17 +311,6 @@ class BaseTestHandler(RequestHandler):
     self.response.write(sp * a)
 
 
-class TestingConcurency(BaseTestHandler):
-
-  autoload_current_account = False
-
-  @tools.profile(HTTP_PERFORMANCE_TEXT)
-  def respond(self):
-      if not tools.mem_temp_get('TestingConcurency'):
-        print('no value')
-        tools.mem_temp_set('TestingConcurency', 1)
-
-
 class Reset(BaseTestHandler):
 
   def respond(self):
@@ -393,10 +382,10 @@ class LoginAs(BaseTestHandler):
         self.secure_cookie_set(settings.COOKIE_AUTH_KEY, '%s|%s' % (account.key_urlsafe, session.session_id), httponly=True)
         self.redirect('/')
 
-
-for k, o in globals().items():
-  if inspect.isclass(o) and issubclass(o, BaseTestHandler):
-    ROUTES.append(('/api/tests/%s' % o.__name__, o))
+if settings.DEBUG:
+  for k, o in globals().items():
+    if inspect.isclass(o) and issubclass(o, BaseTestHandler):
+      ROUTES.append(('/api/tests/%s' % o.__name__, o))
 
 # due development server bug, make additional routing with proxy prefix
 if settings.DEVELOPMENT_SERVER:

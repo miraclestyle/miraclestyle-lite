@@ -56,6 +56,11 @@
                 <div class="list-padding">
                   <sidenav-item ng-click="displayShare()">Share</sidenav-item>
                   <sidenav-item ng-click="displayCart()">Cart</sidenav-item>
+                  <sidenav-item ng-click="sellerDetails.viewContent(content)"
+                                ng-repeat="content in sellerDetails.seller._content.documents track by content.key">
+                                <span class="ellipsis-text" ng-bind="content.title"></span>
+                                </sidenav-item>
+                 
                 </div>
             </div>
         </md-content>
