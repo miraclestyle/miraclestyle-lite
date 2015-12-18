@@ -36,7 +36,7 @@ class CatalogProductView(base.SeoOrAngular):
     catalog_key = [list(ndb.Key(urlsafe=kwargs.get('key')).flat())]
     catalog_image_key = [[]]
     catalog_image_key[0].extend(catalog_key[0])
-    catalog_image_key[0].extend(['30', int(kwargs.get('image_id'))])
+    catalog_image_key[0].extend(['30', kwargs.get('image_id')])
     catalog_image_pricetag_key = [[]]
     catalog_image_pricetag_key[0].extend(catalog_key[0])
     catalog_image_pricetag_key[0].extend(['29', kwargs.get('pricetag_id')])
