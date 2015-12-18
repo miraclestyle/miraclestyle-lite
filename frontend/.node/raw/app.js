@@ -23580,11 +23580,6 @@ angular.module('app')
                 templateUrl: 'home/index.html',
                 controller: 'HomePageController'
             })
-            .state('embed-seller-info', {
-                url: '/embed/seller/:key',
-                controller: 'SellerEmbedInfo',
-                template: ''
-            })
             .state('catalog-view', {
                 url: '/catalog/:key',
                 controller: 'CatalogViewController',
@@ -23625,11 +23620,6 @@ angular.module('app')
                 controller: 'EmbedCatalogViewController',
                 template: ''
             })
-            .state('embed-seller-view', {
-                url: '/embed/seller/:key',
-                controller: 'EmbedSellerViewController',
-                template: ''
-            })
             .state('embed-catalog-product-variant-view', {
                 url: '/embed/catalog/:key/product/:image_id/:pricetag_id/:variant',
                 controller: 'EmbedCatalogProductVariantViewController',
@@ -23649,11 +23639,6 @@ angular.module('app')
                 url: '/seller/orders',
                 controller: 'SellOrdersController',
                 templateUrl: 'order/list.html'
-            })
-            .state('seller-info', {
-                url: '/seller/:key',
-                controller: 'SellerInfo',
-                template: ''
             })
             .state('sell-carts', {
                 url: '/seller/carts',
