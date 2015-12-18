@@ -97,6 +97,4 @@ class CountryUpdateWrite(orm.BaseModel):
         processed_ids[dic['id']] = country_sub_division
         country_sub_division._use_rule_engine = False
         put_entities.append(country_sub_division)
-        if i == 100 and debug_environment:  # all instances nowonly import 100 items
-          break
       orm.put_multi(put_entities)

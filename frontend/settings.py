@@ -13,15 +13,40 @@ import subprocess
 
 # META
 FORCE_SSL = True
+UNMINIFIED = False
 SITE_META_TITLE = "E-commerce Platform, Online Product Catalog Publisher"
 SITE_META_DESCRIPTION = "Easily sell online with POS equipped product catalogs. Create, publish and distribute POS equipped product catalogs with MIRACLESTYLE'S e-commerce platform."
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
-DEBUG_HOST_NAMES = ['localhost:9982', '192.168.0.100:9982', '0.0.0.0:9982']
+DEBUG_HOST_NAMES = {
+  1: {
+    'HOSTS': ['localhost:9982', '0.0.0.0:9982'],
+    'FORCE_SSL': False,
+    'UNMINIFIED': False
+  },
+  2: {
+    'HOSTS': ['themiraclestyle-testing-site.appspot.com'],
+    'FORCE_SSL': True,
+    'UNMINIFIED': True
+  }
+}
+DEBUG_HOST_NAMES_LIST = set()
+for k, v in DEBUG_HOST_NAMES.iteritems():
+  for host in v['HOSTS']:
+    DEBUG_HOST_NAMES_LIST.add(host)
+
+def find_debug_flag(host):
+  for k, v in DEBUG_HOST_NAMES.iteritems():
+    if host in v['HOSTS']:
+      return k
+  return None
+
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
-DEBUG = False
-if HOST_NAME in DEBUG_HOST_NAMES:
-  DEBUG = True
-  FORCE_SSL = False
+DEBUG = find_debug_flag(HOST_NAME)
+LAG = False
+if HOST_NAME in DEBUG_HOST_NAMES_LIST:
+  LAG = False # 2
+  FORCE_SSL = DEBUG_HOST_NAMES[DEBUG]['FORCE_SSL']
+  UNMINIFIED = DEBUG_HOST_NAMES[DEBUG]['UNMINIFIED']
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
@@ -97,7 +122,7 @@ def _angular_vendor_js(debug):
       env('vendor/angular-markdown-directive/markdown.js')
   )
 
-ANGULAR_VENDOR_JS = _angular_vendor_js(DEBUG)
+ANGULAR_VENDOR_JS = _angular_vendor_js(UNMINIFIED)
 ANGULAR_VENDOR_CSS = ()
 ANGULAR_TEMPLATE_FILES = []
 ANGULAR_STATIC_FILES = []

@@ -58,8 +58,6 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
             current_structure = current_structure[path]
 
     for i, item in enumerate(categories):
-      if i == 113 and debug_environment:
-        break
       full_path = item.split(' > ')
       path_map = structure
       current = full_path

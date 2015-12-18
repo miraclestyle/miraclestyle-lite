@@ -45,7 +45,7 @@
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
-    {% if settings.DEBUG %}
+    {% if settings.UNMINIFIED %}
         {% for style in settings.ANGULAR_CSS_PATHS %}
         <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style, True)}}" /> {% endfor %}
     {% else %}
@@ -163,7 +163,7 @@
  
 
     
-    {% if settings.DEBUG %}
+    {% if settings.UNMINIFIED %}
         {% for js in settings.ANGULAR_JAVASCRIPT_PATHS %}
         <script type="text/javascript" src="{{static_dir('%s' % js, True)}}"></script>
         {% endfor %}

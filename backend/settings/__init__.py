@@ -15,19 +15,38 @@ DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input an
 # Server side config
 FORCE_SSL = True
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
-DEBUG = False
 SILENCE_STDOUT = False
 DO_LOGS = True  # logging on application level
 PROFILE_SLOW_ACTIONS = True
 PROFILING = False  # profiling of every function call using cProfile. Debug must be on
 PROFILING_SORT = ('cumulative', )  # 'time'
-DEBUG_HOST_NAMES = ['localhost:9982', '0.0.0.0:9982']
-LAG = False
+DEBUG_HOST_NAMES = {
+  1: {
+    'HOSTS': ['localhost:9982', '0.0.0.0:9982'],
+    'FORCE_SSL': False
+  },
+  2: {
+    'HOSTS': ['themiraclestyle-testing-site.appspot.com'],
+    'FORCE_SSL': True
+  }
+}
+DEBUG_HOST_NAMES_LIST = set()
+for k, v in DEBUG_HOST_NAMES.iteritems():
+  for host in v['HOSTS']:
+    DEBUG_HOST_NAMES_LIST.add(host)
+
+def find_debug_flag(host):
+  for k, v in DEBUG_HOST_NAMES.iteritems():
+    if host in v['HOSTS']:
+      return k
+  return None
+
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
-if HOST_NAME in DEBUG_HOST_NAMES:
-  DEBUG = True
+DEBUG = find_debug_flag(HOST_NAME)
+LAG = False
+if HOST_NAME in DEBUG_HOST_NAMES_LIST:
   LAG = False # 2
-  FORCE_SSL = False
+  FORCE_SSL = DEBUG_HOST_NAMES[DEBUG]['FORCE_SSL']
 # Notify
 NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'  # Password: xZa9hv8nbWyzk67boq4Q0
 
@@ -96,7 +115,7 @@ FACEBOOK_OAUTH2 = {
     'account_info': 'https://graph.facebook.com/v2.5/me?fields=id,email',
 }
 
-if DEBUG:
+if DEBUG == 1:
   FACEBOOK_OAUTH2['client_id'] = '125702284258635'
   FACEBOOK_OAUTH2['client_secret'] = 'f5bcbcfa1bec6166bedb703d69911d43'
 
@@ -118,9 +137,8 @@ LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2, LINKEDIN_OAUTH2]
 AVAILABLE_PAYMENT_METHODS = ('paypal',)
 
 # PAYPAL
-PAYPAL_SANDBOX = True
 PAYPAL_WEBSCR = 'https://www.paypal.com/cgi-bin/webscr'
-if PAYPAL_SANDBOX:
+if DEBUG:
   PAYPAL_WEBSCR = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
 
 # HTTP client related configs

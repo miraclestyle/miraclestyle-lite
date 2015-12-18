@@ -528,7 +528,7 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(),
-                      OrderNotify(),
+                      OrderNotify(cfg={'options': {'paypal': {'webscr': settings.PAYPAL_WEBSCR}}}),
                       OrderSetMessage(cfg={
                         'expando_fields': 'new_message_fields',
                         'expando_values': 'new_message'

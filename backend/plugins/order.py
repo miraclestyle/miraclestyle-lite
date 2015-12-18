@@ -522,7 +522,11 @@ class OrderNotify(orm.BaseModel):
 
   _kind = 118
 
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
+
   def run(self, context):
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
     order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context)  # will throw an error if the payment method does not exist
     context._order = order
     order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
@@ -533,6 +537,9 @@ class OrderNotify(orm.BaseModel):
     payment_plugin.notify(context)
 
   def find_order_paypal(self, context):
+    options = self.cfg.get('options')
+    paypal = options['paypal']
+    url = paypal['webscr']
     request = context.input['request']
     ipn = request['params']
     # validate if the request came from ipn
@@ -540,7 +547,7 @@ class OrderNotify(orm.BaseModel):
     result_content = None
     valid = False
     try:
-      result = urlfetch.fetch(url='https://www.sandbox.paypal.com/cgi-bin/webscr',
+      result = urlfetch.fetch(url=url,
                               payload='cmd=_notify-validate&%s' % request['body'],
                               method=urlfetch.POST,
                               deadline=60,
