@@ -18179,9 +18179,6 @@ angular.module('app')
         }, {
             name: 'Linkedin',
             key: '3'
-        }, {
-            name: 'Twitter',
-            key: '4'
         }])
         .factory('mappedLoginProviders', ng(function (LOGIN_PROVIDERS) {
             var mappedLoginProviders = {};
@@ -20660,8 +20657,10 @@ angular.module('app')
                                     $modal.open({
                                         templateUrl: 'core/misc/content_view.html',
                                         controller: ng(function ($scope) {
-                                            $scope.markDown = true;
-                                            $scope.content = content;
+                                            $scope.$state.instant(function () {
+                                                $scope.markDown = true;
+                                                $scope.content = content;
+                                            });
                                         })
                                     });
                                 };
@@ -23427,82 +23426,6 @@ angular.module('app')
                     return this.actions.read(args, {
                         cache: 'currentSeller',
                         cacheType: 'memory'
-                    });
-                },
-                viewProfileModal: function (accountKey, config) {
-                    config = helpers.alwaysObject(config);
-                    $modal.open({
-                        templateUrl: 'seller/profile.html',
-                        popFrom: config.popFrom,
-                        inDirection: config.inDirection,
-                        outDirection: config.outDirection,
-                        noEscape: config.noEscape,
-                        controller: ng(function ($scope) {
-                            $scope.$state.promise(function () {
-                                return models['23'].actions.read({
-                                    account: accountKey,
-                                    read_arguments: {
-                                        _content: {}
-                                    }
-                                }, {
-                                    ignoreErrors: 2
-                                });
-                            }, function ($scope, response) {
-                                $scope.close = function () {
-                                    var promise = $scope.$close();
-                                    promise.then(config.afterClose || angular.noop);
-                                    return promise;
-                                };
-                                if (response) {
-                                    var errors = response.data.errors;
-                                    if (errors && (errors.not_found || errors.malformed_key)) {
-                                        $scope.notFound = true;
-                                        return;
-                                    }
-                                }
-                                var seller = response.data.entity;
-                                $scope.view = function (key, $event) {
-                                    models['31'].viewModal(key, {
-                                        popFrom: helpers.clicks.realEventTarget($event.target)
-                                    });
-                                };
-                                $scope.hideClose = config.hideClose;
-                                $scope.seller = seller;
-                                $scope.sellerDetails = models['23'].makeSellerDetails($scope.seller, config.sellerDetails);
-                                $scope.search = {
-                                    results: [],
-                                    loader: models['31'].paginate({
-                                        kind: '31',
-                                        args: {
-                                            search: {
-                                                ancestor: $scope.seller.key,
-                                                filters: [{
-                                                    field: 'state',
-                                                    operator: 'IN',
-                                                    value: ['published', 'indexed']
-                                                }],
-                                                orders: [{
-                                                    field: 'published_date',
-                                                    operator: 'desc'
-                                                }, {
-                                                    field: 'key',
-                                                    operator: 'desc'
-                                                }]
-                                            }
-                                        },
-                                        config: {
-                                            normalizeEntity: false
-                                        },
-                                        action: 'search',
-                                        complete: function (response) {
-                                            var results = response.data.entities;
-                                            $scope.search.results.extend(results);
-                                        }
-                                    })
-                                };
-                                $scope.search.loader.load();
-                            });
-                        })
                     });
                 },
                 manageModal: function (accountKey) {
