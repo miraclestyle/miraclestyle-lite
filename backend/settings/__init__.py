@@ -9,44 +9,47 @@ import os
 '''Settings file for backend module'''
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
+
+DEFAULT_HOST_SETTINGS = {
+  'DEBUG': True,
+  'FORCE_SSL': False,
+  'LAG': False,
+  'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
+  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr'
+}
+HOSTS_SPECIFIC_SETTINGS = {
+  'localhost:9982': {
+    'FORCE_SSL': False
+  },
+  'themiraclestyle-testing-site.appspot.com': {
+    'FORCE_SSL': True
+  },
+  'miraclestyle.com': {
+    'DEBUG': False,
+    'FORCE_SSL': True,
+    'BUCKET_PATH': 'themiraclestyle.appspot.com',
+    'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr'
+  }
+}
+
+HOST_SPECIFIC_SETTINGS = HOSTS_SPECIFIC_SETTINGS.get(HOST_NAME, DEFAULT_HOST_SETTINGS)
+for k, v in DEFAULT_HOST_SETTINGS.items():
+  if k not in HOST_SPECIFIC_SETTINGS:
+    HOST_SPECIFIC_SETTINGS[k] = v
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
-
 # Server side config
-FORCE_SSL = True
+FORCE_SSL = HOST_SPECIFIC_SETTINGS['FORCE_SSL']
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 SILENCE_STDOUT = False
 DO_LOGS = True  # logging on application level
 PROFILE_SLOW_ACTIONS = True
 PROFILING = False  # profiling of every function call using cProfile. Debug must be on
 PROFILING_SORT = ('cumulative', )  # 'time'
-DEBUG_HOST_NAMES = {
-  1: {
-    'HOSTS': ['localhost:9982', '0.0.0.0:9982'],
-    'FORCE_SSL': False
-  },
-  2: {
-    'HOSTS': ['themiraclestyle-testing-site.appspot.com'],
-    'FORCE_SSL': True
-  }
-}
-DEBUG_HOST_NAMES_LIST = set()
-for k, v in DEBUG_HOST_NAMES.iteritems():
-  for host in v['HOSTS']:
-    DEBUG_HOST_NAMES_LIST.add(host)
 
-def find_debug_flag(host):
-  for k, v in DEBUG_HOST_NAMES.iteritems():
-    if host in v['HOSTS']:
-      return k
-  return None
-
-HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
-DEBUG = find_debug_flag(HOST_NAME)
-LAG = False
-if HOST_NAME in DEBUG_HOST_NAMES_LIST:
-  LAG = False # 2
-  FORCE_SSL = DEBUG_HOST_NAMES[DEBUG]['FORCE_SSL']
+DEBUG = HOST_SPECIFIC_SETTINGS['DEBUG']
+LAG = HOST_SPECIFIC_SETTINGS['LAG']
 # Notify
 NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'  # Password: xZa9hv8nbWyzk67boq4Q0
 
@@ -86,11 +89,8 @@ PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 # BLOB Handling
 BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 # Cloud storage path settings.
-BUCKET_PATH = 'themiraclestyle-testing-site.appspot.com'
-
-OAUTH2_REDIRECT_URI = HOST_URL
-if DEVELOPMENT_SERVER:
-  OAUTH2_REDIRECT_URI = 'http://localhost:9982'
+BUCKET_PATH = HOST_SPECIFIC_SETTINGS['BUCKET_PATH']
+OAUTH2_REDIRECT_URI = HOST_SPECIFIC_SETTINGS.get('OAUTH2_REDIRECT_URI', HOST_URL)
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
@@ -115,10 +115,6 @@ FACEBOOK_OAUTH2 = {
     'account_info': 'https://graph.facebook.com/v2.5/me?fields=id,email',
 }
 
-if DEBUG == 1:
-  FACEBOOK_OAUTH2['client_id'] = '125702284258635'
-  FACEBOOK_OAUTH2['client_secret'] = 'f5bcbcfa1bec6166bedb703d69911d43'
-
 LINKEDIN_OAUTH2 = {
     'client_id': '77xclva9s9qsex',
     'client_secret': 'cYHLJehkmDGm1j9n',
@@ -137,10 +133,7 @@ LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2, LINKEDIN_OAUTH2]
 AVAILABLE_PAYMENT_METHODS = ('paypal',)
 
 # PAYPAL
-PAYPAL_WEBSCR = 'https://www.paypal.com/cgi-bin/webscr'
-if DEBUG:
-  PAYPAL_WEBSCR = 'https://www.sandbox.paypal.com/cgi-bin/webscr'
-
+PAYPAL_WEBSCR = HOST_SPECIFIC_SETTINGS['PAYPAL_WEBSCR']
 # HTTP client related configs
 CSRF_SALT = '21482499fsd9i348124982ufs89j9f2qofi4knsgye8w9djqwiodnjenj'
 CSRF_TOKEN_KEY = 'csrf_token'

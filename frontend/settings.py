@@ -11,46 +11,50 @@ import codecs
 import shutil
 import subprocess
 
-# META
-FORCE_SSL = True
-UNMINIFIED = False
-SITE_META_TITLE = "E-commerce Platform, Online Product Catalog Publisher"
-SITE_META_DESCRIPTION = "Easily sell online with POS equipped product catalogs. Create, publish and distribute POS equipped product catalogs with MIRACLESTYLE'S e-commerce platform."
-SITE_META_TWITTER_USERNAME = 'miraclestyle'
-DEBUG_HOST_NAMES = {
-  1: {
-    'HOSTS': ['localhost:9982', '0.0.0.0:9982'],
-    'FORCE_SSL': False,
-    'UNMINIFIED': True
-  },
-  2: {
-    'HOSTS': ['themiraclestyle-testing-site.appspot.com'],
-    'FORCE_SSL': True,
-    'UNMINIFIED': False
-  }
-}
-DEBUG_HOST_NAMES_LIST = set()
-for k, v in DEBUG_HOST_NAMES.iteritems():
-  for host in v['HOSTS']:
-    DEBUG_HOST_NAMES_LIST.add(host)
-
-def find_debug_flag(host):
-  for k, v in DEBUG_HOST_NAMES.iteritems():
-    if host in v['HOSTS']:
-      return k
-  return None
-
-HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
-DEBUG = find_debug_flag(HOST_NAME)
-LAG = False
-if HOST_NAME in DEBUG_HOST_NAMES_LIST:
-  LAG = False # 2
-  FORCE_SSL = DEBUG_HOST_NAMES[DEBUG]['FORCE_SSL']
-  UNMINIFIED = DEBUG_HOST_NAMES[DEBUG]['UNMINIFIED']
-
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
 CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src')
+
+HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
+
+DEFAULT_HOST_SETTINGS = {
+  'DEBUG': True,
+  'FORCE_SSL': False,
+  'UNMINIFIED': False,
+  'LAG': False,
+  'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
+  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr'
+}
+HOSTS_SPECIFIC_SETTINGS = {
+  'localhost:9982': {
+    'FORCE_SSL': False,
+    'UNMINIFIED': True
+  },
+  'themiraclestyle-testing-site.appspot.com': {
+    'FORCE_SSL': True
+  },
+  'miraclestyle.com': {
+    'DEBUG': False,
+    'FORCE_SSL': True,
+    'BUCKET_PATH': 'themiraclestyle.appspot.com',
+    'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr'
+  }
+}
+
+HOST_SPECIFIC_SETTINGS = HOSTS_SPECIFIC_SETTINGS.get(HOST_NAME, DEFAULT_HOST_SETTINGS)
+for k, v in DEFAULT_HOST_SETTINGS.items():
+  if k not in HOST_SPECIFIC_SETTINGS:
+    HOST_SPECIFIC_SETTINGS[k] = v
+
+# META
+SITE_META_TITLE = "E-commerce Platform, Online Product Catalog Publisher"
+SITE_META_DESCRIPTION = "Easily sell online with POS equipped product catalogs. Create, publish and distribute POS equipped product catalogs with MIRACLESTYLE'S e-commerce platform."
+SITE_META_TWITTER_USERNAME = 'miraclestyle'
+
+DEBUG = HOST_SPECIFIC_SETTINGS['DEBUG']
+LAG = HOST_SPECIFIC_SETTINGS['LAG']
+UNMINIFIED = HOST_SPECIFIC_SETTINGS['UNMINIFIED']
+FORCE_SSL = HOST_SPECIFIC_SETTINGS['FORCE_SSL']
 
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
