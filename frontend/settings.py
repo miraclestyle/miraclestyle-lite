@@ -21,12 +21,12 @@ DEBUG_HOST_NAMES = {
   1: {
     'HOSTS': ['localhost:9982', '0.0.0.0:9982'],
     'FORCE_SSL': False,
-    'UNMINIFIED': False
+    'UNMINIFIED': True
   },
   2: {
     'HOSTS': ['themiraclestyle-testing-site.appspot.com'],
     'FORCE_SSL': True,
-    'UNMINIFIED': True
+    'UNMINIFIED': False
   }
 }
 DEBUG_HOST_NAMES_LIST = set()
