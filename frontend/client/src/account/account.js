@@ -36,9 +36,6 @@
         }, {
             name: 'Linkedin',
             key: '3'
-        }, {
-            name: 'Twitter',
-            key: '4'
         }])
         .factory('mappedLoginProviders', ng(function (LOGIN_PROVIDERS) {
             var mappedLoginProviders = {};

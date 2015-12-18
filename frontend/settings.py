@@ -29,7 +29,7 @@ CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src')
 
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
-ACTIVE_HANDLERS = ('misc', 'seller', 'catalog', 'home', 'builder')
+ACTIVE_HANDLERS = ('misc', 'catalog', 'home', 'builder')
 
 def get_host_url():
   http = 'http://'

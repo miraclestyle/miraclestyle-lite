@@ -301,8 +301,10 @@
                                     $modal.open({
                                         templateUrl: 'core/misc/content_view.html',
                                         controller: ng(function ($scope) {
-                                            $scope.markDown = true;
-                                            $scope.content = content;
+                                            $scope.$state.instant(function () {
+                                                $scope.markDown = true;
+                                                $scope.content = content;
+                                            });
                                         })
                                     });
                                 };
