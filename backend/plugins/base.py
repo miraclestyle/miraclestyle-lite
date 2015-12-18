@@ -519,6 +519,10 @@ class BaseCache(orm.BaseModel):
       context.cache = saver
     else:
       tools.mem_delete_multi([build_key(driver, key, None) for driver in cache_drivers])
+      if hasattr(context, 'delete_cache_groups'):
+        if not group_id:
+          group_id = []
+        group_id.extend(context.delete_cache_groups)
       if group_id:
         keys = []
         satisfy = self.cfg.get('satisfy', {})

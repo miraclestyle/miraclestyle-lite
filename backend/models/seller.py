@@ -84,9 +84,13 @@ class Seller(orm.BaseExpando):
   def condition_owner_active(action, account, entity, **kwargs):
     return entity._original.root_entity.state == "active"
 
+  def condition_taskqueue(account, **kwargs):
+    return account._is_taskqueue
+
   _permissions = [
       orm.ExecuteActionPermission(('create', 'update', 'prepare'), condition_not_guest_and_owner),
       orm.ExecuteActionPermission('read', condition_owner_active),
+      orm.ExecuteActionPermission('far_cache_groups_flush', condition_owner_active),
       orm.ReadFieldPermission(('_plugin_group'), condition_not_guest_and_owner),
       orm.ReadFieldPermission(('name', 'logo', '_content', '_currency'), condition_owner_active),
       orm.WriteFieldPermission(('name', 'logo', '_content', '_plugin_group', '_records'), condition_not_guest_and_owner)
@@ -110,6 +114,25 @@ class Seller(orm.BaseExpando):
                       SellerSetupDefaults(),
                       Set(cfg={'d': {'output.entity': '_seller'}}),
                       CallbackExec()
+                  ]
+              )
+          ]
+      ),
+      orm.Action(
+          id='far_cache_groups_flush',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='23', required=True)
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(),
+                      RulePrepare(),
+                      RuleExec(),
+                      SellerDeleteFarCacheGroups(),
+                      Set(cfg={'d': {'output.entity': '_seller'}}),
+                      DeleteCache()
                   ]
               )
           ]
@@ -140,6 +163,7 @@ class Seller(orm.BaseExpando):
                                      '_seller._content': 'input._content',
                                      '_seller._plugin_group': 'input._plugin_group'}}),
                       SellerSetupDefaults(),
+                      SellerMaybeDeleteFarCacheGroups(),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -149,7 +173,8 @@ class Seller(orm.BaseExpando):
                   plugins=[
                       Write(),
                       DeleteCache(cfg={'group': lambda context: 'read_23_%s' % context.input['account']._id_str}),
-                      Set(cfg={'d': {'output.entity': '_seller'}})
+                      Set(cfg={'d': {'output.entity': '_seller'}}),
+                      CallbackExec()
                   ]
               )
           ]

@@ -8,10 +8,72 @@ Created on Sep 16, 2014
 import datetime
 import collections
 from decimal import Decimal
+import tools
 
 import orm
 
-__all__ = ['SellerSetupDefaults']
+__all__ = ['SellerSetupDefaults', 'SellerDeleteFarCacheGroups', 'SellerMaybeDeleteFarCacheGroups']
+
+
+class SellerMaybeDeleteFarCacheGroups(orm.BaseModel):
+
+  def run(self, context):
+    seller = context._seller
+    original = seller._original
+    send = False
+    props = ['name', 'logo.value.serving_url', '_currency.key']
+    for prop in props:
+      v1 = tools.get_attr(seller, prop)
+      v2 = tools.get_attr(original, prop)
+      if v1 != v2:
+        tools.log.debug(['found at', prop, v1, v2])
+        send = True
+        break
+    if not send:
+      if len(seller._content.value.documents.value) != len(original._content.value.documents.value):
+        send = True
+        tools.log.debug('found at seller content length')
+      else:
+        original_contents = original._content.value.documents.value
+        for i, content in enumerate(seller._content.value.documents.value):
+          original_content = original_contents[i]
+          if content.body != original_content.body \
+             or content.title != original_content.title \
+             or content._sequence != original_content._sequence:
+            tools.log.debug('found at seller content compare at %s' % i)
+            send = True
+    if send:
+      context._callbacks.append(('callback', {'action_id': 'far_cache_groups_flush', 'key': seller.key_urlsafe, 'action_model': '23'}))
+
+
+class SellerDeleteFarCacheGroups(orm.BaseModel):
+
+  def run(self, context):
+    Catalog = context.models['31']
+    Order = context.models['34']
+    key = context._seller.key
+    groups = []
+    context.delete_cache_groups = groups
+    if key:
+      account_seller_id = key._root._id_str
+      any_public = Catalog.query(Catalog.state.IN(['published', 'indexed']), ancestor=key).count(1)
+      catalog_keys = Catalog.query(ancestor=key).fetch(keys_only=True)
+      if any_public:
+        groups.append('search_31')
+      if catalog_keys:
+        groups.append('search_31_admin')
+        groups.append('search_31_%s' % account_seller_id)
+        for catalog_key in catalog_keys:
+          groups.append('read_31_%s' % catalog_key._id_str)
+
+      order_keys = Order.query(Order.seller_reference == key).fetch(keys_only=True)
+      if order_keys:
+        groups.append('search_34_admin')
+        groups.append('search_34')
+        for order_key in order_keys:
+          groups.append('search_34_seller_%s' % account_seller_id)
+          groups.append('search_34_buyer_%s' % order_key._root._id_str)
+          groups.append('read_34_%s' % order_key._id_str)
 
 
 class SellerSetupDefaults(orm.BaseModel):
