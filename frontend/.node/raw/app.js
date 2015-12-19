@@ -18428,7 +18428,7 @@ angular.module('app')
                                         });
                                     },
                                     recompute = function () {
-                                        var missing = Object.keys(mappedLoginProviders);
+                                        var missing = angular.copy(mappedLoginProviders);
                                         $scope.identities = $scope.entity.identities.concat();
                                         if (!$scope.entity.identities.length) {
                                             $scope.entity._is_guest = true;
@@ -18447,6 +18447,8 @@ angular.module('app')
                                                 });
                                             }
                                         });
+
+                                        console.log(LOGIN_PROVIDERS, missing);
 
                                         $scope.identities.sort(function (prev, next) {
                                             return getLoginProvider(prev).sequence - getLoginProvider(next).sequence;

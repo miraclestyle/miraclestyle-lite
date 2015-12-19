@@ -22,7 +22,7 @@ class CatalogView(base.SeoOrAngular):
     data = self.api_endpoint(payload=data)
     catalog = data['entity']
     tpl = {'catalog': catalog,
-           'title': 'Catalog %s' % catalog['name'],
+           'title': '%s %s' % (catalog['_seller']['name'], catalog['name']),
            'updated': catalog['updated'],
            'image': '%s=s360' % catalog['_images'][0]['serving_url'],
            'path': self.uri_for('catalog.view', _full=True, key=catalog['key'])
@@ -117,6 +117,7 @@ class CatalogProductView(base.SeoOrAngular):
             pass
         data = variant_data(variant_shell)
 
+    print(data)
     data = self.api_endpoint(payload=data)
     catalog = data['entity']
     product = catalog['_images'][0]['pricetags'][0]['_product']
@@ -134,7 +135,7 @@ class CatalogProductView(base.SeoOrAngular):
       kwds.pop('variant')
     tpl = {'catalog': catalog,
            'product': product,
-           'title': 'Product %s' % product['name'],
+           'title': product['name'],
            'description': "\n".join([product['_category']['name'], product['description']]),
            'code': product['code'],
            'updated': catalog['updated'],
