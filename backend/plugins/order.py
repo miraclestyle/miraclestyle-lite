@@ -720,6 +720,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       return
     request = context.input['request']
     ipn = request['params']
+    tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, wwe have it recorded in OrderMessage, however, this is easier to access.
     ipn_payment_status = ipn['payment_status']
     order = context._order
     ip_address = os.environ.get('REMOTE_ADDR')
