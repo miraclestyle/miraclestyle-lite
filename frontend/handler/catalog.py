@@ -33,14 +33,19 @@ class CatalogView(base.SeoOrAngular):
 class CatalogProductView(base.SeoOrAngular):
 
   def respond_seo(self, *args, **kwargs):
+    image_id = kwargs.get('image_id')
+    pricetag_id = kwargs.get('pricetag_id')
+    try:
+      image_id = long(image_id)
+    except ValueError as e:
+      pass
     catalog_key = [list(ndb.Key(urlsafe=kwargs.get('key')).flat())]
     catalog_image_key = [[]]
     catalog_image_key[0].extend(catalog_key[0])
-    catalog_image_key[0].extend(['30', kwargs.get('image_id')])
+    catalog_image_key[0].extend(['30', image_id])
     catalog_image_pricetag_key = [[]]
     catalog_image_pricetag_key[0].extend(catalog_key[0])
-    catalog_image_pricetag_key[0].extend(['29', kwargs.get('pricetag_id')])
-
+    catalog_image_pricetag_key[0].extend(['29', pricetag_id])
     data = {
         'action_id': 'read',
         'action_model': '31',
@@ -104,6 +109,17 @@ class CatalogProductView(base.SeoOrAngular):
     variant = kwargs.get('variant')
     raw_variant = variant
     as_variant = False
+    if not variant:
+      pre_render = self.api_endpoint(payload=data)
+      if pre_render:
+        try:
+          product = pre_render['entity']['_images'][0]['pricetags'][0]['_product']
+          if product['variants']:
+            hash = json.dumps([{v['name']: v['options'][0]} for v in product['variants']])
+            variant = base64.b64encode(hash).replace('=', '-')
+            raw_variant = variant
+        except Exception as e:
+          pass
     if variant:
       variant = json.loads(base64.b64decode(variant.replace('-', '=')))
       if variant:
@@ -117,7 +133,6 @@ class CatalogProductView(base.SeoOrAngular):
             pass
         data = variant_data(variant_shell)
 
-    print(data)
     data = self.api_endpoint(payload=data)
     catalog = data['entity']
     product = catalog['_images'][0]['pricetags'][0]['_product']
