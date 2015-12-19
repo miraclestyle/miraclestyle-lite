@@ -145,7 +145,7 @@
                         <tbody>
                             <tr>
                                 <td class="secondary info">Net total</td>
-                                <td class="secondary">{{cmd.order.showNetTotalAmount()|formatCurrency:order.currency}}</td>
+                                <td class="secondary">{{order.untaxed_amount|formatCurrency:order.currency}}</td>
                             </tr>
                             <tr>
                                 <td class="secondary info">Shipping &amp; handling</td>
