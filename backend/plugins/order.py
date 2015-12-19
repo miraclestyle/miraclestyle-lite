@@ -378,7 +378,6 @@ class OrderLineFormat(orm.BaseModel):
           discount_amount = tools.format_value((line.subtotal * discount_formated), order.currency.value)
           discount_subtotal = tools.format_value((line.subtotal - discount_amount), order.currency.value)
         line.discount_subtotal = discount_subtotal
-        tools.log.debug('Discount Amount: %s' % discount_amount)
         tax_subtotal = tools.format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
@@ -721,7 +720,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       return
     request = context.input['request']
     ipn = request['params']
-    tools.log.debug('IPN: %s' % (ipn))
     ipn_payment_status = ipn['payment_status']
     order = context._order
     ip_address = os.environ.get('REMOTE_ADDR')
@@ -803,7 +801,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     def validate_payment_lines():
       for line in order._lines.value:
         product = line.product.value
-        tools.log.debug('Order sequence #%s' % line.sequence)
         # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
         if str(line.sequence) != ipn['item_number%s' % line.sequence]:
           new_mismatch(('item #%s sequence' % line.sequence, line.sequence), ('item #%s sequence' % line.sequence, ipn['item_number%s' % line.sequence]))
