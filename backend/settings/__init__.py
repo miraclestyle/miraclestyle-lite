@@ -22,19 +22,17 @@ DEFAULT_HOST_SETTINGS = {
   'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 0, 'seconds': 30},
   'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
   'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
-  'OAuth': {
-    'GOOGLE_OAUTH2': {
-      'client_id': '262487344336-vkpvegjrp7q3isfr73vod7q9m0piu9gd.apps.googleusercontent.com', 
-      'client_secret': 'AtUlgzsKycfOueKYUrX6CYIn'
-    },
-    'FACEBOOK_OAUTH2': {
-      'client_id': '114231673409', 
-      'client_secret': '7a467a6d24ba35343d09ce672faf98c2'
-    },
-    'LINKEDIN_OAUTH2': {
-      'client_id': '77xclva9s9qsex', 
-      'client_secret': 'cYHLJehkmDGm1j9n'
-    }
+  'GOOGLE_OAUTH2': {
+    'client_id': '262487344336-vkpvegjrp7q3isfr73vod7q9m0piu9gd.apps.googleusercontent.com', 
+    'client_secret': 'AtUlgzsKycfOueKYUrX6CYIn'
+  },
+  'FACEBOOK_OAUTH2': {
+    'client_id': '114231673409', 
+    'client_secret': '7a467a6d24ba35343d09ce672faf98c2'
+  },
+  'LINKEDIN_OAUTH2': {
+    'client_id': '77xclva9s9qsex', 
+    'client_secret': 'cYHLJehkmDGm1j9n'
   }
 }
 HOSTS_SPECIFIC_SETTINGS = {
@@ -54,19 +52,9 @@ HOSTS_SPECIFIC_SETTINGS = {
     'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 15, 'seconds': 0},
     'BUCKET_PATH': 'themiraclestyle.appspot.com',
     'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
-    'OAuth': {
-      'GOOGLE_OAUTH2': {
-        'client_id': '794606722914-tue5sq5v7b459lq4rorvtm98m421pioj.apps.googleusercontent.com', 
-        'client_secret': 'pvUWETG11c8mRh1IwN0qjYnm'
-      },
-      'FACEBOOK_OAUTH2': {
-        'client_id': '114231673409', 
-        'client_secret': '7a467a6d24ba35343d09ce672faf98c2'
-      },
-      'LINKEDIN_OAUTH2': {
-        'client_id': '77xclva9s9qsex', 
-        'client_secret': 'cYHLJehkmDGm1j9n'
-      }
+    'GOOGLE_OAUTH2': {
+      'client_id': '794606722914-tue5sq5v7b459lq4rorvtm98m421pioj.apps.googleusercontent.com', 
+      'client_secret': 'pvUWETG11c8mRh1IwN0qjYnm'
     }
   }
 }
@@ -112,8 +100,8 @@ OAUTH2_REDIRECT_URI = HOST_SPECIFIC_SETTINGS.get('OAUTH2_REDIRECT_URI', HOST_URL
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
-    'client_id': HOST_SPECIFIC_SETTINGS['OAuth']['GOOGLE_OAUTH2']['client_id'],
-    'client_secret': HOST_SPECIFIC_SETTINGS['OAuth']['GOOGLE_OAUTH2']['client_secret'],
+    'client_id': HOST_SPECIFIC_SETTINGS['GOOGLE_OAUTH2']['client_id'],
+    'client_secret': HOST_SPECIFIC_SETTINGS['GOOGLE_OAUTH2']['client_secret'],
     'scope': " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
     'authorization_uri': 'https://accounts.google.com/o/oauth2/auth',
     'token_uri': 'https://accounts.google.com/o/oauth2/token',
@@ -123,8 +111,8 @@ GOOGLE_OAUTH2 = {
 }
 
 FACEBOOK_OAUTH2 = {
-    'client_id': HOST_SPECIFIC_SETTINGS['OAuth']['FACEBOOK_OAUTH2']['client_id'],
-    'client_secret': HOST_SPECIFIC_SETTINGS['OAuth']['FACEBOOK_OAUTH2']['client_secret'],
+    'client_id': HOST_SPECIFIC_SETTINGS['FACEBOOK_OAUTH2']['client_id'],
+    'client_secret': HOST_SPECIFIC_SETTINGS['FACEBOOK_OAUTH2']['client_secret'],
     'scope': ",".join(['email']),
     'authorization_uri': 'https://www.facebook.com/dialog/oauth',
     'token_uri': 'https://graph.facebook.com/oauth/access_token',
@@ -134,8 +122,8 @@ FACEBOOK_OAUTH2 = {
 }
 
 LINKEDIN_OAUTH2 = {
-    'client_id': HOST_SPECIFIC_SETTINGS['OAuth']['LINKEDIN_OAUTH2']['client_id'],
-    'client_secret': HOST_SPECIFIC_SETTINGS['OAuth']['LINKEDIN_OAUTH2']['client_secret'],
+    'client_id': HOST_SPECIFIC_SETTINGS['LINKEDIN_OAUTH2']['client_id'],
+    'client_secret': HOST_SPECIFIC_SETTINGS['LINKEDIN_OAUTH2']['client_secret'],
     'scope': ",".join(['r_basicprofile', 'r_emailaddress']),
     'authorization_uri': 'https://www.linkedin.com/uas/oauth2/authorization',
     'token_uri': 'https://www.linkedin.com/uas/oauth2/accessToken',
