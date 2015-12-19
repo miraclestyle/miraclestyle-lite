@@ -33,7 +33,7 @@ DEFAULT_HOST_SETTINGS = {
     'LINKEDIN_OAUTH2': {
       'client_id': '77xclva9s9qsex', 
       'client_secret': 'cYHLJehkmDGm1j9n'
-    },
+    }
   }
 }
 HOSTS_SPECIFIC_SETTINGS = {
@@ -64,7 +64,7 @@ HOSTS_SPECIFIC_SETTINGS = {
       'LINKEDIN_OAUTH2': {
         'client_id': '77xclva9s9qsex', 
         'client_secret': 'cYHLJehkmDGm1j9n'
-      },
+      }
     }
   }
 }
@@ -90,7 +90,7 @@ CATALOG_UNPUBLISHED_LIFE = HOST_SPECIFIC_SETTINGS['CATALOG_UNPUBLISHED_LIFE']
 CATALOG_DISCONTINUED_LIFE = HOST_SPECIFIC_SETTINGS['CATALOG_DISCONTINUED_LIFE']
 ORDER_CART_LIFE = HOST_SPECIFIC_SETTINGS['ORDER_CART_LIFE']
 ORDER_UNPAID_LIFE = HOST_SPECIFIC_SETTINGS['ORDER_UNPAID_LIFE']
-
+ORDER_CRON_NOTIFY_TIMER = {'hours': 0, 'minutes': 15, 'seconds': 0}
 
 def get_host_url():
   http = 'http://'
