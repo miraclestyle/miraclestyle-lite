@@ -442,6 +442,7 @@ class OrderFormat(orm.BaseModel):
         untaxed_amount = tools.format_value((untaxed_amount + line.discount_subtotal), order.currency.value)
         tax_amount = tools.format_value((tax_amount + line.tax_subtotal), order.currency.value)
         total_amount = tools.format_value((total_amount + line.total), order.currency.value)
+    order._untaxed_amount_without_carrier_total = untaxed_amount
     carrier = order.carrier.value
     if carrier:
       untaxed_amount = tools.format_value((untaxed_amount + carrier.subtotal), order.currency.value)
@@ -1084,7 +1085,7 @@ class OrderCarrierPlugin(orm.BaseModel):
     data = {
         'weight': order._total_weight,
         'volume': order._total_volume,
-        'price': order.total_amount
+        'price': order._untaxed_amount_without_carrier_total  # Using order.total_amount is causing specific cases issue. The most reasonable option is to use pre-tax & pre-carrier amount.
     }
     line_prices = []
     carrier_line_prices = carrier_line.prices.value
@@ -1124,7 +1125,7 @@ class OrderCarrierPlugin(orm.BaseModel):
         data = {
             'weight': order._total_weight,
             'volume': order._total_volume,
-            'price': order.total_amount
+            'price': order._untaxed_amount_without_carrier_total  # Using order.total_amount is causing specific cases issue. The most reasonable option is to use pre-tax & pre-carrier amount.
         }
         for price in carrier_line.prices.value:
           if price.evaluate_condition(data):
