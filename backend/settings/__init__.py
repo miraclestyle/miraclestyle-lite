@@ -15,8 +15,26 @@ DEFAULT_HOST_SETTINGS = {
   'DEBUG': True,
   'FORCE_SSL': False,
   'LAG': False,
+  'CATALOG_UNPUBLISHED_LIFE': 1,
+  'CATALOG_DISCONTINUED_LIFE': 1,
+  'ORDER_CART_LIFE': 1,
+  'ORDER_UNPAID_LIFE': 1,
   'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
-  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr'
+  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
+  'OAuth': {
+    'GOOGLE_OAUTH2': {
+      'client_id': '262487344336-vkpvegjrp7q3isfr73vod7q9m0piu9gd.apps.googleusercontent.com', 
+      'client_secret': 'AtUlgzsKycfOueKYUrX6CYIn'
+    },
+    'FACEBOOK_OAUTH2': {
+      'client_id': '114231673409', 
+      'client_secret': '7a467a6d24ba35343d09ce672faf98c2'
+    },
+    'LINKEDIN_OAUTH2': {
+      'client_id': '77xclva9s9qsex', 
+      'client_secret': 'cYHLJehkmDGm1j9n'
+    },
+  }
 }
 HOSTS_SPECIFIC_SETTINGS = {
   'localhost:9982': {
@@ -28,8 +46,26 @@ HOSTS_SPECIFIC_SETTINGS = {
   'miraclestyle.com': {
     'DEBUG': False,
     'FORCE_SSL': True,
+    'CATALOG_UNPUBLISHED_LIFE': 15,
+    'CATALOG_DISCONTINUED_LIFE': 15,
+    'ORDER_CART_LIFE': 15,
+    'ORDER_UNPAID_LIFE': 15,
     'BUCKET_PATH': 'themiraclestyle.appspot.com',
-    'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr'
+    'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
+    'OAuth': {
+      'GOOGLE_OAUTH2': {
+        'client_id': '794606722914-tue5sq5v7b459lq4rorvtm98m421pioj.apps.googleusercontent.com', 
+        'client_secret': 'pvUWETG11c8mRh1IwN0qjYnm'
+      },
+      'FACEBOOK_OAUTH2': {
+        'client_id': '114231673409', 
+        'client_secret': '7a467a6d24ba35343d09ce672faf98c2'
+      },
+      'LINKEDIN_OAUTH2': {
+        'client_id': '77xclva9s9qsex', 
+        'client_secret': 'cYHLJehkmDGm1j9n'
+      },
+    }
   }
 }
 
@@ -38,7 +74,6 @@ for k, v in DEFAULT_HOST_SETTINGS.items():
   if k not in HOST_SPECIFIC_SETTINGS:
     HOST_SPECIFIC_SETTINGS[k] = v
 
-DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
 # Server side config
 FORCE_SSL = HOST_SPECIFIC_SETTINGS['FORCE_SSL']
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
@@ -50,23 +85,12 @@ PROFILING_SORT = ('cumulative', )  # 'time'
 
 DEBUG = HOST_SPECIFIC_SETTINGS['DEBUG']
 LAG = HOST_SPECIFIC_SETTINGS['LAG']
-# Notify
-NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'  # Password: xZa9hv8nbWyzk67boq4Q0
 
-# User settings.
-ROOT_ADMINS = ('elvin@miraclestyle.com', 'edis@miraclestyle.com')
+CATALOG_UNPUBLISHED_LIFE = HOST_SPECIFIC_SETTINGS['CATALOG_UNPUBLISHED_LIFE']
+CATALOG_DISCONTINUED_LIFE = HOST_SPECIFIC_SETTINGS['CATALOG_DISCONTINUED_LIFE']
+ORDER_CART_LIFE = HOST_SPECIFIC_SETTINGS['ORDER_CART_LIFE']
+ORDER_UNPAID_LIFE = HOST_SPECIFIC_SETTINGS['ORDER_UNPAID_LIFE']
 
-SEARCH_PAGE = 10
-
-CATALOG_UNPUBLISHED_LIFE = 1  # @note This will be something like 7 days
-CATALOG_DISCONTINUED_LIFE = 1  # @note This will be something like 120-180 days
-CATALOG_INDEX = 'catalogs'
-CATALOG_DOCUMENTS_PER_INDEX = 200
-
-ORDER_CART_LIFE = 1  # @note This will be something like 15 days
-ORDER_UNPAID_LIFE = 1  # @note This will be something like 30 days
-
-MAX_MESSAGE_SIZE = 1024
 
 def get_host_url():
   http = 'http://'
@@ -78,24 +102,14 @@ HOST_URL = None
 if HOST_URL is None:
   HOST_URL = get_host_url()
 
-# Configuration files
-ETC_DATA_DIR = os.path.join(ROOT_DIR, 'etc', 'data')
-
-UOM_DATA_FILE = os.path.join(ETC_DATA_DIR, 'uom.xml')
-LOCATION_DATA_FILE = os.path.join(ETC_DATA_DIR, 'location.xml')
-CURRENCY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'currency.xml')
-PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
-
-# BLOB Handling
-BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 # Cloud storage path settings.
 BUCKET_PATH = HOST_SPECIFIC_SETTINGS['BUCKET_PATH']
 OAUTH2_REDIRECT_URI = HOST_SPECIFIC_SETTINGS.get('OAUTH2_REDIRECT_URI', HOST_URL)
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
-    'client_id': '262487344336-vkpvegjrp7q3isfr73vod7q9m0piu9gd.apps.googleusercontent.com',
-    'client_secret': 'AtUlgzsKycfOueKYUrX6CYIn',
+    'client_id': HOST_SPECIFIC_SETTINGS['OAuth']['GOOGLE_OAUTH2']['client_id'],
+    'client_secret': HOST_SPECIFIC_SETTINGS['OAuth']['GOOGLE_OAUTH2']['client_secret'],
     'scope': " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
     'authorization_uri': 'https://accounts.google.com/o/oauth2/auth',
     'token_uri': 'https://accounts.google.com/o/oauth2/token',
@@ -105,8 +119,8 @@ GOOGLE_OAUTH2 = {
 }
 
 FACEBOOK_OAUTH2 = {
-    'client_id': '114231673409',
-    'client_secret': '7a467a6d24ba35343d09ce672faf98c2',
+    'client_id': HOST_SPECIFIC_SETTINGS['OAuth']['FACEBOOK_OAUTH2']['client_id'],
+    'client_secret': HOST_SPECIFIC_SETTINGS['OAuth']['FACEBOOK_OAUTH2']['client_secret'],
     'scope': ",".join(['email']),
     'authorization_uri': 'https://www.facebook.com/dialog/oauth',
     'token_uri': 'https://graph.facebook.com/oauth/access_token',
@@ -116,8 +130,8 @@ FACEBOOK_OAUTH2 = {
 }
 
 LINKEDIN_OAUTH2 = {
-    'client_id': '77xclva9s9qsex',
-    'client_secret': 'cYHLJehkmDGm1j9n',
+    'client_id': HOST_SPECIFIC_SETTINGS['OAuth']['LINKEDIN_OAUTH2']['client_id'],
+    'client_secret': HOST_SPECIFIC_SETTINGS['OAuth']['LINKEDIN_OAUTH2']['client_secret'],
     'scope': ",".join(['r_basicprofile', 'r_emailaddress']),
     'authorization_uri': 'https://www.linkedin.com/uas/oauth2/authorization',
     'token_uri': 'https://www.linkedin.com/uas/oauth2/accessToken',
@@ -127,15 +141,28 @@ LINKEDIN_OAUTH2 = {
     'header': True
 }
 
+########## Global settings ##########
 LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2, LINKEDIN_OAUTH2]
-
+NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'
+ROOT_ADMINS = ('elvin@miraclestyle.com', 'edis@miraclestyle.com')
+SEARCH_PAGE = 10
+DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
+MAX_MESSAGE_SIZE = 1024
+# Configuration files
+ETC_DATA_DIR = os.path.join(ROOT_DIR, 'etc', 'data')
+UOM_DATA_FILE = os.path.join(ETC_DATA_DIR, 'uom.xml')
+LOCATION_DATA_FILE = os.path.join(ETC_DATA_DIR, 'location.xml')
+CURRENCY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'currency.xml')
+PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
+# BLOB Handling
+BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 # Payment Methods
 AVAILABLE_PAYMENT_METHODS = ('paypal',)
-
-# PAYPAL
+# PayPal
 PAYPAL_WEBSCR = HOST_SPECIFIC_SETTINGS['PAYPAL_WEBSCR']
 # HTTP client related configs
 CSRF_SALT = '21482499fsd9i348124982ufs89j9f2qofi4knsgye8w9djqwiodnjenj'
 CSRF_TOKEN_KEY = 'csrf_token'
 COOKIE_SECRET = '3184ur9gejgirtgrkg493itkopgdfaklfnsgjkfgnei'
 COOKIE_AUTH_KEY = 'auth'
+#####################################
