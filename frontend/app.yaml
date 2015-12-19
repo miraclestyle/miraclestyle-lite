@@ -41,5 +41,5 @@ libraries:
   version: latest
 
 
-builtins:
-- appstats: on
+#builtins:
+#- appstats: on

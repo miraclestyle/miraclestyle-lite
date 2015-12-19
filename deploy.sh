@@ -28,7 +28,8 @@ else
     echo "Just updating backend..."
 fi
 
-if [ "$2" = "index" ]; then
+if [ "$2" = "misc" ]; then
     appcfg.py update_dispatch .
     appcfg.py update_indexes backend
+    appcfg.py update_queues backend
 fi

@@ -1,7 +1,7 @@
 total_storage_limit: 120M
 
 queue:
-- name: notify
+- name: callback
   rate: 20/s
   #bucket_size:20
   #max_concurrent_requests: 10
@@ -11,13 +11,9 @@ queue:
   #  max_doublings: 0
   #   task_retry_limit: 7
   #   task_age_limit: 2d
-  #target:
-
-- name: send
-  rate: 20/s
-
-- name: io
-  rate: 20/s
+  target: 'backend'
   
-- name: callback
-  rate: 20/s
+- name: cache
+  rate: 20/s # 20 tasks in a second
+  max_concurrent_requests: 10 # to avoid datastore transaction errors. we expect 1 callback per cache request
+  target: 'backend'
