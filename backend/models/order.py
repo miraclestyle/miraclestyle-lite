@@ -414,6 +414,7 @@ class Order(orm.BaseExpando):
                       OrderLineRemove(),
                       OrderStockManagement(),
                       OrderProductSpecsFormat(),
+                      OrderFormat(),  # Needed for Carrier. Alternative is to break down this plugin in two, pre-carrier & post-carrier one.
                       OrderPluginExec(),
                       OrderLineFormat(),
                       OrderCarrierFormat(),
@@ -597,7 +598,7 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Write(),
                       Set(cfg={'d': {'output.entity': '_order'}}),
-                      OrderNotifyTrackerSet(),
+                      OrderNotifyTrackerSet(cfg=settings.ORDER_CRON_NOTIFY_TIMER),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
@@ -615,7 +616,10 @@ class Order(orm.BaseExpando):
                       RuleExec(),
                       OrderCronNotify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
                                                  'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
-                                                 'body': notifications.ORDER_LOG_MESSAGE_BODY}}),
+                                                 'body': notifications.ORDER_LOG_MESSAGE_BODY},
+                                           'hours': settings.ORDER_CRON_NOTIFY_TIMER['hours'],
+                                           'minutes': settings.ORDER_CRON_NOTIFY_TIMER['minutes'],
+                                           'seconds': settings.ORDER_CRON_NOTIFY_TIMER['seconds']}),
 
                       CallbackExec()
                   ]

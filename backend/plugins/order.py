@@ -378,7 +378,6 @@ class OrderLineFormat(orm.BaseModel):
           discount_amount = tools.format_value((line.subtotal * discount_formated), order.currency.value)
           discount_subtotal = tools.format_value((line.subtotal - discount_amount), order.currency.value)
         line.discount_subtotal = discount_subtotal
-        tools.log.debug('Discount Amount: %s' % discount_amount)
         tax_subtotal = tools.format_value('0', order.currency.value)
         if line.taxes.value:
           for tax in line.taxes.value:
@@ -445,7 +444,7 @@ class OrderFormat(orm.BaseModel):
         total_amount = tools.format_value((total_amount + line.total), order.currency.value)
     carrier = order.carrier.value
     if carrier:
-      untaxed_amount = tools.format_value((untaxed_amount + carrier.subtotal), order.currency.value)
+      # untaxed_amount = tools.format_value((untaxed_amount + carrier.subtotal), order.currency.value)  # We will use this amount for carrier caluculations.
       tax_amount = tools.format_value((tax_amount + carrier.tax_subtotal), order.currency.value)
       total_amount = tools.format_value((total_amount + carrier.total), order.currency.value)
     order.untaxed_amount = untaxed_amount
@@ -721,7 +720,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       return
     request = context.input['request']
     ipn = request['params']
-    tools.log.debug('IPN: %s' % (ipn))
+    tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, wwe have it recorded in OrderMessage, however, this is easier to access.
     ipn_payment_status = ipn['payment_status']
     order = context._order
     ip_address = os.environ.get('REMOTE_ADDR')
@@ -803,7 +802,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     def validate_payment_lines():
       for line in order._lines.value:
         product = line.product.value
-        tools.log.debug('Order sequence #%s' % line.sequence)
         # our line sequences begin with 0 but should begin with 1 because paypal does not support 0
         if str(line.sequence) != ipn['item_number%s' % line.sequence]:
           new_mismatch(('item #%s sequence' % line.sequence, line.sequence), ('item #%s sequence' % line.sequence, ipn['item_number%s' % line.sequence]))
@@ -1086,7 +1084,7 @@ class OrderCarrierPlugin(orm.BaseModel):
     data = {
         'weight': order._total_weight,
         'volume': order._total_volume,
-        'price': order.total_amount
+        'price': order.untaxed_amount  # Using order.total_amount is causing specific cases issue. The most reasonable option is to use pre-tax & pre-carrier amount.
     }
     line_prices = []
     carrier_line_prices = carrier_line.prices.value
@@ -1126,7 +1124,7 @@ class OrderCarrierPlugin(orm.BaseModel):
         data = {
             'weight': order._total_weight,
             'volume': order._total_volume,
-            'price': order.total_amount
+            'price': order.untaxed_amount  # Using order.total_amount is causing specific cases issue. The most reasonable option is to use pre-tax & pre-carrier amount.
         }
         for price in carrier_line.prices.value:
           if price.evaluate_condition(data):
@@ -1200,7 +1198,7 @@ class OrderDiscountPlugin(orm.BaseModel):
           if validate:
             price_data = {
                 'quantity': product.quantity,
-                'price': product.unit_price
+                'price': tools.format_value((product.unit_price * product.quantity), order.currency.value)
             }
             if discount_line.evaluate_condition(price_data):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
