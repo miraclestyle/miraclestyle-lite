@@ -1199,7 +1199,7 @@ class OrderDiscountPlugin(orm.BaseModel):
           if validate:
             price_data = {
                 'quantity': product.quantity,
-                'price': product.unit_price
+                'price': tools.format_value((product.unit_price * product.quantity), order.currency.value)
             }
             if discount_line.evaluate_condition(price_data):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
