@@ -513,7 +513,7 @@ class BaseCache(orm.BaseModel):
           keys = base64.b64encode(zlib.compress(','.join(keys))) # we compress keys because of taskqueues limit of 100k request payload
           if group_key:
             tools.log.info('Scheduling group cache storage for group %s and cache drivers %s' % (group_key, cache_drivers))
-            context._callbacks.append(('callback', {'action_id': 'update', 'keys': keys, 'ids': [group_key._id_str], 'action_model': '135'}))
+            context._callbacks.append(('cache', {'action_id': 'update', 'keys': keys, 'ids': [group_key._id_str], 'action_model': '135'}))
         else:
           tools.log.warn('No cache for group %s with cache drivers %s' % (group_key, cache_drivers))
       context.cache = saver
@@ -542,7 +542,7 @@ class BaseCache(orm.BaseModel):
         for k in keys[:]:
           keys.append('%s_active' % k)
         tools.mem_delete_multi(keys)
-        tools.log.info('Deleted cache for group %s' % group_id)
+        tools.log.info('Deleted cache for group(s) %s' % group_id)
         orm.delete_multi(group_keys)
 
 
