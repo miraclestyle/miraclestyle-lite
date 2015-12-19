@@ -414,6 +414,7 @@ class Order(orm.BaseExpando):
                       OrderLineRemove(),
                       OrderStockManagement(),
                       OrderProductSpecsFormat(),
+                      OrderFormat(),  # Needed for Carrier. Alternative is to break down this plugin in two, pre-carrier & post-carrier one.
                       OrderPluginExec(),
                       OrderLineFormat(),
                       OrderCarrierFormat(),
