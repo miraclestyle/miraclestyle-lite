@@ -19,6 +19,7 @@ DEFAULT_HOST_SETTINGS = {
   'CATALOG_DISCONTINUED_LIFE': 1,
   'ORDER_CART_LIFE': 1,
   'ORDER_UNPAID_LIFE': 1,
+  'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 0, 'seconds': 30},
   'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
   'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
   'OAuth': {
@@ -50,6 +51,7 @@ HOSTS_SPECIFIC_SETTINGS = {
     'CATALOG_DISCONTINUED_LIFE': 15,
     'ORDER_CART_LIFE': 15,
     'ORDER_UNPAID_LIFE': 15,
+    'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 15, 'seconds': 0},
     'BUCKET_PATH': 'themiraclestyle.appspot.com',
     'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
     'OAuth': {
@@ -90,7 +92,7 @@ CATALOG_UNPUBLISHED_LIFE = HOST_SPECIFIC_SETTINGS['CATALOG_UNPUBLISHED_LIFE']
 CATALOG_DISCONTINUED_LIFE = HOST_SPECIFIC_SETTINGS['CATALOG_DISCONTINUED_LIFE']
 ORDER_CART_LIFE = HOST_SPECIFIC_SETTINGS['ORDER_CART_LIFE']
 ORDER_UNPAID_LIFE = HOST_SPECIFIC_SETTINGS['ORDER_UNPAID_LIFE']
-ORDER_CRON_NOTIFY_TIMER = {'hours': 0, 'minutes': 15, 'seconds': 0}
+ORDER_CRON_NOTIFY_TIMER = HOST_SPECIFIC_SETTINGS['ORDER_CRON_NOTIFY_TIMER']
 
 def get_host_url():
   http = 'http://'
