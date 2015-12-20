@@ -293,7 +293,7 @@
                     weight: 'weight',
                     volume: 'volume',
                     'weight*volume': 'weight multiplied by volume',
-                    price: 'order total untaxed'
+                    price: 'net total'
                 },
                 condition_operator: locals.conditionOperatorSpec,
                 price_type: {
@@ -304,13 +304,13 @@
                     weight: 'weight multiplied by',
                     volume: 'volume multiplied by',
                     'weight*volume': 'weight multiplied by volume multiplied by',
-                    price: 'order total untaxed multiplied by'
+                    price: 'net total multiplied by'
                 }
             },
             '124': {
                 condition_type: {
                     price: 'product subtotal',
-                    quantity: 'quantity'
+                    quantity: 'product quantity'
                 },
                 condition_operator: locals.conditionOperatorSpec
             },
