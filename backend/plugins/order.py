@@ -931,7 +931,7 @@ class OrderTaxPlugin(orm.BaseModel):
       taxes = reset_taxes(line.taxes.value)
       if (self.product_categories and self.product_categories.count(product.category.value.key)) \
               or (self.product_codes and self.product_codes.count(product.code)) \
-              or (not self.carriers and not self.product_categories and not self.product_codes):
+              or (not self.product_categories and not self.product_codes):  # If user wants to bypass product taxes and apply only carrier he can do so by specifying rogue code
         if allowed:
           add_taxes(taxes)
           line.taxes = taxes
@@ -971,13 +971,16 @@ class OrderTaxPlugin(orm.BaseModel):
         if order.carrier.value and order.carrier.value.reference and order.carrier.value.reference in self.carriers:
           allowed = True
       # If tax is configured for product categories, then check if the order contains a line which has product category to which the tax applies.
-      elif self.product_categories:
+      elif self.product_categories or self.product_codes:
         allowed = False
         for line in order._lines.value:
           if line._state == 'deleted':
             continue
           product = line.product.value
           if self.product_categories.count(product.category.value.key):
+            allowed = True
+            break
+          if self.product_codes.count(product.code):
             allowed = True
             break
     return allowed
