@@ -100,6 +100,7 @@ facebook, pinterest and google + uses these
   <article>
     <h1>{{catalog.name}}</h1>
     <div class="expires">Expires: <time>{{catalog.discontinue_date}}</time></div>
+    <div>{{catalog._seller.name}}</div>
 
     {% for img in catalog._images %}
         <div class="catalog-image relative">
