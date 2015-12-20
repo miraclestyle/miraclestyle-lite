@@ -104,17 +104,17 @@
       </span>
     </div>
     
-    <div class="product-detail">Product #: <span itemprop="mpn">{{code}}</span></div>
+    <div class="product-detail"><span itemprop="mpn">{{code}}</span></div>
    
     <span itemprop="offers" class="product-detail" itemscope itemtype="http://schema.org/Offer">
         <div class="product-detail">
-            Regular price:
+            
           <meta itemprop="priceCurrency" content="{{currency.code}}" />
           {{currency.symbol}} <span itemprop="price">{{price}}</span>
         </div>
      
         <div class="product-detail">
-          Available from: <span itemprop="seller" itemscope itemtype="http://schema.org/Organization">
+          <span itemprop="seller" itemscope itemtype="http://schema.org/Organization">
                           <span itemprop="name">{{catalog._seller.name}}</span>
                         </span>
         </div>
