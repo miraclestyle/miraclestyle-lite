@@ -62,16 +62,6 @@ indexes:
   - name: '4'
     direction: desc
 
-# Catalog ancestor, state and order by published_date, key -- seller profile
-- kind: '31'
-  ancestor: yes
-  properties:
-  - name: '6'
-  - name: '4'
-    direction: desc
-  - name: '__key__'
-    direction: desc
-
 # Catalog state and order by discontinue_date -- CatalogCronDiscontinue & CatalogCronDelete plugins
 - kind: '31'
   properties:
