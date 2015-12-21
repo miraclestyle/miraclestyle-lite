@@ -1640,13 +1640,6 @@ if (window.DEBUG) {
             billing: 'Billing',
             shipping: 'Shipping'
         };
-        locals.conditionTypeSpec = {
-            weight: 'weight',
-            volume: 'volume',
-            'weight*volume': 'weight multiplied by volume',
-            price: 'price',
-            quantity: 'quantity'
-        };
         $.extend(GLOBAL_CONFIG.fields.translateChoices, {
             '107': {
                 address_type: locals.addressTypeSpec
@@ -1667,7 +1660,12 @@ if (window.DEBUG) {
                 }
             },
             '111': {
-                condition_type: locals.conditionTypeSpec,
+                condition_type: {
+                    weight: 'weight',
+                    volume: 'volume',
+                    'weight*volume': 'weight multiplied by volume',
+                    price: 'net total'
+                },
                 condition_operator: locals.conditionOperatorSpec,
                 price_type: {
                     fixed: 'fixed',
@@ -1677,11 +1675,14 @@ if (window.DEBUG) {
                     weight: 'weight multiplied by',
                     volume: 'volume multiplied by',
                     'weight*volume': 'weight multiplied by volume multiplied by',
-                    price: 'price multiplied by',
-                    quantity: 'quantity multiplied by'
+                    price: 'net total multiplied by'
                 }
             },
             '124': {
+                condition_type: {
+                    price: 'product subtotal',
+                    quantity: 'product quantity'
+                },
                 condition_operator: locals.conditionOperatorSpec
             },
             rules: {
