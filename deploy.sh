@@ -1,34 +1,58 @@
 #!/bin/bash
+STAGE=$1
+WHERE=$2
+ALSO=$3
+if ! which appcfg2.py | grep -q appcfg; then
+    echo "you dont have it it"
+    exit
+fi
+while true; do
+    read -p "You are going to deploy to $STAGE, are you sure? y/n?" yn
+    case $yn in
+        [Yy]* ) echo "Running to $STAGE..."; break;;
+        [Nn]* ) echo "Deploy canceled"; exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
 git add -A
-if [ "$1" = "frontend" ]; then
+if [ "$WHERE" = "frontend" ]; then
     git commit -m"deploy frontend"
-elif [ "$1" = "backend" ]; then
+elif [ "$WHERE" = "backend" ]; then
     git commit -m"deploy backend"
-elif [ "$1" = "all" ]; then
+elif [ "$WHERE" = "all" ]; then
     git commit -m"deploy all"
 fi
 git pull
 
-if [ "$1" = "frontend" ] || [ "$1" = "all" ]; then
+if [ "$WHERE" = "frontend" ] || [ "$WHERE" = "all" ]; then
 sh build.sh
 fi
 git add -A
 git commit -m"build"
 git push
 
-if [ "$1" = "backend" ] || [ "$1" = "all" ]; then
+if [ "$STAGE" = "production" ]; then
+    python stager.py production
+    echo "Using app.yaml production"
+elif [ "$STAGE" = "testing" ]; then
+    python stager.py testing
+    echo "Using app.yaml testing"
+fi
+
+if [ "$WHERE" = "backend" ] || [ "$WHERE" = "all" ]; then
     appcfg.py update backend/app.yaml
 else
     echo "Just updating frontend..."
 fi
 
-if [ "$1" = "frontend" ] || [ "$1" = "all" ]; then
+if [ "$WHERE" = "frontend" ] || [ "$WHERE" = "all" ]; then
     appcfg.py update frontend/app.yaml
 else
     echo "Just updating backend..."
 fi
 
-if [ "$2" = "misc" ]; then
+if [ "$3" = "misc" ]; then
     appcfg.py update_dispatch .
     appcfg.py update_indexes backend
     appcfg.py update_queues backend
