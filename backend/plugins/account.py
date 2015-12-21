@@ -42,6 +42,8 @@ class AccountLoginInit(orm.BaseModel):
     tools.rule_exec(context._account, context.action)
     login_method = context.input.get('login_method')
     error = context.input.get('error')
+    def get_redirect_uri(cfg):
+      return '%s%s' % (get_host_url(), cfg['redirect_uri'])
     if not error:
       error = context.input.get('error_message')
     code = context.input.get('code')
@@ -51,6 +53,7 @@ class AccountLoginInit(orm.BaseModel):
     for login in login_methods:
       if login['type'] == login_method:
         oauth2_cfg = login.copy()
+        oauth2_cfg['redirect_uri'] = get_redirect_uri(oauth2_cfg)
         oauth2_cfg['state'] = context.account._csrf
         break
     client = tools.OAuth2Client(**oauth2_cfg)
@@ -58,7 +61,7 @@ class AccountLoginInit(orm.BaseModel):
     urls = {}
     for cfg in login_methods:
       urls_oauth2_cfg = cfg.copy()
-      urls_oauth2_cfg['redirect_uri'] = '%s%s' % (get_host_url(), urls_oauth2_cfg['redirect_uri'])
+      urls_oauth2_cfg['redirect_uri'] = get_redirect_uri(urls_oauth2_cfg)
       urls_oauth2_cfg['state'] = context.account._csrf
       urls_client = tools.OAuth2Client(**urls_oauth2_cfg)
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()

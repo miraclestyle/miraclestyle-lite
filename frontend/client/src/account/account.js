@@ -305,8 +305,6 @@
                                             }
                                         });
 
-                                        console.log(LOGIN_PROVIDERS, missing);
-
                                         $scope.identities.sort(function (prev, next) {
                                             return getLoginProvider(prev).sequence - getLoginProvider(next).sequence;
                                         });
@@ -332,7 +330,7 @@
                                         modals.confirm('connectSignInMethod', function () {
                                             var providerid = getProvider(identity);
                                             models['11'].loginPopup($scope.entity._authorization_urls[providerid],
-                                                'Login with ' + LOGIN_PROVIDERS[providerid].name,
+                                                'Login with ' + mappedLoginProviders[providerid].name,
                                                 function success(successResponse, destroy) {
                                                     $http.post($state.engineHref('login', {
                                                         provider: '1'
