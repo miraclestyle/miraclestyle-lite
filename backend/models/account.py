@@ -165,7 +165,7 @@ class Account(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      AccountLoginInit(cfg={'methods': settings.LOGIN_METHODS})
+                      AccountLoginInit(cfg={'methods': settings.LOGIN_METHODS, 'get_host_url': settings.get_host_url})
                   ]
               ),
               orm.PluginGroup(

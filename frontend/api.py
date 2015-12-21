@@ -35,9 +35,9 @@ def _exec(**kwds):
 
 
 def endpoint(**kwds):
-  kwds['url'] = settings.API_ENDPOINT
+  kwds['url'] = settings.API_ENDPOINT()
   return post(**kwds)
 
 
 def model_meta():
-  return post(url=settings.API_MODEL_META)
+  return post(url=settings.API_MODEL_META())

@@ -11,6 +11,22 @@ import os
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 
+MIRACLESTYLE_SETTINGS = {
+  'DEBUG': False,
+  'FORCE_SSL': True,
+  'CATALOG_UNPUBLISHED_LIFE': 15,
+  'CATALOG_DISCONTINUED_LIFE': 15,
+  'ORDER_CART_LIFE': 15,
+  'ORDER_UNPAID_LIFE': 15,
+  'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 10, 'seconds': 0},
+  'BUCKET_PATH': 'themiraclestyle.appspot.com',
+  'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
+  'GOOGLE_OAUTH2': {
+    'client_id': '794606722914-tue5sq5v7b459lq4rorvtm98m421pioj.apps.googleusercontent.com', 
+    'client_secret': 'pvUWETG11c8mRh1IwN0qjYnm'
+  }
+}
+
 DEFAULT_HOST_SETTINGS = {
   'DEBUG': True,
   'FORCE_SSL': False,
@@ -42,21 +58,9 @@ HOSTS_SPECIFIC_SETTINGS = {
   'themiraclestyle-testing-site.appspot.com': {
     'FORCE_SSL': True
   },
-  'miraclestyle.com': {
-    'DEBUG': False,
-    'FORCE_SSL': True,
-    'CATALOG_UNPUBLISHED_LIFE': 15,
-    'CATALOG_DISCONTINUED_LIFE': 15,
-    'ORDER_CART_LIFE': 15,
-    'ORDER_UNPAID_LIFE': 15,
-    'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 10, 'seconds': 0},
-    'BUCKET_PATH': 'themiraclestyle.appspot.com',
-    'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
-    'GOOGLE_OAUTH2': {
-      'client_id': '794606722914-tue5sq5v7b459lq4rorvtm98m421pioj.apps.googleusercontent.com', 
-      'client_secret': 'pvUWETG11c8mRh1IwN0qjYnm'
-    }
-  }
+  'themiraclestyle.appspot.com': MIRACLESTYLE_SETTINGS,
+  'miraclestyle.com': MIRACLESTYLE_SETTINGS,
+  'www.miraclestyle.com': MIRACLESTYLE_SETTINGS
 }
 
 HOST_SPECIFIC_SETTINGS = HOSTS_SPECIFIC_SETTINGS.get(HOST_NAME, DEFAULT_HOST_SETTINGS)
@@ -96,7 +100,6 @@ if HOST_URL is None:
 
 # Cloud storage path settings.
 BUCKET_PATH = HOST_SPECIFIC_SETTINGS['BUCKET_PATH']
-OAUTH2_REDIRECT_URI = HOST_SPECIFIC_SETTINGS.get('OAUTH2_REDIRECT_URI', HOST_URL)
 
 # OAuth credentials, goes in format <PROVIDER>_OAUTH<VERSION>
 GOOGLE_OAUTH2 = {
@@ -105,7 +108,7 @@ GOOGLE_OAUTH2 = {
     'scope': " ".join(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']),
     'authorization_uri': 'https://accounts.google.com/o/oauth2/auth',
     'token_uri': 'https://accounts.google.com/o/oauth2/token',
-    'redirect_uri': '%s/api/account/login/1' % OAUTH2_REDIRECT_URI,
+    'redirect_uri': '/api/account/login/1',
     'type': '1',
     'account_info': 'https://www.googleapis.com/oauth2/v1/userinfo',
 }
@@ -116,7 +119,7 @@ FACEBOOK_OAUTH2 = {
     'scope': ",".join(['email']),
     'authorization_uri': 'https://www.facebook.com/dialog/oauth',
     'token_uri': 'https://graph.facebook.com/oauth/access_token',
-    'redirect_uri': '%s/api/account/login/2' % OAUTH2_REDIRECT_URI,
+    'redirect_uri': '/api/account/login/2',
     'type': '2',
     'account_info': 'https://graph.facebook.com/v2.5/me?fields=id,email',
 }
@@ -127,7 +130,7 @@ LINKEDIN_OAUTH2 = {
     'scope': ",".join(['r_basicprofile', 'r_emailaddress']),
     'authorization_uri': 'https://www.linkedin.com/uas/oauth2/authorization',
     'token_uri': 'https://www.linkedin.com/uas/oauth2/accessToken',
-    'redirect_uri': '%s/api/account/login/3' % OAUTH2_REDIRECT_URI,
+    'redirect_uri': '/api/account/login/3',
     'type': '3',
     'account_info': 'https://api.linkedin.com/v1/people/~:(firstName,lastName,id,email-address)?format=json',
     'header': True

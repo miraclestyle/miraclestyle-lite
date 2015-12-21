@@ -33,6 +33,7 @@ class AccountLoginInit(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
+    get_host_url = self.cfg.get('get_host_url')
     login_methods = self.cfg.get('methods', [])
     context._account = context.model.current_account()
     context.account = context.model.current_account()
@@ -57,6 +58,7 @@ class AccountLoginInit(orm.BaseModel):
     urls = {}
     for cfg in login_methods:
       urls_oauth2_cfg = cfg.copy()
+      urls_oauth2_cfg['redirect_uri'] = '%s%s' % (get_host_url(), urls_oauth2_cfg['redirect_uri'])
       urls_oauth2_cfg['state'] = context.account._csrf
       urls_client = tools.OAuth2Client(**urls_oauth2_cfg)
       urls[urls_oauth2_cfg['type']] = urls_client.get_authorization_code_uri()

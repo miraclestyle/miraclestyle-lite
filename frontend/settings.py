@@ -15,6 +15,13 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
 CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src')
 
+MIRACLESTYLE_SETTINGS = {
+  'DEBUG': False,
+  'FORCE_SSL': True,
+  'BUCKET_PATH': 'themiraclestyle.appspot.com',
+  'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr'
+}
+
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 
 DEFAULT_HOST_SETTINGS = {
@@ -33,12 +40,9 @@ HOSTS_SPECIFIC_SETTINGS = {
   'themiraclestyle-testing-site.appspot.com': {
     'FORCE_SSL': True
   },
-  'miraclestyle.com': {
-    'DEBUG': False,
-    'FORCE_SSL': True,
-    'BUCKET_PATH': 'themiraclestyle.appspot.com',
-    'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr'
-  }
+  'themiraclestyle.appspot.com': MIRACLESTYLE_SETTINGS,
+  'miraclestyle.com': MIRACLESTYLE_SETTINGS,
+  'www.miraclestyle.com': MIRACLESTYLE_SETTINGS
 }
 
 HOST_SPECIFIC_SETTINGS = HOSTS_SPECIFIC_SETTINGS.get(HOST_NAME, DEFAULT_HOST_SETTINGS)
@@ -71,8 +75,8 @@ if HOST_URL is None:
   HOST_URL = get_host_url()
 
 # api path configs
-API_ENDPOINT = HOST_URL + '/api/endpoint'
-API_MODEL_META = HOST_URL + '/api/model_meta'
+API_ENDPOINT = lambda: get_host_url() + '/api/endpoint'
+API_MODEL_META = lambda: get_host_url() + '/api/model_meta'
 
 ROUTES = []
 JINJA_GLOBALS = {}
