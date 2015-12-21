@@ -49,7 +49,7 @@ HOSTS_SPECIFIC_SETTINGS = {
     'CATALOG_DISCONTINUED_LIFE': 15,
     'ORDER_CART_LIFE': 15,
     'ORDER_UNPAID_LIFE': 15,
-    'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 15, 'seconds': 0},
+    'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 10, 'seconds': 0},
     'BUCKET_PATH': 'themiraclestyle.appspot.com',
     'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
     'GOOGLE_OAUTH2': {
