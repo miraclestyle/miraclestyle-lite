@@ -420,7 +420,7 @@
             identityDisconnected: 'Identity disconnected.',
             identityTaken: 'This identity is already connected to another Miraclestyle account.',
             identityConnected: 'Identity connected.',
-            identityConnectionCanceled: 'Identity connection canceled.',
+            identityConnectionCanceled: 'Connecting identity canceled.',
             failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
             identityConnectionFailed: 'This identity is already connected to another Miraclestyle account.',
             createVariantsFirst: 'Create some variants first.',
