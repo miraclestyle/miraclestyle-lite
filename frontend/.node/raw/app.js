@@ -1791,7 +1791,7 @@ if (window.DEBUG) {
             identityDisconnected: 'Identity disconnected.',
             identityTaken: 'This identity is already connected to another Miraclestyle account.',
             identityConnected: 'Identity connected.',
-            identityConnectionCanceled: 'Identity connection canceled.',
+            identityConnectionCanceled: 'Connecting identity canceled.',
             failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
             identityConnectionFailed: 'This identity is already connected to another Miraclestyle account.',
             createVariantsFirst: 'Create some variants first.',
@@ -18449,8 +18449,6 @@ angular.module('app')
                                             }
                                         });
 
-                                        console.log(LOGIN_PROVIDERS, missing);
-
                                         $scope.identities.sort(function (prev, next) {
                                             return getLoginProvider(prev).sequence - getLoginProvider(next).sequence;
                                         });
@@ -18476,7 +18474,7 @@ angular.module('app')
                                         modals.confirm('connectSignInMethod', function () {
                                             var providerid = getProvider(identity);
                                             models['11'].loginPopup($scope.entity._authorization_urls[providerid],
-                                                'Login with ' + LOGIN_PROVIDERS[providerid].name,
+                                                'Login with ' + mappedLoginProviders[providerid].name,
                                                 function success(successResponse, destroy) {
                                                     $http.post($state.engineHref('login', {
                                                         provider: '1'
