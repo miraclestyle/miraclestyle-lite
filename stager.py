@@ -18,4 +18,4 @@ for f in files:
     contents = codecs.open(f, 'r').read()
     lines = contents.splitlines()
     lines[0] = 'application: themiraclestyle%s' % state
-    codecs.open(f, 'w').writelines(lines)
+    codecs.open(f, 'w').write(os.linesep.join(lines))
