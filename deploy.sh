@@ -2,6 +2,13 @@
 STAGE=$1
 WHERE=$2
 ALSO=$3
+
+if [ $# -lt 2 ]
+  then
+    echo "Not enough arguments supplied. Min 2 needed, max 3. Example run sh deploy.sh testing all"
+    exit
+fi
+
 if ! which appcfg.py | grep -q appcfg; then
     echo "You do not have appcfg.py in your path, please add so that appcfg.py => points to path/to/appcfg.py:"
     exit
