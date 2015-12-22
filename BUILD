@@ -1,5 +1,6 @@
 For frontend builds requirements are:
 
+python
 node
 npm
 gulp
@@ -11,15 +12,16 @@ sudo ln -s `which nodejs` /usr/bin/node
 sudo apt-get install npm
 npm install gulp -g
 
+if you do not have python 2.7
+
+sudo apt-get install python
+
 go to frontend/.node
 npm install
 
 go to root
 sh build.sh
 
-or to deploy everywhere
-sh deploy.sh frontend
-sh deploy.sh backend
-sh deploy.sh all
+or to deploy.sh
 
 it will autocommit to git and deploy both backend and frontend

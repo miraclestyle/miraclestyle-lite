@@ -1,7 +1,8 @@
 #!/bin/bash
 STAGE=$1
 WHERE=$2
-ALSO=$3
+MESSAGE=${3-automessage}
+ALSO=$4
 
 if [ $# -lt 2 ]
   then
@@ -35,11 +36,11 @@ done
 
 git add -A
 if [ "$WHERE" = "frontend" ]; then
-    git commit -m"deploy frontend"
+    git commit -m"deploy frontend $MESSAGE"
 elif [ "$WHERE" = "backend" ]; then
-    git commit -m"deploy backend"
+    git commit -m"deploy backend $MESSAGE"
 elif [ "$WHERE" = "all" ]; then
-    git commit -m"deploy all"
+    git commit -m"deploy all $MESSAGE"
 fi
 git pull
 
@@ -47,7 +48,7 @@ if [ "$WHERE" = "frontend" ] || [ "$WHERE" = "all" ]; then
 sh build.sh
 fi
 git add -A
-git commit -m"build"
+git commit -m"build $MESSAGE"
 git push
 
 if [ "$STAGE" = "production" ]; then
