@@ -36,11 +36,11 @@ done
 
 git add -A
 if [ "$WHERE" = "frontend" ]; then
-    git commit -m"deploy frontend $MESSAGE"
+    git commit -m"$MESSAGE deploy frontend"
 elif [ "$WHERE" = "backend" ]; then
-    git commit -m"deploy backend $MESSAGE"
+    git commit -m"$MESSAGE deploy backend"
 elif [ "$WHERE" = "all" ]; then
-    git commit -m"deploy all $MESSAGE"
+    git commit -m"$MESSAGE deploy all"
 fi
 git pull
 
@@ -48,7 +48,7 @@ if [ "$WHERE" = "frontend" ] || [ "$WHERE" = "all" ]; then
 sh build.sh
 fi
 git add -A
-git commit -m"build $MESSAGE"
+git commit -m"$MESSAGE - build"
 git push
 
 if [ "$STAGE" = "production" ]; then
