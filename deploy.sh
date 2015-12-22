@@ -2,10 +2,21 @@
 STAGE=$1
 WHERE=$2
 ALSO=$3
-if ! which appcfg2.py | grep -q appcfg; then
-    echo "you dont have it it"
+if ! which appcfg.py | grep -q appcfg; then
+    echo "You do not have appcfg.py in your path, please add so that appcfg.py => points to path/to/appcfg.py:"
     exit
 fi
+
+if ! which python | grep -q python; then
+    echo "You do not have python in your path... aborting"
+    exit
+fi
+
+if ! which git | grep -q git; then
+    echo "You do not have git in your path... aborting"
+    exit
+fi
+
 while true; do
     read -p "You are going to deploy to $STAGE, are you sure? y/n?" yn
     case $yn in
