@@ -324,6 +324,7 @@
                                                 $.extend($scope.entity, response.data.entity);
                                                 recompute();
                                                 snackbar.showK('identityDisconnected');
+                                                $scope.args.disassociate.empty();
                                             });
                                         });
                                     } else {
