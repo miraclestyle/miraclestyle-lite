@@ -1,2 +1,2 @@
 #!/bin/bash
-sh deploy.sh testing all $1
+sh deploy.sh testing all "$1"

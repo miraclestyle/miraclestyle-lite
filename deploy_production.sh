@@ -1,2 +1,2 @@
 #!/bin/bash
-sh deploy.sh production all $1
+sh deploy.sh production all "$1"

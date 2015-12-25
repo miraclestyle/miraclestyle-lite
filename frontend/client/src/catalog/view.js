@@ -264,6 +264,7 @@
                                         }
                                         $scope.order = undefined;
                                         $scope.orderLineCount = 0;
+                                        config.orderKey = undefined;
                                         return response;
                                     });
                                 };
