@@ -7,7 +7,7 @@
             <div class="date-control clearfix">
                 <div class="title-above">
                     <div class="pager pager-prev">
-                        <md-button class="button-square" ripple-action class="t1" ng-click="calendar._incMonth(-1)" aria-label="Previous Month">
+                        <md-button class="button-square" md-ink-ripple-click="true" ripple-action class="t1" ng-click="calendar._incMonth(-1)" aria-label="Previous Month">
                             <icon type="chevron_left"></icon>
                         </md-button>
                     </div>
@@ -15,7 +15,7 @@
                         <span class="first month-part">{{date | date:'MMMM'}} {{calendar._year}}</span>
                     </div>
                     <div class="pager pager-next">
-                        <md-button ripple-action class="button-square" ng-click="calendar._incMonth(1)" aria-label="Next Month">
+                        <md-button ripple-action md-ink-ripple-click="true" class="button-square" ng-click="calendar._incMonth(1)" aria-label="Next Month">
                             <icon type="chevron_right"></icon>
                         </md-button>
                     </div>
@@ -72,7 +72,8 @@
                     <div class="t1 choicer">
                         <div class="time-control">
                             <md-button md-ink-ripple-action 
-                                       ng-click="clock._incHours(1)" 
+                                       ng-click="clock._incHours(1)"
+                                       md-ink-ripple-click="true"
                                        aria-label="Increment Hours" 
                                        class="button-square">
                                 <icon type="arrow_drop_up"></icon>
@@ -84,6 +85,7 @@
                         <div class="time-control">
                             <md-button md-ink-ripple-action 
                                        ng-click="clock._incHours(-1)"
+                                       md-ink-ripple-click="true"
                                        aria-label="Decrement Hours" 
                                        class="button-square">
                                 <icon type="arrow_drop_down"></icon>
@@ -95,7 +97,8 @@
 
                     <div class="t3 choicer">
                         <div class="time-control">
-                            <md-button md-ink-ripple-action 
+                            <md-button md-ink-ripple-action
+                                       md-ink-ripple-click="true"
                                        ng-click="clock._incMinutes(1)" 
                                        aria-label="Increment Minutes"
                                        class="button-square">
@@ -106,7 +109,8 @@
                             <input render-model-as-hours class="text display1 dial" type="text" ng-model="clock._minutes">
                         </md-input-container>
                         <div class="time-control">
-                            <md-button md-ink-ripple-action 
+                            <md-button md-ink-ripple-action
+                                       md-ink-ripple-click="true"
                                        ng-click="clock._incMinutes(-1)"
                                        aria-label="Decrement Minutes" 
                                        class="button-square">

@@ -8,7 +8,7 @@
                 <button md-ink-ripple-action 
                         ng-if="!spec.templateLeft" 
                         type="button"
-                        class="button-transparent button-square"
+                        class="button-transparent button-square color-child-when-disabled"
                         loading ng-click="close()">
                     <icon type="{{spec.leftIcon || 'close'}}"></icon>
                 </button>
@@ -38,7 +38,7 @@
                   fixed-position="toolbar"
                   parent=".modal-content:first" 
                   template="spec.templateActionsUrl"
-                  class="action"
+                  class="action color-child-when-disabled"
                   ng-if="!spec.templateRight && spec.templateActionsUrl">
                 </action-dropdown>
             </div>
