@@ -22500,8 +22500,10 @@ angular.module('app')
                                     });
 
                                     $scope.$watch('order._lines.length', function (neww, old) {
-                                        if (neww === 0) {
+                                        if (neww < 1) {
                                             $scope.notFound = 1;
+                                        } else {
+                                            $scope.notFound = undefined;
                                         }
                                     });
 
