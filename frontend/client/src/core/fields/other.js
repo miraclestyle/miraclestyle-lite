@@ -377,17 +377,13 @@
                         search = {},
                         args,
                         opts = {},
+                        exists = _.memoize(function (key) {
+                            return _.findWhere(config.ui.specifics.entities, {key: key});
+                        }),
                         override = config.ui.specifics.override || {},
-                        repackMemory = function () {
-                            config.ui.specifics._mapEntities = {};
-                            angular.forEach(config.ui.specifics.entities, function (val) {
-                                config.ui.specifics._mapEntities[val.key] = 1;
-                            });
-                        },
                         actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
                         response = function (response) {
                             config.ui.specifics.entities = response.data.entities;
-                            repackMemory();
                             return config.ui.specifics.entities;
                         },
                         findArgs,
@@ -433,8 +429,6 @@
                         config.ui.specifics.grouping = defaults.grouping[config.kind];
                     }
 
-                    repackMemory();
-
                     finder = defaults.finder[config.kind];
                     if (override.finder) {
                         finder = override.finder;
@@ -473,8 +467,7 @@
                                             return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
                                                 var entities = response.data.entities;
                                                 angular.forEach(entities, function (ent) {
-                                                    if (angular.isUndefined(config.ui.specifics._mapEntities[ent.key])) {
-                                                        config.ui.specifics._mapEntities[ent.key] = 1;
+                                                    if (exists(ent.key)) {
                                                         config.ui.specifics.entities.push(ent);
                                                     }
                                                 });
@@ -492,12 +485,12 @@
                                         }
                                         if (selectedIsArray) {
                                             angular.forEach(selectedIsArray, function (key) {
-                                                if (angular.isUndefined(config.ui.specifics._mapEntities[key])) {
+                                                if (exists(key)) {
                                                     hasAll = false;
                                                 }
                                             });
                                         } else {
-                                            hasAll = angular.isDefined(config.ui.specifics._mapEntities[id]);
+                                            hasAll = exists(id);
                                         }
                                         if (hasAll) {
                                             defer = $q.defer();
@@ -511,14 +504,12 @@
                                         }, opts).then(function (response) {
                                             var fetchedEntities = response.data.entities;
                                             if (!selectedIsArray) {
-                                                if (angular.isUndefined(config.ui.specifics._mapEntities[id])) {
-                                                    config.ui.specifics._mapEntities[id] = 1;
+                                                if (exists(id)) {
                                                     config.ui.specifics.entities.unshift(response.data.entities[0]);
                                                 }
                                             } else {
                                                 angular.forEach(fetchedEntities, function (ent) {
-                                                    if (angular.isUndefined(config.ui.specifics._mapEntities[ent.key])) {
-                                                        config.ui.specifics._mapEntities[ent.key] = 1;
+                                                    if (exists(ent.key)) {
                                                         config.ui.specifics.entities.push(ent);
                                                     }
                                                 });
@@ -542,7 +533,7 @@
                     }
                     info.scope.$on('$destroy', function () {
                         config.ui.specifics.entities = [];
-                        config.ui.specifics._mapEntities = {};
+                        exists.cache = {};
                     });
                     config.ui.specifics.async = true;
                     if (config.repeated) {
