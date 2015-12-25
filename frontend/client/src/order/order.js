@@ -332,6 +332,8 @@
                                             modals.confirm('convertToOrder', function () {
                                                 $scope.cmd.order.update({
                                                     state: 'order'
+                                                }, {
+                                                    disableUI: true
                                                 }).then(function () {
                                                     $timeout(function () {
                                                         submit();
