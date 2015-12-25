@@ -22363,8 +22363,6 @@ angular.module('app')
                                                 promise.then(function (response) {
                                                     locals.updateLiveEntity(response);
                                                     locals.reactOnUpdate();
-                                                })['finally'](function () {
-                                                    $scope.activitySpinner.stop();
                                                 });
                                                 return promise;
                                             };
