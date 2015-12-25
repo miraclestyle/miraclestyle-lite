@@ -321,23 +321,14 @@
                                 $scope.quantityIncrement = false;
                                 $scope.stockText = '';
 
-                                sellerKey = $scope.catalog._seller.key;
+                                sellerKey = config.sellerKey || $scope.catalog._seller.key;
                                 $scope.cartProductQuantity = function () {
                                     $scope.productManager.quantity = 0;
                                     $scope.hasThisProduct = false;
                                     $scope.disableUpdateCart = false;
                                     $scope.orderLineCount = 0;
                                     if (!currentAccount._is_guest) {
-                                        (config.orderKey ? models['34'].actions.read({
-                                            key: config.orderKey,
-                                            read_arguments: {
-                                                _lines: {
-                                                    config: {
-                                                        limit: 0
-                                                    }
-                                                }
-                                            }
-                                        }) : models['34'].current(sellerKey)).then(function (response) {
+                                        models['34'].current(sellerKey).then(function (response) {
                                             var order = response.data.entity;
                                             $scope.order = order;
                                             if (order.id) {
