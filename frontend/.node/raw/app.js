@@ -22516,6 +22516,9 @@ angular.module('app')
                                         } else {
                                             $scope.notFound = undefined;
                                         }
+                                        $timeout(function () {
+                                            $(window).triggerHandler('resize');
+                                        }, 100, false);
                                     });
 
                                     $scope.$on('$destroy', function () {
