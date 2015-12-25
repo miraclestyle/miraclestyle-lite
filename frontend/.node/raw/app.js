@@ -13293,6 +13293,7 @@ function msieversion() {
                         listen,
                         loadMore,
                         steady,
+                        suspend = false,
                         intervalid,
                         waitinterval = false,
                         loaded = false,
@@ -13300,6 +13301,7 @@ function msieversion() {
                         maybeMore,
                         startInterval,
                         timeoutid,
+                        suspendTracker,
                         run;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
 
@@ -13371,7 +13373,7 @@ function msieversion() {
                         startInterval = function () {
                             clearInterval(intervalid);
                             intervalid = setInterval(function () {
-                                if (waitinterval) {
+                                if (waitinterval || suspend) {
                                     return;
                                 }
                                 waitinterval = true;
@@ -13439,6 +13441,15 @@ function msieversion() {
                             maybeMore();
                             startInterval();
                         }
+
+                        scope.$watch((scope.modalOptions ? 'modalOptions.overlay' : 'overlays'), function (neww, old) {
+                            suspend = false;
+                            if (neww !== undefined && (scope.modalOptions ? neww !== scope.overlays : neww)) {
+                                suspend = true; // if layer is not the same as viewing one suspend interval
+                            }
+                            //console.log(scope.modalOptions, scope.overlays, neww, suspend);
+                        });
+
                     };
 
                     scope.$watch(function () {
@@ -14503,7 +14514,7 @@ function msieversion() {
                     });
                 }
             };
-        })).directive('pollResults', ng(function () {
+        })).directive('pollResults', ng(function ($rootScope) {
             return {
                 scope: {
                     config: '=pollResults'
@@ -14514,12 +14525,18 @@ function msieversion() {
                         config = scope.config,
                         stop = false,
                         timer = null,
+                        suspend = false,
                         seen = {},
+                        destroy,
                         poll = function () {
                             if (timer) {
                                 clearTimeout(timer);
                             }
                             timer = setTimeout(function () {
+                                if (suspend) {
+                                    // do nothing if suspend is active
+                                    return poll();
+                                }
                                 config.loader.load({
                                     runLast: function (response) {
                                         if (stop) {
@@ -14554,8 +14571,15 @@ function msieversion() {
                         }
                     });
 
+                    destroy = $rootScope.$watch('overlays', function (neww, old) {
+                        if (!neww) {
+                            suspend = true;
+                        }
+                    });
+
                     scope.$on('$destroy', function () {
                         stop = true;
+                        destroy();
                     });
                 }
             };
@@ -14974,14 +14998,7 @@ function msieversion() {
                     }
                 };
 
-                animation.done(demise);
-
-                setTimeout(function () {
-                    if (domEl) {
-                        // demise();
-                    }
-                }, 600);
-
+                animation.done(demise); // this might never fire sometimes, but fix is to remove dom after n miliseconds if it doesn't
             }
 
             function removeModalWindow(modalInstance, defer) {
@@ -15008,9 +15025,7 @@ function msieversion() {
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
-                    if (!openedWindows.length()) {
-                        $rootScope.overlays = false;
-                    }
+                    $rootScope.overlays = openedWindows.length();
                     $(window).triggerHandler('modal.close');
                     defer.resolve();
                 });
@@ -15072,7 +15087,8 @@ function msieversion() {
                 openedWindows.top().value.modalDomEl = modalDomEl;
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
-                $rootScope.overlays = true;
+                $rootScope.overlays = openedWindows.length();
+                modal.scope.modalOptions.overlay = $rootScope.overlays;
 
                 if (!modal.noEscape) {
                     modalInstance.esc = function (e) {
@@ -22295,9 +22311,7 @@ angular.module('app')
                                                     }
                                                 });
                                                 if (allDeleted) {
-                                                    return $scope.cmd.order['delete'](false, true).then(function () {
-                                                        snackbar.showK('cartUpdated');
-                                                    });
+                                                    return $scope.cmd.order['delete'](false, true);
                                                 }
                                                 return false;
                                             };
@@ -23765,6 +23779,7 @@ angular.module('app')
             $rootScope.disableUIState = state;
             $rootScope.$broadcast('disableUI', state);
         };
+        $rootScope.overlays = 0;
         $state.engineHref = function () {
             var path = $state.href.apply($state, arguments);
             if (window.ENGINE.DESKTOP.ACTIVE) {
