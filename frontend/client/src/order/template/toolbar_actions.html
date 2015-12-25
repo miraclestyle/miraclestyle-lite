@@ -1,7 +1,7 @@
 <button md-ink-ripple-action
         toolbar-padding-control-element
         type="button"
-        class="action button-transparent button-square"
+        class="action button-transparent button-square color-child-when-disabled"
         ng-show="order.ui.rule.action.delete.executable && order.id && order._state !== 'deleted'"
         loading
         ng-click="cmd.order.delete(cmd.order.state !== 'order')">
@@ -11,7 +11,7 @@
 <button md-ink-ripple-action
         toolbar-padding-control-element
         type="button"
-        class="action button-transparent button-square"
+        class="action button-transparent button-square color-child-when-disabled"
         loading ng-click="messages.toggle()">
     <icon type="chat_bubble"></icon>
 </button>

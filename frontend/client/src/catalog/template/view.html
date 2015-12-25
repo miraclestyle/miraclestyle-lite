@@ -8,13 +8,13 @@
   <div class="clearfix">
 
       <div ng-hide="hideClose" class="top-close">
-           <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="close()">
+           <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="close()">
              <icon color="white" type="close"></icon>
            </button>
       </div>
 
       <div ng-if="$state.isCompleted() && !notFound" class="top-close top-close-right">
-           <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button" ng-click="catalogMenu.toggle()">
+           <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="catalogMenu.toggle()">
              <icon color="white" type="more_vert"></icon>
            </button>
       </div>

@@ -289,7 +289,9 @@
                                                 addressing.billing_address = $scope.addresses.shipping;
                                             }
                                             if (valid) {
-                                                $scope.cmd.order.update(addressing).then(function (response) {
+                                                $scope.cmd.order.update(addressing, {
+                                                    disableUI: true
+                                                }).then(function (response) {
                                                     if (helpers.endpoint.isResponseError(response)) {
                                                         return;
                                                     }
@@ -310,6 +312,8 @@
                                                 // state = 'checkout' is needed here
                                                 $scope.cmd.order.update({
                                                     carrier: $scope.carrier.selected
+                                                }, {
+                                                    disableUI: true
                                                 }).then(function () {
                                                     $scope.stage.animating = 4;
                                                     $scope.stage.out.push(3);
@@ -911,7 +915,7 @@
                                                         ui.helper.hide();
                                                         $scope.cmd.order.scheduleUpdate(undefined, {
                                                             noLines: true,
-                                                            disableUI: false
+                                                            disableUI: true
                                                         }).then(function (response) {
                                                             if (!(response && response.then)) {
                                                                 snackbar.showK('cartUpdated');

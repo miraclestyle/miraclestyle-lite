@@ -262,6 +262,8 @@
                                         } else {
                                             models['34'].setCache(sellerCacheKey, response);
                                         }
+                                        $scope.order = undefined;
+                                        $scope.orderLineCount = 0;
                                         return response;
                                     });
                                 };

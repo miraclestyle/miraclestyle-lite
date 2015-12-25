@@ -7,7 +7,7 @@
                 <button md-ink-ripple-action
                         ripple-light
                         loading type="button"
-                        class="button-transparent catalog-close-button button-square"
+                        class="button-transparent catalog-close-button button-square color-child-when-disabled"
                         ng-click="close()">
                     <icon color="white" type="close"></icon>
                 </button>
@@ -18,7 +18,7 @@
                        ripple-light
                        loading
                        type="button"
-                       class="button-transparent button-square catalog-close-button"
+                       class="button-transparent button-square catalog-close-button color-child-when-disabled"
                        ng-click="productMenu.toggle()">
                  <icon color="white" type="more_vert"></icon>
                </button>
@@ -98,7 +98,7 @@
                                         </label>
                                         <div class="product-quantity-controls clearfix">
                                             <div class="product-quantity-control">
-                                                <md-button ripple-action md-ink-ripple-click="true" ng-click="decreaseQuantity()" loading="!canAddToCart" class="product-quantity-button product-quantity-button-deincrease button-square">
+                                                <md-button ripple-action md-ink-ripple-click="true" ng-click="decreaseQuantity()" loading="!canAddToCart" class="product-quantity-button product-quantity-button-deincrease button-square color-child-when-disabled">
                                                     <icon type="remove"></icon>
                                                 </md-button>
                                             </div>
@@ -107,7 +107,7 @@
                                              
                                             </div>
                                             <div class="product-quantity-control">
-                                                <md-button ripple-action md-ink-ripple-click="true" ng-click="increaseQuantity()" loading="!canAddToCart || !quantityIncrement" type="button" class="product-quantity-button product-quantity-button-increase button-square">
+                                                <md-button ripple-action md-ink-ripple-click="true" ng-click="increaseQuantity()" loading="!canAddToCart || !quantityIncrement" type="button" class="product-quantity-button product-quantity-button-increase button-square color-child-when-disabled">
                                                     <icon type="add"></icon>
                                                 </md-button>
                                             </div>
