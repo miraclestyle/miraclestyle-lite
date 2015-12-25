@@ -20612,6 +20612,8 @@ angular.module('app')
                                 deleteOrder = function () {
                                     return models['34'].actions['delete']({
                                         key: $scope.order.key
+                                    }, {
+                                        disableUI: true
                                     }).then(function (response) {
                                         var sellerCacheKey = 'current' + sellerKey,
                                             memoized = models['34'].getCache(sellerCacheKey);
