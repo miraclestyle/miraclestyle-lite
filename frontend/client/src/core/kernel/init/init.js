@@ -185,6 +185,7 @@
             $rootScope.disableUIState = state;
             $rootScope.$broadcast('disableUI', state);
         };
+        $rootScope.overlays = 0;
         $state.engineHref = function () {
             var path = $state.href.apply($state, arguments);
             if (window.ENGINE.DESKTOP.ACTIVE) {

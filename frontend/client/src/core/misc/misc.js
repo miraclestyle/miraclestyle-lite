@@ -383,6 +383,7 @@
                         listen,
                         loadMore,
                         steady,
+                        suspend = false,
                         intervalid,
                         waitinterval = false,
                         loaded = false,
@@ -390,6 +391,7 @@
                         maybeMore,
                         startInterval,
                         timeoutid,
+                        suspendTracker,
                         run;
                     config = scope.$eval(attrs.autoloadOnVerticalScrollEnd);
 
@@ -461,7 +463,7 @@
                         startInterval = function () {
                             clearInterval(intervalid);
                             intervalid = setInterval(function () {
-                                if (waitinterval) {
+                                if (waitinterval || suspend) {
                                     return;
                                 }
                                 waitinterval = true;
@@ -529,6 +531,15 @@
                             maybeMore();
                             startInterval();
                         }
+
+                        scope.$watch((scope.modalOptions ? 'modalOptions.overlay' : 'overlays'), function (neww, old) {
+                            suspend = false;
+                            if (neww !== undefined && (scope.modalOptions ? neww !== scope.overlays : neww)) {
+                                suspend = true; // if layer is not the same as viewing one suspend interval
+                            }
+                            //console.log(scope.modalOptions, scope.overlays, neww, suspend);
+                        });
+
                     };
 
                     scope.$watch(function () {
@@ -1593,7 +1604,7 @@
                     });
                 }
             };
-        })).directive('pollResults', ng(function () {
+        })).directive('pollResults', ng(function ($rootScope) {
             return {
                 scope: {
                     config: '=pollResults'
@@ -1604,12 +1615,18 @@
                         config = scope.config,
                         stop = false,
                         timer = null,
+                        suspend = false,
                         seen = {},
+                        destroy,
                         poll = function () {
                             if (timer) {
                                 clearTimeout(timer);
                             }
                             timer = setTimeout(function () {
+                                if (suspend) {
+                                    // do nothing if suspend is active
+                                    return poll();
+                                }
                                 config.loader.load({
                                     runLast: function (response) {
                                         if (stop) {
@@ -1644,8 +1661,15 @@
                         }
                     });
 
+                    destroy = $rootScope.$watch('overlays', function (neww, old) {
+                        if (!neww) {
+                            suspend = true;
+                        }
+                    });
+
                     scope.$on('$destroy', function () {
                         stop = true;
+                        destroy();
                     });
                 }
             };

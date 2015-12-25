@@ -754,9 +754,7 @@
                                                     }
                                                 });
                                                 if (allDeleted) {
-                                                    return $scope.cmd.order['delete'](false, true).then(function () {
-                                                        snackbar.showK('cartUpdated');
-                                                    });
+                                                    return $scope.cmd.order['delete'](false, true);
                                                 }
                                                 return false;
                                             };

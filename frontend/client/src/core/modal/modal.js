@@ -324,14 +324,7 @@
                     }
                 };
 
-                animation.done(demise);
-
-                setTimeout(function () {
-                    if (domEl) {
-                        // demise();
-                    }
-                }, 600);
-
+                animation.done(demise); // this might never fire sometimes, but fix is to remove dom after n miliseconds if it doesn't
             }
 
             function removeModalWindow(modalInstance, defer) {
@@ -358,9 +351,7 @@
                 removeAfterAnimate(modalWindow.modalDomEl, modalWindow.modalScope, function () {
                     modalWindow.modalScope.$destroy();
                     body.toggleClass(OPENED_MODAL_CLASS, openedWindows.length() > 0);
-                    if (!openedWindows.length()) {
-                        $rootScope.overlays = false;
-                    }
+                    $rootScope.overlays = openedWindows.length();
                     $(window).triggerHandler('modal.close');
                     defer.resolve();
                 });
@@ -422,7 +413,8 @@
                 openedWindows.top().value.modalDomEl = modalDomEl;
                 body.append(modalDomEl);
                 body.addClass(OPENED_MODAL_CLASS);
-                $rootScope.overlays = true;
+                $rootScope.overlays = openedWindows.length();
+                modal.scope.modalOptions.overlay = $rootScope.overlays;
 
                 if (!modal.noEscape) {
                     modalInstance.esc = function (e) {
