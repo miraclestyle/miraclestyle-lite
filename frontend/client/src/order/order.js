@@ -822,6 +822,7 @@
                                                 promise.then(function (response) {
                                                     locals.updateLiveEntity(response);
                                                     locals.reactOnUpdate();
+                                                    snackbar.showK('cartUpdated');
                                                 });
                                                 return promise;
                                             };
