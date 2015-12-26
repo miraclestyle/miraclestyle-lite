@@ -18047,7 +18047,7 @@ angular.module('app')
                         }
 
                         scope.$broadcast('ngUploadSubmit');
-                        $rootScope.disableUI(true);
+                        setTimeout(function () { $rootScope.disableUI(true); }, 100);
 
                     });
 
