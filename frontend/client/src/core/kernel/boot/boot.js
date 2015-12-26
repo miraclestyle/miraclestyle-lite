@@ -25,11 +25,19 @@ window.getLocalStorage = function () {
     if (window.ENGINE.CHROMEAPP.ACTIVE) {
         if (!window._chromeLocalStorage) {
             window._chromeLocalStorage = {
-                _data       : {},
-                setItem     : function(id, val) { return this._data[id] = String(val); },
-                getItem     : function(id) { return this._data.hasOwnProperty(id) ? this._data[id] : undefined; },
-                removeItem  : function(id) { return delete this._data[id]; },
-                clear       : function() { return this._data = {}; }
+                _data: {},
+                setItem: function (id, val) {
+                    return this._data[id] = String(val);
+                },
+                getItem: function (id) {
+                    return this._data.hasOwnProperty(id) ? this._data[id] : undefined;
+                },
+                removeItem: function (id) {
+                    return delete this._data[id];
+                },
+                clear: function () {
+                    return this._data = {};
+                }
             };
         }
         return window._chromeLocalStorage;
@@ -622,7 +630,7 @@ if (!Array.prototype.indexOf) {
             },
             defaultImage: 'client/dist/static/240x240_placeholder.png',
             defaultLogo: 'client/dist/static/720x300_placeholder.png',
-            defaultCatalogCover: 'client/dist/static/240x312_placeholder.png',
+            defaultCatalogCover: 'client/dist/static/1920x2496_placeholder.png',
             grid: {
                 maxWidth: 240,
                 minWidth: 180,
@@ -671,9 +679,9 @@ if (!Array.prototype.indexOf) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $locationProvider.hashPrefix('!');
             var html5Mode = ((!window.ENGINE.DESKTOP.ACTIVE) ? {
-                  enabled: true,
-                  requireBase: false
-                } : true);
+                enabled: true,
+                requireBase: false
+            } : true);
             $locationProvider.html5Mode(html5Mode);
         }));
     angular.module('app', GLOBAL_CONFIG.modules);
