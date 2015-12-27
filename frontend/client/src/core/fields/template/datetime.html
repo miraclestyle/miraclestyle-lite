@@ -1,7 +1,7 @@
 <md-input-container class="with-icon" ng-class="{'no-label': config.ui.label === false}">
     <label ng-if="config.ui.label !== false"><%= config.ui.compiled.label %></label>
     <input class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
-    <div class="select-icon">
+    <div loading="!config.ui.writableCompiled" class="select-icon color-child-when-disabled">
             <icon type="arrow_drop_down"></icon>
     </div>
     <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">

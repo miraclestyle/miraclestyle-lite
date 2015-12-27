@@ -33,7 +33,7 @@
              current-item="ent"
              class="no-move list-row list-row-three-lines list-row-has-secondary no-padding clearfix">
             <div class="delete-overlay"></div>
-            <list-button loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
+            <list-button class="color-child-when-disabled" loading="!<%= config.ui.writableCompiled %>" ng-click="config.ui.specifics.manage(ent)">
                 <strong class="first ellipsis-text">{{ent.name}}</strong>
                 <span class="second">
                   {{config.ui.specifics.showType(ent.kind)}}
