@@ -2189,6 +2189,9 @@ button::-moz-focus-inner {
   position: relative;
   box-sizing: border-box; }
 
+.color-child-when-disabled[disabled] .wide-arrow-down {
+  border-top-color: rgba(0, 0, 0, 0.38); }
+
 .block-center {
   margin-left: auto;
   margin-right: auto; }
@@ -2995,6 +2998,15 @@ button.product-quantity-button {
 
 .swoop-from-left-finish {
   left: 0%; }
+
+.color-child-when-disabled[disabled] .catalog-pricetag-link {
+  color: rgba(0, 0, 0, 0.38); }
+
+.no-touch .images-manage div.catalog-pricetag[disabled],
+.no-touch .images-manage li.catalog-new-pricetag[disabled],
+.no-touch .images-manage div.catalog-pricetag[disabled] .catalog-pricetag-link,
+.no-touch .images-manage li.catalog-new-pricetag[disabled] .catalog-pricetag-link {
+  cursor: not-allowed; }
 
 .logo img {
   width: auto;
