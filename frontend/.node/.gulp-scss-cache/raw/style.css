@@ -197,6 +197,9 @@ md-backdrop.md-opaque {
 .card-load-more .headline {
   text-transform: uppercase; }
 
+.color-child-when-disabled[disabled] .secondary, .color-child-when-disabled[disabled] .headline {
+  color: rgba(0, 0, 0, 0.38); }
+
 md-checkbox {
   display: block;
   cursor: pointer;
