@@ -10588,7 +10588,7 @@ function msieversion() {
                             delete attrs['ng-disabled'];
                         } else {
                             if (!attrs.loading) {
-                                attrs.loading = '!' + writableCompiled;
+                                attrs.loading = '!' + config.ui.writableCompiled;
                             }
                         }
 
@@ -21751,6 +21751,7 @@ angular.module('app')
                                             args: 'addresses.shipping.' + value.code_name,
                                             parentArgs: 'addresses.shipping',
                                             writable: true,
+                                            writableCompiled: 'true',
                                             name: 'supplier_' + value.code_name
                                         });
                                         locals.shippingAddressFields.push(value);
@@ -21761,6 +21762,7 @@ angular.module('app')
                                             args: 'addresses.billing.' + value.code_name,
                                             parentArgs: 'addresses.billing',
                                             writable: true,
+                                            writableCompiled: 'true',
                                             name: 'supplier_' + value.code_name
                                         });
                                         value.required = (value.required ? '!addresses.sameAsShipping' : false);
@@ -21799,6 +21801,8 @@ angular.module('app')
                                     });
 
                                     $scope.today = new Date();
+
+                                    $scope.writable = true;
 
                                     $scope.stage = {
                                         checkout: null,
