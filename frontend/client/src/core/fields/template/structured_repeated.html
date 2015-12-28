@@ -38,12 +38,12 @@
            <div class="card-inner">
               <div class="delete-overlay"></div>
               <button 
-                loading 
+                loading
                 ng-click="config.ui.specifics.manage(ent, undefined, $event)" 
                 type="button" 
                 md-ink-ripple 
                 ng-class="{'padding-right-56': config.ui.specifics.listConfig.secondary}"
-                class="card-inner-padding menu-item">
+                class="card-inner-padding menu-item color-child-when-disabled">
 
                   <% if (config.ui.specifics.cardView) { %>
                     <span <%=config.ui.specifics.cardView %>="ent"

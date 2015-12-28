@@ -16,11 +16,11 @@ div.catalog-pricetag, li.catalog-new-pricetag {
 }
 
 div.catalog-pricetag.ui-draggable-disabled {
-    cursor:pointer;
+    cursor: pointer;
 }
 
 li.catalog-new-pricetag[disabled] {
-    cursor:default;
+    cursor: default;
 }
 
 div.catalog-pricetag:active, li.catalog-new-pricetag:active {
@@ -256,4 +256,15 @@ button.product-quantity-button {
 
 .swoop-from-left-finish {
     left: 0%;
+}
+
+.color-child-when-disabled[disabled] .catalog-pricetag-link {
+    color: rgba(0, 0, 0, 0.38);
+}
+
+.no-touch .images-manage div.catalog-pricetag[disabled],
+.no-touch .images-manage li.catalog-new-pricetag[disabled],
+.no-touch .images-manage div.catalog-pricetag[disabled] .catalog-pricetag-link,
+.no-touch .images-manage li.catalog-new-pricetag[disabled] .catalog-pricetag-link {
+    cursor: not-allowed;
 }
