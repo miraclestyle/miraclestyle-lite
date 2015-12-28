@@ -1058,3 +1058,7 @@ img.auto-width, .auto-width {
 a[type="button"] {
     text-decoration: none;
 }
+
+.button-transparent[disabled].color-child-when-disabled {
+    cursor:not-allowed;
+}
