@@ -195,6 +195,7 @@
                                             args: 'addresses.shipping.' + value.code_name,
                                             parentArgs: 'addresses.shipping',
                                             writable: true,
+                                            writableCompiled: 'true',
                                             name: 'supplier_' + value.code_name
                                         });
                                         locals.shippingAddressFields.push(value);
@@ -205,6 +206,7 @@
                                             args: 'addresses.billing.' + value.code_name,
                                             parentArgs: 'addresses.billing',
                                             writable: true,
+                                            writableCompiled: 'true',
                                             name: 'supplier_' + value.code_name
                                         });
                                         value.required = (value.required ? '!addresses.sameAsShipping' : false);
@@ -243,6 +245,8 @@
                                     });
 
                                     $scope.today = new Date();
+
+                                    $scope.writable = true;
 
                                     $scope.stage = {
                                         checkout: null,

@@ -133,7 +133,7 @@
                             delete attrs['ng-disabled'];
                         } else {
                             if (!attrs.loading) {
-                                attrs.loading = '!' + writableCompiled;
+                                attrs.loading = '!' + config.ui.writableCompiled;
                             }
                         }
 
