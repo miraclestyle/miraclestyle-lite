@@ -142,7 +142,8 @@
                                            <md-radio-group ng-model="carrier.selected" class="list list-row-has-primary">
                                             <md-radio-button ng-repeat="available_carrier in carrier.available" 
                                                              md-ink-ripple
-                                                             class="list-content-tile list-row-two-lines list-row"
+                                                             class="list-content-tile list-row-two-lines list-row color-child-when-disabled"
+                                                             loading
                                                              ng-value="available_carrier.key" 
                                                              aria-label="available_carrier.name"
                                                              ng-required="true">

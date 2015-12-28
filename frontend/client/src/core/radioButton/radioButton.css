@@ -33,3 +33,6 @@ md-radio-button .md-icon-radio_button_unchecked {
 .md-checked .md-icon-radio_button_unchecked {
     opacity: 0;
 }
+md-radio-button[disabled] {
+    cursor:not-allowed;
+}

@@ -1,7 +1,7 @@
 <md-input-container class="padding-0">
      <% if (config.ui.specifics.type === 'radio') { %>
             <md-radio-group 
-                class="<%= config.ui.attrs['class'] %> list list-row-one-line list-row-has-primary" 
+                class="<%= config.ui.attrs['class'] %> list list-row-one-line list-row-has-primary color-child-when-disabled" 
                 <%= config.ui.compiled.attrs %> 
                 aria-label="<%= config.ui.compiled.label %>">
 
@@ -26,7 +26,7 @@
             </md-radio-group>
      <% } else if (config.ui.specifics.type === 'checkbox') { %>
          <div ng-class="{'list-row-two-lines': config.ui.help.length}" class="list-row-has-primary padding-0">
-             <md-checkbox md-ink-ripple md-ink-ripple-click="true" class="list-content-tile list-row" ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
+             <md-checkbox md-ink-ripple md-ink-ripple-click="true" class="list-content-tile list-row color-child-when-disabled" ng-false-value="false" class="<%= config.ui.attrs['class'] %>" <%= config.ui.compiled.attrs %> aria-label="<%= config.ui.compiled.label %>">
                <span class="first"><%= config.ui.compiled.label %></span>
                <span class="second" ng-if="config.ui.help">{{config.ui.help}}</span>
              </md-checkbox>
