@@ -224,7 +224,7 @@
                 variant_options: 'Select all variant options you want this configuration to be matched with',
                 weight: 'Weight (kilogram)',
                 volume: 'Volume (liter)',
-                _stock: 'Stock Configurations'
+                _stock: 'Stock configurations'
             },
             '27': {
                 uom: 'Unit of measurement',
