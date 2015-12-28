@@ -54,10 +54,10 @@
                                 </div>
                                 <div class="list list-padding seam-bottom">
                                     <div class="list-row list-row-one-line no-padding">
-                                        <list-button ng-click="displayShare()" loading><span class="first">Share</span></list-button>
+                                        <list-button class="color-child-when-disabled" ng-click="displayShare()" loading><span class="first">Share</span></list-button>
                                     </div>
                                     <div ng-if="product.contents.length" ng-repeat="content in product.contents track by content.key" class="list-row list-row-one-line no-padding">
-                                        <list-button ng-click="viewContent(content)">
+                                        <list-button class="color-child-when-disabled" loading ng-click="viewContent(content)">
                                             <strong ng-bind="content.title" class="first ellipsis-text"></strong>
                                         </list-button>
                                     </div>
@@ -72,14 +72,11 @@
                                         <span ng-bind="stockText" class="second"></span>
                                     </div>
                                 </div>
-                                <div class="product-variant-selection" ng-if="variantSelection.length && false">
-                                    <div form-builder="variantSelection"></div>
-                                </div>
 
-                                    <div ng-repeat="variant in variants" class="list-row list-row-two-lines no-padding">
-                                        <button ng-if="!variant.allow_custom_value" md-ink-ripple loading ng-click="setupVariantChooser(variant, $index)" type="button" class="list-row menu-item list-content-tile list-row-is-clickable list-row-two-lines list-row-has-secondary color-child-when-disabled">
-                                            <span class="first" ng-bind="variant.name"></span>
-                                            <span class="second" ng-bind="variant.option"></span>
+                                    <div ng-repeat="variant in variants" class="list-row list-row-two-lines list-row-has-secondary no-padding">
+                                        <button ng-if="!variant.allow_custom_value" md-ink-ripple loading ng-click="setupVariantChooser(variant, $index)" type="button" class="list-row menu-item list-content-tile list-row-is-clickable list-row-two-lines color-child-when-disabled">
+                                            <span class="first ellipsis-text" ng-bind="variant.name"></span>
+                                            <span class="second ellipsis-text" ng-bind="variant.option"></span>
 
                                              <div class="list-secondary-tile">
                                                <div class="button-square"><icon type="chevron_right"></icon></div>
@@ -135,7 +132,7 @@
                         class="right md-closed variant-sidenav" 
                         md-component-id="variantMenu.id">
                 <md-content>
-                    <div ng-if="!variantChooser.allow_custom_value" class="list seam-bottom list-padding">
+                    <div ng-if="!variantChooser.allow_custom_value" class="list seam-bottom list-padding word-break-word">
                          <div class="list-row list-row-two-lines">
                              <div class="list-content-tile">
                                  <span class="first" ng-bind="variantChooser.name"></span>

@@ -54,7 +54,7 @@ DEFAULT_HOST_SETTINGS = {
 HOSTS_SPECIFIC_SETTINGS = {
   'localhost:9982': {
     'FORCE_SSL': False,
-    'LAG': 2
+    'LAG': False
   },
   'themiraclestyle-testing-site.appspot.com': {
     'FORCE_SSL': True

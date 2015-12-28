@@ -54,7 +54,7 @@
                         ng-model="config.ui.specifics.select.multipleSelection[config.ui.specifics.select.getHash(item)]"
                         ng-click="<%=config.ui.writableCompiled %> && config.ui.specifics.select.commitMultipleSelect(item)"
                         aria-label="{{config.ui.specifics.select.listView(item)}}">
-                       <span class="first"><span ng-bind-html="config.ui.specifics.select.listView(item)"></span></span>
+                       <span class="first ellipsis-text"><span ng-bind-html="config.ui.specifics.select.listView(item)"></span></span>
                      </md-checkbox>
                    </div>
               </div>

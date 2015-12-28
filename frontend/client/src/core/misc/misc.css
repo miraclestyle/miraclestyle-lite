@@ -1059,6 +1059,11 @@ a[type="button"] {
     text-decoration: none;
 }
 
-.button-transparent[disabled].color-child-when-disabled {
+.button-transparent[disabled].color-child-when-disabled, .disabled-cursor-when-disabled[disabled] {
     cursor:not-allowed;
+}
+
+.word-break-word {
+    word-wrap: break-word;
+    word-break: break-word;
 }

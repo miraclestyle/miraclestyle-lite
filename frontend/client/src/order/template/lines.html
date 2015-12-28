@@ -76,11 +76,11 @@
 
     <div drag="true" jqyoui-draggable="{onDrag: 'lineDrag.onDrag(line)', onStart: 'lineDrag.onStart(line)', onStop: 'lineDrag.onStop(line)'}" jqyoui-options="lineDrag.options" class="card" ng-if="line._state !== 'deleted' && line.product.quantity > 0" ng-repeat="line in order._lines track by $index">
         <a loading
-                ng-click="(!disableUIState && stage.current < 2) && cmd.line.view(line, $event)"
-                type="button"
-                md-ink-ripple
-                ng-class="{'order-line-no-pointer': stage.current > 2, 'md-ink-ripple-disabled': stage.current > 2}"
-                class="menu-item card-inner">
+            ng-click="(!disableUIState && stage.current < 2) && cmd.line.view(line, $event)"
+            type="button"
+            md-ink-ripple
+            ng-class="{'order-line-no-pointer': stage.current > 2, 'md-ink-ripple-disabled': stage.current > 2}"
+            class="menu-item card-inner disabled-cursor-when-disabled color-child-when-disabled">
 
             <div class="delete-overlay"></div>
             <div class="card-inner-padding">
