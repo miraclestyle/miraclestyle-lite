@@ -79,8 +79,11 @@
             ng-click="(!disableUIState && stage.current < 2) && cmd.line.view(line, $event)"
             type="button"
             md-ink-ripple
-            ng-class="{'order-line-no-pointer': stage.current > 2, 'md-ink-ripple-disabled': stage.current > 2}"
-            class="menu-item card-inner disabled-cursor-when-disabled color-child-when-disabled">
+            ng-class="{'order-line-no-pointer': stage.current > 2,
+                       'md-ink-ripple-disabled': stage.current > 2,
+                       'color-child-when-disabled': stage.current < 2,
+                       'disabled-cursor-when-disabled': stage.current < 2}"
+            class="menu-item card-inner">
 
             <div class="delete-overlay"></div>
             <div class="card-inner-padding">
