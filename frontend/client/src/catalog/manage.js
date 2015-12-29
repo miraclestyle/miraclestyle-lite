@@ -4,22 +4,22 @@
 
         modelsConfig(function (models) {
             var recomputeRealPath = function (field1, level) {
-                    if (!level) {
-                        level = 0;
-                    }
-                    var field2 = field1.modelclass;
-                    angular.forEach(field2, function (value) {
-                        if (value.ui.realPath) {
-                            var con = field1.ui.realPath.concat();
-                            con.push(value.code_name);
-                            value.ui.realPath = con;
-                            value.ui.initialRealPath = con;
-                            if (value.modelclass) {
-                                recomputeRealPath(value, level + 1);
-                            }
+                if (!level) {
+                    level = 0;
+                }
+                var field2 = field1.modelclass;
+                angular.forEach(field2, function (value) {
+                    if (value.ui.realPath) {
+                        var con = field1.ui.realPath.concat();
+                        con.push(value.code_name);
+                        value.ui.realPath = con;
+                        value.ui.initialRealPath = con;
+                        if (value.modelclass) {
+                            recomputeRealPath(value, level + 1);
                         }
-                    });
-                };
+                    }
+                });
+            };
             $.extend(models['31'], {
                 adminManageModal: function (account, extraConfig) {
                     return this.manageModal(account, undefined, extraConfig);
@@ -342,16 +342,26 @@
                                                 cancel: "input,textarea,button,select,option,[disabled]"
                                             };
 
-                                            $scope.newPricetagDraggableOptions = {revert: function (element) {
-                                                if (!element) {
-                                                    return true;
+                                            $scope.newPricetagDraggableOptions = {
+                                                revert: function (element) {
+                                                    if (!element) {
+                                                        return true;
+                                                    }
+                                                    var truth = $scope.container.form.$dirty;
+                                                    if (truth) {
+                                                        snackbar.showK('saveChangesFirst');
+                                                    }
+                                                    return truth;
+                                                },
+                                                distance: 10,
+                                                helper: 'clone',
+                                                stop: function (event) {
+                                                    $(event.target).removeClass('activated');
+                                                },
+                                                start: function (event, ui) {
+                                                    $(event.target).addClass('activated');
                                                 }
-                                                var truth = $scope.container.form.$dirty;
-                                                if (truth) {
-                                                    snackbar.showK('saveChangesFirst');
-                                                }
-                                                return truth;
-                                            }, distance: 10, helper: 'clone'};
+                                            };
 
                                             $scope.onStop = function (event, ui, image, pricetag) {
                                                 setTimeout(function () {

@@ -3,12 +3,12 @@
       <div class="clearfix new-pricetag-bar button-set list-row">
       <div class="pull-right line-height-0">
          <ul class="list-inline-block padding-top-8">
-                 <li md-ink-ripple loading="!entity.ui.rule.field._images.pricetags.writable" 
+                 <li md-ink-ripple loading="!entity.ui.rule.field._images.pricetags.writable"
                      class="catalog-new-pricetag md-button color-child-when-disabled"
                      drag="entity.ui.rule.field._images.pricetags.writable && !disableUIState"
                      jqyoui-options="newPricetagDraggableOptions"
                      draggable-click="entity.ui.rule.field._images.pricetags.writable && howToDrag($event)"
-                     jqyoui-draggable="{placeholder: 'keep'}">
+                     jqyoui-draggable="{placeholder: 'keep', onStop: 'newPricetagDraggableOptions.stop()', onStart: 'newPricetagDraggableOptions.start()'}">
                    <div class="catalog-pricetag-dot"></div>
                    <div class="catalog-pricetag-link button-transparent">Add</div>
                  </li>
