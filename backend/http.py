@@ -191,13 +191,15 @@ class Install(RequestHandler):
 
   def respond(self):
     output = []
-    only = self.request.get('only')
+    input = self.get_input()
+    only = input.get('only')
     if only:
       only = only.split(',')
     for model, action in [('12', 'update'), ('24', 'update'), ('17', 'update_unit'), ('17', 'update_currency')]:
       if only and model not in only:
         continue
-      output.append(iom.Engine.run({'action_model': model, 'action_id': action}))
+      input.update({'action_model': model, 'action_id': action})
+      output.append(iom.Engine.run(input))
     self.send_json(output)
 
 
@@ -252,7 +254,8 @@ class AccountLogout(RequestHandler):
 class CatalogCron(RequestHandler):
 
   def respond(self):
-    input = {'action_model': '31', 'action_id': 'cron'}
+    input = self.get_input()
+    input.update({'action_model': '31', 'action_id': 'cron'})
     iom.Engine.run(input)
 
 
@@ -261,7 +264,8 @@ class OrderNotify(RequestHandler):
   def respond(self, payment_method):
     params = ['body', 'content_type', 'method', 'url', 'scheme', 'host', 'host_url', 'path_url',
               'path', 'path_qs', 'query_string', 'headers', 'GET', 'POST', 'params', 'cookies']
-    input = {'action_model': '34', 'payment_method': payment_method, 'action_id': 'notify', 'request': {}}
+    input = self.get_input()
+    input.update({'action_model': '34', 'payment_method': payment_method, 'action_id': 'notify', 'request': {}})
     for param in params:
       input['request'][param] = getattr(self.request, param)
     iom.Engine.run(input)
@@ -270,13 +274,15 @@ class OrderNotify(RequestHandler):
 class OrderCron(RequestHandler):
 
   def respond(self):
-    input = {'action_model': '34', 'action_id': 'cron'}
+    input = self.get_input()
+    input.update({'action_model': '34', 'action_id': 'cron'})
     iom.Engine.run(input)
 
 class OrderCronNotify(RequestHandler):
 
   def respond(self):
-    input = {'action_model': '34', 'action_id': 'cron_notify'}
+    input = self.get_input()
+    input.update({'action_model': '34', 'action_id': 'cron_notify'})
     iom.Engine.run(input)
 
 

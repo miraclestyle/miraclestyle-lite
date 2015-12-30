@@ -5,6 +5,8 @@ Created on Sep 23, 2014
 @author:  Edis Sehalic (edis.sehalic@gmail.com)
 '''
 import json
+import webapp2
+import settings
 
 from google.appengine.api import urlfetch
 
