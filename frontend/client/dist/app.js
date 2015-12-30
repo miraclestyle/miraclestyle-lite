@@ -9999,14 +9999,26 @@ function msieversion() {
             }
         ]).directive('timeDatePickerDialog', ['$modal', 'dateFilter', 'dateParser', 'GLOBAL_CONFIG', '$$rAF', function ($modal, dateFilter, dateParser, GLOBAL_CONFIG, $$rAF) {
             return {
-                require: ['ngModel', '^form'],
+                require: ['ngModel', '^form', '^?mdInputContainer'],
                 link: function (scope, element, attrs, ctrls) {
                     var ngModel = ctrls[0],
                         form = ctrls[1],
+                        containerCtrl = ctrls[2],
+                        parseFn,
                         open = false;
                     ngModel.$render = function () {
-                        element.val(dateFilter(ngModel.$modelValue, GLOBAL_CONFIG.date.format));
+                        element.find('.selected-item').text(dateFilter(ngModel.$modelValue, GLOBAL_CONFIG.date.format));
                     };
+                    containerCtrl.input = element;
+                    scope.$watch(function () {
+                        return ngModel.$invalid && ngModel.$touched;
+                    }, containerCtrl.setInvalid);
+
+                    scope.$on('$destroy', function () {
+                        containerCtrl.setFocused(false);
+                        containerCtrl.setHasValue(false);
+                        containerCtrl.input = null;
+                    });
 
                     element.on('click focus', function (event) {
                         event.preventDefault();
@@ -10044,27 +10056,34 @@ function msieversion() {
                         });
                     });
 
-                    ngModel.$parsers.unshift(function parseDate(viewValue) {
-                        if (!viewValue) {
-                            ngModel.$setValidity('date', true);
-                            return null;
-                        } else if (angular.isDate(viewValue) && !isNaN(viewValue)) {
-                            ngModel.$setValidity('date', true);
-                            return viewValue;
-                        } else if (angular.isString(viewValue)) {
-                            var date = dateParser.parse(viewValue, dateFormat) || new Date(viewValue);
-                            if (isNaN(date)) {
+                    parseFn = function (viewValue) {
+                        var s = (function () {
+                            if (!viewValue) {
+                                ngModel.$setValidity('date', true);
+                                return null;
+                            } else if (angular.isDate(viewValue) && !isNaN(viewValue)) {
+                                ngModel.$setValidity('date', true);
+                                return viewValue;
+                            } else if (angular.isString(viewValue)) {
+                                var date = dateParser.parse(viewValue, dateFormat) || new Date(viewValue);
+                                if (isNaN(date)) {
+                                    ngModel.$setValidity('date', false);
+                                    return undefined;
+                                } else {
+                                    ngModel.$setValidity('date', true);
+                                    return date;
+                                }
+                            } else {
                                 ngModel.$setValidity('date', false);
                                 return undefined;
-                            } else {
-                                ngModel.$setValidity('date', true);
-                                return date;
                             }
-                        } else {
-                            ngModel.$setValidity('date', false);
-                            return undefined;
-                        }
-                    });
+                        }());
+                        containerCtrl.setHasValue(s);
+                        return s;
+                    };
+
+                    ngModel.$formatters.push(parseFn);
+                    ngModel.$parsers.unshift(parseFn);
                 }
 
             };
