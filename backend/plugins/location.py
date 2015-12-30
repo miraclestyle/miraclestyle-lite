@@ -104,7 +104,7 @@ class CountryUpdateWrite(orm.BaseModel):
       orm.put_multi(put_entities)
       put_entities = []
       for country_key, country in no_regions.iteritems():
-        country_sub_division = CountrySubdivision(name=country.name, id=country.key.id(), type='country', code=country.code, active=True)
+        country_sub_division = CountrySubdivision(name=country.name, parent=country_key, id=country_key.id(), type='country', code=country.code, active=True)
         country_sub_division._use_cache = False
         country_sub_division._use_rule_engine = False
         country_sub_division._use_record_engine = False
