@@ -5155,6 +5155,7 @@ function msieversion() {
 
                 var ignore = element.attr('md-ink-ripple-ignore'),
                     eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click');
+                    eventHandler = 'click';
 
                 ignore = (ignore ? $parse(ignore)(scope) : undefined);
 
