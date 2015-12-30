@@ -47,6 +47,7 @@ class CountryUpdateWrite(orm.BaseModel):
         return unicode(' / ').join(names)
 
       i = 0
+      no_regions = {}
       for child in root[1]:
         i += 1
         dic = dict()
@@ -63,6 +64,7 @@ class CountryUpdateWrite(orm.BaseModel):
         country._use_memcache = False
         country._use_cache = False
         put_entities.append(country)
+        no_regions[country.key] = country
       processed_keys = {}
       processed_ids = {}
       i = 0
@@ -80,7 +82,9 @@ class CountryUpdateWrite(orm.BaseModel):
             dic[name] = sub_child.attrib['ref']
         country_sub_division_values = dict(name=dic['name'], id=dic['id'], type=dic['type'], code=dic['code'], active=True)
         if 'country' in dic:
-          country_sub_division_values['parent'] = Country.build_key(dic['country'])
+          country_key = Country.build_key(dic['country'])
+          no_regions.pop(country_key, None)
+          country_sub_division_values['parent'] = country_key
         if 'parent' in dic:
           parent = processed_ids.get(dic['parent'])
           if parent:
@@ -98,3 +102,14 @@ class CountryUpdateWrite(orm.BaseModel):
         country_sub_division._use_rule_engine = False
         put_entities.append(country_sub_division)
       orm.put_multi(put_entities)
+      put_entities = []
+      for country_key, country in no_regions.iteritems():
+        country_sub_division = CountrySubdivision(name=country.name, id=country.key.id(), type='country', code=country.code, active=True)
+        country_sub_division._use_cache = False
+        country_sub_division._use_rule_engine = False
+        country_sub_division._use_record_engine = False
+        country_sub_division._use_memcache = False
+        country_sub_division.complete_name = country.name
+        put_entities.append(country_sub_division)
+      orm.put_multi(put_entities)
+
