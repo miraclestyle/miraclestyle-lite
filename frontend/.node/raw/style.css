@@ -3692,7 +3692,9 @@ button.product-quantity-button {
 .no-touch li.catalog-new-pricetag[disabled] .catalog-pricetag-link {
     cursor: not-allowed;
 }
-.logo img {
+.fixed-width-240 {
+    width: 240px;
+}.logo img {
     width: auto;
     height: 100%;
     vertical-align: middle;
