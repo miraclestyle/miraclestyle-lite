@@ -10,6 +10,7 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
+print(os.environ)
 
 MIRACLESTYLE_SETTINGS = {
   'DEBUG': False,
