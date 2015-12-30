@@ -5155,7 +5155,7 @@ function msieversion() {
 
                 var ignore = element.attr('md-ink-ripple-ignore'),
                     eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click');
-                    eventHandler = 'click';
+
 
                 ignore = (ignore ? $parse(ignore)(scope) : undefined);
 
@@ -21237,7 +21237,7 @@ angular.module('app')
             return {
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.closeMasterMenu);
-                    element.on('click', function () {
+                    element.on('click', function (event) {
                         scope.site.toolbar.menu.close().then(function () {
                             if (callback) {
                                 if (scope.$$phase) {
