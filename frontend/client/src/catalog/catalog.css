@@ -275,3 +275,7 @@ button.product-quantity-button {
 .fixed-width-240 {
     width: 240px;
 }
+
+.fixed-width-240 .fake-button input.upload {
+    width:240px;
+}
