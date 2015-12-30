@@ -1,4 +1,4 @@
-<md-input-container class="with-icon" ng-class="{'no-label': config.ui.label === false}">
+<!-- <md-input-container class="with-icon" ng-class="{'no-label': config.ui.label === false}">
     <label ng-if="config.ui.label !== false"><%= config.ui.compiled.label %></label>
     <input class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
     <div loading="!<%= config.ui.writableCompiled %>" class="select-icon color-child-when-disabled">
@@ -7,5 +7,28 @@
     <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
       <div ng-message="help"><%= config.ui.help %></div>
       <div ng-message="required">This field requires "<span ng-if="config.ui.attrs['check-numeric'] !== undefined">number</span><span ng-if="config.ui.attrs['check-numeric'] === undefined">text</span>" value!</div>
+    </div>
+</md-input-container>
+-->
+
+<md-input-container class="select-input">
+    <label ng-if="config.ui.label !== false"><%= config.ui.compiled.label %></label>
+
+    <div class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
+        <div tabindex="0" md-ink-ripple-list class="as-md-input select-box clearfix">
+            <div class="selected-item-wrapper">
+                <span>
+                    <span class="selected-item"></span>
+                </span>
+            </div>
+            <div class="select-icon">
+                <icon type="arrow_drop_down"></icon>
+            </div>
+        </div>
+    </div>
+   
+    <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
+      <div ng-message="help"><%= config.ui.help %></div>
+      <div ng-message="required">This field requires selection!</div>
     </div>
 </md-input-container>

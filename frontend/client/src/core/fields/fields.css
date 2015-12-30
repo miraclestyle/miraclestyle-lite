@@ -20,6 +20,11 @@
     z-index: 2;
 }
 
+.fake-button input.upload.to-right {
+    right: 0px;
+    left:auto;
+}
+
 button[disabled] input.upload {
     cursor: not-allowed;
 }

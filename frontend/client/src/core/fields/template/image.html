@@ -7,7 +7,7 @@
            <a href="javascript:;" md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent color-child-when-disabled">
                <span><icon type="file_upload"></icon></span>
                <input ng-show="<%= config.ui.writableCompiled %>"
-                      class="upload"
+                      class="upload to-right"
                       name="<%= config.ui.name %>"
                       multiple
                       generate-upload-url="true"
@@ -60,7 +60,7 @@
                   <div class="first">
                      <a href="javascript:;" type="button" md-ink-ripple ripple-light loading="!<%= config.ui.writableCompiled %>" class="fake-button button-transparent uploaded-image">
                         <input ng-show="<%= config.ui.writableCompiled %>" 
-                              class="upload" 
+                              class="upload"
                               name="<%= config.ui.name %>"
                               generate-upload-url
                               ng-required="config.required || !<%= config.ui.args %>.serving_url"
