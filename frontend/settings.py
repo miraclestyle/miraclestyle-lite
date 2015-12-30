@@ -23,6 +23,8 @@ MIRACLESTYLE_SETTINGS = {
 }
 
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
+if HOST_NAME == 'themiraclestyle.appspot.com':
+  HOST_NAME = 'miraclestyle.com'
 
 DEFAULT_HOST_SETTINGS = {
   'DEBUG': True,
