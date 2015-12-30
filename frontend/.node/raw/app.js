@@ -5200,7 +5200,7 @@ function msieversion() {
 
                 // Publish self-detach method if desired...
                 return function detach() {
-                    element.off('$md.pressdown', onPressDown);
+                    element.off(eventHandler, onPressDown);
                     //.off('$md.pressup', onPressUp);
                     //.off('click', onPressDown);
                     element.removeClass('ripple-presence');
