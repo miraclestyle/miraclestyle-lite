@@ -8,7 +8,13 @@ import json
 
 from google.appengine.api import urlfetch
 
-import settings
+def api_endpoint():
+  request = webapp2.get_request()
+  return settings.get_host_url(request.host) + '/api/endpoint'
+
+def api_model_meta():
+  request = webapp2.get_request()
+  return settings.get_host_url(request.host) + '/api/model_meta'
 
 
 def get(**kwds):
@@ -35,9 +41,9 @@ def _exec(**kwds):
 
 
 def endpoint(**kwds):
-  kwds['url'] = settings.API_ENDPOINT()
+  kwds['url'] = api_endpoint()
   return post(**kwds)
 
 
 def model_meta():
-  return post(url=settings.API_MODEL_META())
+  return post(url=api_model_meta())

@@ -23,8 +23,6 @@ MIRACLESTYLE_SETTINGS = {
 }
 
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
-if HOST_NAME == 'themiraclestyle.appspot.com':
-  HOST_NAME = 'miraclestyle.com'
 
 DEFAULT_HOST_SETTINGS = {
   'DEBUG': True,
@@ -66,19 +64,11 @@ DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 
 ACTIVE_HANDLERS = ('misc', 'catalog', 'home', 'builder')
 
-def get_host_url():
+def get_host_url(hostname):
   http = 'http://'
   if os.environ.get('HTTPS') == 'on' or FORCE_SSL:
     http = 'https://'
-  return '%s%s' % (http, HOST_NAME)
-
-HOST_URL = None
-if HOST_URL is None:
-  HOST_URL = get_host_url()
-
-# api path configs
-API_ENDPOINT = lambda: get_host_url() + '/api/endpoint'
-API_MODEL_META = lambda: get_host_url() + '/api/model_meta'
+  return '%s%s' % (http, hostname)
 
 ROUTES = []
 JINJA_GLOBALS = {}

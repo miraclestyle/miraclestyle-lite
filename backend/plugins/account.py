@@ -43,7 +43,7 @@ class AccountLoginInit(orm.BaseModel):
     login_method = context.input.get('login_method')
     error = context.input.get('error')
     def get_redirect_uri(cfg):
-      return '%s%s' % (get_host_url(), cfg['redirect_uri'])
+      return '%s%s' % (get_host_url(context.input['__request__'].host), cfg['redirect_uri'])
     if not error:
       error = context.input.get('error_message')
     code = context.input.get('code')

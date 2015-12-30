@@ -117,7 +117,7 @@ JINJA_ENV = Environment(loader=FileSystemLoader([os.path.join(os.path.dirname(os
 
 
 def absolute_url(path):
-  return '%s/%s' % (settings.get_host_url(), path)
+  return '%s/%s' % (settings.get_host_url(webapp2.get_request().host), path)
 
 
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')

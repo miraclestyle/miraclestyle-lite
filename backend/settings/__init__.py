@@ -10,8 +10,6 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
-if HOST_NAME == 'themiraclestyle.appspot.com':
-  HOST_NAME = 'miraclestyle.com'
 
 MIRACLESTYLE_SETTINGS = {
   'DEBUG': False,
@@ -91,15 +89,11 @@ ORDER_CRON_NOTIFY_TIMER = HOST_SPECIFIC_SETTINGS['ORDER_CRON_NOTIFY_TIMER']
 
 PAYPAL_WEBSCR = HOST_SPECIFIC_SETTINGS['PAYPAL_WEBSCR']
 
-def get_host_url():
+def get_host_url(hostname):
   http = 'http://'
   if os.environ.get('HTTPS') == 'on' or FORCE_SSL:
     http = 'https://'
-  return '%s%s' % (http, HOST_NAME)
-
-HOST_URL = None
-if HOST_URL is None:
-  HOST_URL = get_host_url()
+  return '%s%s' % (http, hostname)
 
 # Cloud storage path settings.
 BUCKET_PATH = HOST_SPECIFIC_SETTINGS['BUCKET_PATH']

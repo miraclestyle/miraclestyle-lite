@@ -66,6 +66,7 @@ class RequestHandler(webapp2.RequestHandler):
           value = value[0]
         new_params[param_key] = value
       input.update(new_params)
+    input['__request__'] = self.request
     self._input = input
     return self._input
 

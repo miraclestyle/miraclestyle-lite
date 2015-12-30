@@ -441,7 +441,7 @@ def _static_dir(file_path, version=None):
     version = '?v=%s' % _get_version()
   else:
     version = ''
-  return '%s/client/%s%s' % (settings.get_host_url(), file_path, version)
+  return '%s/client/%s%s' % (settings.get_host_url(webapp2.get_request().host), file_path, version)
 
 
 def _angular_include_template(path):
