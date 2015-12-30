@@ -4,7 +4,7 @@
        <div class="clearfix list-row-single-line button-set-square list-content-tile">
         <div class="pull-right">
            <span ng-include="config.ui.specifics.mainActionsLayout.before"></span>
-           <button md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent color-child-when-disabled">
+           <a href="javascript:;" md-ink-ripple-action type="button" loading="!<%= config.ui.writableCompiled %>" class="fake-button button-square button-transparent color-child-when-disabled">
                <span><icon type="file_upload"></icon></span>
                <input ng-show="<%= config.ui.writableCompiled %>"
                       class="upload"
@@ -12,7 +12,7 @@
                       multiple
                       generate-upload-url="true"
                       type="file" />
-           </button>
+           </a>
            <span ng-include="config.ui.specifics.mainActionsLayout.after"></span>
         </div>
       </div>
@@ -58,7 +58,7 @@
             <div class="list-row no-padding clearfix">
                <div class="list-row list-content-tile list-row-large-multiline block list-row-one-line">
                   <div class="first">
-                     <button type="button" md-ink-ripple ripple-light loading="!<%= config.ui.writableCompiled %>" class="fake-button button-transparent uploaded-image">
+                     <a href="javascript:;" type="button" md-ink-ripple ripple-light loading="!<%= config.ui.writableCompiled %>" class="fake-button button-transparent uploaded-image">
                         <input ng-show="<%= config.ui.writableCompiled %>" 
                               class="upload" 
                               name="<%= config.ui.name %>"
@@ -68,8 +68,8 @@
                               ng-model="<%= config.ui.args %>._file"
                               type="file" />
                         <img class="not-pointable" display-image-config="config.ui.specifics.displayImageConfig" display-image="<%= config.ui.args %>" />
-                     </div>
-                  </button>
+                     </a>
+                  </div>
                   <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">
                     <div ng-message="help"><%= config.ui.help %></div>
                     <div ng-message="required">This field requires file selection!</div>

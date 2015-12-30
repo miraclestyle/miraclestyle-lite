@@ -6,7 +6,7 @@
             return {
                 link: function (scope, element, attrs) {
                     var callback = $parse(attrs.closeMasterMenu);
-                    element.on('click', function () {
+                    element.on('click', function (event) {
                         scope.site.toolbar.menu.close().then(function () {
                             if (callback) {
                                 if (scope.$$phase) {
