@@ -3699,7 +3699,7 @@ button.product-quantity-button {
 .fixed-width-240 {
     width: 240px;
 }
-.fake-button.fixed-width-240, input[type="file"]::-webkit-file-upload-button:not([disabled]) {
+.fake-button.fixed-width-240, input[type="file"]::-webkit-file-upload-button {
     cursor:pointer;
 }
 
