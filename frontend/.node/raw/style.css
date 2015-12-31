@@ -2785,10 +2785,6 @@ a[type="button"] {
 .word-break-word {
     word-wrap: break-word;
     word-break: break-word;
-}
-
-.fake-button[disabled] input[type="file"] {
-    display:none;
 }.modal-open {
     overflow: hidden;
 }
@@ -3701,6 +3697,10 @@ button.product-quantity-button {
 }
 .fake-button.fixed-width-240, input[type="file"]::-webkit-file-upload-button {
     cursor:pointer;
+}
+
+.fake-button[disabled] input[type="file"]::-webkit-file-upload-button, .fake-button[disabled] input[type="file"] {
+    cursor:not-allowed;
 }
 
 .fixed-width-240 .fake-button input.upload {
