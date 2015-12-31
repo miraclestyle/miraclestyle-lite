@@ -11227,9 +11227,6 @@ function msieversion() {
                                     'default': 'memory'
                                 }
                             },
-                            finder: {
-                                '24': true
-                            },
                             grouping: {},
                             view: {
                                 'default': function (result) {
@@ -11239,6 +11236,7 @@ function msieversion() {
                                     return result.name;
                                 }
                             },
+                            finder: {},
                             init: {
                                 '13': function (info) {
                                     info.scope.$watch(info.config.ui.parentArgs +
@@ -11254,18 +11252,24 @@ function msieversion() {
                             },
                             queryFilter: {
                                 '24': function (term, searchArguments) {
-                                    var searchDefaults = angular.copy(searchArguments.search['default']),
-                                        args = {
-                                            search: searchDefaults
-                                        };
-                                    if (term) {
-                                        args.search.filters.push({
-                                            field: 'name',
-                                            operator: '==',
-                                            value: term
-                                        });
-                                    }
-                                    return args;
+                                    return {
+                                        search: {
+                                            options: {limit: 300},
+                                            orders: [{
+                                                operator: 'asc',
+                                                field: 'name'
+                                            }],
+                                            filters: [{
+                                                value: ['indexable'],
+                                                operator: 'ALL_IN',
+                                                field: 'state'
+                                            }, {
+                                                value: null,
+                                                operator: '==',
+                                                field: 'parent_record'
+                                            }]
+                                        }
+                                    };
                                 },
                                 '17': function (term, searchArguments, cacheFn) {
                                     var searchDefaults = {
@@ -11477,12 +11481,12 @@ function msieversion() {
                                         }, opts).then(function (response) {
                                             var fetchedEntities = response.data.entities;
                                             if (!selectedIsArray) {
-                                                if (exists(id)) {
+                                                if (!exists(id)) {
                                                     config.ui.specifics.entities.unshift(response.data.entities[0]);
                                                 }
                                             } else {
                                                 angular.forEach(fetchedEntities, function (ent) {
-                                                    if (exists(ent.key)) {
+                                                    if (!exists(ent.key)) {
                                                         config.ui.specifics.entities.push(ent);
                                                     }
                                                 });
@@ -11513,7 +11517,8 @@ function msieversion() {
                         template = this._SuperKeyPropertyRepeated(info);
                     }
                     (function () {
-                        var select = config.ui.specifics.select || config.ui.specifics.search;
+                        var select = config.ui.specifics.select || config.ui.specifics.search,
+                            args;
                         if (info.config.kind === '24') {
                             select.init = function (select, scope, element, attrs, ctrls) {
                                 var splitout = function (entities) {
@@ -11540,7 +11545,7 @@ function msieversion() {
                                     next: function (item) {
                                         var newFilter = {
                                             search: {
-                                                options: {limit: 1000},
+                                                options: {limit: 300},
                                                 orders: [{
                                                     operator: 'asc',
                                                     field: 'name'
@@ -11594,25 +11599,9 @@ function msieversion() {
                                         }
                                     }
                                 };
-
-                                models['24'].actions.search({
-                                    search: {
-                                        options: {limit: 1000},
-                                        orders: [{
-                                            operator: 'asc',
-                                            field: 'name'
-                                        }],
-                                        filters: [{
-                                            value: ['indexable'],
-                                            operator: 'ALL_IN',
-                                            field: 'state'
-                                        }, {
-                                            value: null,
-                                            operator: '==',
-                                            field: 'parent_record'
-                                        }]
-                                    }
-                                }, opts).then(function (response) {
+                                args = defaults.queryFilter[config.kind]();
+                                args.search.options.limit = 400;
+                                models[config.kind].actions.search(args, opts).then(function (response) {
                                     var entities = response.data.entities;
                                     splitout(entities);
                                     select.product_categories.top = entities;
@@ -15740,7 +15729,7 @@ function msieversion() {
                     data;
 
                 if (kind === undefined) {
-                    console.error('no info for kind ' + kind_id);
+                    //console.error('no info for kind ' + kind_id);
                     return undefined;
                 }
 
