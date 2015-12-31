@@ -721,6 +721,10 @@
                                         $scope.formSetPristine();
                                         snackbar.showK('changesSaved');
 
+                                        if (!$scope.$$phase) {
+                                            $scope.$apply();
+                                        }
+
                                     };
 
                                     $scope.noComplete = function () {

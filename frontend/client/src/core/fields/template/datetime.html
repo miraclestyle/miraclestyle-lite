@@ -1,8 +1,8 @@
 <md-input-container class="select-input">
     <label ng-if="config.ui.label !== false"><%= config.ui.compiled.label %></label>
 
-    <div class="<%= config.ui.attrs['class'] %>" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
-        <div tabindex="0" md-ink-ripple-list class="as-md-input select-box clearfix">
+    <div tabindex="0" md-ink-ripple-list class="<%= config.ui.attrs['class'] %> as-md-input select-box clearfix color-child-when-disabled" name="<%= config.ui.name %>" <%= config.ui.compiled.attrs %>>
+ 
             <div class="selected-item-wrapper">
                 <span>
                     <span class="selected-item"></span>
@@ -11,7 +11,7 @@
             <div class="select-icon">
                 <icon type="arrow_drop_down"></icon>
             </div>
-        </div>
+ 
     </div>
    
     <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()">

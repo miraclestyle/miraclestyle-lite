@@ -685,7 +685,7 @@ class _BaseImageProperty(_BaseBlobProperty):
       # - failed to write to cloudstorage / cloudstorage failed for some reason.
       if settings.DEVELOPMENT_SERVER:
         blob = urlfetch.fetch(
-            '%s/_ah/gcs%s' % (settings.get_host_url(), gs_object_name[3:]))
+            '%s/_ah/gcs%s' % (settings.get_host_url('localhost:9982'), gs_object_name[3:]))
         blob = blob.content
       else:
         readonly_blob = cloudstorage.open(gs_object_name[3:], 'r')

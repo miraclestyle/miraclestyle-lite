@@ -154,7 +154,7 @@ class Engine:
 
   @classmethod
   def process_action_input(cls, context, input):
-    context.input['__request__'] = input['__request__']
+    context.input['__request__'] = input.pop('__request__', None)
     input_error = {}
     for key, argument in context.action.arguments.items():
       if argument._code_name is None:

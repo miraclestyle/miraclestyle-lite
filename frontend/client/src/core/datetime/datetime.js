@@ -443,6 +443,9 @@
                     });
 
                     element.on('click focus', function (event) {
+                        if (element.attr('disabled')) {
+                            return;
+                        }
                         event.preventDefault();
                         if (open) {
                             return;
