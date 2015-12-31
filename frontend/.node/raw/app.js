@@ -10021,6 +10021,9 @@ function msieversion() {
                     });
 
                     element.on('click focus', function (event) {
+                        if (element.attr('disabled')) {
+                            return;
+                        }
                         event.preventDefault();
                         if (open) {
                             return;
@@ -16229,6 +16232,10 @@ function msieversion() {
                                         }
                                         $scope.formSetPristine();
                                         snackbar.showK('changesSaved');
+
+                                        if (!$scope.$$phase) {
+                                            $scope.$apply();
+                                        }
 
                                     };
 
