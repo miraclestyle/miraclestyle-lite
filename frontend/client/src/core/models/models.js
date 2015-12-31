@@ -228,7 +228,7 @@
                     data;
 
                 if (kind === undefined) {
-                    console.error('no info for kind ' + kind_id);
+                    //console.error('no info for kind ' + kind_id);
                     return undefined;
                 }
 
