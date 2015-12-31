@@ -279,6 +279,10 @@ button.product-quantity-button {
     cursor:pointer;
 }
 
+.fake-button[disabled] input[type="file"]::-webkit-file-upload-button, .fake-button[disabled] input[type="file"] {
+    cursor:not-allowed;
+}
+
 .fixed-width-240 .fake-button input.upload {
     width:240px;
 }

@@ -1067,7 +1067,3 @@ a[type="button"] {
     word-wrap: break-word;
     word-break: break-word;
 }
-
-.fake-button[disabled] input[type="file"] {
-    display:none;
-}
