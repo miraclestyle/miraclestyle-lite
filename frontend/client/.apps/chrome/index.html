@@ -1,200 +1,56 @@
-
-<!DOCTYPE html>
 <html>
-
-<head>
-    <script> (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-68614444-1', 'auto'); ga('send', 'pageview');
-    </script>
-    <script>
-        window.VERSION = '1.389631984404855845';
-        window.DEBUG = false;
-        if (window.location.hash && window.location.hash.indexOf('#context-monitor-') !== -1) {
-            window.location.hash = '';
-        }
-    </script>
-    <title ng-bind="site.title"></title>
-    
-    <meta id="is-landscape" />
-    <meta id="is-mobile" />
-    <meta id="is-tablet" />
-    <meta id="is-desktoplike" />
-
-
-
-    
-    <base href="/" />
-    
-
-    <meta name="theme-color" content="#FFFFFF">
-<link rel="icon" sizes="256x256" href="client/dist/favicon.png">
-
-
-
-<!-- Opera Speed Dial Favicon -->
-<link rel="icon" type="image/png" href="client/dist/favicon.png" />
-            
-<!-- Standard Favicon -->
-<link rel="icon" type="image/png" href="client/dist/favicon.png" />
-
-<!-- For iPhone 4 Retina display: -->
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="client/dist/favicon.png">
-
-<!-- For iPad: -->
-<link rel="apple-touch-icon-precomposed" sizes="72x72" href="client/dist/favicon.png">
-
-<!-- For iPhone: -->
-<link rel="apple-touch-icon-precomposed" href="client/dist/favicon.png">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="white">
-<link rel="apple-touch-icon" sizes="72x72" href="client/dist/static/icons/logo_favicon_72.png">
-<link rel="apple-touch-icon" sizes="114x114" href="client/dist/static/icons/logo_favicon_114.png">
-<link rel="apple-touch-icon" href="client/dist/static/icons/logo_favicon_57.png">
-<link rel="apple-touch-startup-image" href="client/dist/static/icons/logo_favicon_256.png">
-
-<meta name="mobile-web-app-capable" content="yes">
-<link rel="icon" sizes="72x72"href="client/dist/static/icons/logo_favicon_72.png">
-<link rel="icon" sizes="114x114"href="client/dist/static/icons/logo_favicon_114.png">
-<link rel="icon" sizes="192x192"href="client/dist/static/icons/logo_favicon_192.png">
-<link rel="icon" sizes="57x57"href="client/dist/static/icons/logo_favicon_57.png">
-
-<meta name="application-name" content="Miraclestyle"/>
-<meta name="msapplication-TileColor" content="#FFFFFF"/>
-<meta name="msapplication-square70x70logo" content="client/dist/static/icons/logo_favicon_70.png"/>
-<meta name="msapplication-square150x150logo" content="client/dist/static/icons/logo_favicon_150.png"/>
-<meta name="msapplication-wide310x150logo" content="client/dist/static/icons/logo_favicon_256.png"/>
-<meta name="msapplication-square310x310logo" content="client/dist/static/icons/logo_favicon_256.png"/>
-
-
- <link rel="manifest" href="client/dist/manifest.json">
-
-    
-    
-
-
-    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="fragment" content="!" />
-    <link href='https://fonts.googleapis.com/css?family=Roboto:400,300italic,300,100italic,100,400italic,500,500italic,700italic,700,900italic,900' rel='stylesheet' type='text/css'>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet">
-    
-    
-     <link rel="stylesheet" type="text/css" href="client/dist/style.css?v=1.389631984404855845" />
-    
-</head>
-<body ng-controller="RootController" layout="row">
-    <div class="loading-splash" home-splash>
-        <div class="progress-wrapper progress circular">
-            <div class="progress circular">
-                <div class="spinner">
-                    <div class="arc one"></div>
-                    <div class="arc two"></div>
-                    <div class="mask one"></div>
-                    <div class="mask two"></div>
-                    <div class="pin"></div>
-                </div>
-            </div>
-            <div class="clearfix"></div>
-        </div>
-    </div>
-    <md-sidenav md-swipe-left="site.toolbar.menu.close()" layout="column" class="left md-closed" md-component-id="site.toolbar.menu.id">
-        <md-content>
-            <div class="bar-logo">
-                <img src="client/dist/static/logo_720x300.png" />
-            </div>
-            <div class="list list-padding seam-bottom">
-                <!-- <sidenav-item ng-show="!currentAccount._is_guest" close-master-menu ui-sref="following">Home</sidenav-item> -->
-                <sidenav-item close-master-menu ui-sref="home">Home</sidenav-item>
-            </div>
-
-            <div class="list list-padding seam-bottom" ng-show="!currentAccount._is_guest" ng-controller="BuyerManagementController">
-                <div class="list-subheader subheader">Buyer</div>
-                <sidenav-item close-master-menu ui-sref="buy-carts">Carts</sidenav-item>
-                <sidenav-item close-master-menu ui-sref="buy-orders">Orders</sidenav-item>
-                <sidenav-item close-master-menu="settings()">Addresses</sidenav-item>
-            </div>
-
-            <div class="list list-padding seam-bottom" ng-controller="SellerManagementController" ng-show="!currentAccount._is_guest">
-                <div class="list-subheader subheader">Seller</div>
-                <sidenav-item close-master-menu ui-sref="sell-catalogs">Catalogs</sidenav-item>
-                <sidenav-item close-master-menu ui-sref="sell-orders">Orders</sidenav-item>
-                <sidenav-item close-master-menu="settings()">Settings</sidenav-item>
-            </div>
-
-            <div class="list list-padding seam-bottom" ng-controller="AccountManagementController" ng-show="!currentAccount._is_guest">
-                <div class="list-subheader subheader">Account</div>
-                <sidenav-item close-master-menu="logout()">Sign out</sidenav-item>
-                <sidenav-item close-master-menu="settings()">Settings</sidenav-item>
-            </div>
-
-            <div class="list list-padding seam-bottom" ng-controller="LoginLinksController" ng-show="currentAccount._is_guest">
-                <div class="list-subheader subheader">Account</div>
-                <sidenav-item close-master-menu="login()">Sign in / Sign up</sidenav-item>
-            </div>
-
-            <div class="list list-padding seam-bottom" ng-show="currentAccount._root_admin && GLOBAL_CONFIG.admin.menu">
-                <div class="list-subheader subheader">Administration</div>
-                <sidenav-item  close-master-menu  ng-repeat="item in GLOBAL_CONFIG.admin.menu" ui-sref="admin-list({query: helpers.url.jsonToUrlsafe({}), kind : item.kind})" ng-bind="item.name"></sidenav-item>
-            </div>
-
-              <div class="list list-padding">
-                <div class="list-subheader subheader">Support</div>
-                <sidenav-item close-master-menu ui-sref="about">About</sidenav-item>
-                <sidenav-item close-master-menu ui-sref="tos">Terms</sidenav-item>
-                <sidenav-item close-master-menu ui-sref="privacy_policy">Privacy</sidenav-item>
-                <sidenav-item close-master-menu ui-sref="support">Support</sidenav-item>
-              </div>
-            </div>
-        </md-content>
-    </md-sidenav>
-    <div layout="column" layout-fill tabIndex="-1" role="main">
-        <md-toolbar class="main-toolbar" ng-class="{'no-right-actions': site.toolbar.hideRight,
-                               'no-left-actions': site.toolbar.hideLeft, 'ngloaded': true, 'hidden': site.toolbar.hidden}">
-            <div toolbar-padding-control class="md-toolbar-tools with-actions">
-                <div class="fill-height">
-                    <div ng-if="!site.toolbar.hideLeft" class="md-toolbar-item md-tools actions-left ng-scope">
-                        <button md-ink-ripple-action
-                                ng-click="site.toolbar.menu.open()"
-                                type="button"
-                                class="button-transparent homepage-menu button-square">
-                                <icon type="menu"></icon>
-                        </button>
-                    </div>
-
-                    <div class="md-toolbar-item md-breadcrumb">
-                        <span ng-bind="site.toolbar.title" class="md-toolbar-title"></span>
-                    </div>
-
-                    <div toolbar-padding-control-element ng-if="!site.toolbar.hideRight" class="md-toolbar-item md-tools actions-right ng-scope">
-                        <button ng-click="site.toolbar.actionRight()"
-                                md-ink-ripple-action type="button"
-                                class="action button-transparent button-action ripple-presence" 
-                                loading>
-                            <icon type="more_vert">more_vert</icon>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </md-toolbar>
-        <content-spinner toolbar="true"></content-spinner>
-        <div fill-empty-space2 class="ui-view-wrapper" ui-view></div>
-    </div>
-
-    <snackbar></snackbar>
-
-    
-    <script type="text/javascript" src="/_ah/channel/jsapi"></script>
-    
- 
-
-    
-    
-        <script type="text/javascript" src="client/dist/vendors.js?v=1.389631984404855845"></script>
-        <script type="text/javascript" src="client/dist/app.js?v=1.389631984404855845"></script>
-        <script type="text/javascript" src="client/dist/templates.js?v=1.389631984404855845"></script>
-    
-
-</body>
-
+  <head>
+    <title>Internal Server Error</title>
+    <style>
+      body {
+        padding: 20px;
+        font-family: arial, sans-serif;
+        font-size: 14px;
+      }
+      pre {
+        background: #F2F2F2;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Internal Server Error</h1>
+    <p>The server has either erred or is incapable of performing
+    the requested operation.</p>
+    <pre>Traceback (most recent call last):
+  File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 1535, in __call__
+    rv = self.handle_exception(request, response, e)
+  File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 1529, in __call__
+    rv = self.router.dispatch(request, response)
+  File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 1278, in default_dispatcher
+    return route.handler_adapter(request, response)
+  File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 1102, in __call__
+    return handler.dispatch()
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389651683718400222/handler/base.py&quot;, line 505, in dispatch
+    super(RequestHandler, self).dispatch()
+  File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 572, in dispatch
+    return self.handle_exception(e, self.app.debug)
+  File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 570, in dispatch
+    return method(*args, **kwargs)
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389651683718400222/handler/base.py&quot;, line 542, in get
+    data = self.respond(*args, **kwargs)
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389651683718400222/handler/builder.py&quot;, line 39, in respond
+    self.render(self.base_template, data)
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389651683718400222/handler/base.py&quot;, line 524, in render
+    return self.render_response(tpl, **self.template)
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389651683718400222/handler/base.py&quot;, line 517, in render_response
+    rv = self.jinja2.render_template(_template, **context)
+  File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2_extras/jinja2.py&quot;, line 158, in render_template
+    return self.environment.get_template(_filename).render(**context)
+  File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/jinja2-2.6/jinja2/environment.py&quot;, line 894, in render
+    return self.environment.handle_exception(exc_info, True)
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389651683718400222/templates/angular/index.html&quot;, line 34, in top-level template code
+    {% include 'icons.html' %}
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389651683718400222/templates/icons.html&quot;, line 2, in top-level template code
+    &lt;link rel=&quot;icon&quot; sizes=&quot;256x256&quot; href=&quot;{{static_dir('dist/favicon.png')}}&quot;&gt;
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389651683718400222/handler/builder.py&quot;, line 27, in _static_dir
+    static_dir = '%s/' % settings.HOST_URL
+AttributeError: 'module' object has no attribute 'HOST_URL'
+</pre>
+  </body>
 </html>

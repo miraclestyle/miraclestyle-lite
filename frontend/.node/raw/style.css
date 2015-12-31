@@ -2785,6 +2785,10 @@ a[type="button"] {
 .word-break-word {
     word-wrap: break-word;
     word-break: break-word;
+}
+
+.fake-button[disabled] input[type="file"] {
+    display:none;
 }.modal-open {
     overflow: hidden;
 }
