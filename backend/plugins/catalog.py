@@ -10,7 +10,7 @@ import datetime
 import copy
 import collections
 
-from google.appengine.api import search
+from google.appengine.api import search, datastore
 
 import orm
 import tools
@@ -22,19 +22,6 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
 
   def run(self, context):
     # This code builds leaf categories for selection with complete names, 3.8k of them.
-    def delete_all_in_index(index_name):
-        """Delete all the docs in the given index."""
-        doc_index = search.Index(name=index_name)
-        # looping because get_range by default returns up to 100 documents at a time
-        while True:
-            # Get a list of documents populating only the doc_id field and extract the ids.
-            document_ids = [document.doc_id
-                            for document in doc_index.get_range(ids_only=True)]
-            if not document_ids:
-                break
-            # Delete the documents for the given ids from the Index.
-            doc_index.delete(document_ids)
-    delete_all_in_index('24')
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     update_file_path = self.cfg.get('file', None)
@@ -42,6 +29,9 @@ class CatalogProductCategoryUpdateWrite(orm.BaseModel):
     if not update_file_path:
       raise orm.TerminateAction()
     Category = context.models['24']
+    gets = datastore.Query('24', namespace=None, keys_only=True).Run()
+    keys = list(gets)
+    datastore.Delete(keys)
     categories = []
     put_entities = []
     structure = {}
