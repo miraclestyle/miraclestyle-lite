@@ -571,7 +571,7 @@ if (!Array.prototype.indexOf) {
         // global configuration for the application
         // this config file will expand
         GLOBAL_CONFIG = {
-            debug: true, // debug mode
+            debug: window.DEBUG, // debug mode
             host: host,
             modules: ['config',
                 'ngAnimate',

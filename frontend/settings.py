@@ -19,7 +19,8 @@ MIRACLESTYLE_SETTINGS = {
   'DEBUG': False,
   'FORCE_SSL': True,
   'BUCKET_PATH': 'themiraclestyle.appspot.com',
-  'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr'
+  'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
+  'GOOGLE_TAG_MANAGER_ID_WEB': 'GTM-MPC3DQ'
 }
 
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
@@ -30,7 +31,8 @@ DEFAULT_HOST_SETTINGS = {
   'UNMINIFIED': False,
   'LAG': False,
   'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
-  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr'
+  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
+  'GOOGLE_TAG_MANAGER_ID_WEB': 'GTM-TGBGSH'
 }
 HOSTS_SPECIFIC_SETTINGS = {
   'localhost:9982': {
@@ -59,6 +61,8 @@ DEBUG = HOST_SPECIFIC_SETTINGS['DEBUG']
 LAG = HOST_SPECIFIC_SETTINGS['LAG']
 UNMINIFIED = HOST_SPECIFIC_SETTINGS['UNMINIFIED']
 FORCE_SSL = HOST_SPECIFIC_SETTINGS['FORCE_SSL']
+GOOGLE_TAG_MANAGER_ID_WEB = HOST_SPECIFIC_SETTINGS['GOOGLE_TAG_MANAGER_ID_WEB']
+PAYPAL_WEBSCR = HOST_SPECIFIC_SETTINGS['PAYPAL_WEBSCR']
 
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 

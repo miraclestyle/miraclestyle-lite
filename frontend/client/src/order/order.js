@@ -248,6 +248,8 @@
 
                                     $scope.writable = true;
 
+                                    $scope.PAYPAL_WEBSCR = window.PAYPAL_WEBSCR;
+
                                     $scope.stage = {
                                         checkout: null,
                                         time: 500,
