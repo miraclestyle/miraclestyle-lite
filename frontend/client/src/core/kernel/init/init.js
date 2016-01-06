@@ -198,8 +198,12 @@
                 if (toState.title) {
                     $rootScope.setPageToolbarTitle(toState.title);
                 }
-                if (window.ga) {
-                    window.ga('send', 'pageview', $state.href(toState, toParams));
+                if (window.ga && !window.tracker) {
+                    window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID);
+                }
+                if (window.tracker) {
+                    var url = $state.href(toState, toParams);
+                    window.tracker.send('pageview', url);
                 }
             });
         $.extend(modelsInfo, window.MODELS_META);

@@ -2,7 +2,7 @@
 STAGE=$1
 WHERE=$2
 MESSAGE=${3-automessage}
-ALSO=$4
+NOGIT=$4
 
 if [ $# -lt 2 ]
   then
@@ -34,22 +34,29 @@ while true; do
     esac
 done
 
-git add -A
-if [ "$WHERE" = "frontend" ]; then
-    git commit -m"$MESSAGE - deploy frontend"
-elif [ "$WHERE" = "backend" ]; then
-    git commit -m"$MESSAGE - deploy backend"
-elif [ "$WHERE" = "all" ]; then
-    git commit -m"$MESSAGE - deploy all"
+if ! [ -n "$NOGIT" ]
+    then
+    git add -A
+    if [ "$WHERE" = "frontend" ]; then
+        git commit -m"$MESSAGE - deploy frontend"
+    elif [ "$WHERE" = "backend" ]; then
+        git commit -m"$MESSAGE - deploy backend"
+    elif [ "$WHERE" = "all" ]; then
+        git commit -m"$MESSAGE - deploy all"
+    fi
+    git pull
 fi
-git pull
 
 if [ "$WHERE" = "frontend" ] || [ "$WHERE" = "all" ]; then
 sh build.sh
 fi
-git add -A
-git commit -m"$MESSAGE - build"
-git push
+
+if ! [ -n "$NOGIT" ]
+    then
+    git add -A
+    git commit -m"$MESSAGE - build"
+    git push
+fi
 
 if [ "$STAGE" = "production" ]; then
     python stager.py production

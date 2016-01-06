@@ -571,7 +571,7 @@ if (!Array.prototype.indexOf) {
         // global configuration for the application
         // this config file will expand
         GLOBAL_CONFIG = {
-            debug: true, // debug mode
+            debug: window.DEBUG, // debug mode
             host: host,
             modules: ['config',
                 'ngAnimate',
@@ -21831,6 +21831,8 @@ angular.module('app')
 
                                     $scope.writable = true;
 
+                                    $scope.PAYPAL_WEBSCR = window.PAYPAL_WEBSCR;
+
                                     $scope.stage = {
                                         checkout: null,
                                         time: 500,
@@ -23822,8 +23824,12 @@ angular.module('app')
                 if (toState.title) {
                     $rootScope.setPageToolbarTitle(toState.title);
                 }
-                if (window.ga) {
-                    window.ga('send', 'pageview', $state.href(toState, toParams));
+                if (window.ga && !window.tracker) {
+                    window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID);
+                }
+                if (window.tracker) {
+                    var url = $state.href(toState, toParams);
+                    window.tracker.send('pageview', url);
                 }
             });
         $.extend(modelsInfo, window.MODELS_META);

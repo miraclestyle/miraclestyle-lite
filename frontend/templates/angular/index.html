@@ -13,6 +13,7 @@
     })(window,document,'script','dataLayer','{{settings.GOOGLE_TAG_MANAGER_ID_WEB}}');</script>
     <!-- End Google Tag Manager -->
     <script>
+        window.GOOGLE_ANALYTICS_TRACKING_ID = '{{settings.GOOGLE_ANALYTICS_TRACKING_ID}}';
         window.PAYPAL_WEBSCR = '{{settings.PAYPAL_WEBSCR}}';
         window.VERSION = '{{version()}}';
         window.DEBUG = {% if settings.DEBUG %}true{% else %}false{% endif %};
