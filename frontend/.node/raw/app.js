@@ -21914,10 +21914,7 @@ angular.module('app')
                                         },
                                         converToOrder: function ($event) {
                                             var submit = function () {
-                                                $timeout(function () {
-                                                    $scope.pressedSubmit = true;
-                                                    $($event.target).parents('form:first').submit();
-                                                });
+                                                $($event.target).parents('form:first').submit();
                                             };
                                             if ($scope.order.state === 'order') {
                                                 return submit();
@@ -21927,10 +21924,6 @@ angular.module('app')
                                                     state: 'order'
                                                 }, {
                                                     disableUI: true
-                                                }).then(function () {
-                                                    $timeout(function () {
-                                                        submit();
-                                                    }, 200, false);
                                                 });
                                             });
                                         },
@@ -22333,7 +22326,8 @@ angular.module('app')
                                                     payment_method: $scope.payment.method,
                                                     _lines: $scope.order._lines
                                                 },
-                                                deleteMaybe, promise;
+                                                deleteMaybe,
+                                                promise;
                                             $.extend(data, extra);
                                             deleteMaybe = function () {
                                                 var allDeleted = true;
