@@ -185,9 +185,12 @@
                                     <button ng-click="stage.converToOrder($event)"
                                             md-ink-ripple
                                             type="button"
-                                            loading="pressedSubmit"
+                                            loading
                                             class="md-button text-center order-next-stage order-go-pay color-child-when-disabled">
-                                         <span class="md-button-text"><span ng-if="order.state !== 'order'">Place Your Order And </span>Pay With</span>
+                                         <span class="md-button-text">
+                                            <span ng-if="order.state !== 'order'">Place Your Order</span>
+                                            <span ng-if="order.state == 'order'">Pay With</span>
+                                          </span>
                                          <img class="block t100" ng-src="{{helpers.url.local('client/dist/static/order/cc-badges-ppmcvdam.png')}}" alt="Check out with PayPal" />
                                     </button>
                                   </div>

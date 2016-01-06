@@ -64,7 +64,7 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
           else:
             grouping = []
           if digits is None:
-            digits = 3
+            digits = 2
           uom.update({
               'measurement': 'Currency',
               'name': uom_data['name'].text,
