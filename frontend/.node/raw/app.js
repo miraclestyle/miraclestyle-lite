@@ -823,6 +823,30 @@ if (window.DEBUG) {
                 }
                 return angular.noop;
             },
+            track: {
+                pageview: function () {
+                    if (window.tracker) {
+                        var args = _.toArray(arguments);
+                        if (GLOBAL_CONFIG.debug) {
+                            console.log('Tracking pageview', args);
+                        }
+                        args.unshift('pageview');
+                        window.tracker.send.apply(window.tracker, args);
+
+                    }
+                },
+                event: function () {
+                    if (window.tracker) {
+                        var args = _.toArray(arguments);
+                        if (GLOBAL_CONFIG.debug) {
+                            console.log('Tracking event', args);
+                        }
+                        args.unshift('event');
+                        window.tracker.send.apply(window.tracker, args);
+
+                    }
+                }
+            },
             endpoint: {
                 isResponseError: function (response) {
                     return angular.isString(response) || (response.status !== 200 || response.data.errors);
@@ -5204,7 +5228,11 @@ function msieversion() {
                 if (element.attr('md-ink-ripple-pulsate')) {
                     scope.$watch(element.attr('md-ink-ripple-pulsate'), function (neww) {
                         if (neww) {
-                            onPressDown2({}, PULSATE_FREQUENCY);
+                            var ets = element[0].getBoundingClientRect();
+                            onPressDown2({
+                                clientY: ets.top + (ets.width / 2),
+                                clientX: ets.left + (ets.height / 2)
+                            }, PULSATE_FREQUENCY);
                         }
                     });
                 }
@@ -5238,7 +5266,10 @@ function msieversion() {
                 function onPressDown2(ev, time) {
                     if (!isRippleAllowed()) return;
 
-                    var cls = 'ripple-animation';
+                    var cls = 'ripple-animation',
+                        element_position = {top: 0, left: 0},
+                        parent_height = 0,
+                        parent_width = 0;
 
                     if (ignore && ev.target) {
                         var target = $(ev.target),
@@ -5284,9 +5315,11 @@ function msieversion() {
                             'width': '48px'
                         };
                     } else {
-                        var parent_width = element.width();
-                        var parent_height = element.height();
-                        var element_position = element[0].getBoundingClientRect();
+                        element_position = element[0].getBoundingClientRect();
+                        parent_width = element_position.width;
+                        parent_height = element_position.height;
+                        //parent_width = element.width();
+                        //parent_height = element.height();
                         var parent_diagonal = 2 * (Math.round(Math.sqrt((parent_width * parent_width) + (parent_height * parent_height))));
                         if (parent_diagonal > 2000) {
                             parent_diagonal = 2000;
@@ -5312,7 +5345,10 @@ function msieversion() {
                             if (pulsates && time) {
                                 pulsates -= 1;
                                 setTimeout(function () {
-                                    onPressDown2({}, PULSATE_FREQUENCY);
+                                    onPressDown2({
+                                        clientY: element_position.top + (parent_height / 2),
+                                        clientX: element_position.left + (parent_width / 2)
+                                    }, PULSATE_FREQUENCY);
                                 }, PULSATE_FREQUENCY);
                             }
                         });
@@ -23816,7 +23852,7 @@ angular.module('app')
                 controller: 'AdminListController'
             });
 
-    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
+    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, helpers, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
         $rootScope.disableUI = function (state) {
             $rootScope.disableUIState = state;
             $rootScope.$broadcast('disableUI', state);
@@ -23835,11 +23871,11 @@ angular.module('app')
                     $rootScope.setPageToolbarTitle(toState.title);
                 }
                 if (window.ga && !window.tracker) {
-                    window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID);
+                    window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID, 'auto');
                 }
                 if (window.tracker) {
                     var url = $state.href(toState, toParams);
-                    window.tracker.send('pageview', url);
+                    helpers.track.pageview(url);
                 }
             });
         $.extend(modelsInfo, window.MODELS_META);
