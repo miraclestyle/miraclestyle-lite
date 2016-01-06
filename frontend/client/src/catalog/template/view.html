@@ -8,13 +8,13 @@
   <div class="clearfix">
 
       <div ng-hide="hideClose" class="top-close">
-           <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="close()">
+           <button md-ink-ripple-pulsate="$state.isCompleted()" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="close()">
              <icon color="white" type="close"></icon>
            </button>
       </div>
 
       <div ng-if="$state.isCompleted() && !notFound" class="top-close top-close-right">
-           <button md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="catalogMenu.toggle()">
+           <button md-ink-ripple-pulsate="$state.isCompleted()" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="catalogMenu.toggle()">
              <icon color="white" type="more_vert"></icon>
            </button>
       </div>
@@ -33,7 +33,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button data-pricetag-id="{{image.id}}-{{pricetag.id}}" md-ink-ripple type="button" class="button-transparent catalog-pricetag-link " loading="loadingProduct" ng-click="viewProduct(image, pricetag, $event)">
+                         <button data-pricetag-id="{{image.id}}-{{pricetag.id}}" md-ink-ripple md-ink-ripple-pulsate="$state.isCompleted()" type="button" class="button-transparent catalog-pricetag-link " loading="loadingProduct" ng-click="viewProduct(image, pricetag, $event)">
                             {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
                          </button>
                      </div>

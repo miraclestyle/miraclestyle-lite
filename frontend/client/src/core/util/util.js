@@ -2539,7 +2539,9 @@
                 if (element.controller('mdNoInk')) return angular.noop;
 
                 var ignore = element.attr('md-ink-ripple-ignore'),
-                    eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click');
+                    eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click'),
+                    pulsates = 3,
+                    PULSATE_FREQUENCY = 2000;
 
 
                 ignore = (ignore ? $parse(ignore)(scope) : undefined);
@@ -2584,6 +2586,14 @@
                 element.on(eventHandler, onPressDown);
 
 
+                if (element.attr('md-ink-ripple-pulsate')) {
+                    scope.$watch(element.attr('md-ink-ripple-pulsate'), function (neww) {
+                        if (neww) {
+                            onPressDown2({}, PULSATE_FREQUENCY);
+                        }
+                    });
+                }
+
                 // Publish self-detach method if desired...
                 return function detach() {
                     element.off(eventHandler, onPressDown);
@@ -2598,7 +2608,8 @@
                  *
                  */
                 // temporary fix for the safari ripple
-                var k = null;
+                var k = null,
+                    times = 3;
 
                 function onPressDown(ev) {
                     if (k) {
@@ -2609,7 +2620,7 @@
                     }, (isSafari() ? 90 : 0));
                 }
 
-                function onPressDown2(ev) {
+                function onPressDown2(ev, time) {
                     if (!isRippleAllowed()) return;
 
                     var cls = 'ripple-animation';
@@ -2683,11 +2694,16 @@
                             addClass: cls
                         }).start().done(function () {
                             ripple.removeClass(cls);
+                            if (pulsates && time) {
+                                pulsates -= 1;
+                                setTimeout(function () {
+                                    onPressDown2({}, PULSATE_FREQUENCY);
+                                }, PULSATE_FREQUENCY);
+                            }
                         });
                     }, 0, false);
 
                 }
-
                 function onPressUp(ev) {
                     isHeld = false;
                 }
