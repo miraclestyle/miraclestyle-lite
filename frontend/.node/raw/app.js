@@ -21285,6 +21285,10 @@ angular.module('app')
                                     loadProduct();
                                 }
 
+                                if (config.track) {
+                                    config.track();
+                                }
+
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                             });
@@ -21514,7 +21518,10 @@ angular.module('app')
             };
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
-                    popFrom: helpers.clicks.realEventTarget($event.target)
+                    popFrom: helpers.clicks.realEventTarget($event.target),
+                    track: function () {
+                        helpers.track.event('Home / Catalogs', 'open catalog');
+                    }
                 });
             };
 
