@@ -833,6 +833,10 @@
                                     loadProduct();
                                 }
 
+                                if (config.track) {
+                                    config.track();
+                                }
+
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                             });

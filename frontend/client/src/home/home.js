@@ -216,7 +216,10 @@
             };
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
-                    popFrom: helpers.clicks.realEventTarget($event.target)
+                    popFrom: helpers.clicks.realEventTarget($event.target),
+                    track: function () {
+                        helpers.track.event('Home / Catalogs', 'open catalog');
+                    }
                 });
             };
 
