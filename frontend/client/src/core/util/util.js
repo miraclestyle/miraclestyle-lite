@@ -2589,7 +2589,11 @@
                 if (element.attr('md-ink-ripple-pulsate')) {
                     scope.$watch(element.attr('md-ink-ripple-pulsate'), function (neww) {
                         if (neww) {
-                            onPressDown2({}, PULSATE_FREQUENCY);
+                            var ets = element[0].getBoundingClientRect();
+                            onPressDown2({
+                                clientY: ets.top + (ets.width / 2),
+                                clientX: ets.left + (ets.height / 2)
+                            }, PULSATE_FREQUENCY);
                         }
                     });
                 }
@@ -2623,7 +2627,10 @@
                 function onPressDown2(ev, time) {
                     if (!isRippleAllowed()) return;
 
-                    var cls = 'ripple-animation';
+                    var cls = 'ripple-animation',
+                        element_position = {top: 0, left: 0},
+                        parent_height = 0,
+                        parent_width = 0;
 
                     if (ignore && ev.target) {
                         var target = $(ev.target),
@@ -2669,9 +2676,11 @@
                             'width': '48px'
                         };
                     } else {
-                        var parent_width = element.width();
-                        var parent_height = element.height();
-                        var element_position = element[0].getBoundingClientRect();
+                        element_position = element[0].getBoundingClientRect();
+                        parent_width = element_position.width;
+                        parent_height = element_position.height;
+                        //parent_width = element.width();
+                        //parent_height = element.height();
                         var parent_diagonal = 2 * (Math.round(Math.sqrt((parent_width * parent_width) + (parent_height * parent_height))));
                         if (parent_diagonal > 2000) {
                             parent_diagonal = 2000;
@@ -2697,7 +2706,10 @@
                             if (pulsates && time) {
                                 pulsates -= 1;
                                 setTimeout(function () {
-                                    onPressDown2({}, PULSATE_FREQUENCY);
+                                    onPressDown2({
+                                        clientY: element_position.top + (parent_height / 2),
+                                        clientX: element_position.left + (parent_width / 2)
+                                    }, PULSATE_FREQUENCY);
                                 }, PULSATE_FREQUENCY);
                             }
                         });

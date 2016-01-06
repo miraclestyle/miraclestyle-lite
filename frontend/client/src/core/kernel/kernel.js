@@ -63,6 +63,30 @@
                 }
                 return angular.noop;
             },
+            track: {
+                pageview: function () {
+                    if (window.tracker) {
+                        var args = _.toArray(arguments);
+                        if (GLOBAL_CONFIG.debug) {
+                            console.log('Tracking pageview', args);
+                        }
+                        args.unshift('pageview');
+                        window.tracker.send.apply(window.tracker, args);
+
+                    }
+                },
+                event: function () {
+                    if (window.tracker) {
+                        var args = _.toArray(arguments);
+                        if (GLOBAL_CONFIG.debug) {
+                            console.log('Tracking event', args);
+                        }
+                        args.unshift('event');
+                        window.tracker.send.apply(window.tracker, args);
+
+                    }
+                }
+            },
             endpoint: {
                 isResponseError: function (response) {
                     return angular.isString(response) || (response.status !== 200 || response.data.errors);

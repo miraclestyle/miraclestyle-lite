@@ -180,7 +180,7 @@
                 controller: 'AdminListController'
             });
 
-    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
+    })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, helpers, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
         $rootScope.disableUI = function (state) {
             $rootScope.disableUIState = state;
             $rootScope.$broadcast('disableUI', state);
@@ -199,11 +199,11 @@
                     $rootScope.setPageToolbarTitle(toState.title);
                 }
                 if (window.ga && !window.tracker) {
-                    window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID);
+                    window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID, 'auto');
                 }
                 if (window.tracker) {
                     var url = $state.href(toState, toParams);
-                    window.tracker.send('pageview', url);
+                    helpers.track.pageview(url);
                 }
             });
         $.extend(modelsInfo, window.MODELS_META);
