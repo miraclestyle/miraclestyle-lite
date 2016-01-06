@@ -40,7 +40,7 @@
                 }
                 return formatted;
             };
-        })).run(ng(function (modelsMeta, modelsConfig, GLOBAL_CONFIG, $modal, modals, snackbar, $state, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
+        })).run(ng(function (modelsMeta, modelsConfig, $sce, GLOBAL_CONFIG, $modal, modals, snackbar, $state, helpers, endpoint, $q, $filter, currentAccount, $mdSidenav, $timeout) {
             modelsConfig(function (models) {
                 $.extend(models['34'], {
                     current: function (sellerKey, opts) {
@@ -248,7 +248,7 @@
 
                                     $scope.writable = true;
 
-                                    $scope.PAYPAL_WEBSCR = window.PAYPAL_WEBSCR;
+                                    $scope.PAYPAL_WEBSCR = $sce.trustAsResourceUrl(window.PAYPAL_WEBSCR);
 
                                     $scope.stage = {
                                         checkout: null,
