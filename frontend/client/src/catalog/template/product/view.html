@@ -67,7 +67,7 @@
                                     <div class="list-content-tile">
                                         <span class="first">
                                           <span ng-bind="product.unit_price|formatCurrency:catalog._seller._currency"></span> 
-                                          <span ng-bind="catalog._seller._currency.code">()</span>
+                                          <span ng-if="catalog._seller._currency.code == 'USD'" ng-bind="catalog._seller._currency.code"></span>
                                         </span>
                                         <span ng-bind="stockText" class="second"></span>
                                     </div>
