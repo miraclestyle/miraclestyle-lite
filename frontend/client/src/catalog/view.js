@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    angular.module('app').run(ng(function (modelsEditor, modelsMeta, modelsConfig, currentAccount, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
+    angular.module('app').run(ng(function (modelsEditor, modelsMeta, modelsConfig, errorHandling, currentAccount, $modal, modals, helpers, $q, GLOBAL_CONFIG, $mdSidenav, $timeout, $state, snackbar, social) {
 
         modelsConfig(function (models) {
             var doNotRipple = ['.catalog-close-button', '.catalog-pricetag', '.catalog-pricetag-link'];
@@ -27,6 +27,24 @@
                     return this.viewModal(key, config);
                 },
                 viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts, config) {
+                    function getTrack(relativePath) {
+                        var track;
+                        if (config) {
+                            track = config.track;
+                        }
+                        return helpers.track.proxyLabelToEvents(track || helpers.track.noop.catalogProducts, relativePath);
+                    }
+                    /*
+                    openProduct: "open product",
+                    closeProduct: "close product",
+                    openProductDrawer: "open product drawer",
+                    closeProductDrawer: "close product drawer",
+                    changeProductVariantOption: "change product variant option",
+                    focusProductCustomVariant: "focus product custom variant",
+                    changeProductQuantity: "change product quantity",
+                    addToCart: "add to cart",
+                    updateCart: "update cart",
+                     */
                     var readArguments = {
                             _seller: {},
                             _images: {
@@ -43,6 +61,7 @@
                                 }
                             }
                         },
+                        track,
                         that = this,
                         deferOpen = $q.defer(),
                         openPromise = deferOpen.promise,
@@ -97,7 +116,8 @@
                                                         label: v.name,
                                                         writable: true,
                                                         attrs: {
-                                                            'ng-change': 'delayedChangeVariation(' + (v.allow_custom_value ? 'true' : 'false') + ')'
+                                                            'ng-change': 'delayedChangeVariation(' + (v.allow_custom_value ? 'true' : 'false') + ')',
+                                                            'ng-focus': 'getTrack().focusProductCustomVariant()'
                                                         },
                                                         args: 'variants[' + i + '].option'
                                                     }
@@ -191,6 +211,7 @@
                                     timer,
                                     deleteOrder,
                                     fakeScope = response.fakeScope,
+                                    relativeProductUrl,
                                     productInstanceResponse = response.productResponse;
                                 $scope.variantMenu = {};
                                 $scope.productMenu = {};
@@ -206,20 +227,25 @@
                                         return;
                                     }
                                     var key = (config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-' + ($scope.currentVariation.length ? 'variant-' : '') + 'view',
-                                        productUrl = $state.engineHref(key, {
-                                            key: $scope.catalog.key,
-                                            image_id: $scope.catalog._images[0].id,
-                                            pricetag_id: $scope.catalog._images[0].pricetags[0].id,
-                                            variant: helpers.url.jsonToUrlsafe($scope.currentVariation)
-                                        }, {
-                                            absolute: true
-                                        }),
+                                        buildUrl = function (a) {
+                                            return $state.engineHref(key, {
+                                                key: $scope.catalog.key,
+                                                image_id: $scope.catalog._images[0].id,
+                                                pricetag_id: $scope.catalog._images[0].pricetags[0].id,
+                                                variant: helpers.url.jsonToUrlsafe($scope.currentVariation)
+                                            }, {
+                                                absolute: a
+                                            });
+                                        },
+                                        productUrl = buildUrl(true),
                                         image = function (size) {
                                             if ($scope.product.images && $scope.product.images.length) {
                                                 return helpers.url.handleProtocol($scope.product.images[0].serving_url + '=s' + (size || '600'));
                                             }
                                             return undefined;
                                         };
+
+                                    relativeProductUrl = buildUrl(false);
                                     $scope.socialMeta = {
                                         facebook: {
                                             'u': productUrl
@@ -249,7 +275,11 @@
                                             name: $scope.product.name
                                         }
                                     };
+
+                                    track = getTrack(relativeProductUrl);
                                 };
+
+                                shareWatch();
 
                                 deleteOrder = function () {
                                     return models['34'].actions['delete']({
@@ -273,7 +303,9 @@
 
                                 $scope.displayShare = function () {
                                     shareWatch();
-                                    return social.share($scope.socialMeta, false);
+                                    return social.share($scope.socialMeta, false, undefined, {
+                                        track: helpers.track.proxyLabelToEvents(helpers.track.events.productShares, relativeProductUrl)
+                                    });
                                 };
 
                                 $scope.variantChooser = {};
@@ -288,6 +320,7 @@
                                     $scope.variantChooser.option = option;
                                     $scope.variantMenu.close();
                                     $scope.changeVariation();
+                                    track.changeProductVariantOption();
                                 };
 
                                 $scope.resetVariation = function () {
@@ -309,6 +342,12 @@
                                             $scope.$state.instant(function () {
                                                 $scope.markDown = true;
                                                 $scope.content = content;
+                                                track.openProductContent();
+
+                                                $scope.close = function () {
+                                                    $scope.$close();
+                                                    track.closeProductContent();
+                                                };
                                             });
                                         })
                                     });
@@ -401,6 +440,10 @@
                                     $scope.variationApplied = true;
                                 };
 
+                                $scope.getTrack = function () {
+                                    return track;
+                                };
+
                                 $scope.delayedChangeVariation = function (forceSkip) {
                                     if (timer) {
                                         $timeout.cancel(timer);
@@ -408,6 +451,7 @@
                                     timer = $timeout(function () {
                                         timer = null;
                                         $scope.changeVariation(forceSkip);
+                                        track.changeProductVariantOption();
                                     }, 500, false);
                                 };
 
@@ -435,6 +479,8 @@
                                     } else if (!$scope.canAddToCart) {
                                         $scope.disableUpdateCart = true;
                                     }
+
+                                    track.changeProductQuantity();
                                 };
 
                                 $scope.increaseQuantity = function () {
@@ -572,7 +618,13 @@
                                             $scope.productManager.quantity = 1;
                                             $scope.disableUpdateCart = !$scope.isInStock;
                                             $scope.canAddToCart = $scope.isInStock;
+                                            track.updateCart();
                                         } else {
+                                            if (!$scope.hasThisProduct) {
+                                                track.addToCart();
+                                            } else {
+                                                track.updateCart();
+                                            }
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;
                                             $scope.canAddToCart = true;
@@ -599,6 +651,7 @@
                                 $scope.close = function () {
                                     var promise = $scope.$close();
                                     promise.then(function () {
+                                        track.closeProduct();
                                         if (config.afterClose) {
                                             config.afterClose();
                                         }
@@ -614,6 +667,16 @@
 
                                 deferOpen.resolve();
 
+                                track.openProduct();
+
+                                $scope.productMenu.stateChanged = function (state) {
+                                    if (state) {
+                                        track.openProductDrawer();
+                                    } else {
+                                        track.closeProductDrawer();
+                                    }
+                                };
+
                             }, failedOpen);
 
                         })
@@ -622,7 +685,8 @@
                     return openPromise;
                 },
                 viewModal: function (key, config) {
-                    var that = this;
+                    var that = this,
+                        track;
 
                     $modal.open({
                         templateUrl: 'catalog/view.html',
@@ -656,13 +720,21 @@
                                         if (config.afterClose) {
                                             config.afterClose();
                                         }
+                                        if (track) {
+                                            track.closeCatalog();
+                                        }
                                     });
                                     return promise;
                                 };
                                 if (response) {
                                     var errors = response.data.errors;
-                                    if (errors && (errors.not_found || errors.malformed_key)) {
-                                        $scope.notFound = true;
+                                    if (errors) {
+                                        if ((errors.not_found || errors.malformed_key)) {
+                                            $scope.notFound = true;
+                                        } else {
+                                            $scope.close();
+                                            errorHandling.snackbar(errors);
+                                        }
                                         return;
                                     }
                                 }
@@ -681,11 +753,15 @@
                                 var imagesReader,
                                     accessImages,
                                     loadProduct,
-                                    catalogUrl = $state.engineHref('catalog-view', {
-                                        key: $scope.catalog.key
-                                    }, {
-                                        absolute: true
-                                    }),
+                                    buildUrl = function (a) {
+                                        return $state.engineHref('catalog-view', {
+                                            key: $scope.catalog.key
+                                        }, {
+                                            absolute: a
+                                        });
+                                    },
+                                    relativeCatalogUrl = buildUrl(false),
+                                    catalogUrl = buildUrl(true),
                                     embedCatalogUrl = $state.engineHref('embed-catalog-view', {
                                         key: $scope.catalog.key
                                     }, {
@@ -703,9 +779,12 @@
                                     access: accessImages,
                                     complete: function (items) {
                                         $scope.catalog._images.extend(items);
+                                        track.loadMoreCatalogImages();
                                     }
                                 });
                                 imagesReader.showLoaderAlways = true;
+
+                                track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.homeCatalog, relativeCatalogUrl);
 
                                 $scope.imagesReader = imagesReader;
 
@@ -742,6 +821,8 @@
                                 $scope.displayShare = function () {
                                     return social.share($scope.socialMeta, {
                                         src: embedCatalogUrl
+                                    }, undefined, {
+                                        track: helpers.track.proxyLabelToEvents(helpers.track.events.catalogShares, relativeCatalogUrl)
                                     });
                                 };
 
@@ -757,16 +838,22 @@
                                 };
 
                                 $scope.displayCart = function () {
-                                    if (currentAccount._is_guest) {
-                                        models['11'].login($state.engineHref((config.hideClose ? 'embed-' : '') + 'catalog-order-view', {
+                                    var getLink = function (engineHref) {
+                                        return $state[engineHref]((config.hideClose ? 'embed-' : '') + 'catalog-order-view', {
                                             key: $scope.catalog.key
-                                        }));
+                                        });
+                                    };
+                                    var link = getLink('engineHref');
+                                    if (currentAccount._is_guest) {
+                                        models['11'].login(link);
                                         return;
                                     }
                                     models['19'].current().then(function (response) {
                                         models['34'].manageModal(undefined, $scope.catalog._seller, response.data.entity, {
                                             cartMode: true,
-                                            cartModeRead: true
+                                            cartModeRead: true,
+                                            relativeUrl: getLink('href'),
+                                            track: helpers.track.events.catalogCarts
                                         });
                                     });
                                 };
@@ -781,10 +868,12 @@
 
                                 $scope.viewProduct = function (image, pricetag, $event) {
                                     var target = $event.target,
+                                        productLink = config.productLink,
                                         theTarget = $(target).parents('.catalog-pricetag:first');
                                     if (theTarget.length) {
                                         target = theTarget.get(0);
                                     }
+                                    config.productLink = false;
                                     $scope.loadingProduct = true;
                                     that.viewProductModal($scope.catalog.key, image.key, pricetag.key, config.variantSignatureAsDicts, {
                                         popFrom: target,
@@ -794,7 +883,8 @@
                                         noEscape: config.noEscapeOnProduct,
                                         autoAddToCart: (config.variantSignatureAsDicts && config.autoAddToCart) ? true : false,
                                         autoAddToCartQuantity: config.autoAddToCartQuantity,
-                                        afterClose: config.afterCloseProduct
+                                        afterClose: config.afterCloseProduct,
+                                        track: (productLink ? helpers.track.events.linkProducts : helpers.track.events.catalogProducts)
                                     })['finally'](function () {
                                         $scope.loadingProduct = false;
                                     });
@@ -805,7 +895,6 @@
                                 $scope.openSellerDetails = function () {
                                     $scope.sellerDetails.menu.open();
                                 };
-
                                 $scope.maybeLoadProduct = null;
 
                                 if (config.loadProduct) {
@@ -833,11 +922,22 @@
                                     loadProduct();
                                 }
 
-                                if (config.track) {
-                                    config.track();
-                                }
+                                track.openCatalog();
 
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
+
+                                $scope.sellerDetails.getTrack = function () {
+                                    return track;
+                                };
+
+                                $scope.catalogMenu.stateChanged = function (state) {
+                                    if (state) {
+                                        track.openCatalogDrawer();
+                                    } else {
+                                        track.closeCatalogDrawer();
+                                    }
+                                };
+
 
                             });
                         })

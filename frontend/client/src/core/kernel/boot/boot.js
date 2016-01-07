@@ -573,6 +573,7 @@ if (!Array.prototype.indexOf) {
         GLOBAL_CONFIG = {
             debug: window.DEBUG, // debug mode
             host: host,
+            tracker: {},
             modules: ['config',
                 'ngAnimate',
                 'ngMessages',

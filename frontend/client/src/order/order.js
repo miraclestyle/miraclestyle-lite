@@ -70,7 +70,8 @@
                             sellerMode = config.sellerMode,
                             openDefer = $q.defer(),
                             openPromise = openDefer.promise,
-                            modalOpen;
+                            modalOpen,
+                            track;
                         if (!cartMode) {
                             args = {
                                 key: order.key,
@@ -104,6 +105,32 @@
                         }
 
 
+                        /*
+                        openCart: "open cart",
+                        closeCart: "close cart",
+                        initiateEmptyCart: "initiate empty cart",
+                        confirmEmptyCart: "confirm empty cart",
+                        cancelEmptyCart: "cancel empty cart",
+                        proceedToCheckoutSuccess: "proceed to checkout success",
+                        proceedToCheckoutFail: "proceed to checkout fail",
+                        selectShippingMethodSuccess: "select shipping method success",
+                        selectShippingMethodFail: "select shipping method fail",
+                        reviewCartSuccess: "review cart success",
+                        reviewCartFail: "review cart fail",
+                        initiateOrderPlacement: "initiate order placement",
+                        confirmOrderPlacement: "confirm order placement",
+                        cancelOrderPlacement: "cancel order placement",
+                        openMessages: "open messages",
+                        closeMessages: "close messages",
+                        sendMessageSuccess: "send message success",
+                        sendMessageFail: "send message fail",
+                        openSellerDrawer: "open seller drawer",
+                        closeSellerDrawer: "close seller drawer",
+                        useSavedAddressForShipping: "use saved address for shipping",
+                        useSavedAddressForBilling: "use saved address for billing",
+                         */
+
+
                         modalOpen = {
                             templateUrl: 'order/view.html',
                             controller: ng(function ($scope) {
@@ -134,6 +161,9 @@
                                         }
                                         var promise = $scope.$close();
                                         promise.then(config.afterClose || angular.noop);
+                                        if (track) {
+                                            track.closeCart();
+                                        }
                                         return promise;
                                     };
 
@@ -282,6 +312,8 @@
                                             }).then(function () {
                                                 $scope.addresses.finalizeFields = true;
                                             });
+
+                                            track.proceedToCheckoutSuccess();
                                         },
                                         toDeliveryMethod: function () {
                                             var valid = $scope.addresses.form.shipping.$valid,
@@ -299,17 +331,22 @@
                                                     disableUI: true
                                                 }).then(function (response) {
                                                     if (helpers.endpoint.isResponseError(response)) {
+                                                        track.selectShippingMethodFail();
                                                         return;
                                                     }
                                                     $scope.stage.animating = 3;
                                                     $scope.stage.out.push(2);
                                                     $scope.stage.current = 3;
+                                                    track.selectShippingMethodSuccess();
+                                                }, function () {
+                                                    track.selectShippingMethodFail();
                                                 });
                                             } else {
                                                 helpers.form.wakeUp($scope.addresses.form.shipping);
                                                 if (!$scope.addresses.sameAsShipping) {
                                                     helpers.form.wakeUp($scope.addresses.form.billing);
                                                 }
+                                                track.selectShippingMethodFail();
                                                 snackbar.showK('actionFailedCheckForm');
                                             }
                                         },
@@ -324,24 +361,34 @@
                                                     $scope.stage.animating = 4;
                                                     $scope.stage.out.push(3);
                                                     $scope.stage.current = 4;
+                                                    track.reviewCartSuccess();
+                                                }, function () {
+                                                    track.reviewCartFail();
                                                 });
                                             } else {
                                                 helpers.form.wakeUp($scope.carrier.form, false, true);
+                                                track.reviewCartFail();
                                             }
                                         },
                                         converToOrder: function ($event) {
                                             var submit = function () {
                                                 $($event.target).parents('form:first').submit();
-                                            };
+                                            }, saidyes;
                                             if ($scope.order.state === 'order') {
                                                 return submit();
                                             }
+                                            track.initiateOrderPlacement();
                                             modals.confirm('convertToOrder', function () {
+                                                saidyes = true;
                                                 $scope.cmd.order.update({
                                                     state: 'order'
                                                 }, {
                                                     disableUI: true
-                                                });
+                                                }).then(track.confirmOrderPlacement);
+                                            }).result.then(function () {
+                                                if (!saidyes) {
+                                                    track.cancelOrderPlacement();
+                                                }
                                             });
                                         },
                                         complete: function () {
@@ -390,6 +437,7 @@
                                     $scope.cartModeRead = cartMode;
                                     $scope.sellerMode = sellerMode;
                                     $scope.order = response.data.entity;
+                                    track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.buyerCarts, config.relativeUrl);
                                     $scope.seller = seller;
                                     $scope.currentAccount = currentAccount;
                                     $scope.addresses = {
@@ -422,6 +470,11 @@
                                                             $scope.$close().then(function () {
                                                                 $timeout(doit, 100); // fix for region
                                                             }); // scope apply
+                                                            if (type === 'billing') {
+                                                                track.useSavedAddressForBilling();
+                                                            } else {
+                                                                track.useSavedAddressForShipping();
+                                                            }
                                                         };
                                                         $scope.manage = function () {
                                                             models['19'].manageModal(response.data.entity.parent.key, function (buyerScope) {
@@ -515,6 +568,11 @@
                                             $timeout(function () {
                                                 $scope.messages.sync.toggle(state);
                                             }, 2000, 0);
+                                            if (state) {
+                                                track.openMessages();
+                                            } else {
+                                                track.closeMessages();
+                                            }
                                         },
                                         seen: false,
                                         sync: {
@@ -620,9 +678,12 @@
                                                     $.extend(newMessage, response.data.entity._messages[0]);
                                                     newMessage._failed = false;
                                                     locals.reactOnStateChange(response);
+                                                    track.sendMessageSuccess();
                                                     return response;
-                                                }, failure = function () {
+                                                },
+                                                failure = function () {
                                                     newMessage._failed = true;
+                                                    track.sendMessageFail();
                                                 };
                                             if (!message) {
                                                 $scope.messages.draft.message = '';
@@ -810,24 +871,34 @@
                                             return total;
                                         },
                                         'delete': function (cart, now) {
-                                            var exec = function () {
-                                                var promise = models['34'].actions['delete']({
-                                                    key: $scope.order.key
-                                                }, {
-                                                    activitySpinner: true,
-                                                    disableUI: true
-                                                });
-                                                promise.then(function (response) {
-                                                    locals.updateLiveEntity(response);
-                                                    locals.reactOnUpdate();
-                                                    snackbar.showK('cartUpdated');
-                                                });
-                                                return promise;
-                                            };
+                                            var execd,
+                                                exec = function () {
+                                                    execd = true;
+                                                    var promise = models['34'].actions['delete']({
+                                                        key: $scope.order.key
+                                                    }, {
+                                                        activitySpinner: true,
+                                                        disableUI: true
+                                                    });
+                                                    promise.then(function (response) {
+                                                        locals.updateLiveEntity(response);
+                                                        locals.reactOnUpdate();
+                                                        snackbar.showK('cartUpdated');
+                                                    });
+                                                    return promise;
+                                                };
                                             if (now) {
                                                 return exec();
                                             }
-                                            modals.confirm('delete' + (cart ? 'Cart' : 'Order'), exec);
+                                            track.initiateEmptyCart();
+                                            modals.confirm('delete' + (cart ? 'Cart' : 'Order'), function () {
+                                                exec();
+                                                track.confirmEmptyCart();
+                                            }).result.then(function () {
+                                                if (!execd) {
+                                                    track.cancelEmptyCart();
+                                                }
+                                            });
                                         }
                                     };
 
@@ -846,6 +917,7 @@
                                                 line.product.variant_signature, {
                                                     popFrom: helpers.clicks.realEventTarget($event.target),
                                                     sellerKey: seller.key,
+                                                    track: helpers.track.events.cartProducts,
                                                     events: {
                                                         addToCart: function () {
                                                             locals.updateLiveEntity.apply($scope, arguments);
@@ -971,6 +1043,20 @@
                                     $scope.$on('$destroy', function () {
                                         $scope.messages.sync.stop();
                                     });
+
+                                    $scope.sellerDetails.stateChanged = function (state) {
+                                        if (state) {
+                                            track.openSellerDrawer();
+                                        } else {
+                                            track.closeSellerDrawer();
+                                        }
+                                    };
+
+                                    $scope.sellerDetails.getTrack = function () {
+                                        return track;
+                                    };
+
+                                    track.openCart();
 
                                     openDefer.resolve($scope.order);
 

@@ -126,6 +126,99 @@
             }
         });
 
+        locals.catalogActions = function () {
+            return {
+                openCatalog: "open catalog",
+                closeCatalog: "close catalog",
+                openCatalogDrawer: "open catalog drawer",
+                closeCatalogDrawer: "close catalog drawer",
+                loadMoreCatalogImages: "load more catalog images",
+                openSellerContent: "open seller content",
+                closeSellerContent: "close seller content"
+            };
+        };
+
+        locals.productActions = function () {
+            return {
+                openProduct: "open product",
+                closeProduct: "close product",
+                openProductDrawer: "open product drawer",
+                closeProductDrawer: "close product drawer",
+                changeProductVariantOption: "change product variant option",
+                focusProductCustomVariant: "focus product custom variant",
+                changeProductQuantity: "change product quantity",
+                addToCart: "add to cart",
+                updateCart: "update cart",
+                openProductContent: "open product content",
+                closeProductContent: "close product content"
+            };
+        };
+
+        locals.shareActions = function () {
+            return {
+                openShareDialog: "open share dialog",
+                closeShareDialog: "close share dialog",
+                focusShareLink: "focus share link",
+                focusShareEmbedCode: "focus share embed code",
+            };
+        };
+
+        locals.cartActions = function () {
+            return {
+                openCart: "open cart",
+                closeCart: "close cart",
+                initiateEmptyCart: "initiate empty cart",
+                confirmEmptyCart: "confirm empty cart",
+                cancelEmptyCart: "cancel empty cart",
+                proceedToCheckoutSuccess: "proceed to checkout success",
+                proceedToCheckoutFail: "proceed to checkout fail",
+                selectShippingMethodSuccess: "select shipping method success",
+                selectShippingMethodFail: "select shipping method fail",
+                reviewCartSuccess: "review cart success",
+                reviewCartFail: "review cart fail",
+                initiateOrderPlacement: "initiate order placement",
+                confirmOrderPlacement: "confirm order placement",
+                cancelOrderPlacement: "cancel order placement",
+                openMessages: "open messages",
+                closeMessages: "close messages",
+                sendMessageSuccess: "send message success",
+                sendMessageFail: "send message fail",
+                openSellerDrawer: "open seller drawer",
+                closeSellerDrawer: "close seller drawer",
+                useSavedAddressForShipping: "use saved address for shipping",
+                useSavedAddressForBilling: "use saved address for billing",
+                openSellerContent: "open seller content",
+                closeSellerContent: "close seller content"
+            };
+        };
+
+        locals.makeActions = function (category, fn) {
+            var maker = fn();
+            angular.forEach(maker, function (value, key) {
+                maker[key] = [category, value];
+            });
+            return maker;
+        };
+
+        $.extend(GLOBAL_CONFIG.tracker, {
+
+            homeCatalog: locals.makeActions('Home / Catalog', locals.catalogActions),
+            sellerCatalog: locals.makeActions('Seller / Catalog', locals.catalogActions),
+            linkCatalog: locals.makeActions('Link / Catalog', locals.catalogActions),
+            embedCatalog: locals.makeActions('Embed / Catalog', locals.catalogActions),
+
+            catalogProducts: locals.makeActions('Catalog / Products', locals.productActions),
+            cartProducts: locals.makeActions('Cart / Products', locals.productActions),
+            linkProducts: locals.makeActions('Link / Products', locals.productActions),
+
+            buyerCarts: locals.makeActions('Buyer / Carts', locals.cartActions),
+            catalogCarts: locals.makeActions('Catalog / Carts', locals.cartActions),
+
+            catalogShares: locals.makeActions('Catalog / Shares', locals.shareActions),
+            productShares: locals.makeActions('Product / Shares', locals.shareActions),
+
+        });
+
 
         $.extend(GLOBAL_CONFIG.labels, {
             account: {

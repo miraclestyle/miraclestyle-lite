@@ -64,9 +64,21 @@
                 return angular.noop;
             },
             track: {
-                pageview: function () {
+                noop: {},
+                events: {},
+                exception: function () {
                     if (window.tracker) {
                         var args = _.toArray(arguments);
+                        args.unshift('exception');
+                        return window.tracker.send.apply(window.tracker, args);
+                    }
+                },
+                pageview: function (maybeArgs) {
+                    var args = maybeArgs;
+                    if (window.tracker) {
+                        if (!angular.isArray(maybeArgs)) {
+                            args = _.toArray(arguments);
+                        }
                         if (GLOBAL_CONFIG.debug) {
                             console.log('Tracking pageview', args);
                         }
@@ -75,14 +87,26 @@
 
                     }
                 },
-                event: function () {
+                proxyLabelToEvents: function (track, label) {
+                    var newTrack = angular.copy(track);
+                    angular.forEach(newTrack, function (value, key) {
+                        newTrack[key] = function () {
+                            return value(label);
+                        };
+                    });
+                    return newTrack;
+                },
+                event: function (maybeArgs) {
+                    var args = maybeArgs;
                     if (window.tracker) {
-                        var args = _.toArray(arguments);
-                        if (GLOBAL_CONFIG.debug) {
-                            console.log('Tracking event', args);
+                        if (!angular.isArray(maybeArgs)) {
+                            args = _.toArray(arguments);
                         }
                         args.unshift('event');
                         window.tracker.send.apply(window.tracker, args);
+                        if (GLOBAL_CONFIG.debug) {
+                            console.log('Tracking event', args);
+                        }
 
                     }
                 }

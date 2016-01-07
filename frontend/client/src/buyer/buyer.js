@@ -38,6 +38,7 @@
                 isBuyerViewOrder = $state.current.name === 'buyer-order-view',
                 isOrderPaymentCanceled = $state.current.name === 'order-payment-canceled',
                 isOrderPaymentSuccess = $state.current.name === 'order-payment-success',
+                relativeUrl = $state.href($state.current.name, $state.params),
                 wait = null,
                 loaded = false,
                 tick = null,
@@ -76,6 +77,8 @@
                 viewOpts = {
                     inDirection: false,
                     outDirection: false,
+                    track: helpers.track.events.buyerCarts,
+                    relativeUrl: relativeUrl,
                     afterClose: function () {
                         var state = 'buy-orders';
                         if (isBuyerViewCart) {
@@ -156,6 +159,8 @@
                     if (directView) {
                         $.extend(opts, viewOpts);
                     }
+                    opts.relativeUrl = $state.href('buyer-cart-view', {key: order.key});
+                    opts.track = opts.track || helpers.track.events.buyerCarts;
                     viewPromise = models['34'].manageModal(order, order._seller, buyer, opts);
                     if (viewPromise && directView) {
                         viewPromise.then(viewThen);

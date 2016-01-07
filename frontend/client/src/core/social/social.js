@@ -2,10 +2,16 @@
     'use strict';
     angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG, helpers) {
         var social = {
-            share: function (meta, embed, link) {
+            share: function (meta, embed, link, config) {
+                config = helpers.alwaysObject(config);
+                var track = config.track;
                 $modal.open({
                     templateUrl: 'core/social/share.html',
                     controller: ng(function ($scope) {
+                        $scope.close = function () {
+                            $scope.$close();
+                            track.closeShareDialog();
+                        };
                         $scope.container = {};
                         $scope.$state.instant(function ($scope) {
                             $scope.socials = [{
@@ -85,12 +91,15 @@
                                         parentArgs: 'link.values',
                                         attrs: {
                                             readonly: 'true',
-                                            onclick: 'this.select()'
+                                            onclick: 'this.select()',
+                                            'ng-focus': 'track.focusShareLink()'
                                         }
                                     }
 
                                 }]
                             };
+
+                            $scope.track = track;
 
                             $scope.embed = {
                                 enabled: embed,
@@ -142,7 +151,8 @@
                                         parentArgs: 'embed.values',
                                         attrs: {
                                             readonly: 'true',
-                                            onclick: 'this.select()'
+                                            onclick: 'this.select()',
+                                            'ng-focus': 'track.focusShareEmbedCode()'
                                         }
                                     }
 
@@ -150,6 +160,8 @@
                             };
 
                             $scope.embed.setCode();
+
+                            track.openShareDialog();
                         });
                     })
                 });

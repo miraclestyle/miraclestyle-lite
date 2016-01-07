@@ -181,6 +181,29 @@
             });
 
     })).run(ng(function ($rootScope, modelsInfo, $state, endpoint, helpers, models, currentAccount, GLOBAL_CONFIG, modelsUtil, $animate) {
+        angular.forEach(GLOBAL_CONFIG.tracker, function (value, key) {
+            var noop = angular.copy(value);
+            angular.forEach(value, function (v, k) {
+                value[k] = function () {
+                    var supplied = _.toArray(arguments),
+                        arr = [];
+                    arr.extend(v);
+                    arr.extend(supplied);
+                    helpers.track.event.apply(helpers.tracker, arr);
+                };
+                noop[k] = function () {
+                    var supplied = _.toArray(arguments),
+                        arr = [];
+                    arr.extend(v);
+                    arr.extend(supplied);
+                    if (GLOBAL_CONFIG.debug) {
+                        console.log('No tracking instruction, but would track', arr);
+                    }
+                };
+            });
+            helpers.track.events[key] = value;
+            helpers.track.noop[key] = noop;
+        });
         $rootScope.disableUI = function (state) {
             $rootScope.disableUIState = state;
             $rootScope.$broadcast('disableUI', state);
@@ -193,6 +216,23 @@
             }
             return GLOBAL_CONFIG.host + path;
         };
+        /* if (window.ENGINE.TRACK_ERRORS) {
+            window.removeEventListener(window.ENGINE.TRACK_ERRORS);
+        }
+        window.ENGINE.TRACK_ERRORS = function (e) {
+            helpers.track.event('JavaScript Error', e.message + ' ' + e.filename + ':  ' + e.lineno);
+        };
+        window.addEventListener('error', window.ENGINE.TRACK_ERRORS, true);*/
+        window.ENGINE.TRACK_ERRORS = function (message, url, line, e) {
+            var error = message + ' ' + url + ' ' + e.filename + ':  ' + e.lineno;
+            //helpers.track.event('JavaScript Error', error);
+            helpers.track.exception({
+                'exDescription': error,
+                'exFatal': true
+            });
+        };
+        window.onerror = window.ENGINE.TRACK_ERRORS;
+
         $rootScope.$on('$stateChangeSuccess',
             function (event, toState, toParams, fromState, fromParams) {
                 if (toState.title) {

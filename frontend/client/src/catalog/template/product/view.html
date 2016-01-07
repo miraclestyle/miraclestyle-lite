@@ -37,7 +37,7 @@
                 </div>
             </div>
 
-            <md-sidenav ng-if="$state.isCompleted()" md-is-open="true" md-swipe-right="productMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="productMenu.id">
+            <md-sidenav md-state-changed="productMenu.stateChanged" ng-if="$state.isCompleted()" md-is-open="true" md-swipe-right="productMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="productMenu.id">
 
                 <md-content>
                         <div class="product-detail-content">

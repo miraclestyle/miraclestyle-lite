@@ -46,7 +46,7 @@
          </div>
       </div>
 
-     <md-sidenav ng-if="$state.isCompleted() && !notFound" md-swipe-right="catalogMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="catalogMenu.id">
+     <md-sidenav md-state-changed="catalogMenu.stateChanged" ng-if="$state.isCompleted() && !notFound" md-swipe-right="catalogMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="catalogMenu.id">
         <md-content>
             <div class="list">
                 <div class="sidebar-seller-logo">

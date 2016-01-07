@@ -177,7 +177,6 @@
                 if (angular.isDefined(action)) {
                     getAction = info.mapped_actions[action];
                     if (!angular.isDefined(getAction)) {
-                        console.error('action ' + action + ' not found for kind ' + kind_id);
                         return undefined;
                     }
                     fields = angular.copy(getAction['arguments']);
@@ -228,7 +227,6 @@
                     data;
 
                 if (kind === undefined) {
-                    //console.error('no info for kind ' + kind_id);
                     return undefined;
                 }
 

@@ -83,7 +83,8 @@
 
         $scope.preview = function (key, $event) {
             models['31'].previewModal(key, {
-                popFrom: helpers.clicks.realEventTarget($event.target)
+                popFrom: helpers.clicks.realEventTarget($event.target),
+                track: helpers.track.events.sellerCatalog
             });
         };
 
@@ -875,6 +876,8 @@
 
 
                         $scope.viewContent = function (content) {
+                            var track = $scope.getTrack();
+                            track.openSellerContent();
                             $modal.open({
                                 templateUrl: 'core/misc/content_view.html',
                                 controller: ng(function ($scope) {
@@ -882,6 +885,11 @@
                                         $scope.plainText = true;
                                         $scope.content = content;
                                     });
+
+                                    $scope.close = function () {
+                                        track.closeSellerContent();
+                                        $scope.$close();
+                                    };
                                 })
                             });
                         };

@@ -25,8 +25,11 @@
                 menu.open = function () {
                     return menu.toggle(undefined, 'open');
                 };
+                menu.get = function () {
+                    return $mdSidenav(menu.id);
+                };
                 menu.toggle = function ($event, dowhat) {
-                    var it = $mdSidenav(menu.id),
+                    var it = menu.get(),
                         check = false,
                         defer = $q.defer(),
                         promise = defer.promise,
