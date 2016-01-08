@@ -3,6 +3,20 @@ if (!window.ng) {
         return fn;
     };
 }
+
+window.getTracker = function () {
+    if (window.ga && (!window.tracker || window.tracker._fake)) {
+        window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID, 'auto');
+    } else if (!window.ga) {
+        window.tracker = {
+            _fake: true,
+            send: function () {
+                console.log('Tracker not ready...', arguments);
+            }
+        };
+    }
+    return window.tracker;
+};
 window.ENGINE = {
     SERVER: {
         URL: 'https://themiraclestyle-testing-site.appspot.com'
@@ -707,7 +721,7 @@ $(function () {
 /* Bootstrap, it will try to load current account and model data and then bootstrap the application. */
 (function () {
     'use strict';
-    var ready = function (cb) {
+    function ready(cb) {
         if (window.ENGINE.CORDOVA.ACTIVE) {
             return document.addEventListener('deviceready', function () {
                 window.open = cordova.InAppBrowser.open;
@@ -716,8 +730,59 @@ $(function () {
         } else {
             return $(document).ready(cb);
         }
-    };
+    }
+    function checkBrowserFeatures() {
+        var errors = [],
+            check = ['borderradius',
+                    ['flexbox', 'flexboxlegacy'],
+                    'textshadow',
+                    'csstransforms3d',
+                    'csstransforms',
+                    'fontface',
+                    'opacity',
+                    'history',
+                    'csstransitions',
+                    'rgba',
+                    'localstorage',
+                    'cssanimations'];
+        function doCheck(thing, nopush) {
+            if (!Modernizr[thing]) {
+                if (!nopush) {
+                    errors.push(thing);
+                }
+                return false;
+            }
+            return true;
+        }
+        angular.forEach(check, function (value) {
+            if (angular.isArray(value)) {
+                var any = false,
+                    maybies = [];
+                angular.forEach(value, function (v) {
+                    if (doCheck(v, true)) {
+                        any = true;
+                    } else {
+                        maybies.push(v);
+                    }
+                });
+                if (!any) {
+                    errors.extend(maybies);
+                } 
+            } else {
+                doCheck(value);
+            }
+        });
+        if (errors.length) {
+            window.getTracker().send('event', 'Browser Incompatibility', 'check', errors.join(', '));
+        }
+        return !errors.length;
+    }
     ready(function () {
+        if (!checkBrowserFeatures()) {
+            $('.loading-splash').find('.progress').hide();
+            $('#browser-sucks').show();
+            return;
+        }
         var failure = function (response) {
                 if (response.status === -1) {
                     return; // this is canceled request
@@ -831,7 +896,7 @@ if (window.DEBUG) {
                     if (window.tracker) {
                         var args = _.toArray(arguments);
                         args.unshift('exception');
-                        return window.tracker.send.apply(window.tracker, args);
+                        return window.getTracker().send.apply(window.tracker, args);
                     }
                 },
                 pageview: function (maybeArgs) {
@@ -844,7 +909,7 @@ if (window.DEBUG) {
                             console.log('Tracking pageview', args);
                         }
                         args.unshift('pageview');
-                        window.tracker.send.apply(window.tracker, args);
+                        window.getTracker().send.apply(window.tracker, args);
 
                     }
                 },
@@ -864,7 +929,7 @@ if (window.DEBUG) {
                             args = _.toArray(arguments);
                         }
                         args.unshift('event');
-                        window.tracker.send.apply(window.tracker, args);
+                        window.getTracker().send.apply(window.tracker, args);
                         if (GLOBAL_CONFIG.debug) {
                             console.log('Tracking event', args);
                         }
@@ -24279,20 +24344,13 @@ angular.module('app')
             }
             return GLOBAL_CONFIG.host + path;
         };
-        /* if (window.ENGINE.TRACK_ERRORS) {
-            window.removeEventListener(window.ENGINE.TRACK_ERRORS);
-        }
-        window.ENGINE.TRACK_ERRORS = function (e) {
-            helpers.track.event('JavaScript Error', e.message + ' ' + e.filename + ':  ' + e.lineno);
-        };
-        window.addEventListener('error', window.ENGINE.TRACK_ERRORS, true);*/
         window.ENGINE.TRACK_ERRORS = function (message, url, line, e) {
             var error = message + ' ' + url + ' ' + e.filename + ':  ' + e.lineno;
-            //helpers.track.event('JavaScript Error', error);
-            helpers.track.exception({
+            helpers.track.event('JavaScript Error', error);
+            /*helpers.track.exception({
                 'exDescription': error,
                 'exFatal': true
-            });
+            });*/
         };
         window.onerror = window.ENGINE.TRACK_ERRORS;
 
@@ -24300,9 +24358,6 @@ angular.module('app')
             function (event, toState, toParams, fromState, fromParams) {
                 if (toState.title) {
                     $rootScope.setPageToolbarTitle(toState.title);
-                }
-                if (window.ga && !window.tracker) {
-                    window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID, 'auto');
                 }
                 if (window.tracker) {
                     var url = $state.href(toState, toParams);

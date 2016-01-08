@@ -3096,6 +3096,22 @@ button.product-quantity-button {
 body, html {
   overflow: hidden; }
 
+.show-when-loader-is-inactive .display1 {
+  margin: auto;
+  top: calc(50% - 20px);
+  position: absolute;
+  text-align: center;
+  width: 100%; }
+
+.show-when-loader-is-inactive {
+  display: none; }
+
+html:not(.js) .requires-js {
+  display: none !important; }
+
+#scripting-needed {
+  display: block; }
+
 .order-stage {
   top: 0px;
   width: 100%;
