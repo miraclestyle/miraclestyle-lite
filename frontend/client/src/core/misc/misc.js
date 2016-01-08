@@ -153,9 +153,9 @@
                         element.css('min-height', $(window).height() - margintop);
                     };
                     resize();
-                    $(window).resize(resize);
+                    $(window).on('resize', resize);
                     scope.$on('$destroy', function () {
-                        $(window).unbind('resize', resize);
+                        $(window).off('resize', resize);
                     });
                 }
             };
@@ -220,6 +220,7 @@
                                 done = function () {
                                     img.css('visibility', 'inherit');
                                     scope.$emit('displayImageLoaded', img);
+                                    img.off('load', done);
                                 },
                                 error = function () {
                                     var defaultImage = scope.config.defaultImage;
@@ -228,6 +229,7 @@
                                     }
                                     img.attr('src', helpers.url.local(GLOBAL_CONFIG[defaultImage]));
                                     done();
+                                    img.off('error', error);
                                 };
 
                             if (scope.image && scope.image.serving_url) {
@@ -745,7 +747,8 @@
                 numberFilter = $filter('number'),
                 formats = $locale.NUMBER_FORMATS;
             formats.DEFAULT_PRECISION = angular.isUndefined(formats.DEFAULT_PRECISION) ? 2 : formats.DEFAULT_PRECISION;
-            return function (amount, currency) {
+            return function (amount, currency, showSymbol) {
+                showSymbol = angular.isDefined(showSymbol) ? showSymbol : true;
                 amount = parseFloat(amount, 10);
                 if (!angular.isNumber(amount) || isNaN(amount)) {
                     return '';
@@ -902,6 +905,9 @@
 
                 s = '<' + number + '>';
                 smb = currency.symbol;
+                if (!showSymbol) {
+                    smb = false;
+                }
                 if (smb) {
                     precedes = (isNegative && currency.negative_currency_symbol_precedes || currency.positive_currency_symbol_precedes);
                     separated = (isNegative && currency.negative_separate_by_space || currency.positive_separate_by_space);

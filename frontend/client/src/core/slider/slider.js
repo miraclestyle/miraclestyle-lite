@@ -105,10 +105,10 @@
                             reactingElement = element.parents('.image-slider-item:first'),
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
-                                element.unbind('load', fn);
+                                element.off('load', fn);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
-                        element.bind('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
+                        element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
 
