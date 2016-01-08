@@ -20695,6 +20695,7 @@ angular.module('app')
                                             $scope.variants = [];
                                             $scope.variantSelection = [];
                                             $scope.currentVariation = [];
+                                            $scope.urlsafeCurrentVariation = [];
                                             $scope.currentVariationPure = [];
                                             $scope.notInitialLoad = false;
                                             angular.forEach($scope.product.variants, function (v, i) {
@@ -20702,7 +20703,7 @@ angular.module('app')
                                                 $scope.variants.push({
                                                     name: v.name,
                                                     options: v.options,
-                                                    option: (variantSignatureAsDicts && variantSignatureAsDicts[i] ? variantSignatureAsDicts[i][v.name] : v.options[0]),
+                                                    option: (variantSignatureAsDicts && variantSignatureAsDicts[i] ? v.options[variantSignatureAsDicts[i]] : v.options[0]),
                                                     description: v.description,
                                                     allow_custom_value: v.allow_custom_value
                                                 });
@@ -20732,6 +20733,7 @@ angular.module('app')
                                                     qdefer;
 
                                                 $scope.currentVariation.empty();
+                                                $scope.urlsafeCurrentVariation.empty();
                                                 $scope.currentVariationPure.empty();
 
                                                 angular.forEach($scope.variants, function (v) {
@@ -20746,6 +20748,8 @@ angular.module('app')
                                                     } else if (!angular.isString(v.option) || !v.option.length) {
                                                         v.option = '';
                                                     }
+                                                    // custom inputs are not passed to url
+                                                    $scope.urlsafeCurrentVariation.push(!v.allow_custom_value ? v.options.indexOf(v.option) : null);
                                                     $scope.currentVariation.push(d);
                                                 });
 
@@ -20832,7 +20836,7 @@ angular.module('app')
                                                 key: $scope.catalog.key,
                                                 image_id: $scope.catalog._images[0].id,
                                                 pricetag_id: $scope.catalog._images[0].pricetags[0].id,
-                                                variant: helpers.url.jsonToUrlsafe($scope.currentVariation)
+                                                variant: helpers.url.jsonToUrlsafe($scope.urlsafeCurrentVariation)
                                             }, {
                                                 absolute: a
                                             });
