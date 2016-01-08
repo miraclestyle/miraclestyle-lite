@@ -2540,8 +2540,11 @@
 
                 var ignore = element.attr('md-ink-ripple-ignore'),
                     eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click'),
-                    pulsates = 3,
-                    PULSATE_FREQUENCY = 2000;
+                    pulsateOptions = scope.$eval(element.attr('md-ink-ripple-pulsate-options')) || {},
+                    pulsates = pulsateOptions.repeat || 7,
+                    pulsateColor = pulsateOptions.color || false,
+                    PULSATE_FREQUENCY = 2000,
+                    lastColor = (pulsateOptions.color ? 'ripple-dark': null);
 
 
                 ignore = (ignore ? $parse(ignore)(scope) : undefined);
@@ -2585,7 +2588,6 @@
                 // expose onInput for ripple testing
                 element.on(eventHandler, onPressDown);
 
-
                 if (element.attr('md-ink-ripple-pulsate')) {
                     scope.$watch(element.attr('md-ink-ripple-pulsate'), function (neww) {
                         if (neww) {
@@ -2612,8 +2614,7 @@
                  *
                  */
                 // temporary fix for the safari ripple
-                var k = null,
-                    times = 3;
+                var k = null;
 
                 function onPressDown(ev) {
                     if (k) {
@@ -2631,6 +2632,12 @@
                         element_position = {top: 0, left: 0},
                         parent_height = 0,
                         parent_width = 0;
+
+                    if (ev.target) {
+                        pulsates = 0;
+                        lastColor = undefined;
+                        pulsateColor = false;
+                    }
 
                     if (ignore && ev.target) {
                         var target = $(ev.target),
@@ -2652,10 +2659,27 @@
                     };
                     var ripple = angular.element('<div class="ripple-active"></div>');
                     ripple.css(worker.style);
-                    if (element[0].hasAttribute('ripple-dark')) {
-                        ripple.addClass('ripple-dark');
-                    } else if (element[0].hasAttribute('ripple-light')) {
-                        ripple.addClass('ripple-light');
+                    
+                    if (lastColor) {
+                        if (lastColor === 'ripple-dark') {
+                            ripple.addClass('ripple-light');
+                            lastColor = 'ripple-light';
+                        } else {
+                            ripple.addClass('ripple-dark');
+                            lastColor = 'ripple-dark';
+                        }
+                    } else {
+                        if (element[0].hasAttribute('ripple-dark')) {
+                            ripple.addClass('ripple-dark');
+                            if (pulsateColor) {
+                                lastColor = 'ripple-dark';
+                            }
+                        } else if (element[0].hasAttribute('ripple-light')) {
+                            ripple.addClass('ripple-light');
+                            if (pulsateColor) {
+                                lastColor = 'ripple-light';
+                            }
+                        }
                     }
                     element.find('.ripple-active').remove(); // remove all previous ripples
                     element.append(ripple);
@@ -2703,8 +2727,11 @@
                             addClass: cls
                         }).start().done(function () {
                             ripple.removeClass(cls);
-                            if (pulsates && time) {
-                                pulsates -= 1;
+                            var infinite = pulsates === 'infinite';
+                            if ((infinite || pulsates) && time) {
+                                if (!infinite) {
+                                    pulsates -= 1;
+                                }
                                 setTimeout(function () {
                                     onPressDown2({
                                         clientY: element_position.top + (parent_height / 2),

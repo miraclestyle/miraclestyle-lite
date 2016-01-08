@@ -102,11 +102,13 @@
                             newWidth = Math.ceil(newHeight * image.proportion),
                             imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
                             originalNewHeight = newHeight,
-                            reactingElement = element.parents('.image-slider-item:first');
+                            reactingElement = element.parents('.image-slider-item:first'),
+                            fn = function () {
+                                scope.$broadcast('readySingleImageSlider', reactingElement);
+                                element.unbind('load', fn);
+                            };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
-                        element.bind('load', function () {
-                            scope.$broadcast('readySingleImageSlider', reactingElement);
-                        }).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
+                        element.bind('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
 
