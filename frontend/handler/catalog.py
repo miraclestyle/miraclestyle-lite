@@ -70,6 +70,9 @@ class CatalogProductView(base.SeoOrAngular):
         }
     }
 
+    def decode_variant(variant):
+      return json.loads(base64.b64decode(variant.replace('-', '=')))
+
     def variant_data(variant_shell):
       return {
             "action_model": "31",
@@ -106,22 +109,31 @@ class CatalogProductView(base.SeoOrAngular):
             }
         }
 
-    variant = kwargs.get('variant')
+    variant = None
+    variant_get = kwargs.get('variant')
     raw_variant = variant
     as_variant = False
-    if not variant:
-      pre_render = self.api_endpoint(payload=data)
-      if pre_render:
-        try:
-          product = pre_render['entity']['_images'][0]['pricetags'][0]['_product']
-          if product['variants']:
-            hash = json.dumps([{v['name']: v['options'][0]} for v in product['variants']])
-            variant = base64.b64encode(hash).replace('=', '-')
-            raw_variant = variant
-        except Exception as e:
-          pass
+    pre_render = self.api_endpoint(payload=data)
+    if pre_render:
+      try:
+        product = pre_render['entity']['_images'][0]['pricetags'][0]['_product']
+        if product['variants']:
+          default_hash = [{v['name']: v['options'][0] if not v['allow_custom_value'] else None} for v in product['variants']]
+          if variant_get:
+            variant = decode_variant(variant_get)
+            default_hash = []
+            for i, value in enumerate(variant):
+              var = product['variants'][i]
+              if not var['allow_custom_value']:
+                default_hash.append({var['name']: var['options'][value]})
+          default_hash = json.dumps(default_hash)
+          variant = base64.b64encode(default_hash).replace('=', '-')
+          raw_variant = variant
+      except Exception as e:
+        pass
+
     if variant:
-      variant = json.loads(base64.b64decode(variant.replace('-', '=')))
+      variant = decode_variant(variant)
       if variant:
         as_variant = True
         variant_shell = []
