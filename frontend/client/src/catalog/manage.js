@@ -985,6 +985,7 @@
                                                     init: function () {
                                                         var currentFieldScope = $scope.fieldProduct.ui.specifics.getScope(),
                                                             currentArgs = currentFieldScope.args,
+                                                            itArgs = $scope.fieldProduct.modelclass._instances.ui.specifics.getScope().args,
                                                             choices = [];
 
                                                         angular.forEach(currentArgs.variants, function (variant) {
@@ -995,7 +996,11 @@
                                                                 choices.push(variant.name + ': ' + variantOpt);
                                                             });
                                                         });
-
+                                                        angular.forEach(itArgs.variant_options, function (value) {
+                                                            if ($.inArray(value, choices) === -1) {
+                                                                choices.push(value);
+                                                            }
+                                                        });
                                                         variantOptions.choices = choices;
                                                     },
                                                     excludeFields: ['created', 'sequence']
