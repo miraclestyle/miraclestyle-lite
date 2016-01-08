@@ -70,7 +70,7 @@
                     if (window.tracker) {
                         var args = _.toArray(arguments);
                         args.unshift('exception');
-                        return window.tracker.send.apply(window.tracker, args);
+                        return window.getTracker().send.apply(window.tracker, args);
                     }
                 },
                 pageview: function (maybeArgs) {
@@ -83,7 +83,7 @@
                             console.log('Tracking pageview', args);
                         }
                         args.unshift('pageview');
-                        window.tracker.send.apply(window.tracker, args);
+                        window.getTracker().send.apply(window.tracker, args);
 
                     }
                 },
@@ -103,7 +103,7 @@
                             args = _.toArray(arguments);
                         }
                         args.unshift('event');
-                        window.tracker.send.apply(window.tracker, args);
+                        window.getTracker().send.apply(window.tracker, args);
                         if (GLOBAL_CONFIG.debug) {
                             console.log('Tracking event', args);
                         }

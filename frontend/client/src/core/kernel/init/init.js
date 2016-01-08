@@ -216,20 +216,13 @@
             }
             return GLOBAL_CONFIG.host + path;
         };
-        /* if (window.ENGINE.TRACK_ERRORS) {
-            window.removeEventListener(window.ENGINE.TRACK_ERRORS);
-        }
-        window.ENGINE.TRACK_ERRORS = function (e) {
-            helpers.track.event('JavaScript Error', e.message + ' ' + e.filename + ':  ' + e.lineno);
-        };
-        window.addEventListener('error', window.ENGINE.TRACK_ERRORS, true);*/
         window.ENGINE.TRACK_ERRORS = function (message, url, line, e) {
             var error = message + ' ' + url + ' ' + e.filename + ':  ' + e.lineno;
-            //helpers.track.event('JavaScript Error', error);
-            helpers.track.exception({
+            helpers.track.event('JavaScript Error', error);
+            /*helpers.track.exception({
                 'exDescription': error,
                 'exFatal': true
-            });
+            });*/
         };
         window.onerror = window.ENGINE.TRACK_ERRORS;
 
@@ -237,9 +230,6 @@
             function (event, toState, toParams, fromState, fromParams) {
                 if (toState.title) {
                     $rootScope.setPageToolbarTitle(toState.title);
-                }
-                if (window.ga && !window.tracker) {
-                    window.tracker = window.ga.create(window.GOOGLE_ANALYTICS_TRACKING_ID, 'auto');
                 }
                 if (window.tracker) {
                     var url = $state.href(toState, toParams);

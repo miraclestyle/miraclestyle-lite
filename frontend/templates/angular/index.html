@@ -64,7 +64,7 @@
 </head>
 <body ng-controller="RootController" layout="row">
     <div class="loading-splash" home-splash>
-        <div class="progress-wrapper progress circular">
+        <div class="progress-wrapper progress circular requires-js">
             <div class="progress circular">
                 <div class="spinner">
                     <div class="arc one"></div>
@@ -76,6 +76,14 @@
             </div>
             <div class="clearfix"></div>
         </div>
+        <div class="show-when-loader-is-inactive" id="browser-sucks">
+            <div class="display1">Your browser is not supported. Consider <a href="http://browsehappy.com/" target="_blank">upgrading to newer version</a>.</div>
+        </div>
+        <noscript>
+            <div class="show-when-loader-is-inactive" id="scripting-needed">
+                <div class="display1">Your javascript is disabled, please enable it and reload your browser.</div>
+            </div>
+        </noscript>
     </div>
     <md-sidenav md-swipe-left="site.toolbar.menu.close()" layout="column" class="left md-closed" md-component-id="site.toolbar.menu.id">
         <md-content>
