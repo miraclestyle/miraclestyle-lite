@@ -19375,14 +19375,14 @@ angular.module('app')
                 });
             }
         };
-    })).directive('catalogReady', function () {
+    })).directive('catalogReady', ng(function ($timeout) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
                 function transitionEnd() {
-                    scope.$evalAsync(function () {
-                        scope[attrs.catalogReady] = true;
-                    });
+                    $timeout(function () {
+                        scope.$eval(attrs.catalogReady + ' = true;');
+                    }, 200);
                 }
                 element.transitionEnd(transitionEnd);
 
@@ -19391,7 +19391,7 @@ angular.module('app')
                 });
             }
         };
-    }).directive('catalogNewPricetag', ng(function ($parse) {
+    })).directive('catalogNewPricetag', ng(function ($parse) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
