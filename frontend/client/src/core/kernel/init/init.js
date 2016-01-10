@@ -231,7 +231,7 @@
                 if (toState.title) {
                     $rootScope.setPageToolbarTitle(toState.title);
                 }
-                if (window.tracker) {
+                if (window.getTracker()) {
                     var url = $state.href(toState, toParams);
                     helpers.track.pageview(url);
                 }

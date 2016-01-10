@@ -67,15 +67,15 @@
                 noop: {},
                 events: {},
                 exception: function () {
-                    if (window.tracker) {
+                    if (window.getTracker()) {
                         var args = _.toArray(arguments);
                         args.unshift('exception');
-                        return window.getTracker().send.apply(window.tracker, args);
+                        return window.getTracker().send.apply(window.getTracker(), args);
                     }
                 },
                 pageview: function (maybeArgs) {
                     var args = maybeArgs;
-                    if (window.tracker) {
+                    if (window.getTracker()) {
                         if (!angular.isArray(maybeArgs)) {
                             args = _.toArray(arguments);
                         }
@@ -83,7 +83,7 @@
                             console.log('Tracking pageview', args);
                         }
                         args.unshift('pageview');
-                        window.getTracker().send.apply(window.tracker, args);
+                        window.getTracker().send.apply(window.getTracker(), args);
 
                     }
                 },
@@ -98,12 +98,12 @@
                 },
                 event: function (maybeArgs) {
                     var args = maybeArgs;
-                    if (window.tracker) {
+                    if (window.getTracker()) {
                         if (!angular.isArray(maybeArgs)) {
                             args = _.toArray(arguments);
                         }
                         args.unshift('event');
-                        window.getTracker().send.apply(window.tracker, args);
+                        window.getTracker().send.apply(window.getTracker(), args);
                         if (GLOBAL_CONFIG.debug) {
                             console.log('Tracking event', args);
                         }
