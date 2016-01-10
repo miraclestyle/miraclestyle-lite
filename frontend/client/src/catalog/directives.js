@@ -18,7 +18,23 @@
                 });
             }
         };
-    })).directive('catalogNewPricetag', ng(function ($parse) {
+    })).directive('catalogReady', function () {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                function transitionEnd() {
+                    scope.$evalAsync(function () {
+                        scope[attrs.catalogReady] = true;
+                    });
+                }
+                element.transitionEnd(transitionEnd);
+
+                scope.$on('$destroy', function () {
+                    element.transitionEndOff(transitionEnd);
+                });
+            }
+        };
+    }).directive('catalogNewPricetag', ng(function ($parse) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {

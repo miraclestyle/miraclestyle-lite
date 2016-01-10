@@ -893,15 +893,15 @@ if (window.DEBUG) {
                 noop: {},
                 events: {},
                 exception: function () {
-                    if (window.tracker) {
+                    if (window.getTracker()) {
                         var args = _.toArray(arguments);
                         args.unshift('exception');
-                        return window.getTracker().send.apply(window.tracker, args);
+                        return window.getTracker().send.apply(window.getTracker(), args);
                     }
                 },
                 pageview: function (maybeArgs) {
                     var args = maybeArgs;
-                    if (window.tracker) {
+                    if (window.getTracker()) {
                         if (!angular.isArray(maybeArgs)) {
                             args = _.toArray(arguments);
                         }
@@ -909,7 +909,7 @@ if (window.DEBUG) {
                             console.log('Tracking pageview', args);
                         }
                         args.unshift('pageview');
-                        window.getTracker().send.apply(window.tracker, args);
+                        window.getTracker().send.apply(window.getTracker(), args);
 
                     }
                 },
@@ -924,12 +924,12 @@ if (window.DEBUG) {
                 },
                 event: function (maybeArgs) {
                     var args = maybeArgs;
-                    if (window.tracker) {
+                    if (window.getTracker()) {
                         if (!angular.isArray(maybeArgs)) {
                             args = _.toArray(arguments);
                         }
                         args.unshift('event');
-                        window.getTracker().send.apply(window.tracker, args);
+                        window.getTracker().send.apply(window.getTracker(), args);
                         if (GLOBAL_CONFIG.debug) {
                             console.log('Tracking event', args);
                         }
@@ -5363,9 +5363,9 @@ function msieversion() {
                 var ignore = element.attr('md-ink-ripple-ignore'),
                     eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click'),
                     pulsateOptions = scope.$eval(element.attr('md-ink-ripple-pulsate-options')) || {},
-                    pulsates = pulsateOptions.repeat || 7,
+                    pulsates = pulsateOptions.repeat || 6,
                     pulsateColor = pulsateOptions.color || false,
-                    PULSATE_FREQUENCY = 2000,
+                    PULSATE_FREQUENCY = pulsateOptions.speed || 2000,
                     lastColor = (pulsateOptions.color ? 'ripple-dark': null);
 
 
@@ -19375,7 +19375,23 @@ angular.module('app')
                 });
             }
         };
-    })).directive('catalogNewPricetag', ng(function ($parse) {
+    })).directive('catalogReady', function () {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                function transitionEnd() {
+                    scope.$evalAsync(function () {
+                        scope[attrs.catalogReady] = true;
+                    });
+                }
+                element.transitionEnd(transitionEnd);
+
+                scope.$on('$destroy', function () {
+                    element.transitionEndOff(transitionEnd);
+                });
+            }
+        };
+    }).directive('catalogNewPricetag', ng(function ($parse) {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
@@ -24359,7 +24375,7 @@ angular.module('app')
                 if (toState.title) {
                     $rootScope.setPageToolbarTitle(toState.title);
                 }
-                if (window.tracker) {
+                if (window.getTracker()) {
                     var url = $state.href(toState, toParams);
                     helpers.track.pageview(url);
                 }

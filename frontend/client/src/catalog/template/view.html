@@ -8,13 +8,13 @@
   <div class="clearfix">
 
       <div ng-hide="hideClose" class="top-close">
-           <button md-ink-ripple-pulsate-options="{color: true}" md-ink-ripple-pulsate="$state.isCompleted()" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="close()">
+           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="close()">
              <icon color="white" type="close"></icon>
            </button>
       </div>
 
       <div ng-if="$state.isCompleted() && !notFound" class="top-close top-close-right">
-           <button md-ink-ripple-pulsate-options="{color: true}" md-ink-ripple-pulsate="$state.isCompleted()" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="catalogMenu.toggle()">
+           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="catalogMenu.toggle()">
              <icon color="white" type="more_vert"></icon>
            </button>
       </div>
@@ -25,7 +25,7 @@
       </div>
  
       <div ng-if="modalOptions.opened && $state.isCompleted() && !notFound" track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
-         <div ng-class="{'swoop-from-left-finish': true}" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider swoop-from-left"> 
+         <div  catalog-ready="$state.fullyReady" ng-class="{'swoop-from-left-finish': true}" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider swoop-from-left"> 
              <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
                <img class="not-pointable" slider-image="image" /> 
                <div ng-repeat="pricetag in image.pricetags track by $index"
@@ -33,7 +33,7 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button data-pricetag-id="{{image.id}}-{{pricetag.id}}" md-ink-ripple md-ink-ripple-pulsate-options="{repeat: 'infinite'}" md-ink-ripple-pulsate="$state.isCompleted()" type="button" class="button-transparent catalog-pricetag-link " loading="loadingProduct" ng-click="viewProduct(image, pricetag, $event)">
+                         <button data-pricetag-id="{{image.id}}-{{pricetag.id}}" md-ink-ripple md-ink-ripple-pulsate-options="{repeat: 'infinite', speed: 2000}" md-ink-ripple-pulsate="$state.fullyReady" type="button" class="button-transparent catalog-pricetag-link " loading="loadingProduct" ng-click="viewProduct(image, pricetag, $event)">
                             {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
                          </button>
                      </div>
