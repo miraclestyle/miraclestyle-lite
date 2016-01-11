@@ -591,7 +591,6 @@ if (!Array.prototype.indexOf) {
             modules: ['config',
                 'ngAnimate',
                 'ngMessages',
-                'vs-repeat',
                 'ui.router',
                 'ui.sortable',
                 'ui.inflector', 'ngSanitize',
