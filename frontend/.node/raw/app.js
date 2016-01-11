@@ -591,6 +591,7 @@ if (!Array.prototype.indexOf) {
             modules: ['config',
                 'ngAnimate',
                 'ngMessages',
+                'vs-repeat',
                 'ui.router',
                 'ui.sortable',
                 'ui.inflector', 'ngSanitize',
@@ -1695,10 +1696,10 @@ if (window.DEBUG) {
 
         $.extend(GLOBAL_CONFIG.tracker, {
 
-            homeCatalog: locals.makeActions('Home / Catalog', locals.catalogActions),
-            sellerCatalog: locals.makeActions('Seller / Catalog', locals.catalogActions),
-            linkCatalog: locals.makeActions('Link / Catalog', locals.catalogActions),
-            embedCatalog: locals.makeActions('Embed / Catalog', locals.catalogActions),
+            homeCatalog: locals.makeActions('Home / Catalogs', locals.catalogActions),
+            sellerCatalog: locals.makeActions('Seller / Catalogs', locals.catalogActions),
+            linkCatalog: locals.makeActions('Link / Catalogs', locals.catalogActions),
+            embedCatalog: locals.makeActions('Embed / Catalogs', locals.catalogActions),
 
             catalogProducts: locals.makeActions('Catalog / Products', locals.productActions),
             cartProducts: locals.makeActions('Cart / Products', locals.productActions),
@@ -5559,7 +5560,7 @@ function msieversion() {
                                         clientY: element_position.top + (parent_height / 2),
                                         clientX: element_position.left + (parent_width / 2)
                                     }, PULSATE_FREQUENCY);
-                                }, PULSATE_FREQUENCY);
+                                }, PULSATE_FREQUENCY - 600);
                             }
                         });
                     }, 0, false);
@@ -17992,6 +17993,7 @@ function msieversion() {
                                 element.off('load', fn);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
+                        image._realWidth = newWidth;
                         element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
