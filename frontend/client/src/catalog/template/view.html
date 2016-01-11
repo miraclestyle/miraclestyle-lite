@@ -25,8 +25,8 @@
       </div>
  
       <div ng-if="modalOptions.opened && $state.isCompleted() && !notFound" track-if-product-view="maybeLoadProduct" class="image-slider-outer unselectable">
-         <div  catalog-ready="$state.fullyReady" ng-class="{'swoop-from-left-finish': true}" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider swoop-from-left"> 
-             <div ng-repeat="image in catalog._images track by $index" class="image-slider-item">
+         <div vs-excess="3" vs-horizontal vs-scroll-parent=".image-slider-outer" vs-repeat--unused vs-autoresize vs-size="image._realWidth" catalog-ready="$state.fullyReady" ng-class="{'swoop-from-left-finish': true}" image-slider-load-more="loadMoreImages(callback)" image-slider="catalog._images" class="image-slider swoop-from-left"> 
+             <div ng-repeat="image in catalog._images" class="image-slider-item">
                <img class="not-pointable" slider-image="image" /> 
                <div ng-repeat="pricetag in image.pricetags track by $index"
                     class="button catalog-pricetag"

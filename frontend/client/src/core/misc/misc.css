@@ -1067,3 +1067,18 @@ a[type="button"] {
     word-wrap: break-word;
     word-break: break-word;
 }
+
+.vs-repeat-before-content {
+    display: inline-block;
+    position: relative;
+    top: -100%;
+    margin-top: 35px;
+    white-space: nowrap;
+}
+.vs-repeat-after-content {
+    white-space: nowrap;
+    display: inline-block;
+    position: relative;
+    top: -100%;
+    margin-top: 35px;
+}

@@ -2737,7 +2737,7 @@
                                         clientY: element_position.top + (parent_height / 2),
                                         clientX: element_position.left + (parent_width / 2)
                                     }, PULSATE_FREQUENCY);
-                                }, PULSATE_FREQUENCY);
+                                }, PULSATE_FREQUENCY - 600);
                             }
                         });
                     }, 0, false);

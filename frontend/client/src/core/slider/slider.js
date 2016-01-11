@@ -108,6 +108,7 @@
                                 element.off('load', fn);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
+                        image._realWidth = newWidth;
                         element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);

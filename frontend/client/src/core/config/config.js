@@ -202,10 +202,10 @@
 
         $.extend(GLOBAL_CONFIG.tracker, {
 
-            homeCatalog: locals.makeActions('Home / Catalog', locals.catalogActions),
-            sellerCatalog: locals.makeActions('Seller / Catalog', locals.catalogActions),
-            linkCatalog: locals.makeActions('Link / Catalog', locals.catalogActions),
-            embedCatalog: locals.makeActions('Embed / Catalog', locals.catalogActions),
+            homeCatalog: locals.makeActions('Home / Catalogs', locals.catalogActions),
+            sellerCatalog: locals.makeActions('Seller / Catalogs', locals.catalogActions),
+            linkCatalog: locals.makeActions('Link / Catalogs', locals.catalogActions),
+            embedCatalog: locals.makeActions('Embed / Catalogs', locals.catalogActions),
 
             catalogProducts: locals.makeActions('Catalog / Products', locals.productActions),
             cartProducts: locals.makeActions('Cart / Products', locals.productActions),
