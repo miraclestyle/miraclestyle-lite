@@ -309,7 +309,7 @@ class Catalog(orm.BaseExpando):
   DELETE_CACHE_POLICY = {
       # only delete public cache when user saves published or indexed catalog
       'satisfy': [
-        (['search_31'], lambda context, group_id: True if context._catalog.state == 'indexed' else False)
+        (['search_31'], lambda context, group_id: True if (context._catalog.state == 'indexed' or (context._catalog.state != 'indexed' and context._catalog._original.state == 'indexed')) else False)
       ],
       'group': [
         'search_31',
