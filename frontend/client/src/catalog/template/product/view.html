@@ -5,6 +5,8 @@
         <div class="modal-body">
            <div ng-hide="hideClose" class="top-close">
                 <button md-ink-ripple-action
+                        md-ink-ripple-pulsate-options="{color: true, speed: 1000}"
+                        md-ink-ripple-pulsate="$state.fullyReady"
                         ripple-light
                         loading type="button"
                         class="button-transparent catalog-close-button button-square color-child-when-disabled"
@@ -15,6 +17,8 @@
 
            <div ng-if="$state.isCompleted()" class="top-close top-close-right">
                <button md-ink-ripple-action
+                       md-ink-ripple-pulsate-options="{color: true, speed: 1000}"
+                       md-ink-ripple-pulsate="$state.fullyReady"
                        ripple-light
                        loading
                        type="button"
@@ -26,7 +30,7 @@
 
             <div class="fixed-height relative overflow-x unselectable">
                 <div ng-show="$state.isCompleted()">
-                  <div ng-class="{'swoop-from-left-finish': true}" ng-if="product.images.length && modalOptions.opened" image-slider="product.images" class="image-slider swoop-from-left">
+                  <div catalog-ready="$state.fullyReady" ng-class="{'swoop-from-left-finish': true}" ng-if="product.images.length && modalOptions.opened" image-slider="product.images" class="image-slider swoop-from-left">
                       <div ng-repeat="image in product.images track by image.key" class="image-slider-item">
                           <img class="not-pointable" slider-image="image" />
                       </div>

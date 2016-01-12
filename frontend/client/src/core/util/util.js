@@ -2541,7 +2541,7 @@
                 var ignore = element.attr('md-ink-ripple-ignore'),
                     eventHandler = (!element.attr('md-ink-ripple-click') ? '$md.pressdown' : 'click'),
                     pulsateOptions = scope.$eval(element.attr('md-ink-ripple-pulsate-options')) || {},
-                    pulsates = pulsateOptions.repeat || 6,
+                    pulsates = pulsateOptions.repeat || 9,
                     pulsateColor = pulsateOptions.color || false,
                     PULSATE_FREQUENCY = pulsateOptions.speed || 2000,
                     lastColor = (pulsateOptions.color ? 'ripple-dark': null);
