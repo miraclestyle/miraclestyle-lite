@@ -309,7 +309,7 @@ class Catalog(orm.BaseExpando):
   DELETE_CACHE_POLICY = {
       # only delete public cache when user saves published or indexed catalog
       'satisfy': [
-        (['search_31'], lambda context, group_id: True if (context._catalog.state == 'indexed' or (context._catalog.state != 'indexed' and context._catalog._original.state == 'indexed')) else False)
+        (['search_31'], lambda context, group_id: True if (context._catalog.state == 'indexed' or (context._catalog.state != 'indexed' and (hasattr(context, 'catalog_original_state') and context.catalog_original_state == 'indexed'))) else False)
       ],
       'group': [
         'search_31',
@@ -574,6 +574,7 @@ class Catalog(orm.BaseExpando):
                       Read(),
                       Set(cfg={'d': {'_catalog.name': 'input.name',
                                      '_catalog.discontinue_date': 'input.discontinue_date',
+                                     'catalog_original_state': '_catalog._original.state',
                                      '_catalog._images': 'input._images'}}),
                       CatalogProcessCoverSet(),
                       CatalogProcessPricetags(),
@@ -872,7 +873,8 @@ class Catalog(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(),
-                      Set(cfg={'d': {'_catalog.state': 'input.state'}}),
+                      Set(cfg={'d': {'_catalog.state': 'input.state', 
+                                     'catalog_original_state': '_catalog._original.state'}}),
                       RulePrepare(),
                       RuleExec()
                   ]
