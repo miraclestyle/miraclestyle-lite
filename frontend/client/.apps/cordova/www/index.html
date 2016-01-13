@@ -26,29 +26,29 @@
     return route.handler_adapter(request, response)
   File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 1102, in __call__
     return handler.dispatch()
-  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389929621427997946/handler/base.py&quot;, line 505, in dispatch
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389952053037650725/handler/base.py&quot;, line 505, in dispatch
     super(RequestHandler, self).dispatch()
   File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 572, in dispatch
     return self.handle_exception(e, self.app.debug)
   File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2.py&quot;, line 570, in dispatch
     return method(*args, **kwargs)
-  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389929621427997946/handler/base.py&quot;, line 542, in get
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389952053037650725/handler/base.py&quot;, line 542, in get
     data = self.respond(*args, **kwargs)
-  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389929621427997946/handler/builder.py&quot;, line 39, in respond
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389952053037650725/handler/builder.py&quot;, line 39, in respond
     self.render(self.base_template, data)
-  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389929621427997946/handler/base.py&quot;, line 524, in render
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389952053037650725/handler/base.py&quot;, line 524, in render
     return self.render_response(tpl, **self.template)
-  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389929621427997946/handler/base.py&quot;, line 517, in render_response
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389952053037650725/handler/base.py&quot;, line 517, in render_response
     rv = self.jinja2.render_template(_template, **context)
   File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/webapp2-2.5.2/webapp2_extras/jinja2.py&quot;, line 158, in render_template
     return self.environment.get_template(_filename).render(**context)
   File &quot;/base/data/home/runtimes/python27/python27_lib/versions/third_party/jinja2-2.6/jinja2/environment.py&quot;, line 894, in render
     return self.environment.handle_exception(exc_info, True)
-  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389929621427997946/templates/angular/index.html&quot;, line 42, in top-level template code
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389952053037650725/templates/angular/index.html&quot;, line 42, in top-level template code
     {% include 'icons.html' %}
-  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389929621427997946/templates/icons.html&quot;, line 2, in top-level template code
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389952053037650725/templates/icons.html&quot;, line 2, in top-level template code
     &lt;link rel=&quot;icon&quot; sizes=&quot;256x256&quot; href=&quot;{{static_dir('dist/favicon.png')}}&quot;&gt;
-  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389929621427997946/handler/builder.py&quot;, line 27, in _static_dir
+  File &quot;/base/data/home/apps/s~themiraclestyle-testing-site/1.389952053037650725/handler/builder.py&quot;, line 27, in _static_dir
     static_dir = '%s/' % settings.HOST_URL
 AttributeError: 'module' object has no attribute 'HOST_URL'
 </pre>

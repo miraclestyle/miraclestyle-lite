@@ -1629,9 +1629,6 @@ if (window.DEBUG) {
                 openCatalogDrawer: "open catalog drawer",
                 closeCatalogDrawer: "close catalog drawer",
                 loadMoreCatalogImages: "load more catalog images",
-                openSellerContent: "open seller content",
-                closeSellerContent: "close seller content",
-
                 openCatalogShareDialog: "open catalog share dialog",
                 closeCatalogShareDialog: "close catalog share dialog",
                 focusCatalogShareLink: "focus catalog share link",
@@ -1687,11 +1684,16 @@ if (window.DEBUG) {
                 closeSellerDrawer: "close seller drawer",
                 useSavedAddressForShipping: "use saved address for shipping",
                 useSavedAddressForBilling: "use saved address for billing",
-                openSellerContent: "open seller content",
-                closeSellerContent: "close seller content",
 
                 removeLineSuccess: "remove line success",
                 removeLineFail: "remove line fail"
+            };
+        };
+
+        locals.sellerActions = function () {
+            return {
+                openSellerContent: "open seller content",
+                closeSellerContent: "close seller content"
             };
         };
 
@@ -1721,6 +1723,17 @@ if (window.DEBUG) {
             productBuyerCartsCart: locals.makeActions('Buyer / Carts / Cart', locals.productActions),
             productLink: locals.makeActions('Link', locals.productActions),
 
+            sellerHomeCatalog: locals.makeActions('Home / Catalog', locals.sellerActions),
+            sellerSellerCatalogsCatalog: locals.makeActions('Seller / Catalogs / Catalog', locals.sellerActions),
+            sellerLinkCatalog: locals.makeActions('Link / Catalog', locals.sellerActions),
+            sellerEmbedCatalog: locals.makeActions('Embed / Catalog', locals.sellerActions),
+            sellerHomeCatalogCart: locals.makeActions('Home / Catalog / Cart', locals.sellerActions),
+            sellerSellerCatalogsCatalogCart: locals.makeActions('Seller / Catalogs / Catalog / Cart', locals.sellerActions),
+            sellerLinkCatalogCart: locals.makeActions('Link / Catalog / Cart', locals.sellerActions),
+            sellerEmbedCatalogCart: locals.makeActions('Embed / Catalog / Cart', locals.sellerActions),
+            sellerBuyerCartsCart: locals.makeActions('Buyer / Carts / Cart', locals.sellerActions),
+            sellerLink: locals.makeActions('Link', locals.sellerActions),
+
             cartHomeCatalog: locals.makeActions('Home / Catalog', locals.cartActions),
             cartSellerCatalogsCatalog: locals.makeActions('Seller / Catalogs / Catalog', locals.cartActions),
             cartLinkCatalog: locals.makeActions('Link / Catalog', locals.cartActions),
@@ -1744,6 +1757,17 @@ if (window.DEBUG) {
         GLOBAL_CONFIG.tracker.cartLinkCatalog.product = GLOBAL_CONFIG.tracker.productLinkCatalogCart;
         GLOBAL_CONFIG.tracker.cartEmbedCatalog.product = GLOBAL_CONFIG.tracker.productEmbedCatalogCart;
         GLOBAL_CONFIG.tracker.cartBuyerCarts.product = GLOBAL_CONFIG.tracker.productBuyerCartsCart;
+
+        GLOBAL_CONFIG.tracker.cartHomeCatalog.seller = GLOBAL_CONFIG.tracker.sellerHomeCatalogCart;
+        GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog.seller = GLOBAL_CONFIG.tracker.sellerSellerCatalogsCatalogCart;
+        GLOBAL_CONFIG.tracker.cartLinkCatalog.seller = GLOBAL_CONFIG.tracker.sellerLinkCatalogCart;
+        GLOBAL_CONFIG.tracker.cartEmbedCatalog.seller = GLOBAL_CONFIG.tracker.sellerEmbedCatalogCart;
+        GLOBAL_CONFIG.tracker.cartBuyerCarts.seller = GLOBAL_CONFIG.tracker.sellerBuyerCartsCart;
+
+        GLOBAL_CONFIG.tracker.catalogHome.seller = GLOBAL_CONFIG.tracker.sellerHomeCatalog;
+        GLOBAL_CONFIG.tracker.catalogSellerCatalogs.seller = GLOBAL_CONFIG.tracker.sellerSellerCatalogsCatalog;
+        GLOBAL_CONFIG.tracker.catalogLink.seller = GLOBAL_CONFIG.tracker.sellerLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogEmbed.seller = GLOBAL_CONFIG.tracker.sellerEmbedCatalog;
 
 
         $.extend(GLOBAL_CONFIG.labels, {
@@ -21460,7 +21484,8 @@ angular.module('app')
                 },
                 viewModal: function (key, config) {
                     var that = this,
-                        track;
+                        track,
+                        sellerTrack;
 
                     $modal.open({
                         templateUrl: 'catalog/view.html',
@@ -21559,6 +21584,7 @@ angular.module('app')
                                 imagesReader.showLoaderAlways = true;
 
                                 track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.homeCatalog, relativeCatalogUrl);
+                                sellerTrack = helpers.track.proxyLabelToEvents(track.seller, relativeCatalogUrl);
 
                                 $scope.imagesReader = imagesReader;
 
@@ -21706,7 +21732,7 @@ angular.module('app')
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                                 $scope.sellerDetails.getTrack = function () {
-                                    return track;
+                                    return sellerTrack;
                                 };
 
                                 $scope.catalogMenu.stateChanged = function (state) {
@@ -23122,7 +23148,7 @@ angular.module('app')
                                     };
 
                                     $scope.sellerDetails.getTrack = function () {
-                                        return track;
+                                        return helpers.track.proxyLabelToEvents(track.seller, config.relativeUrl);
                                     };
 
                                     track.openCart();
@@ -24392,7 +24418,6 @@ angular.module('app')
                         arr = [];
                     arr.extend(v);
                     arr.extend(supplied);
-                    console.log(value);
                     helpers.track.event.apply(helpers.tracker, arr);
                 };
                 noop[k] = function () {
