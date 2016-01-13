@@ -916,6 +916,9 @@ if (window.DEBUG) {
                 proxyLabelToEvents: function (track, label) {
                     var newTrack = angular.copy(track);
                     angular.forEach(newTrack, function (value, key) {
+                        if (!angular.isFunction(value)) {
+                            return;
+                        }
                         newTrack[key] = function () {
                             return value(label);
                         };
@@ -1627,7 +1630,12 @@ if (window.DEBUG) {
                 closeCatalogDrawer: "close catalog drawer",
                 loadMoreCatalogImages: "load more catalog images",
                 openSellerContent: "open seller content",
-                closeSellerContent: "close seller content"
+                closeSellerContent: "close seller content",
+
+                openCatalogShareDialog: "open catalog share dialog",
+                closeCatalogShareDialog: "close catalog share dialog",
+                focusCatalogShareLink: "focus catalog share link",
+                focusCatalogShareEmbedCode: "focus catalog share embed code",
             };
         };
 
@@ -1640,19 +1648,18 @@ if (window.DEBUG) {
                 changeProductVariantOption: "change product variant option",
                 focusProductCustomVariant: "focus product custom variant",
                 changeProductQuantity: "change product quantity",
-                addToCart: "add to cart",
-                updateCart: "update cart",
-                openProductContent: "open product content",
-                closeProductContent: "close product content"
-            };
-        };
 
-        locals.shareActions = function () {
-            return {
-                openShareDialog: "open share dialog",
-                closeShareDialog: "close share dialog",
-                focusShareLink: "focus share link",
-                focusShareEmbedCode: "focus share embed code",
+                openProductContent: "open product content",
+                closeProductContent: "close product content",
+
+                addToCartSuccess: "add to cart success",
+                addToCartFail: "add to cart fail",
+                updateCartSuccess: "update cart success",
+                updateCartFail: "update cart fail",
+
+                openProductShareDialog: "open product share dialog",
+                closeProductShareDialog: "close product share dialog",
+                focusProductShareLink: "focus product share link",
             };
         };
 
@@ -1681,7 +1688,10 @@ if (window.DEBUG) {
                 useSavedAddressForShipping: "use saved address for shipping",
                 useSavedAddressForBilling: "use saved address for billing",
                 openSellerContent: "open seller content",
-                closeSellerContent: "close seller content"
+                closeSellerContent: "close seller content",
+
+                removeLineSuccess: "remove line success",
+                removeLineFail: "remove line fail"
             };
         };
 
@@ -1695,22 +1705,45 @@ if (window.DEBUG) {
 
         $.extend(GLOBAL_CONFIG.tracker, {
 
-            homeCatalog: locals.makeActions('Home / Catalogs', locals.catalogActions),
-            sellerCatalog: locals.makeActions('Seller / Catalogs', locals.catalogActions),
-            linkCatalog: locals.makeActions('Link / Catalogs', locals.catalogActions),
-            embedCatalog: locals.makeActions('Embed / Catalogs', locals.catalogActions),
+            catalogHome: locals.makeActions('Home', locals.catalogActions),
+            catalogSellerCatalogs: locals.makeActions('Seller / Catalogs', locals.catalogActions),
+            catalogLink: locals.makeActions('Link', locals.catalogActions),
+            catalogEmbed: locals.makeActions('Embed', locals.catalogActions),
 
-            catalogProducts: locals.makeActions('Catalog / Products', locals.productActions),
-            cartProducts: locals.makeActions('Cart / Products', locals.productActions),
-            linkProducts: locals.makeActions('Link / Products', locals.productActions),
+            productHomeCatalog: locals.makeActions('Home / Catalog', locals.productActions),
+            productSellerCatalogsCatalog: locals.makeActions('Seller / Catalogs / Catalog', locals.productActions),
+            productLinkCatalog: locals.makeActions('Link / Catalog', locals.productActions),
+            productEmbedCatalog: locals.makeActions('Embed / Catalog', locals.productActions),
+            productHomeCatalogCart: locals.makeActions('Home / Catalog / Cart', locals.productActions),
+            productSellerCatalogsCatalogCart: locals.makeActions('Seller / Catalogs / Catalog / Cart', locals.productActions),
+            productLinkCatalogCart: locals.makeActions('Link / Catalog / Cart', locals.productActions),
+            productEmbedCatalogCart: locals.makeActions('Embed / Catalog / Cart', locals.productActions),
+            productBuyerCartsCart: locals.makeActions('Buyer / Carts / Cart', locals.productActions),
+            productLink: locals.makeActions('Link', locals.productActions),
 
-            buyerCarts: locals.makeActions('Buyer / Carts', locals.cartActions),
-            catalogCarts: locals.makeActions('Catalog / Carts', locals.cartActions),
-
-            catalogShares: locals.makeActions('Catalog / Shares', locals.shareActions),
-            productShares: locals.makeActions('Product / Shares', locals.shareActions),
+            cartHomeCatalog: locals.makeActions('Home / Catalog', locals.cartActions),
+            cartSellerCatalogsCatalog: locals.makeActions('Seller / Catalogs / Catalog', locals.cartActions),
+            cartLinkCatalog: locals.makeActions('Link / Catalog', locals.cartActions),
+            cartEmbedCatalog: locals.makeActions('Embed / Catalog', locals.cartActions),
+            cartBuyerCarts: locals.makeActions('Buyer / Carts', locals.cartActions)
 
         });
+
+        GLOBAL_CONFIG.tracker.catalogHome.product = GLOBAL_CONFIG.tracker.productHomeCatalog;
+        GLOBAL_CONFIG.tracker.catalogSellerCatalogs.product = GLOBAL_CONFIG.tracker.productSellerCatalogsCatalog;
+        GLOBAL_CONFIG.tracker.catalogLink.product = GLOBAL_CONFIG.tracker.productLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogEmbed.product = GLOBAL_CONFIG.tracker.productEmbedCatalog;
+
+        GLOBAL_CONFIG.tracker.catalogHome.cart = GLOBAL_CONFIG.tracker.cartHomeCatalog;
+        GLOBAL_CONFIG.tracker.catalogSellerCatalogs.cart = GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog;
+        GLOBAL_CONFIG.tracker.catalogLink.cart = GLOBAL_CONFIG.tracker.cartLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogEmbed.cart = GLOBAL_CONFIG.tracker.cartBuyerCarts;
+
+        GLOBAL_CONFIG.tracker.cartHomeCatalog.product = GLOBAL_CONFIG.tracker.productHomeCatalogCart;
+        GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog.product = GLOBAL_CONFIG.tracker.productSellerCatalogsCatalogCart;
+        GLOBAL_CONFIG.tracker.cartLinkCatalog.product = GLOBAL_CONFIG.tracker.productLinkCatalogCart;
+        GLOBAL_CONFIG.tracker.cartEmbedCatalog.product = GLOBAL_CONFIG.tracker.productEmbedCatalogCart;
+        GLOBAL_CONFIG.tracker.cartBuyerCarts.product = GLOBAL_CONFIG.tracker.productBuyerCartsCart;
 
 
         $.extend(GLOBAL_CONFIG.labels, {
@@ -18985,7 +19018,7 @@ angular.module('app')
                 viewOpts = {
                     inDirection: false,
                     outDirection: false,
-                    track: helpers.track.events.buyerCarts,
+                    track: helpers.track.events.cartBuyerCarts,
                     relativeUrl: relativeUrl,
                     afterClose: function () {
                         var state = 'buy-orders';
@@ -19068,7 +19101,7 @@ angular.module('app')
                         $.extend(opts, viewOpts);
                     }
                     opts.relativeUrl = $state.href('buyer-cart-view', {key: order.key});
-                    opts.track = opts.track || helpers.track.events.buyerCarts;
+                    opts.track = opts.track || helpers.track.events.cartBuyerCarts;
                     viewPromise = models['34'].manageModal(order, order._seller, buyer, opts);
                     if (viewPromise && directView) {
                         viewPromise.then(viewThen);
@@ -19228,7 +19261,7 @@ angular.module('app')
                 popFrom: undefined,
                 inDirection: false,
                 outDirection: false,
-                track: helpers.track.events.linkCatalog,
+                track: helpers.track.events.catalogLink,
                 afterClose: function () {
                     $state.go('home');
                 }
@@ -19247,7 +19280,7 @@ angular.module('app')
                 afterClose: embed ? undefined : function () {
                     $state.go('home');
                 },
-                track: helpers.track.events.linkCatalog,
+                track: helpers.track.events.catalogLink,
                 productLink: true,
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 autoAddToCartQuantity: $state.params.quantity,
@@ -19265,7 +19298,7 @@ angular.module('app')
                 outDirection: false,
                 link: true,
                 productLink: true,
-                track: helpers.track.events.linkCatalog,
+                track: helpers.track.events.catalogLink,
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 afterClose: function () {
                     $state.go('home');
@@ -19283,7 +19316,7 @@ angular.module('app')
                 inDirection: false,
                 outDirection: false,
                 productLink: true,
-                track: helpers.track.events.linkCatalog,
+                track: helpers.track.events.catalogLink,
                 afterClose: function () {
                     $state.go('home');
                 },
@@ -19301,7 +19334,7 @@ angular.module('app')
                 inDirection: false,
                 outDirection: false,
                 openCart: true,
-                track: helpers.track.events.linkCatalog,
+                track: helpers.track.events.catalogLink,
                 afterClose: function () {
                     $state.go('home');
                 },
@@ -19317,7 +19350,7 @@ angular.module('app')
                 outDirection: false,
                 noEscape: true,
                 hideClose: true,
-                track: helpers.track.events.embedCatalog
+                track: helpers.track.events.catlaogEmbed
             });
 
         })).controller('EmbedCatalogProductViewController', ng(function ($scope, helpers, $state, models) {
@@ -19329,7 +19362,7 @@ angular.module('app')
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
-                track: helpers.track.events.embedCatalog,
+                track: helpers.track.events.catlaogEmbed,
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
@@ -19345,7 +19378,7 @@ angular.module('app')
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
-                track: helpers.track.events.embedCatalog,
+                track: helpers.track.events.catlaogEmbed,
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 loadProduct: {
                     image: $state.params.image_id,
@@ -20750,23 +20783,8 @@ angular.module('app')
                 },
                 viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts, config) {
                     function getTrack(relativePath) {
-                        var track;
-                        if (config) {
-                            track = config.track;
-                        }
-                        return helpers.track.proxyLabelToEvents(track || helpers.track.noop.catalogProducts, relativePath);
+                        return helpers.track.proxyLabelToEvents(config.track, relativePath);
                     }
-                    /*
-                    openProduct: "open product",
-                    closeProduct: "close product",
-                    openProductDrawer: "open product drawer",
-                    closeProductDrawer: "close product drawer",
-                    changeProductVariantOption: "change product variant option",
-                    focusProductCustomVariant: "focus product custom variant",
-                    changeProductQuantity: "change product quantity",
-                    addToCart: "add to cart",
-                    updateCart: "update cart",
-                     */
                     var readArguments = {
                             _seller: {},
                             _images: {
@@ -21030,7 +21048,12 @@ angular.module('app')
                                 $scope.displayShare = function () {
                                     shareWatch();
                                     return social.share($scope.socialMeta, false, undefined, {
-                                        track: helpers.track.proxyLabelToEvents(helpers.track.events.productShares, relativeProductUrl)
+                                        track: {
+                                            openShareDialog: track.openProductShareDialog,
+                                            closeShareDialog: track.closeProductShareDialog,
+                                            focusShareLink: track.focusProductShareLink,
+                                            focusShareEmbedCode: track.focusProductShareEmbedCode
+                                        }
                                     });
                                 };
 
@@ -21286,7 +21309,8 @@ angular.module('app')
                                     return GLOBAL_CONFIG.fields.translateChoices['133'].availability[match];
                                 };
 
-                                $scope.addToCart = function () {
+                                function addToCart() {
+
                                     if (currentAccount._is_guest) {
                                         models['11'].login($state.engineHref((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
                                             key: $scope.catalog.key,
@@ -21312,8 +21336,8 @@ angular.module('app')
                                         productQuantityField.$setValidity('required', false);
                                         return;
                                     }
-                                    $scope.activitySpinner.start();
-                                    models['19'].current().then(function (response) {
+
+                                    function getsSeller(response) {
                                         if ($scope.order && $scope.orderLineCount === 1 && $scope.productManager.quantity.toString() === '0') {
                                             return deleteOrder();
                                         }
@@ -21327,7 +21351,10 @@ angular.module('app')
                                             disableUI: true,
                                             handleError: GLOBAL_CONFIG.backendErrorHandling.productOutOfStock
                                         });
-                                    }).then(function (response) {
+                                    }
+
+
+                                    function afterAddingToCart(response) {
                                         if (config.events && config.events.addToCart) {
                                             config.events.addToCart.call(this, response);
                                         }
@@ -21344,12 +21371,12 @@ angular.module('app')
                                             $scope.productManager.quantity = 1;
                                             $scope.disableUpdateCart = !$scope.isInStock;
                                             $scope.canAddToCart = $scope.isInStock;
-                                            track.updateCart();
+                                            track.updateCartSuccess();
                                         } else {
                                             if (!$scope.hasThisProduct) {
-                                                track.addToCart();
+                                                track.addToCartSuccess();
                                             } else {
-                                                track.updateCart();
+                                                track.updateCartSuccess();
                                             }
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;
@@ -21362,19 +21389,25 @@ angular.module('app')
                                         $scope.orderLineCount = response.data.entity._lines.length;
 
                                         snackbar.showK('cartUpdated');
-                                    })['finally'](function () {
-                                        $scope.activitySpinner.stop();
-                                    });
-                                };
+                                    }
 
-                                if (config.autoAddToCart) {
-                                    $timeout(function () {
-                                        $scope.addToCart();
-                                        config.autoAddToCart = false;
-                                    });
+                                    function failureAddingToCart() {
+                                        if (!$scope.hasThisProduct) {
+                                            track.addToCartFail();
+                                        } else {
+                                            track.updateCartFail();
+                                        }
+                                    }
+
+                                    function anyways() {
+                                        $scope.activitySpinner.stop();
+                                    }
+
+                                    $scope.activitySpinner.start();
+                                    models['19'].current().then(getsSeller).then(afterAddingToCart, failureAddingToCart)['finally'](anyways);
                                 }
 
-                                $scope.close = function () {
+                                function close() {
                                     var promise = $scope.$close();
                                     promise.then(function () {
                                         track.closeProduct();
@@ -21383,25 +21416,40 @@ angular.module('app')
                                         }
                                     });
                                     return promise;
-                                };
+                                }
 
-                                $scope.notInitialLoad = true;
-
-                                $scope.$watch('product.id', function productIdWatch(neww, old) {
+                                function productIdWatch(neww, old) {
                                     shareWatch();
-                                });
+                                }
 
-                                deferOpen.resolve();
-
-                                track.openProduct();
-
-                                $scope.productMenu.stateChanged = function (state) {
+                                function productMenuStateChanged(state) {
                                     if (state) {
                                         track.openProductDrawer();
                                     } else {
                                         track.closeProductDrawer();
                                     }
-                                };
+                                }
+
+                                $scope.addToCart = addToCart;
+
+                                if (config.autoAddToCart) {
+                                    $timeout(function () {
+                                        $scope.addToCart();
+                                        config.autoAddToCart = false;
+                                    });
+                                }
+
+                                $scope.close = close;
+
+                                $scope.notInitialLoad = true;
+
+                                $scope.$watch('product.id', productIdWatch);
+
+                                deferOpen.resolve();
+
+                                track.openProduct();
+
+                                $scope.productMenu.stateChanged = productMenuStateChanged;
 
                             }, failedOpen);
 
@@ -21548,7 +21596,12 @@ angular.module('app')
                                     return social.share($scope.socialMeta, {
                                         src: embedCatalogUrl
                                     }, undefined, {
-                                        track: helpers.track.proxyLabelToEvents(helpers.track.events.catalogShares, relativeCatalogUrl)
+                                        track: {
+                                            openShareDialog: track.openCatalogShareDialog,
+                                            closeShareDialog: track.closeCatalogShareDialog,
+                                            focusShareLink: track.focusCatalogShareLink,
+                                            focusShareEmbedCode: track.focusCatalogShareEmbedCode
+                                        }
                                     });
                                 };
 
@@ -21579,7 +21632,7 @@ angular.module('app')
                                             cartMode: true,
                                             cartModeRead: true,
                                             relativeUrl: getLink('href'),
-                                            track: helpers.track.events.catalogCarts
+                                            track: track.cart
                                         });
                                     });
                                 };
@@ -21610,7 +21663,7 @@ angular.module('app')
                                         autoAddToCart: (config.variantSignatureAsDicts && config.autoAddToCart) ? true : false,
                                         autoAddToCartQuantity: config.autoAddToCartQuantity,
                                         afterClose: config.afterCloseProduct,
-                                        track: (productLink ? helpers.track.events.linkProducts : helpers.track.events.catalogProducts)
+                                        track: track.product
                                     })['finally'](function () {
                                         $scope.loadingProduct = false;
                                     });
@@ -21893,7 +21946,7 @@ angular.module('app')
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
                     popFrom: helpers.clicks.realEventTarget($event.target),
-                    track: helpers.track.events.homeCatalog
+                    track: helpers.track.events.catalogHome
                 });
             };
 
@@ -22931,7 +22984,7 @@ angular.module('app')
                                                 line.product.variant_signature, {
                                                     popFrom: helpers.clicks.realEventTarget($event.target),
                                                     sellerKey: seller.key,
-                                                    track: helpers.track.events.cartProducts,
+                                                    track: track.product,
                                                     events: {
                                                         addToCart: function () {
                                                             locals.updateLiveEntity.apply($scope, arguments);
@@ -23178,7 +23231,7 @@ angular.module('app')
         $scope.preview = function (key, $event) {
             models['31'].previewModal(key, {
                 popFrom: helpers.clicks.realEventTarget($event.target),
-                track: helpers.track.events.sellerCatalog
+                track: helpers.track.events.catalogSellerCatalogs
             });
         };
 
@@ -24329,11 +24382,15 @@ angular.module('app')
         angular.forEach(GLOBAL_CONFIG.tracker, function (value, key) {
             var noop = angular.copy(value);
             angular.forEach(value, function (v, k) {
+                if (angular.isObject(v) && !angular.isArray(v)) {
+                    return;
+                }
                 value[k] = function () {
                     var supplied = _.toArray(arguments),
                         arr = [];
                     arr.extend(v);
                     arr.extend(supplied);
+                    console.log(value);
                     helpers.track.event.apply(helpers.tracker, arr);
                 };
                 noop[k] = function () {
