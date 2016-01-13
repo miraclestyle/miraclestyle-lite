@@ -705,7 +705,8 @@
                 },
                 viewModal: function (key, config) {
                     var that = this,
-                        track;
+                        track,
+                        sellerTrack;
 
                     $modal.open({
                         templateUrl: 'catalog/view.html',
@@ -804,6 +805,7 @@
                                 imagesReader.showLoaderAlways = true;
 
                                 track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.homeCatalog, relativeCatalogUrl);
+                                sellerTrack = helpers.track.proxyLabelToEvents(track.seller, relativeCatalogUrl);
 
                                 $scope.imagesReader = imagesReader;
 
@@ -951,7 +953,7 @@
                                 $scope.sellerDetails = models['23'].makeSellerDetails($scope.catalog._seller);
 
                                 $scope.sellerDetails.getTrack = function () {
-                                    return track;
+                                    return sellerTrack;
                                 };
 
                                 $scope.catalogMenu.stateChanged = function (state) {

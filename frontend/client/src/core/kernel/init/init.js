@@ -192,7 +192,6 @@
                         arr = [];
                     arr.extend(v);
                     arr.extend(supplied);
-                    console.log(value);
                     helpers.track.event.apply(helpers.tracker, arr);
                 };
                 noop[k] = function () {

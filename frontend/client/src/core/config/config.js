@@ -133,9 +133,6 @@
                 openCatalogDrawer: "open catalog drawer",
                 closeCatalogDrawer: "close catalog drawer",
                 loadMoreCatalogImages: "load more catalog images",
-                openSellerContent: "open seller content",
-                closeSellerContent: "close seller content",
-
                 openCatalogShareDialog: "open catalog share dialog",
                 closeCatalogShareDialog: "close catalog share dialog",
                 focusCatalogShareLink: "focus catalog share link",
@@ -191,11 +188,16 @@
                 closeSellerDrawer: "close seller drawer",
                 useSavedAddressForShipping: "use saved address for shipping",
                 useSavedAddressForBilling: "use saved address for billing",
-                openSellerContent: "open seller content",
-                closeSellerContent: "close seller content",
 
                 removeLineSuccess: "remove line success",
                 removeLineFail: "remove line fail"
+            };
+        };
+
+        locals.sellerActions = function () {
+            return {
+                openSellerContent: "open seller content",
+                closeSellerContent: "close seller content"
             };
         };
 
@@ -225,6 +227,17 @@
             productBuyerCartsCart: locals.makeActions('Buyer / Carts / Cart', locals.productActions),
             productLink: locals.makeActions('Link', locals.productActions),
 
+            sellerHomeCatalog: locals.makeActions('Home / Catalog', locals.sellerActions),
+            sellerSellerCatalogsCatalog: locals.makeActions('Seller / Catalogs / Catalog', locals.sellerActions),
+            sellerLinkCatalog: locals.makeActions('Link / Catalog', locals.sellerActions),
+            sellerEmbedCatalog: locals.makeActions('Embed / Catalog', locals.sellerActions),
+            sellerHomeCatalogCart: locals.makeActions('Home / Catalog / Cart', locals.sellerActions),
+            sellerSellerCatalogsCatalogCart: locals.makeActions('Seller / Catalogs / Catalog / Cart', locals.sellerActions),
+            sellerLinkCatalogCart: locals.makeActions('Link / Catalog / Cart', locals.sellerActions),
+            sellerEmbedCatalogCart: locals.makeActions('Embed / Catalog / Cart', locals.sellerActions),
+            sellerBuyerCartsCart: locals.makeActions('Buyer / Carts / Cart', locals.sellerActions),
+            sellerLink: locals.makeActions('Link', locals.sellerActions),
+
             cartHomeCatalog: locals.makeActions('Home / Catalog', locals.cartActions),
             cartSellerCatalogsCatalog: locals.makeActions('Seller / Catalogs / Catalog', locals.cartActions),
             cartLinkCatalog: locals.makeActions('Link / Catalog', locals.cartActions),
@@ -248,6 +261,17 @@
         GLOBAL_CONFIG.tracker.cartLinkCatalog.product = GLOBAL_CONFIG.tracker.productLinkCatalogCart;
         GLOBAL_CONFIG.tracker.cartEmbedCatalog.product = GLOBAL_CONFIG.tracker.productEmbedCatalogCart;
         GLOBAL_CONFIG.tracker.cartBuyerCarts.product = GLOBAL_CONFIG.tracker.productBuyerCartsCart;
+
+        GLOBAL_CONFIG.tracker.cartHomeCatalog.seller = GLOBAL_CONFIG.tracker.sellerHomeCatalogCart;
+        GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog.seller = GLOBAL_CONFIG.tracker.sellerSellerCatalogsCatalogCart;
+        GLOBAL_CONFIG.tracker.cartLinkCatalog.seller = GLOBAL_CONFIG.tracker.sellerLinkCatalogCart;
+        GLOBAL_CONFIG.tracker.cartEmbedCatalog.seller = GLOBAL_CONFIG.tracker.sellerEmbedCatalogCart;
+        GLOBAL_CONFIG.tracker.cartBuyerCarts.seller = GLOBAL_CONFIG.tracker.sellerBuyerCartsCart;
+
+        GLOBAL_CONFIG.tracker.catalogHome.seller = GLOBAL_CONFIG.tracker.sellerHomeCatalog;
+        GLOBAL_CONFIG.tracker.catalogSellerCatalogs.seller = GLOBAL_CONFIG.tracker.sellerSellerCatalogsCatalog;
+        GLOBAL_CONFIG.tracker.catalogLink.seller = GLOBAL_CONFIG.tracker.sellerLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogEmbed.seller = GLOBAL_CONFIG.tracker.sellerEmbedCatalog;
 
 
         $.extend(GLOBAL_CONFIG.labels, {

@@ -1055,7 +1055,7 @@
                                     };
 
                                     $scope.sellerDetails.getTrack = function () {
-                                        return track;
+                                        return helpers.track.proxyLabelToEvents(track.seller, config.relativeUrl);
                                     };
 
                                     track.openCart();
