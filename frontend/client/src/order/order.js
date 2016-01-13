@@ -989,8 +989,10 @@
                                                             if (!(response && response.then)) {
                                                                 snackbar.showK('cartUpdated');
                                                             }
+                                                            track.removeLineSuccess();
                                                         }, function () {
                                                             line._state = null;
+                                                            track.removeLineFail();
                                                         });
                                                     });
                                                 });
