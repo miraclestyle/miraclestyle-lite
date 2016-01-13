@@ -184,11 +184,15 @@
         angular.forEach(GLOBAL_CONFIG.tracker, function (value, key) {
             var noop = angular.copy(value);
             angular.forEach(value, function (v, k) {
+                if (angular.isObject(v) && !angular.isArray(v)) {
+                    return;
+                }
                 value[k] = function () {
                     var supplied = _.toArray(arguments),
                         arr = [];
                     arr.extend(v);
                     arr.extend(supplied);
+                    console.log(value);
                     helpers.track.event.apply(helpers.tracker, arr);
                 };
                 noop[k] = function () {

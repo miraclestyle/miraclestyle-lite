@@ -134,7 +134,12 @@
                 closeCatalogDrawer: "close catalog drawer",
                 loadMoreCatalogImages: "load more catalog images",
                 openSellerContent: "open seller content",
-                closeSellerContent: "close seller content"
+                closeSellerContent: "close seller content",
+
+                openCatalogShareDialog: "open catalog share dialog",
+                closeCatalogShareDialog: "close catalog share dialog",
+                focusCatalogShareLink: "focus catalog share link",
+                focusCatalogShareEmbedCode: "focus catalog share embed code",
             };
         };
 
@@ -147,19 +152,18 @@
                 changeProductVariantOption: "change product variant option",
                 focusProductCustomVariant: "focus product custom variant",
                 changeProductQuantity: "change product quantity",
-                addToCart: "add to cart",
-                updateCart: "update cart",
-                openProductContent: "open product content",
-                closeProductContent: "close product content"
-            };
-        };
 
-        locals.shareActions = function () {
-            return {
-                openShareDialog: "open share dialog",
-                closeShareDialog: "close share dialog",
-                focusShareLink: "focus share link",
-                focusShareEmbedCode: "focus share embed code",
+                openProductContent: "open product content",
+                closeProductContent: "close product content",
+
+                addToCartSuccess: "add to cart success",
+                addToCartFail: "add to cart fail",
+                updateCartSuccess: "update cart success",
+                updateCartFail: "update cart fail",
+
+                openProductShareDialog: "open product share dialog",
+                closeProductShareDialog: "close product share dialog",
+                focusProductShareLink: "focus product share link",
             };
         };
 
@@ -188,7 +192,10 @@
                 useSavedAddressForShipping: "use saved address for shipping",
                 useSavedAddressForBilling: "use saved address for billing",
                 openSellerContent: "open seller content",
-                closeSellerContent: "close seller content"
+                closeSellerContent: "close seller content",
+
+                removeLineSuccess: "remove line success",
+                removeLineFail: "remove line fail"
             };
         };
 
@@ -202,22 +209,45 @@
 
         $.extend(GLOBAL_CONFIG.tracker, {
 
-            homeCatalog: locals.makeActions('Home / Catalogs', locals.catalogActions),
-            sellerCatalog: locals.makeActions('Seller / Catalogs', locals.catalogActions),
-            linkCatalog: locals.makeActions('Link / Catalogs', locals.catalogActions),
-            embedCatalog: locals.makeActions('Embed / Catalogs', locals.catalogActions),
+            catalogHome: locals.makeActions('Home', locals.catalogActions),
+            catalogSellerCatalogs: locals.makeActions('Seller / Catalogs', locals.catalogActions),
+            catalogLink: locals.makeActions('Link', locals.catalogActions),
+            catalogEmbed: locals.makeActions('Embed', locals.catalogActions),
 
-            catalogProducts: locals.makeActions('Catalog / Products', locals.productActions),
-            cartProducts: locals.makeActions('Cart / Products', locals.productActions),
-            linkProducts: locals.makeActions('Link / Products', locals.productActions),
+            productHomeCatalog: locals.makeActions('Home / Catalog', locals.productActions),
+            productSellerCatalogsCatalog: locals.makeActions('Seller / Catalogs / Catalog', locals.productActions),
+            productLinkCatalog: locals.makeActions('Link / Catalog', locals.productActions),
+            productEmbedCatalog: locals.makeActions('Embed / Catalog', locals.productActions),
+            productHomeCatalogCart: locals.makeActions('Home / Catalog / Cart', locals.productActions),
+            productSellerCatalogsCatalogCart: locals.makeActions('Seller / Catalogs / Catalog / Cart', locals.productActions),
+            productLinkCatalogCart: locals.makeActions('Link / Catalog / Cart', locals.productActions),
+            productEmbedCatalogCart: locals.makeActions('Embed / Catalog / Cart', locals.productActions),
+            productBuyerCartsCart: locals.makeActions('Buyer / Carts / Cart', locals.productActions),
+            productLink: locals.makeActions('Link', locals.productActions),
 
-            buyerCarts: locals.makeActions('Buyer / Carts', locals.cartActions),
-            catalogCarts: locals.makeActions('Catalog / Carts', locals.cartActions),
-
-            catalogShares: locals.makeActions('Catalog / Shares', locals.shareActions),
-            productShares: locals.makeActions('Product / Shares', locals.shareActions),
+            cartHomeCatalog: locals.makeActions('Home / Catalog', locals.cartActions),
+            cartSellerCatalogsCatalog: locals.makeActions('Seller / Catalogs / Catalog', locals.cartActions),
+            cartLinkCatalog: locals.makeActions('Link / Catalog', locals.cartActions),
+            cartEmbedCatalog: locals.makeActions('Embed / Catalog', locals.cartActions),
+            cartBuyerCarts: locals.makeActions('Buyer / Carts', locals.cartActions)
 
         });
+
+        GLOBAL_CONFIG.tracker.catalogHome.product = GLOBAL_CONFIG.tracker.productHomeCatalog;
+        GLOBAL_CONFIG.tracker.catalogSellerCatalogs.product = GLOBAL_CONFIG.tracker.productSellerCatalogsCatalog;
+        GLOBAL_CONFIG.tracker.catalogLink.product = GLOBAL_CONFIG.tracker.productLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogEmbed.product = GLOBAL_CONFIG.tracker.productEmbedCatalog;
+
+        GLOBAL_CONFIG.tracker.catalogHome.cart = GLOBAL_CONFIG.tracker.cartHomeCatalog;
+        GLOBAL_CONFIG.tracker.catalogSellerCatalogs.cart = GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog;
+        GLOBAL_CONFIG.tracker.catalogLink.cart = GLOBAL_CONFIG.tracker.cartLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogEmbed.cart = GLOBAL_CONFIG.tracker.cartBuyerCarts;
+
+        GLOBAL_CONFIG.tracker.cartHomeCatalog.product = GLOBAL_CONFIG.tracker.productHomeCatalogCart;
+        GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog.product = GLOBAL_CONFIG.tracker.productSellerCatalogsCatalogCart;
+        GLOBAL_CONFIG.tracker.cartLinkCatalog.product = GLOBAL_CONFIG.tracker.productLinkCatalogCart;
+        GLOBAL_CONFIG.tracker.cartEmbedCatalog.product = GLOBAL_CONFIG.tracker.productEmbedCatalogCart;
+        GLOBAL_CONFIG.tracker.cartBuyerCarts.product = GLOBAL_CONFIG.tracker.productBuyerCartsCart;
 
 
         $.extend(GLOBAL_CONFIG.labels, {

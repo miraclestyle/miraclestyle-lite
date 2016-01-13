@@ -90,6 +90,9 @@
                 proxyLabelToEvents: function (track, label) {
                     var newTrack = angular.copy(track);
                     angular.forEach(newTrack, function (value, key) {
+                        if (!angular.isFunction(value)) {
+                            return;
+                        }
                         newTrack[key] = function () {
                             return value(label);
                         };

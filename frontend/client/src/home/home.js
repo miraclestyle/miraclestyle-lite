@@ -217,7 +217,7 @@
             $scope.view = function (key, $event) {
                 models['31'].viewModal(key, {
                     popFrom: helpers.clicks.realEventTarget($event.target),
-                    track: helpers.track.events.homeCatalog
+                    track: helpers.track.events.catalogHome
                 });
             };
 

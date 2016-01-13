@@ -28,23 +28,8 @@
                 },
                 viewProductModal: function (catalogKey, imageKey, pricetagKey, variantSignatureAsDicts, config) {
                     function getTrack(relativePath) {
-                        var track;
-                        if (config) {
-                            track = config.track;
-                        }
-                        return helpers.track.proxyLabelToEvents(track || helpers.track.noop.catalogProducts, relativePath);
+                        return helpers.track.proxyLabelToEvents(config.track, relativePath);
                     }
-                    /*
-                    openProduct: "open product",
-                    closeProduct: "close product",
-                    openProductDrawer: "open product drawer",
-                    closeProductDrawer: "close product drawer",
-                    changeProductVariantOption: "change product variant option",
-                    focusProductCustomVariant: "focus product custom variant",
-                    changeProductQuantity: "change product quantity",
-                    addToCart: "add to cart",
-                    updateCart: "update cart",
-                     */
                     var readArguments = {
                             _seller: {},
                             _images: {
@@ -308,7 +293,12 @@
                                 $scope.displayShare = function () {
                                     shareWatch();
                                     return social.share($scope.socialMeta, false, undefined, {
-                                        track: helpers.track.proxyLabelToEvents(helpers.track.events.productShares, relativeProductUrl)
+                                        track: {
+                                            openShareDialog: track.openProductShareDialog,
+                                            closeShareDialog: track.closeProductShareDialog,
+                                            focusShareLink: track.focusProductShareLink,
+                                            focusShareEmbedCode: track.focusProductShareEmbedCode
+                                        }
                                     });
                                 };
 
@@ -564,7 +554,8 @@
                                     return GLOBAL_CONFIG.fields.translateChoices['133'].availability[match];
                                 };
 
-                                $scope.addToCart = function () {
+                                function addToCart() {
+
                                     if (currentAccount._is_guest) {
                                         models['11'].login($state.engineHref((config.hideCloseCatalog ? 'embed-' : '') + 'catalog-product-add-to-cart', {
                                             key: $scope.catalog.key,
@@ -590,8 +581,8 @@
                                         productQuantityField.$setValidity('required', false);
                                         return;
                                     }
-                                    $scope.activitySpinner.start();
-                                    models['19'].current().then(function (response) {
+
+                                    function getsSeller(response) {
                                         if ($scope.order && $scope.orderLineCount === 1 && $scope.productManager.quantity.toString() === '0') {
                                             return deleteOrder();
                                         }
@@ -605,7 +596,10 @@
                                             disableUI: true,
                                             handleError: GLOBAL_CONFIG.backendErrorHandling.productOutOfStock
                                         });
-                                    }).then(function (response) {
+                                    }
+
+
+                                    function afterAddingToCart(response) {
                                         if (config.events && config.events.addToCart) {
                                             config.events.addToCart.call(this, response);
                                         }
@@ -622,12 +616,12 @@
                                             $scope.productManager.quantity = 1;
                                             $scope.disableUpdateCart = !$scope.isInStock;
                                             $scope.canAddToCart = $scope.isInStock;
-                                            track.updateCart();
+                                            track.updateCartSuccess();
                                         } else {
                                             if (!$scope.hasThisProduct) {
-                                                track.addToCart();
+                                                track.addToCartSuccess();
                                             } else {
-                                                track.updateCart();
+                                                track.updateCartSuccess();
                                             }
                                             $scope.hasThisProduct = true;
                                             $scope.disableUpdateCart = true;
@@ -640,19 +634,25 @@
                                         $scope.orderLineCount = response.data.entity._lines.length;
 
                                         snackbar.showK('cartUpdated');
-                                    })['finally'](function () {
-                                        $scope.activitySpinner.stop();
-                                    });
-                                };
+                                    }
 
-                                if (config.autoAddToCart) {
-                                    $timeout(function () {
-                                        $scope.addToCart();
-                                        config.autoAddToCart = false;
-                                    });
+                                    function failureAddingToCart() {
+                                        if (!$scope.hasThisProduct) {
+                                            track.addToCartFail();
+                                        } else {
+                                            track.updateCartFail();
+                                        }
+                                    }
+
+                                    function anyways() {
+                                        $scope.activitySpinner.stop();
+                                    }
+
+                                    $scope.activitySpinner.start();
+                                    models['19'].current().then(getsSeller).then(afterAddingToCart, failureAddingToCart)['finally'](anyways);
                                 }
 
-                                $scope.close = function () {
+                                function close() {
                                     var promise = $scope.$close();
                                     promise.then(function () {
                                         track.closeProduct();
@@ -661,25 +661,40 @@
                                         }
                                     });
                                     return promise;
-                                };
+                                }
 
-                                $scope.notInitialLoad = true;
-
-                                $scope.$watch('product.id', function productIdWatch(neww, old) {
+                                function productIdWatch(neww, old) {
                                     shareWatch();
-                                });
+                                }
 
-                                deferOpen.resolve();
-
-                                track.openProduct();
-
-                                $scope.productMenu.stateChanged = function (state) {
+                                function productMenuStateChanged(state) {
                                     if (state) {
                                         track.openProductDrawer();
                                     } else {
                                         track.closeProductDrawer();
                                     }
-                                };
+                                }
+
+                                $scope.addToCart = addToCart;
+
+                                if (config.autoAddToCart) {
+                                    $timeout(function () {
+                                        $scope.addToCart();
+                                        config.autoAddToCart = false;
+                                    });
+                                }
+
+                                $scope.close = close;
+
+                                $scope.notInitialLoad = true;
+
+                                $scope.$watch('product.id', productIdWatch);
+
+                                deferOpen.resolve();
+
+                                track.openProduct();
+
+                                $scope.productMenu.stateChanged = productMenuStateChanged;
 
                             }, failedOpen);
 
@@ -826,7 +841,12 @@
                                     return social.share($scope.socialMeta, {
                                         src: embedCatalogUrl
                                     }, undefined, {
-                                        track: helpers.track.proxyLabelToEvents(helpers.track.events.catalogShares, relativeCatalogUrl)
+                                        track: {
+                                            openShareDialog: track.openCatalogShareDialog,
+                                            closeShareDialog: track.closeCatalogShareDialog,
+                                            focusShareLink: track.focusCatalogShareLink,
+                                            focusShareEmbedCode: track.focusCatalogShareEmbedCode
+                                        }
                                     });
                                 };
 
@@ -857,7 +877,7 @@
                                             cartMode: true,
                                             cartModeRead: true,
                                             relativeUrl: getLink('href'),
-                                            track: helpers.track.events.catalogCarts
+                                            track: track.cart
                                         });
                                     });
                                 };
@@ -888,7 +908,7 @@
                                         autoAddToCart: (config.variantSignatureAsDicts && config.autoAddToCart) ? true : false,
                                         autoAddToCartQuantity: config.autoAddToCartQuantity,
                                         afterClose: config.afterCloseProduct,
-                                        track: (productLink ? helpers.track.events.linkProducts : helpers.track.events.catalogProducts)
+                                        track: track.product
                                     })['finally'](function () {
                                         $scope.loadingProduct = false;
                                     });

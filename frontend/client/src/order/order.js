@@ -917,7 +917,7 @@
                                                 line.product.variant_signature, {
                                                     popFrom: helpers.clicks.realEventTarget($event.target),
                                                     sellerKey: seller.key,
-                                                    track: helpers.track.events.cartProducts,
+                                                    track: track.product,
                                                     events: {
                                                         addToCart: function () {
                                                             locals.updateLiveEntity.apply($scope, arguments);

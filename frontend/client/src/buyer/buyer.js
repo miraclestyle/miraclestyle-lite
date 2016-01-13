@@ -77,7 +77,7 @@
                 viewOpts = {
                     inDirection: false,
                     outDirection: false,
-                    track: helpers.track.events.buyerCarts,
+                    track: helpers.track.events.cartBuyerCarts,
                     relativeUrl: relativeUrl,
                     afterClose: function () {
                         var state = 'buy-orders';
@@ -160,7 +160,7 @@
                         $.extend(opts, viewOpts);
                     }
                     opts.relativeUrl = $state.href('buyer-cart-view', {key: order.key});
-                    opts.track = opts.track || helpers.track.events.buyerCarts;
+                    opts.track = opts.track || helpers.track.events.cartBuyerCarts;
                     viewPromise = models['34'].manageModal(order, order._seller, buyer, opts);
                     if (viewPromise && directView) {
                         viewPromise.then(viewThen);

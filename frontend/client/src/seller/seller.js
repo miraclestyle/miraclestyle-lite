@@ -84,7 +84,7 @@
         $scope.preview = function (key, $event) {
             models['31'].previewModal(key, {
                 popFrom: helpers.clicks.realEventTarget($event.target),
-                track: helpers.track.events.sellerCatalog
+                track: helpers.track.events.catalogSellerCatalogs
             });
         };
 
