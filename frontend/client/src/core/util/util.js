@@ -2729,7 +2729,6 @@
                             ripple.removeClass(cls);
                             var infinite = pulsates === 'infinite',
                                 negative;
-                            console.log(negative);
                             if ((infinite || pulsates) && time) {
                                 if (!infinite) {
                                     pulsates -= 1;
