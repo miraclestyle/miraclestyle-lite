@@ -307,8 +307,7 @@ class Account(orm.BaseExpando):
                   plugins=[
                       Write(),
                       Set(cfg={'d': {'output.entity': '_account'}}),
-                      Notify(cfg={'condition': condition_account_has_identities,
-                                  's': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
+                      Notify(cfg={'s': {'subject': notifications.ACCOUNT_SUDO_SUBJECT,
                                         'body': notifications.ACCOUNT_SUDO_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_account._primary_email'}}),
