@@ -768,7 +768,8 @@ class Catalog(orm.BaseExpando):
                       RulePrepare(),
                       Set(cfg={'d': {'output.entity': '_catalog'}}),
                       # notify when user publishes catalog
-                      Notify(cfg={'s': {'subject': notifications.CATALOG_PUBLISH_SUBJECT,
+                      Notify(cfg={'condition': lambda entity, **kwargs: entity.root_entity._primary_email != None,
+                                  's': {'subject': notifications.CATALOG_PUBLISH_SUBJECT,
                                         'body': notifications.CATALOG_PUBLISH_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
@@ -799,7 +800,8 @@ class Catalog(orm.BaseExpando):
                       RulePrepare(),
                       Set(cfg={'d': {'output.entity': '_catalog'}}),
                       # notify owner when catalog gets discontinued
-                      Notify(cfg={'s': {'subject': notifications.CATALOG_SUDO_SUBJECT,
+                      Notify(cfg={'condition': lambda entity, **kwargs: entity.root_entity._primary_email != None,
+                                  's': {'subject': notifications.CATALOG_SUDO_SUBJECT,
                                         'body': notifications.CATALOG_SUDO_DISCONTINUE_BODY, 'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
@@ -829,7 +831,8 @@ class Catalog(orm.BaseExpando):
                       RulePrepare(),
                       Set(cfg={'d': {'output.entity': '_catalog'}}),
                       # notify owner when catalog gets discontinued
-                      Notify(cfg={'s': {'subject': notifications.CATALOG_DISCONTINUE_SUBJECT,
+                      Notify(cfg={'condition': lambda entity, **kwargs: entity.root_entity._primary_email != None,
+                                  's': {'subject': notifications.CATALOG_DISCONTINUE_SUBJECT,
                                         'body': notifications.CATALOG_DISCONTINUE_BODY, 'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
@@ -886,7 +889,8 @@ class Catalog(orm.BaseExpando):
                       RulePrepare(),
                       Set(cfg={'d': {'output.entity': '_catalog'}}),
                       # use 1 notify plugin with dynamic email
-                      Notify(cfg={'s': {'subject': notifications.CATALOG_SUDO_SUBJECT,
+                      Notify(cfg={'condition': lambda entity, **kwargs: entity.root_entity._primary_email != None,
+                                  's': {'subject': notifications.CATALOG_SUDO_SUBJECT,
                                         'body': notifications.CATALOG_SUDO_BODY, 'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
