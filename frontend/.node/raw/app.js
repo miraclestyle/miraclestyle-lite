@@ -5600,23 +5600,25 @@ function msieversion() {
                     }
 
                     ripple.css(worker.style);
-
+                    var now = new Date().getTime();
                     $timeout(function () {
                         $animateCss(ripple, {
                             addClass: cls
                         }).start().done(function () {
                             ripple.removeClass(cls);
-                            var infinite = pulsates === 'infinite';
+                            var infinite = pulsates === 'infinite',
+                                negative;
                             if ((infinite || pulsates) && time) {
                                 if (!infinite) {
                                     pulsates -= 1;
                                 }
+                                negative = new Date().getTime() - now;
                                 setTimeout(function () {
                                     onPressDown2({
                                         clientY: element_position.top + (parent_height / 2),
                                         clientX: element_position.left + (parent_width / 2)
                                     }, PULSATE_FREQUENCY);
-                                }, PULSATE_FREQUENCY - 600);
+                                }, PULSATE_FREQUENCY - negative);
                             }
                         });
                     }, 0, false);
@@ -19374,7 +19376,7 @@ angular.module('app')
                 outDirection: false,
                 noEscape: true,
                 hideClose: true,
-                track: helpers.track.events.catlaogEmbed
+                track: helpers.track.events.catalogEmbed
             });
 
         })).controller('EmbedCatalogProductViewController', ng(function ($scope, helpers, $state, models) {
@@ -19386,7 +19388,7 @@ angular.module('app')
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
-                track: helpers.track.events.catlaogEmbed,
+                track: helpers.track.events.catalogEmbed,
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
@@ -19402,7 +19404,7 @@ angular.module('app')
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
-                track: helpers.track.events.catlaogEmbed,
+                track: helpers.track.events.catalogEmbed,
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 loadProduct: {
                     image: $state.params.image_id,
