@@ -2721,23 +2721,26 @@
                     }
 
                     ripple.css(worker.style);
-
+                    var now = new Date().getTime();
                     $timeout(function () {
                         $animateCss(ripple, {
                             addClass: cls
                         }).start().done(function () {
                             ripple.removeClass(cls);
-                            var infinite = pulsates === 'infinite';
+                            var infinite = pulsates === 'infinite',
+                                negative;
+                            console.log(negative);
                             if ((infinite || pulsates) && time) {
                                 if (!infinite) {
                                     pulsates -= 1;
                                 }
+                                negative = new Date().getTime() - now;
                                 setTimeout(function () {
                                     onPressDown2({
                                         clientY: element_position.top + (parent_height / 2),
                                         clientX: element_position.left + (parent_width / 2)
                                     }, PULSATE_FREQUENCY);
-                                }, PULSATE_FREQUENCY - 600);
+                                }, PULSATE_FREQUENCY - negative);
                             }
                         });
                     }, 0, false);
