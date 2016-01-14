@@ -768,8 +768,8 @@ class Catalog(orm.BaseExpando):
                       RulePrepare(),
                       Set(cfg={'d': {'output.entity': '_catalog'}}),
                       # notify when user publishes catalog
-                      Notify(cfg={'s': {'condition': lambda entity, **kwargs: entity.root_entity._primary_email != None,
-                                        'subject': notifications.CATALOG_PUBLISH_SUBJECT,
+                      Notify(cfg={'condition': lambda entity, **kwargs: entity.root_entity._primary_email != None,
+                                  's': {'subject': notifications.CATALOG_PUBLISH_SUBJECT,
                                         'body': notifications.CATALOG_PUBLISH_BODY,
                                         'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': '_catalog.root_entity._primary_email'}}),
