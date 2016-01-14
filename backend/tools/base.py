@@ -163,15 +163,18 @@ def render_subject_and_body_templates(data):
 # @note We have to consider http://sendgrid.com/partner/google
 def mail_send(data, render=True):
   message_sender = data.get('sender', None)
+  message_recipient = data.get('recipient', None)
   if not message_sender:
     raise ValueError('`sender` not found in data')
+  if message_recipient == None:
+    return  # Fail silently in situations where user disconnects all identities from his/her account.
   if render:
     render_subject_and_body_templates(data)
   if settings.DEBUG:
     log.debug([data['subject'], data['body']])
   message = mail.EmailMessage()
   message.sender = message_sender
-  message.bcc = data['recipient']
+  message.bcc = message_recipient
   message.subject = data['subject']
   message.html = data['body']
   message.body = message.html
