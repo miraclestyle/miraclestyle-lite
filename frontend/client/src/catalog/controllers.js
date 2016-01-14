@@ -96,7 +96,7 @@
                 outDirection: false,
                 noEscape: true,
                 hideClose: true,
-                track: helpers.track.events.catlaogEmbed
+                track: helpers.track.events.catalogEmbed
             });
 
         })).controller('EmbedCatalogProductViewController', ng(function ($scope, helpers, $state, models) {
@@ -108,7 +108,7 @@
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
-                track: helpers.track.events.catlaogEmbed,
+                track: helpers.track.events.catalogEmbed,
                 loadProduct: {
                     image: $state.params.image_id,
                     id: $state.params.pricetag_id
@@ -124,7 +124,7 @@
                 noEscapeOnProduct: true,
                 inDirection: false,
                 outDirection: false,
-                track: helpers.track.events.catlaogEmbed,
+                track: helpers.track.events.catalogEmbed,
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 loadProduct: {
                     image: $state.params.image_id,
