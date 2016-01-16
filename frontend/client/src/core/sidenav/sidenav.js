@@ -269,7 +269,7 @@
                             }
 
                             if (isOpen) {
-                                resize();
+                                //resize();
                             }
 
                             deferred.resolve(result);
