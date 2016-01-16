@@ -134,17 +134,23 @@
             var initialWidth = element.css('width');
             var resize = function () {
                 var tolerate = $(window).width() - 56;
+                /*
                 if (tolerate > initialWidth) {
                     element.css({
                         width: '',
                         'min-width': ''
                     });
                     return;
-                }
+                }*/
                 if (element.width() > tolerate) {
                     element.css({
                         width: tolerate,
                         'min-width': tolerate
+                    });
+                } else {
+                    element.css({
+                        width: '',
+                        'min-width': ''
                     });
                 }
             };
