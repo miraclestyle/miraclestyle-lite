@@ -110,9 +110,9 @@ class RequestHandler(webapp2.RequestHandler):
     if self.current_account is None and self.autoload_current_account:
       from models.account import Account
       unsecure = self.secure_cookie_get(settings.COOKIE_AUTH_KEY)
+      headers = self.request.headers
       if not unsecure:
         unsecure = headers.get('Authorization')
-      headers = self.request.headers
       Account.set_current_account_from_access_token(unsecure)
       current_account = Account.current_account()
       current_account.set_taskqueue(headers.get('X-AppEngine-QueueName', None) != None)  # https://developers.google.com/appengine/docs/python/taskqueue/overview-push#Python_Task_request_headers
