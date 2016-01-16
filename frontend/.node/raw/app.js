@@ -6186,7 +6186,7 @@ function msieversion() {
     }
     SidenavService.$inject = ["$mdComponentRegistry", "$q"];
 
-    function SidenavDirective($timeout, $animateCss, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor) {
+    function SidenavDirective($timeout, $animateCss, $parse, $mdMedia, $mdConstant, $compile, $q, $document, mdContextualMonitor, $$rAF) {
         return {
             restrict: 'E',
             scope: {
@@ -6226,30 +6226,24 @@ function msieversion() {
             var initialWidth = element.css('width');
             var resize = function () {
                 var tolerate = $(window).width() - 56;
-                if (tolerate > initialWidth) {
-                    element.css({
-                        width: '',
-                        'min-width': ''
-                    });
-                    return;
-                }
                 if (element.width() > tolerate) {
+                    /*
                     element.css({
                         width: tolerate,
                         'min-width': tolerate
-                    });
+                    });*/
+                    element.addClass('force-auto');
                 } else {
+                    /*
                     element.css({
                         width: '',
                         'min-width': ''
-                    });
+                    });*/
+                    element.removeClass('force-auto');
                 }
             };
 
             resize();
-
-            resize = _.throttle(resize, 100);
-
             $(window).bind('resize', resize);
 
             scope.$watch(isLocked, updateIsLocked);

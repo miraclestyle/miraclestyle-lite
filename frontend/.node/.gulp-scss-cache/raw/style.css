@@ -699,6 +699,16 @@ md-sidenav.wide-sidenav {
   width: 560px;
   min-width: 560px; }
 
+md-sidenav {
+  width: calc(100% - 56px);
+  min-width: initial;
+  max-width: 280px; }
+
+md-sidenav.wide-sidenav {
+  width: calc(100% - 56px);
+  min-width: initial;
+  max-width: 560px; }
+
 md-backdrop {
   z-index: 50; }
 
