@@ -6243,13 +6243,13 @@ function msieversion() {
                 }
             };
 
-            resize();
-            $(window).bind('resize', resize);
+            //resize();
+            //$(window).bind('resize', resize);
 
             scope.$watch(isLocked, updateIsLocked);
             scope.$watch('isOpen', updateIsOpen);
             scope.$on('$destroy', function () {
-                $(window).off('resize', resize);
+                //$(window).off('resize', resize);
             });
 
 
