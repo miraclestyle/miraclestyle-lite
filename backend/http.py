@@ -110,6 +110,8 @@ class RequestHandler(webapp2.RequestHandler):
     if self.current_account is None and self.autoload_current_account:
       from models.account import Account
       unsecure = self.secure_cookie_get(settings.COOKIE_AUTH_KEY)
+      if not unsecure:
+        unsecure = headers.get('Authorization')
       headers = self.request.headers
       Account.set_current_account_from_access_token(unsecure)
       current_account = Account.current_account()
