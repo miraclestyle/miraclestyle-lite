@@ -18042,7 +18042,7 @@ function msieversion() {
                         var bar = element.parents('.modal:first').find('.new-pricetag-bar'),
                             newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
                             newWidth = Math.ceil(newHeight * image.proportion),
-                            imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
+                            imageSize = newHeight, //helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight),
                             originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
                             fn = function () {
@@ -23312,6 +23312,7 @@ angular.module('app')
             viewOpts = {
                 inDirection: false,
                 outDirection: false,
+                track: helpers.track.noop.cartBuyerCarts,
                 afterClose: function () {
                     $state.go('sell-orders');
                 }

@@ -136,6 +136,7 @@
             viewOpts = {
                 inDirection: false,
                 outDirection: false,
+                track: helpers.track.noop.cartBuyerCarts,
                 afterClose: function () {
                     $state.go('sell-orders');
                 }
