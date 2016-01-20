@@ -187,6 +187,7 @@
         $scope.view = function (order, $event, viewOpts) {
             var opts = {
                 sellerMode: carts,
+                track: helpers.track.noop.cartBuyerCarts,
                 popFrom: helpers.clicks.realEventTarget($event.target)
             };
             if (viewOpts) {
