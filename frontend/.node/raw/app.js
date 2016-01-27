@@ -1646,9 +1646,6 @@ if (window.DEBUG) {
                 focusProductCustomVariant: "focus product custom variant",
                 changeProductQuantity: "change product quantity",
 
-                openProductContent: "open product content",
-                closeProductContent: "close product content",
-
                 addToCartSuccess: "add to cart success",
                 addToCartFail: "add to cart fail",
                 updateCartSuccess: "update cart success",
@@ -1691,10 +1688,7 @@ if (window.DEBUG) {
         };
 
         locals.sellerActions = function () {
-            return {
-                openSellerContent: "open seller content",
-                closeSellerContent: "close seller content"
-            };
+            return {};
         };
 
         locals.makeActions = function (category, fn) {
@@ -2003,17 +1997,12 @@ if (window.DEBUG) {
             },
             '28': {
                 images: 'catalog/product/help/images.html',
-                contents: 'catalog/product/help/contents.html',
                 variants: 'catalog/product/help/variants.html',
                 _instances: 'catalog/product/help/instances.html'
             },
             '27': {
                 images: 'catalog/product/help/images.html',
-                contents: 'catalog/product/help/contents.html',
                 variant_options: 'catalog/product/help/variant_options.html'
-            },
-            '21': {
-                documents: 'seller/help/contents.html'
             }
         });
 
@@ -2039,7 +2028,6 @@ if (window.DEBUG) {
             catalogProducts: 'Products',
             history: 'History',
             record: 'Log Entry',
-            sellerContents: 'Contents',
             sellerPlugins: 'Rules'
         });
 
@@ -2148,15 +2136,10 @@ if (window.DEBUG) {
             viewInstances: 'Variant Configurations',
             editInstances: 'Edit Variant Configuration',
             addInstances: 'Add Variant Configuration',
-            addContents: 'Add Content',
-            editContents: 'Edit Content',
             account: 'Account',
             admin: 'Admin',
             users: 'Accounts',
             aboutRules: 'About Rules',
-            addDocuments: 'Add Content',
-            editDocuments: 'Edit Content',
-            editContent: false,
             sellerProfile: 'Seller Profile'
         });
 
@@ -20507,8 +20490,6 @@ angular.module('app')
                                                         fields: ["code", "description", "unit_price", "weight", "volume"]
                                                     }, {
                                                         fields: ["images"]
-                                                    }, {
-                                                        fields: ["contents"]
                                                     }],
                                                     cards: true,
                                                     cardView: 'product-instance-card-view',
@@ -20590,10 +20571,6 @@ angular.module('app')
                                                     },
                                                     excludeFields: ['created', 'sequence']
                                                 }
-                                            });
-
-                                            $.extend($scope.fieldProduct.modelclass.contents.ui, {
-                                                specifics: {}
                                             });
 
                                             $.extend($scope.fieldProduct.modelclass.images.ui, {
@@ -21122,23 +21099,6 @@ angular.module('app')
                                     $scope.productInstance = null;
                                 };
                                 $scope.variationApplied = false;
-                                $scope.viewContent = function (content) {
-                                    $modal.open({
-                                        templateUrl: 'core/misc/content_view.html',
-                                        controller: ng(function ($scope) {
-                                            $scope.$state.instant(function () {
-                                                $scope.markDown = true;
-                                                $scope.content = content;
-                                                track.openProductContent();
-
-                                                $scope.close = function () {
-                                                    $scope.$close();
-                                                    track.closeProductContent();
-                                                };
-                                            });
-                                        })
-                                    });
-                                };
                                 $scope.canAddToCart = true;
                                 $scope.hasThisProduct = false;
                                 $scope.disableUpdateCart = false;
@@ -21205,7 +21165,7 @@ angular.module('app')
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'volume',
-                                            'description', 'contents',
+                                            'description'
                                         ];
                                     try {
                                         product = response.data.entity._images[0].pricetags[0]._product;
@@ -21516,9 +21476,7 @@ angular.module('app')
                                     key: key,
                                     // 5 rpcs
                                     read_arguments: {
-                                        _seller: {
-                                            _content: {}
-                                        },
+                                        _seller: {},
                                         _images: {
                                             pricetags: {}
                                         }
@@ -24096,17 +24054,7 @@ angular.module('app')
                 manageModal: function (accountKey) {
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config;
-                    fields._content.ui.label = false;
                     fields._plugin_group.ui.label = false;
-                    $.extend(fields._content.modelclass.documents.ui, {
-                        label: false,
-                        specifics: {
-                            listView: 'content-list-view',
-                            listConfig: {
-                                perLine: 1
-                            }
-                        }
-                    });
                     $.extend(fields._plugin_group.modelclass.plugins.ui, {
                         label: false
                     });
@@ -24133,12 +24081,6 @@ angular.module('app')
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);
                             args.account = accountKey;
-                            if (args._content === null) {
-                                args._content = {
-                                    kind: '21',
-                                    documents: []
-                                };
-                            }
                             args.read_arguments = read_arguments;
                             return args;
                         },
@@ -24147,9 +24089,6 @@ angular.module('app')
                                 groups: [{
                                     label: false,
                                     fields: ['name', 'logo'],
-                                }, {
-                                    label: GLOBAL_CONFIG.subheaders.sellerContents,
-                                    fields: ['_content']
                                 }, {
                                     label: GLOBAL_CONFIG.subheaders.sellerPlugins,
                                     fields: ['_plugin_group'],
