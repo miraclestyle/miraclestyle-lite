@@ -133,8 +133,8 @@
                 openCatalogDrawer: "open catalog drawer",
                 closeCatalogDrawer: "close catalog drawer",
                 loadMoreCatalogImages: "load more catalog images",
-                openCatalogShareDialog: "open catalog share dialog",
-                closeCatalogShareDialog: "close catalog share dialog",
+                openCatalogShareDrawer: "open catalog share drawer",
+                closeCatalogShareDrawer: "close catalog share drawer",
                 focusCatalogShareLink: "focus catalog share link",
                 focusCatalogShareEmbedCode: "focus catalog share embed code",
             };
@@ -158,8 +158,8 @@
                 updateCartSuccess: "update cart success",
                 updateCartFail: "update cart fail",
 
-                openProductShareDialog: "open product share dialog",
-                closeProductShareDialog: "close product share dialog",
+                openProductShareDrawer: "open product share drawer",
+                closeProductShareDrawer: "close product share drawer",
                 focusProductShareLink: "focus product share link",
             };
         };

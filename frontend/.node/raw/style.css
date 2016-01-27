@@ -3175,6 +3175,11 @@ div[disabled] .select-box {
 .social-grid.padding-0 {
     padding: 0px;
 }
+
+[class^="socicon-"] {
+    font-size: 40px;
+    color: rgba(0, 0, 0, 0.54);
+}
 #is-mobile {
     visibility: hidden;
 }

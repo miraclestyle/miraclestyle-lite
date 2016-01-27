@@ -12,7 +12,7 @@
            <div class="social-grid padding-0">
                 <a target="_blank" href="{{share(soc)}}" ng-repeat="soc in socials" class="social-grid-item" md-ink-ripple>
                     <div class="social-grid-item-line">
-                        <img class="social-icon" ng-src="{{getIcon(soc)}}">
+                        <div class="socicon-{{getIcon(soc)}}"></div>
                     </div>
                 </a>
             </div>

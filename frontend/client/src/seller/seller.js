@@ -870,13 +870,6 @@
                             }
                         };
 
-                        $scope.displayShare = function () {
-                            return social.share($scope.socialMeta, {
-                                src: embedSellerUrl
-                            });
-                        };
-
-
                         $scope.viewContent = function (content) {
                             var track = $scope.getTrack();
                             track.openSellerContent();

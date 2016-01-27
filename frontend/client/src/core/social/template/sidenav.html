@@ -1,0 +1,5 @@
+<md-sidenav md-state-changed="share.menu.stateChanged" ng-if="$state.isCompleted() && !notFound" md-swipe-right="share.menu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="share.menu.id">
+    <md-content>
+        <div ng-include="'core/social/share.html'"></div>
+    </md-content>
+</md-sidenav>

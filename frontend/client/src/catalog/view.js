@@ -290,19 +290,25 @@
                                     });
                                 };
 
-                                $scope.displayShare = function () {
-                                    shareWatch();
-                                    return social.share($scope.socialMeta, false, undefined, {
+                                function spawnShare() {
+                                    social.share($scope, $scope.socialMeta, false, undefined, {
                                         track: {
-                                            openShareDialog: track.openProductShareDialog,
-                                            closeShareDialog: track.closeProductShareDialog,
+                                            openShareDrawer: track.openProductShareDrawer,
+                                            closeShareDrawer: track.closeProductShareDrawer,
                                             focusShareLink: track.focusProductShareLink,
                                             focusShareEmbedCode: track.focusProductShareEmbedCode
                                         }
                                     });
-                                };
+                                }
+
+                                spawnShare();
 
                                 $scope.variantChooser = {};
+
+                                $scope.displayShare = function () {
+                                    spawnShare();
+                                    $scope.share.menu.open();
+                                };
 
                                 $scope.setupVariantChooser = function (variant, indice) {
                                     variant.indice = indice;
@@ -839,17 +845,19 @@
                                     }
                                 };
 
+                                social.share($scope, $scope.socialMeta, {
+                                    src: embedCatalogUrl
+                                }, undefined, {
+                                    track: {
+                                        openShareDrawer: track.openCatalogShareDrawer,
+                                        closeShareDrawer: track.closeCatalogShareDrawer,
+                                        focusShareLink: track.focusCatalogShareLink,
+                                        focusShareEmbedCode: track.focusCatalogShareEmbedCode
+                                    }
+                                });
+
                                 $scope.displayShare = function () {
-                                    return social.share($scope.socialMeta, {
-                                        src: embedCatalogUrl
-                                    }, undefined, {
-                                        track: {
-                                            openShareDialog: track.openCatalogShareDialog,
-                                            closeShareDialog: track.closeCatalogShareDialog,
-                                            focusShareLink: track.focusCatalogShareLink,
-                                            focusShareEmbedCode: track.focusCatalogShareEmbedCode
-                                        }
-                                    });
+                                    $scope.share.menu.open();
                                 };
 
                                 $scope.loadMoreImages = function (callback) {

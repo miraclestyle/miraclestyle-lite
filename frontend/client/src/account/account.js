@@ -228,7 +228,7 @@
                                     $scope.socials = LOGIN_PROVIDERS;
 
                                     $scope.getIcon = function (soc) {
-                                        return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
+                                        return soc.icon || soc.name.toLowerCase();
                                     };
 
                                     $scope.authorization_urls = login.data.authorization_urls;

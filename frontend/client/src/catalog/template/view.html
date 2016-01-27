@@ -46,6 +46,10 @@
          </div>
       </div>
 
+
+
+       
+
      <md-sidenav md-state-changed="catalogMenu.stateChanged" ng-if="$state.isCompleted() && !notFound" md-swipe-right="catalogMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="catalogMenu.id">
         <md-content>
             <div class="list">
@@ -65,6 +69,8 @@
             </div>
         </md-content>
     </md-sidenav>
+
+     <div ng-include="'core/social/sidenav.html'"></div>
        
 
     <div ng-if="$state.isCompleted() && !notFound" ng-include="'seller/view.html'"></div>
