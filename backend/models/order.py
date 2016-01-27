@@ -294,7 +294,7 @@ class Order(orm.BaseExpando):
                                'payment_status', 'payment_method',
                                '_lines', '_messages.created', '_messages.agent', '_messages.action', '_messages.body',
                                '_messages._action', '_payment_method', '_seller.name',
-                               '_seller.logo', '_seller._content',
+                               '_seller.logo',
                                '_seller.follower_count', '_seller._notified_followers_count',
                                '_seller._currency'), condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('date', 'seller_reference',

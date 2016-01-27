@@ -922,8 +922,6 @@
                                                         fields: ["code", "description", "unit_price", "weight", "volume"]
                                                     }, {
                                                         fields: ["images"]
-                                                    }, {
-                                                        fields: ["contents"]
                                                     }],
                                                     cards: true,
                                                     cardView: 'product-instance-card-view',
@@ -1005,10 +1003,6 @@
                                                     },
                                                     excludeFields: ['created', 'sequence']
                                                 }
-                                            });
-
-                                            $.extend($scope.fieldProduct.modelclass.contents.ui, {
-                                                specifics: {}
                                             });
 
                                             $.extend($scope.fieldProduct.modelclass.images.ui, {

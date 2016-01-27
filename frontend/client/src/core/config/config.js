@@ -150,9 +150,6 @@
                 focusProductCustomVariant: "focus product custom variant",
                 changeProductQuantity: "change product quantity",
 
-                openProductContent: "open product content",
-                closeProductContent: "close product content",
-
                 addToCartSuccess: "add to cart success",
                 addToCartFail: "add to cart fail",
                 updateCartSuccess: "update cart success",
@@ -195,10 +192,7 @@
         };
 
         locals.sellerActions = function () {
-            return {
-                openSellerContent: "open seller content",
-                closeSellerContent: "close seller content"
-            };
+            return {};
         };
 
         locals.makeActions = function (category, fn) {
@@ -507,17 +501,12 @@
             },
             '28': {
                 images: 'catalog/product/help/images.html',
-                contents: 'catalog/product/help/contents.html',
                 variants: 'catalog/product/help/variants.html',
                 _instances: 'catalog/product/help/instances.html'
             },
             '27': {
                 images: 'catalog/product/help/images.html',
-                contents: 'catalog/product/help/contents.html',
                 variant_options: 'catalog/product/help/variant_options.html'
-            },
-            '21': {
-                documents: 'seller/help/contents.html'
             }
         });
 
@@ -543,7 +532,6 @@
             catalogProducts: 'Products',
             history: 'History',
             record: 'Log Entry',
-            sellerContents: 'Contents',
             sellerPlugins: 'Rules'
         });
 
@@ -652,15 +640,10 @@
             viewInstances: 'Variant Configurations',
             editInstances: 'Edit Variant Configuration',
             addInstances: 'Add Variant Configuration',
-            addContents: 'Add Content',
-            editContents: 'Edit Content',
             account: 'Account',
             admin: 'Admin',
             users: 'Accounts',
             aboutRules: 'About Rules',
-            addDocuments: 'Add Content',
-            editDocuments: 'Edit Content',
-            editContent: false,
             sellerProfile: 'Seller Profile'
         });
 

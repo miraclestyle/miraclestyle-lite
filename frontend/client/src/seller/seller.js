@@ -905,17 +905,7 @@
                 manageModal: function (accountKey) {
                     var fields = modelsMeta.getActionArguments(this.kind, 'update'),
                         config;
-                    fields._content.ui.label = false;
                     fields._plugin_group.ui.label = false;
-                    $.extend(fields._content.modelclass.documents.ui, {
-                        label: false,
-                        specifics: {
-                            listView: 'content-list-view',
-                            listConfig: {
-                                perLine: 1
-                            }
-                        }
-                    });
                     $.extend(fields._plugin_group.modelclass.plugins.ui, {
                         label: false
                     });
@@ -942,12 +932,6 @@
                         argumentLoader: function ($scope) {
                             var args = this.defaultArgumentLoader($scope);
                             args.account = accountKey;
-                            if (args._content === null) {
-                                args._content = {
-                                    kind: '21',
-                                    documents: []
-                                };
-                            }
                             args.read_arguments = read_arguments;
                             return args;
                         },
@@ -956,9 +940,6 @@
                                 groups: [{
                                     label: false,
                                     fields: ['name', 'logo'],
-                                }, {
-                                    label: GLOBAL_CONFIG.subheaders.sellerContents,
-                                    fields: ['_content']
                                 }, {
                                     label: GLOBAL_CONFIG.subheaders.sellerPlugins,
                                     fields: ['_plugin_group'],

@@ -335,23 +335,6 @@
                                     $scope.productInstance = null;
                                 };
                                 $scope.variationApplied = false;
-                                $scope.viewContent = function (content) {
-                                    $modal.open({
-                                        templateUrl: 'core/misc/content_view.html',
-                                        controller: ng(function ($scope) {
-                                            $scope.$state.instant(function () {
-                                                $scope.markDown = true;
-                                                $scope.content = content;
-                                                track.openProductContent();
-
-                                                $scope.close = function () {
-                                                    $scope.$close();
-                                                    track.closeProductContent();
-                                                };
-                                            });
-                                        })
-                                    });
-                                };
                                 $scope.canAddToCart = true;
                                 $scope.hasThisProduct = false;
                                 $scope.disableUpdateCart = false;
@@ -418,7 +401,7 @@
                                     var product,
                                         productInstance,
                                         toUpdate = ['images', 'code', 'unit_price', 'weight', 'volume',
-                                            'description', 'contents',
+                                            'description'
                                         ];
                                     try {
                                         product = response.data.entity._images[0].pricetags[0]._product;
@@ -729,9 +712,7 @@
                                     key: key,
                                     // 5 rpcs
                                     read_arguments: {
-                                        _seller: {
-                                            _content: {}
-                                        },
+                                        _seller: {},
                                         _images: {
                                             pricetags: {}
                                         }

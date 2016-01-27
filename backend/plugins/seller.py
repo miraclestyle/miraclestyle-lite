@@ -29,19 +29,6 @@ class SellerMaybeDeleteFarCacheGroups(orm.BaseModel):
         tools.log.debug(['found at', prop, v1, v2])
         send = True
         break
-    if not send:
-      if len(seller._content.value.documents.value) != len(original._content.value.documents.value):
-        send = True
-        tools.log.debug('found at seller content length')
-      else:
-        original_contents = original._content.value.documents.value
-        for i, content in enumerate(seller._content.value.documents.value):
-          original_content = original_contents[i]
-          if content.body != original_content.body \
-             or content.title != original_content.title \
-             or content._sequence != original_content._sequence:
-            tools.log.debug('found at seller content compare at %s' % i)
-            send = True
     if send:
       context._callbacks.append(('callback', {'action_id': 'far_cache_groups_flush', 'key': seller.key_urlsafe, 'action_model': '23'}))
 

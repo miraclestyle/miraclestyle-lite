@@ -19,7 +19,7 @@ from plugins.base import *
 from plugins.catalog import *
 
 
-__all__ = ['CatalogProductCategory', 'CatalogProductContent', 'CatalogProductVariant', 'CatalogProductInstance',
+__all__ = ['CatalogProductCategory', 'CatalogProductVariant', 'CatalogProductInstance',
            'CatalogProduct', 'CatalogPricetag', 'CatalogImage', 'Catalog']
 
 
@@ -105,16 +105,6 @@ class CatalogProductCategory(orm.BaseModel):
   ]
 
 
-class CatalogProductContent(orm.BaseModel):
-
-  _kind = 25
-
-  _use_rule_engine = False
-
-  title = orm.SuperStringProperty('1', required=True, indexed=False)
-  body = orm.SuperTextProperty('2', required=True)
-
-
 class CatalogProductVariant(orm.BaseModel):
 
   _kind = 26
@@ -174,8 +164,7 @@ class CatalogProductInstance(orm.BaseExpando):
       'unit_price': orm.SuperDecimalProperty('5'),
       'weight': orm.SuperDecimalProperty('6'),
       'volume': orm.SuperDecimalProperty('7'),
-      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '8', repeated=True),
-      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '9', repeated=True)
+      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '8', repeated=True)
   }
 
   @classmethod
@@ -224,7 +213,6 @@ class CatalogProduct(orm.BaseExpando):
       'weight': orm.SuperDecimalProperty('7'),
       'volume': orm.SuperDecimalProperty('8'),
       'images': orm.SuperImageLocalStructuredProperty(orm.Image, '9', repeated=True),
-      'contents': orm.SuperLocalStructuredProperty(CatalogProductContent, '10', repeated=True),
       'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '11', repeated=True)
   }
 
@@ -486,7 +474,7 @@ class Catalog(orm.BaseExpando):
       orm.WriteFieldPermission('state', condition_write_state),
       orm.ReadFieldPermission(('name', 'published_date', 'discontinue_date', 'updated',
                                'state', 'cover', '_images'), condition_published_or_indexed),
-      orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._content', '_seller._currency'), condition_true),
+      orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._currency'), condition_true),
       orm.WriteFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
                                 'state', 'cover', '_images'), condition_duplicate)
   ]

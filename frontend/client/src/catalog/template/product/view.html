@@ -60,11 +60,6 @@
                                     <div class="list-row list-row-one-line no-padding">
                                         <list-button class="color-child-when-disabled" ng-click="displayShare()" loading><span class="first">Share</span></list-button>
                                     </div>
-                                    <div ng-if="product.contents.length" ng-repeat="content in product.contents track by content.key" class="list-row list-row-one-line no-padding">
-                                        <list-button class="color-child-when-disabled" loading ng-click="viewContent(content)">
-                                            <strong ng-bind="content.title" class="first ellipsis-text"></strong>
-                                        </list-button>
-                                    </div>
                                 </div>
                                 <div class="list list-padding">
                                 <div class="product-price list-row list-row-two-lines">

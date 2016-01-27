@@ -6,24 +6,14 @@
                 <img class="not-pointable" display-image-config="{size: true}" display-image="sellerDetails.seller.logo" />
             </div>
         </div>
-        <div ng-class="{'seam-bottom': sellerDetails.seller._content.documents.length}" class="list list-padding">
+        <div class="list list-padding">
             <div class="list-row list-content-tile list-row-large-multiline">
                 <span class="headline">{{sellerDetails.seller.name}}</span>
             </div>
           
 
         </div>
-        <div  class="list list-padding">
-       
-             <div ng-if="sellerDetails.seller._content.documents.length">
-               <div ng-repeat="content in sellerDetails.seller._content.documents track by content.key" class="list-row no-padding">
-                 <list-button ng-click="sellerDetails.viewContent(content)">
-                    <strong class="first ellipsis-text" ng-bind="content.title"></strong>
-                 </list-button>
-              </div>
-             </div>
-
-        </div>
+ 
       </div>
     </md-content>
 </md-sidenav>
