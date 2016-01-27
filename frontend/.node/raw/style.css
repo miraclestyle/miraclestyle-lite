@@ -3120,7 +3120,7 @@ div[disabled] .select-box {
     position: relative;
     box-sizing: border-box;
     margin: 0px;
-    padding-top: 56px;
+    padding-top: 8px;
     padding-bottom: 8px;
 }
 
@@ -3179,6 +3179,7 @@ div[disabled] .select-box {
 [class^="socicon-"] {
     font-size: 40px;
     color: rgba(0, 0, 0, 0.54);
+    line-height: 30px;
 }
 #is-mobile {
     visibility: hidden;

@@ -1629,8 +1629,8 @@ if (window.DEBUG) {
                 openCatalogDrawer: "open catalog drawer",
                 closeCatalogDrawer: "close catalog drawer",
                 loadMoreCatalogImages: "load more catalog images",
-                openCatalogShareDialog: "open catalog share dialog",
-                closeCatalogShareDialog: "close catalog share dialog",
+                openCatalogShareDrawer: "open catalog share drawer",
+                closeCatalogShareDrawer: "close catalog share drawer",
                 focusCatalogShareLink: "focus catalog share link",
                 focusCatalogShareEmbedCode: "focus catalog share embed code",
             };
@@ -1654,8 +1654,8 @@ if (window.DEBUG) {
                 updateCartSuccess: "update cart success",
                 updateCartFail: "update cart fail",
 
-                openProductShareDialog: "open product share dialog",
-                closeProductShareDialog: "close product share dialog",
+                openProductShareDrawer: "open product share drawer",
+                closeProductShareDrawer: "close product share drawer",
                 focusProductShareLink: "focus product share link",
             };
         };
@@ -18082,169 +18082,176 @@ function msieversion() {
     'use strict';
     angular.module('app').factory('social', ng(function ($modal, GLOBAL_CONFIG, helpers) {
         var social = {
-            share: function (meta, embed, link, config) {
+            share: function ($scope, meta, embed, link, config) {
                 config = helpers.alwaysObject(config);
                 var track = config.track;
-                $modal.open({
-                    templateUrl: 'core/social/share.html',
-                    controller: ng(function ($scope) {
-                        $scope.close = function () {
-                            $scope.$close();
-                            track.closeShareDialog();
+                if (!$scope.share) {
+                    $scope.share = {};
+                }
+                if (!$scope.share.menu) {
+                    $scope.$watch('share.menu.stateChanged', function (v1, v2) {
+                        if (v1) {
+                            track.openShareDrawer();
+                        } else {
+                            track.closeShareDrawer();
+                        }
+                    });
+                }
+                return (function ($scope) {
+
+                    if (!$scope.menu) {
+                        $scope.menu = {};
+                        helpers.sideNav.setup($scope.menu, 'sharer');
+                    }
+
+                    $scope.socials = [{
+                        name: 'Facebook',
+                        key: 'facebook',
+                        command: 'https://www.facebook.com/sharer.php?u={u}',
+                        require: ['u']
+                    }, {
+                        name: 'Twitter',
+                        key: 'twitter',
+                        command: 'https://twitter.com/intent/tweet?text={text}&url={url}',
+                        require: ['url', 'text']
+                    }, {
+                        name: 'Pinterest',
+                        key: 'pinterest',
+                        command: 'https://www.pinterest.com/pin/create/button/?url={url}&media={media}&description={description}',
+                        require: ['url', 'media', 'description']
+                    }, {
+                        name: 'Reddit',
+                        key: 'reddit',
+                        command: 'https://www.reddit.com/submit?url={url}&title={title}',
+                        require: ['url', 'title']
+                    }, {
+                        name: 'Linkedin',
+                        key: 'linkedin',
+                        command: 'https://www.linkedin.com/shareArticle?url={url}&title={title}',
+                        require: ['url', 'title']
+                    }, {
+                        name: 'Google+',
+                        icon: 'googleplus',
+                        key: 'googleplus',
+                        command: 'https://plus.google.com/share?url={url}',
+                        require: ['url']
+                    }, {
+                        name: 'Tumblr',
+                        key: 'tumblr',
+                        command: 'https://www.tumblr.com/share/link?url={url}&name={name}&description={description}',
+                        require: ['url', 'name', 'description']
+                    }];
+
+                    $scope.getIcon = function (soc) {
+                        return soc.icon || soc.name.toLowerCase();
+                    };
+
+                    $scope.share = function (soc) {
+                        var cmd = soc.command;
+                        angular.forEach(soc.require, function (key) {
+                            var hasit = meta[soc.key][key];
+                            if (angular.isUndefined(hasit)) {
+                                cmd = cmd.replace('&' + key + '={' + key + '}', '');
+                                cmd = cmd.replace('?' + key + '={' + key + '}', '');
+                            } else {
+                                cmd = cmd.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
+                            }
+                        });
+                        return helpers.popup.openCentered(cmd, 'Share to ' + soc.name);
+                    };
+
+                    if (angular.isUndefined(link)) {
+                        link = {
+                            src: meta.googleplus.url
                         };
-                        $scope.container = {};
-                        $scope.$state.instant(function ($scope) {
-                            $scope.socials = [{
-                                name: 'Facebook',
-                                key: 'facebook',
-                                command: 'https://www.facebook.com/sharer.php?u={u}',
-                                require: ['u']
-                            }, {
-                                name: 'Twitter',
-                                key: 'twitter',
-                                command: 'https://twitter.com/intent/tweet?text={text}&url={url}',
-                                require: ['url', 'text']
-                            }, {
-                                name: 'Pinterest',
-                                key: 'pinterest',
-                                command: 'https://www.pinterest.com/pin/create/button/?url={url}&media={media}&description={description}',
-                                require: ['url', 'media', 'description']
-                            }, {
-                                name: 'Reddit',
-                                key: 'reddit',
-                                command: 'https://www.reddit.com/submit?url={url}&title={title}',
-                                require: ['url', 'title']
-                            }, {
-                                name: 'Linkedin',
-                                key: 'linkedin',
-                                command: 'https://www.linkedin.com/shareArticle?url={url}&title={title}',
-                                require: ['url', 'title']
-                            }, {
-                                name: 'Google+',
-                                icon: 'googleplus',
-                                key: 'googleplus',
-                                command: 'https://plus.google.com/share?url={url}',
-                                require: ['url']
-                            }, {
-                                name: 'Tumblr',
-                                key: 'tumblr',
-                                command: 'https://www.tumblr.com/share/link?url={url}&name={name}&description={description}',
-                                require: ['url', 'name', 'description']
-                            }];
+                    }
 
-                            $scope.getIcon = function (soc) {
-                                return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
-                            };
-
-                            $scope.share = function (soc) {
-                                var cmd = soc.command;
-                                angular.forEach(soc.require, function (key) {
-                                    var hasit = meta[soc.key][key];
-                                    if (angular.isUndefined(hasit)) {
-                                        cmd = cmd.replace('&' + key + '={' + key + '}', '');
-                                        cmd = cmd.replace('?' + key + '={' + key + '}', '');
-                                    } else {
-                                        cmd = cmd.replace('{' + key + '}', encodeURIComponent(meta[soc.key][key]));
-                                    }
-                                });
-                                return helpers.popup.openCentered(cmd, 'Share to ' + soc.name);
-                            };
-
-                            if (angular.isUndefined(link)) {
-                                link = {
-                                    src: meta.googleplus.url
-                                };
+                    $scope.link = {
+                        enabled: link,
+                        values: {
+                            url: (angular.isObject(link) ? link.src : link)
+                        },
+                        fields: [{
+                            type: 'SuperTextProperty',
+                            code_name: 'url',
+                            ui: {
+                                label: false,
+                                writable: true,
+                                args: 'share.link.values.url',
+                                parentArgs: 'share.link.values',
+                                attrs: {
+                                    readonly: 'true',
+                                    onclick: 'this.select()',
+                                    'ng-focus': 'share.track.focusShareLink()'
+                                }
                             }
 
-                            $scope.link = {
-                                enabled: link,
-                                values: {
-                                    url: (angular.isObject(link) ? link.src : link)
-                                },
-                                fields: [{
-                                    type: 'SuperTextProperty',
-                                    code_name: 'url',
-                                    ui: {
-                                        label: false,
-                                        writable: true,
-                                        args: 'link.values.url',
-                                        parentArgs: 'link.values',
-                                        attrs: {
-                                            readonly: 'true',
-                                            onclick: 'this.select()',
-                                            'ng-focus': 'track.focusShareLink()'
-                                        }
-                                    }
+                        }]
+                    };
 
-                                }]
-                            };
+                    $scope.track = track;
 
-                            $scope.track = track;
+                    $scope.embed = {
+                        enabled: embed,
+                        values: {
+                            width: '100%',
+                            height: '100%',
+                            code: ''
+                        },
+                        setCode: function () {
+                            if (!embed) {
+                                return '';
+                            }
+                            var values = $scope.embed.values;
+                            values.code = '<iframe width="' + values.width + '" height="' + values.height + '" src="' + embed.src + '" frameborder="0" allowfullscreen></iframe>';
+                            return values.code;
+                        },
+                        fields: [{
+                            type: 'SuperStringProperty',
+                            code_name: 'width',
+                            required: true,
+                            ui: {
+                                writable: true,
+                                args: 'share.embed.values.width',
+                                parentArgs: 'share.embed.values',
+                                attrs: {
+                                    'ng-change': 'share.embed.setCode()'
+                                }
+                            }
 
-                            $scope.embed = {
-                                enabled: embed,
-                                values: {
-                                    width: '100%',
-                                    height: '100%',
-                                    code: ''
-                                },
-                                setCode: function () {
-                                    if (!embed) {
-                                        return '';
-                                    }
-                                    var values = $scope.embed.values;
-                                    values.code = '<iframe width="' + values.width + '" height="' + values.height + '" src="' + embed.src + '" frameborder="0" allowfullscreen></iframe>';
-                                    return values.code;
-                                },
-                                fields: [{
-                                    type: 'SuperStringProperty',
-                                    code_name: 'width',
-                                    required: true,
-                                    ui: {
-                                        writable: true,
-                                        args: 'embed.values.width',
-                                        parentArgs: 'embed.values',
-                                        attrs: {
-                                            'ng-change': 'embed.setCode()'
-                                        }
-                                    }
+                        }, {
+                            type: 'SuperStringProperty',
+                            code_name: 'height',
+                            required: true,
+                            ui: {
+                                writable: true,
+                                args: 'share.embed.values.height',
+                                parentArgs: 'share.embed.values',
+                                attrs: {
+                                    'ng-change': 'share.embed.setCode()'
+                                }
+                            }
 
-                                }, {
-                                    type: 'SuperStringProperty',
-                                    code_name: 'height',
-                                    required: true,
-                                    ui: {
-                                        writable: true,
-                                        args: 'embed.values.height',
-                                        parentArgs: 'embed.values',
-                                        attrs: {
-                                            'ng-change': 'embed.setCode()'
-                                        }
-                                    }
+                        }, {
+                            type: 'SuperTextProperty',
+                            code_name: 'code',
+                            ui: {
+                                writable: true,
+                                args: 'share.embed.values.code',
+                                parentArgs: 'share.embed.values',
+                                attrs: {
+                                    readonly: 'true',
+                                    onclick: 'this.select()',
+                                    'ng-focus': 'share.track.focusShareEmbedCode()'
+                                }
+                            }
 
-                                }, {
-                                    type: 'SuperTextProperty',
-                                    code_name: 'code',
-                                    ui: {
-                                        writable: true,
-                                        args: 'embed.values.code',
-                                        parentArgs: 'embed.values',
-                                        attrs: {
-                                            readonly: 'true',
-                                            onclick: 'this.select()',
-                                            'ng-focus': 'track.focusShareEmbedCode()'
-                                        }
-                                    }
+                        }]
+                    };
 
-                                }]
-                            };
+                    $scope.embed.setCode();
 
-                            $scope.embed.setCode();
-
-                            track.openShareDialog();
-                        });
-                    })
-                });
+                }($scope.share));
             }
         };
         if (GLOBAL_CONFIG.debug) {
@@ -18745,7 +18752,7 @@ angular.module('app')
                                     $scope.socials = LOGIN_PROVIDERS;
 
                                     $scope.getIcon = function (soc) {
-                                        return soc.name.toLowerCase();
+                                        return soc.icon || soc.name.toLowerCase();
                                     };
 
                                     $scope.authorization_urls = login.data.authorization_urls;
@@ -21070,19 +21077,25 @@ angular.module('app')
                                     });
                                 };
 
-                                $scope.displayShare = function () {
-                                    shareWatch();
-                                    return social.share($scope.socialMeta, false, undefined, {
+                                function spawnShare() {
+                                    social.share($scope, $scope.socialMeta, false, undefined, {
                                         track: {
-                                            openShareDialog: track.openProductShareDialog,
-                                            closeShareDialog: track.closeProductShareDialog,
+                                            openShareDrawer: track.openProductShareDrawer,
+                                            closeShareDrawer: track.closeProductShareDrawer,
                                             focusShareLink: track.focusProductShareLink,
                                             focusShareEmbedCode: track.focusProductShareEmbedCode
                                         }
                                     });
-                                };
+                                }
+
+                                spawnShare();
 
                                 $scope.variantChooser = {};
+
+                                $scope.displayShare = function () {
+                                    spawnShare();
+                                    $scope.share.menu.open();
+                                };
 
                                 $scope.setupVariantChooser = function (variant, indice) {
                                     variant.indice = indice;
@@ -21619,17 +21632,19 @@ angular.module('app')
                                     }
                                 };
 
+                                social.share($scope, $scope.socialMeta, {
+                                    src: embedCatalogUrl
+                                }, undefined, {
+                                    track: {
+                                        openShareDrawer: track.openCatalogShareDrawer,
+                                        closeShareDrawer: track.closeCatalogShareDrawer,
+                                        focusShareLink: track.focusCatalogShareLink,
+                                        focusShareEmbedCode: track.focusCatalogShareEmbedCode
+                                    }
+                                });
+
                                 $scope.displayShare = function () {
-                                    return social.share($scope.socialMeta, {
-                                        src: embedCatalogUrl
-                                    }, undefined, {
-                                        track: {
-                                            openShareDialog: track.openCatalogShareDialog,
-                                            closeShareDialog: track.closeCatalogShareDialog,
-                                            focusShareLink: track.focusCatalogShareLink,
-                                            focusShareEmbedCode: track.focusCatalogShareEmbedCode
-                                        }
-                                    });
+                                    $scope.share.menu.open();
                                 };
 
                                 $scope.loadMoreImages = function (callback) {
@@ -21940,7 +21955,7 @@ angular.module('app')
             };
 
             $scope.getIcon = function (soc) {
-                return helpers.url.local('client/dist/static/social/' + (soc.icon || soc.name.toLowerCase()) + '.png');
+                return soc.icon || soc.name.toLowerCase();
             };
 
             $scope.setPageToolbarTitle('about');
@@ -24045,13 +24060,6 @@ angular.module('app')
                                 name: $scope.seller.name
                             }
                         };
-
-                        $scope.displayShare = function () {
-                            return social.share($scope.socialMeta, {
-                                src: embedSellerUrl
-                            });
-                        };
-
 
                         $scope.viewContent = function (content) {
                             var track = $scope.getTrack();
