@@ -18025,11 +18025,12 @@ function msieversion() {
                         var bar = element.parents('.modal:first').find('.new-pricetag-bar'),
                             newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
                             newWidth = Math.ceil(newHeight * image.proportion),
-                            imageSize = helpers.closestLargestNumber(GLOBAL_CONFIG.imageSizes, newHeight > newWidth ? newHeight : newWidth),
+                            imageSize = newHeight > newWidth ? newHeight : newWidth,
                             originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
+                                console.log(element.get(0).width, newWidth);
                                 element.off('load', fn);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
