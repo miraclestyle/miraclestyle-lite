@@ -1573,7 +1573,7 @@ if (window.DEBUG) {
             },
             discontinueCatalog: {
                 title: 'Discontinue the catalog?',
-                message: 'A discontinued catalog is not accessible to the general public and is eventually entirely removed from the Miraclestyle app. However, products of a discontinued catalog remain accessible for the 180 days to those who have purchased them. A discontinued catalog cannot be edited or duplicated. You will be notified once this action is completed.',
+                message: 'A discontinued catalog is not accessible to anyone and is entirely removed from the Miraclestyle app after 15 days. You will be notified once this action is completed.',
                 text: {
                     primary: 'Discontinue'
                 }
