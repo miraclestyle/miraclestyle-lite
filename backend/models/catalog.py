@@ -311,7 +311,7 @@ class Catalog(orm.BaseExpando):
   updated = orm.SuperDateTimeProperty('2', required=True, auto_now=True)
   name = orm.SuperStringProperty('3', required=True)
   published_date = orm.SuperDateTimeProperty('4', required=False)
-  discontinue_date = orm.SuperDateTimeProperty('5', required=True)
+  discontinued_date = orm.SuperDateTimeProperty('5', required=False)
   state = orm.SuperStringProperty('6', required=True, default='draft',
                                   choices=('draft', 'published', 'indexed', 'discontinued'))
 
@@ -417,6 +417,9 @@ class Catalog(orm.BaseExpando):
         or (action.key_id_str == "publish" and entity.state == "published") \
         or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
         or (action.key_id_str == "sudo" and entity.state != "draft")
+  
+  def condition_write_discontinued_date(account, entity, action, **kwargs):
+    return action.key_id_str == "discontinue" and entity.state == "discontinued"
 
   def condition_duplicate(action, **kwargs):
     return action.key_id_str in ("catalog_process_duplicate", "catalog_pricetag_process_duplicate")
@@ -450,15 +453,15 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission('update', condition_update),
       orm.ExecuteActionPermission(('read', 'publish', 'catalog_upload_images', 'product_upload_images',
                                    'product_instance_upload_images', 'catalog_pricetag_duplicate'), condition_not_guest_and_owner_and_draft),
-      orm.ExecuteActionPermission(('catalog_duplicate'), condition_not_guest_and_owner_and_published),
+      orm.ExecuteActionPermission(('discontinue', 'catalog_duplicate'), condition_not_guest_and_owner_and_published),
       orm.ExecuteActionPermission(('read', 'sudo'), condition_root),
       orm.ExecuteActionPermission('cron', condition_cron),
-      orm.ExecuteActionPermission(('account_discontinue', 'sudo_discontinue', 'cron_discontinue', 'catalog_process_duplicate', 
+      orm.ExecuteActionPermission(('account_discontinue', 'sudo_discontinue', 'catalog_process_duplicate', 
                                    'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue),
       # field permissions
-      orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
+      orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinued_date',
                                'state', 'cover', '_images'), condition_not_guest_and_owner_or_root),
-      orm.WriteFieldPermission(('name', 'published_date', 'discontinue_date', 'cover',
+      orm.WriteFieldPermission(('name', 'published_date', 'discontinued_date', 'cover',
                                 '_images', '_images.pricetags'), condition_not_guest_and_owner_and_draft),
       orm.DenyWriteFieldPermission(('_images.image', '_images.content_type',
                                     '_images.size', '_images.gs_object_name',
@@ -472,10 +475,11 @@ class Catalog(orm.BaseExpando):
       orm.WriteFieldPermission(('_images'), condition_write_images),
       orm.WriteFieldPermission(('_images.pricetags._product._stock',), condition_not_guest_and_owner_and_published),
       orm.WriteFieldPermission('state', condition_write_state),
-      orm.ReadFieldPermission(('name', 'published_date', 'discontinue_date', 'updated',
+      orm.WriteFieldPermission('discontinued_date', condition_write_discontinued_date),
+      orm.ReadFieldPermission(('name', 'published_date', 'discontinued_date', 'updated',
                                'state', 'cover', '_images'), condition_published_or_indexed),
       orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._currency'), condition_true),
-      orm.WriteFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinue_date',
+      orm.WriteFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinued_date',
                                 'state', 'cover', '_images'), condition_duplicate)
   ]
 
@@ -501,8 +505,7 @@ class Catalog(orm.BaseExpando):
           id='create',
           arguments={
               'seller': orm.SuperKeyProperty(kind='23', required=True),
-              'name': orm.SuperStringProperty(required=True),
-              'discontinue_date': orm.SuperDateTimeProperty(required=True)
+              'name': orm.SuperStringProperty(required=True)
           },
           _plugin_groups=[
               orm.PluginGroup(
@@ -510,8 +513,7 @@ class Catalog(orm.BaseExpando):
                       Context(),
                       Read(),
                       Set(cfg={'s': {'_catalog.state': 'draft'},
-                               'd': {'_catalog.name': 'input.name',
-                                     '_catalog.discontinue_date': 'input.discontinue_date'}}),
+                               'd': {'_catalog.name': 'input.name'}}),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -551,7 +553,6 @@ class Catalog(orm.BaseExpando):
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True),
               'name': orm.SuperStringProperty(required=True),
-              'discontinue_date': orm.SuperDateTimeProperty(required=True),
               '_images': orm.SuperImageRemoteStructuredProperty(CatalogImage, repeated=True),
               'read_arguments': orm.SuperJsonProperty()
           },
@@ -561,7 +562,6 @@ class Catalog(orm.BaseExpando):
                       Context(),
                       Read(),
                       Set(cfg={'d': {'_catalog.name': 'input.name',
-                                     '_catalog.discontinue_date': 'input.discontinue_date',
                                      'catalog_original_state': '_catalog._original.state',
                                      '_catalog._images': 'input._images'}}),
                       CatalogProcessCoverSet(),
@@ -707,7 +707,7 @@ class Catalog(orm.BaseExpando):
                                   {'orders': [('created', ['asc', 'desc'])]},
                                   {'orders': [('updated', ['asc', 'desc'])]},
                                   {'orders': [('published_date', ['asc', 'desc'])]},
-                                  {'orders': [('discontinue_date', ['asc', 'desc'])]},
+                                  {'orders': [('discontinued_date', ['asc', 'desc'])]},
                                   {'filters': [('state', ['IN'])],
                                    'orders': [('published_date', ['desc'])]},
                                   {'filters': [('key', ['=='])]}]
@@ -743,8 +743,7 @@ class Catalog(orm.BaseExpando):
                       Context(),
                       Read(),
                       Set(cfg={'s': {'_catalog.state': 'published'},
-                               'f': {'_catalog.published_date': lambda: datetime.datetime.now()}
-                              }),
+                               'f': {'_catalog.published_date': lambda: datetime.datetime.now()}}),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -775,7 +774,8 @@ class Catalog(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(),
-                      Set(cfg={'s': {'_catalog.state': 'discontinued'}}),
+                      Set(cfg={'s': {'_catalog.state': 'discontinued'},
+                               'f': {'_catalog.discontinued_date': lambda: datetime.datetime.now()}}),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -796,7 +796,7 @@ class Catalog(orm.BaseExpando):
           ]
       ),
       orm.Action(
-          id='cron_discontinue',
+          id='discontinue',
           arguments={
               'key': orm.SuperKeyProperty(kind='31', required=True)
           },
@@ -805,7 +805,8 @@ class Catalog(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(),
-                      Set(cfg={'s': {'_catalog.state': 'discontinued'}}),
+                      Set(cfg={'s': {'_catalog.state': 'discontinued'},
+                               'f': {'_catalog.discontinued_date': lambda: datetime.datetime.now()}}),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -862,7 +863,9 @@ class Catalog(orm.BaseExpando):
                       Context(),
                       Read(),
                       Set(cfg={'d': {'_catalog.state': 'input.state', 
-                                     'catalog_original_state': '_catalog._original.state'}}),
+                                     'catalog_original_state': '_catalog._original.state'},
+                                     'f': {'_catalog.published_date': lambda: datetime.datetime.now()}, # We do not have a conditional capability here to decide when this gets to be set.
+                                     'f': {'_catalog.discontinued_date': lambda: datetime.datetime.now()}}), # We do not have a conditional capability here to decide when this gets to be set.
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -892,7 +895,6 @@ class Catalog(orm.BaseExpando):
                       Read(),
                       RulePrepare(),
                       RuleExec(),
-                      CatalogCronDiscontinue(cfg={'page': 100}),
                       CatalogCronDelete(cfg={'page': 100,
                                              'unpublished_life': settings.CATALOG_UNPUBLISHED_LIFE,
                                              'discontinued_life': settings.CATALOG_DISCONTINUED_LIFE}),
