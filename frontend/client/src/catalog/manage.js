@@ -1140,7 +1140,7 @@
                                 layouts: {
                                     groups: [{
                                         label: false,
-                                        fields: ['name', 'discontinue_date'],
+                                        fields: ['name'],
                                     }, {
                                         label: GLOBAL_CONFIG.subheaders.catalogImages,
                                         fields: ['_images'],
