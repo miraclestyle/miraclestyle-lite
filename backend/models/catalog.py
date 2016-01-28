@@ -415,11 +415,12 @@ class Catalog(orm.BaseExpando):
   def condition_write_state(entity, action, **kwargs):
     return (action.key_id_str == "create" and entity.state == "draft") \
         or (action.key_id_str == "publish" and entity.state == "published") \
+        or (action.key_id_str == "sudo_discontinue" and entity.state == "discontinued") \
         or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
         or (action.key_id_str == "sudo" and entity.state != "draft")
   
   def condition_write_discontinued_date(entity, action, **kwargs):
-    return action.key_id_str in ("discontinue", "sudo") and entity.state == "discontinued"
+    return action.key_id_str in ("sudo_discontinue", "discontinue", "sudo") and entity.state == "discontinued"
   
   def condition_write_published_date(entity, action, **kwargs):
     return action.key_id_str == "sudo" and entity.state in ("published", "indexed")
