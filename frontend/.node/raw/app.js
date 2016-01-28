@@ -1837,7 +1837,7 @@ if (window.DEBUG) {
             '27': locals.fieldhelpForProduct,
             '28': locals.fieldhelpForProduct,
             '31-update': {
-                discontinue_date: 'Date when this catalog will be automatically discontinued and become unavailable to the general public.'
+                discontinued_date: 'Date when this catalog will be automatically discontinued and become unavailable to the general public.'
             },
             '26': {
                 name: 'Name of the variant input control that is visible on the product view.',
@@ -1879,7 +1879,7 @@ if (window.DEBUG) {
                 product_categories: 'Product categories'
             },
             '31-update': {
-                discontinue_date: 'Expiration date'
+                discontinued_date: 'Expiration date'
             },
             '124-update': {
                 condition_type: 'Condition',
