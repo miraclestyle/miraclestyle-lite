@@ -136,24 +136,6 @@ class CatalogDiscontinue(orm.BaseModel):
       context._callbacks.append(('callback', data))
 
 
-class CatalogCronDiscontinue(orm.BaseModel):
-
-  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
-
-  def run(self, context):
-    if not isinstance(self.cfg, dict):
-      self.cfg = {}
-    limit = self.cfg.get('page', 10)
-    Catalog = context.models['31']
-    catalogs = Catalog.query(Catalog.state.IN(['published', 'indexed']),
-                             Catalog.discontinue_date <= datetime.datetime.now()).fetch(limit=limit)
-    for catalog in catalogs:
-      data = {'action_id': 'cron_discontinue',
-              'action_model': '31',
-              'key': catalog.key.urlsafe()}
-      context._callbacks.append(('callback', data))
-
-
 class CatalogCronDelete(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -169,7 +151,7 @@ class CatalogCronDelete(orm.BaseModel):
     unpublished_catalogs = Catalog.query(Catalog.state == 'draft',
                                          Catalog.created < (datetime.datetime.now() - datetime.timedelta(days=catalog_unpublished_life))).fetch(limit=limit)
     discontinued_catalogs = Catalog.query(Catalog.state == 'discontinued',
-                                          Catalog.discontinue_date < (datetime.datetime.now() - datetime.timedelta(days=catalog_discontinued_life))).fetch(limit=limit)
+                                          Catalog.discontinued_date < (datetime.datetime.now() - datetime.timedelta(days=catalog_discontinued_life))).fetch(limit=limit)
     catalogs.extend(unpublished_catalogs)
     catalogs.extend(discontinued_catalogs)
     for catalog in catalogs:
