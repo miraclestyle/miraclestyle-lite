@@ -423,7 +423,7 @@ class Catalog(orm.BaseExpando):
         or (action.key_id_str == "sudo" and entity.state == "discontinued")
   
   def condition_write_published_date(entity, action, **kwargs):
-    return action.key_id_str == "sudo" and entity.state == "discontinued"
+    return action.key_id_str == "sudo" and entity.state == "published"
 
   def condition_duplicate(action, **kwargs):
     return action.key_id_str in ("catalog_process_duplicate", "catalog_pricetag_process_duplicate")
