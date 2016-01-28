@@ -847,7 +847,7 @@ class _BaseModel(object):
         except IndexError as e:
           break
       if (current_field_value is None and not current_field.can_be_none) \
-          or hasattr(field, '_logical') and not field._logical \
+          or (hasattr(field, '_logical') and field._logical) \
           or (hasattr(current_field, '_updateable') and (not current_field._updateable and not current_field._deleteable)) \
           or (hasattr(current_field, '_auto_now') and current_field._auto_now):
         current_field_key = None
