@@ -412,14 +412,18 @@ class Catalog(orm.BaseExpando):
         and action.key_id_str \
         in ("read", "catalog_upload_images", "product_upload_images", "product_instance_upload_images", "prepare")
 
-  def condition_write_state(account, entity, action, **kwargs):
+  def condition_write_state(entity, action, **kwargs):
     return (action.key_id_str == "create" and entity.state == "draft") \
         or (action.key_id_str == "publish" and entity.state == "published") \
         or (action.key_id_str == "discontinue" and entity.state == "discontinued") \
         or (action.key_id_str == "sudo" and entity.state != "draft")
   
-  def condition_write_discontinued_date(account, entity, action, **kwargs):
-    return action.key_id_str == "discontinue" and entity.state == "discontinued"
+  def condition_write_discontinued_date(entity, action, **kwargs):
+    return (action.key_id_str == "discontinue" and entity.state == "discontinued") \
+        or (action.key_id_str == "sudo" and entity.state == "discontinued")
+  
+  def condition_write_published_date(entity, action, **kwargs):
+    return action.key_id_str == "sudo" and entity.state == "discontinued"
 
   def condition_duplicate(action, **kwargs):
     return action.key_id_str in ("catalog_process_duplicate", "catalog_pricetag_process_duplicate")
@@ -476,6 +480,7 @@ class Catalog(orm.BaseExpando):
       orm.WriteFieldPermission(('_images.pricetags._product._stock',), condition_not_guest_and_owner_and_published),
       orm.WriteFieldPermission('state', condition_write_state),
       orm.WriteFieldPermission('discontinued_date', condition_write_discontinued_date),
+      orm.WriteFieldPermission('published_date', condition_write_published_date),
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinued_date',
                                'state', 'cover', '_images'), condition_published_or_indexed),
       orm.ReadFieldPermission(('_seller.name', '_seller.logo', '_seller._currency'), condition_true),
