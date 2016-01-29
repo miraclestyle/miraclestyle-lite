@@ -13176,7 +13176,11 @@ function msieversion() {
                         marginLeft: '',
                         marginRight: ''
                     });
-                    item.css('width', 'calc((' + (100 / that.columns) + '%) - ' + (that.config.margin * 2) + 'px)');
+                    if (that.columns) {
+                        item.css('width', 'calc((' + (100 / that.columns) + '%) - ' + (that.config.margin * 2) + 'px)');
+                    } else {
+                        item.css('width', '');
+                    }
                 };
                 that.resize = function (doAll) {
                     that.getColumns();
@@ -18030,7 +18034,7 @@ function msieversion() {
                             reactingElement = element.parents('.image-slider-item:first'),
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
-                                console.log(element.get(0).width, newWidth);
+                                //console.log(element.get(0).width, newWidth);
                                 element.off('load', fn);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
@@ -19706,6 +19710,7 @@ angular.module('app')
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogDiscontinued');
                                                     updateState(response.data.entity);
+                                                    $scope.close();
                                                 });
                                             });
                                     },
@@ -23224,6 +23229,18 @@ angular.module('app')
                 $.extend(find, entity);
             }
         };
+
+        $scope.$watch(function maybeRemoveSearchResult() {
+            var maybe = false;
+            $scope.search.results.iremove(function (ent) {
+                var truth = (!ent.id || ent.state === 'discontinued');
+                if (!maybe) {
+                    maybe = truth;
+                }
+                return truth;
+            });
+            return maybe;
+        }, angular.noop);
 
         $scope.create = function ($event) {
             models['31'].manageModal(undefined, newEntity, {
