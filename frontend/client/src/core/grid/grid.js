@@ -240,7 +240,11 @@
                         marginLeft: '',
                         marginRight: ''
                     });
-                    item.css('width', 'calc((' + (100 / that.columns) + '%) - ' + (that.config.margin * 2) + 'px)');
+                    if (that.columns) {
+                        item.css('width', 'calc((' + (100 / that.columns) + '%) - ' + (that.config.margin * 2) + 'px)');
+                    } else {
+                        item.css('width', '');
+                    }
                 };
                 that.resize = function (doAll) {
                     that.getColumns();

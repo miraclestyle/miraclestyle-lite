@@ -75,6 +75,18 @@
             }
         };
 
+        $scope.$watch(function maybeRemoveSearchResult() {
+            var maybe = false;
+            $scope.search.results.iremove(function (ent) {
+                var truth = (!ent.id || ent.state === 'discontinued');
+                if (!maybe) {
+                    maybe = truth;
+                }
+                return truth;
+            });
+            return maybe;
+        }, angular.noop);
+
         $scope.create = function ($event) {
             models['31'].manageModal(undefined, newEntity, {
                 popFrom: helpers.clicks.realEventTarget($event.target)

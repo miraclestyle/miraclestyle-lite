@@ -137,6 +137,7 @@
                                                 }).then(function (response) {
                                                     snackbar.showK('catalogDiscontinued');
                                                     updateState(response.data.entity);
+                                                    $scope.close();
                                                 });
                                             });
                                     },

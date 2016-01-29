@@ -105,7 +105,7 @@
                             reactingElement = element.parents('.image-slider-item:first'),
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
-                                console.log(element.get(0).width, newWidth);
+                                //console.log(element.get(0).width, newWidth);
                                 element.off('load', fn);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
