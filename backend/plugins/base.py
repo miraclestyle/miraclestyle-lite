@@ -17,8 +17,6 @@ import tools
 
 class Context(orm.BaseModel):
 
-  _kind = 86
-
   def run(self, context):
     context.cache = None
     context.account = context.models['11'].current_account()
@@ -43,8 +41,6 @@ class Context(orm.BaseModel):
 
 
 class Set(orm.BaseModel):
-
-  _kind = 87
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
@@ -76,8 +72,6 @@ class Set(orm.BaseModel):
 
 
 class Read(orm.BaseModel):
-
-  _kind = 88
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default=[])
   
@@ -121,8 +115,6 @@ class Read(orm.BaseModel):
 
 class Write(orm.BaseModel):
 
-  _kind = 89
-
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
@@ -150,8 +142,6 @@ class Write(orm.BaseModel):
 
 class Delete(orm.BaseModel):
 
-  _kind = 90
-
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
@@ -171,8 +161,6 @@ class Delete(orm.BaseModel):
 
 
 class Duplicate(orm.BaseModel):
-
-  _kind = 91
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
@@ -211,8 +199,6 @@ class Duplicate(orm.BaseModel):
 
 class UploadImages(orm.BaseModel):
 
-  _kind = 92
-
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
@@ -226,8 +212,6 @@ class UploadImages(orm.BaseModel):
 
 
 class RulePrepare(orm.BaseModel):
-
-  _kind = 93
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
@@ -248,8 +232,6 @@ class RulePrepare(orm.BaseModel):
 
 class RuleExec(orm.BaseModel):
 
-  _kind = 94
-
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
@@ -263,8 +245,6 @@ class RuleExec(orm.BaseModel):
 
 
 class Search(orm.BaseModel):
-
-  _kind = 95
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
   
@@ -311,8 +291,6 @@ class Search(orm.BaseModel):
 
 class CallbackExec(orm.BaseModel):
 
-  _kind = 97
-
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default=[])
 
   def run(self, context):
@@ -338,8 +316,6 @@ class CallbackExec(orm.BaseModel):
 
 class BlobURL(orm.BaseModel):
 
-  _kind = 98
-
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
@@ -354,8 +330,6 @@ class BlobURL(orm.BaseModel):
 
 
 class CreateChannel(orm.BaseModel):
-
-  _kind = 128
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
