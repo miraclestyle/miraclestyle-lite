@@ -514,7 +514,7 @@ class SuperPluginStorageProperty(SuperPickleProperty):
             _kind = _kind.get_kind()
           _kinds.append(_kind)
         if kind not in _kinds:
-          raise ValueError('Expected Kind to be one of %s, got %s' % (kind, _kinds))
+          raise ValueError('Expected Kind to be one of %s, got %s' % (_kinds, kind))
         model = Model._kind_map.get(kind)
         return model
 
