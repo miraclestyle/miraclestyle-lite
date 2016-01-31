@@ -14,10 +14,10 @@
       </div>
 
       <div ng-if="$state.isCompleted() && !notFound" class="top-close top-close-right">
-           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="displayCart()">
+           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled pull-right" ng-click="displayCart()">
              <icon color="white" type="shopping_cart"></icon>
            </button>
-           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="displayShare()">
+           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled pull-left" ng-click="displayShare()">
              <icon color="white" type="share"></icon>
            </button>
       </div>
@@ -48,26 +48,6 @@
            </div>
          </div>
       </div>
-
-
-
-       
-
-     <md-sidenav md-state-changed="catalogMenu.stateChanged" ng-if="$state.isCompleted() && !notFound" md-swipe-right="catalogMenu.close()" layout="column" class="right wide-sidenav md-closed" md-component-id="catalogMenu.id">
-        <md-content>
-            <div class="list">
-                <div class="sidebar-seller-logo">
-                  <img class="seller-logo not-pointable" display-image-config="logoImageConfig" display-image="catalog._seller.logo" />
-                </div>
-                <div class="list-padding seam-bottom" ng-include="'catalog/quick_info.html'"></div>
-                <div class="list-padding">
-                  <sidenav-item ng-click="displayShare()">Share</sidenav-item>
-                  <sidenav-item ng-click="displayCart()">Cart</sidenav-item>
-                 
-                </div>
-            </div>
-        </md-content>
-    </md-sidenav>
 
      <div ng-include="'core/social/sidenav.html'"></div>
        
