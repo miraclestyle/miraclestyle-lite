@@ -182,7 +182,7 @@ class Order(orm.BaseExpando):
   untaxed_amount = orm.SuperDecimalProperty('9', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
-  payment_method = orm.SuperKeyProperty('12', required=False, indexed=False)
+  payment_method = orm.SuperPluginStorageProperty(('108', 'xxx'), '12', required=False, default=[], compressed=False)  # This is supposed to be a single instance of payment plugin. I am not sure how this will play out to be, but the previous value vas unaceptable in our 'idempotent storage' case scenario since it was a key, and key could be lost if seller deleted entity from his/her plugins anytime after the order was completed.
   payment_status = orm.SuperStringProperty('13', required=False, indexed=True)
   carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '14')
 
@@ -250,6 +250,9 @@ class Order(orm.BaseExpando):
                                                    and input["search"]["filters"][0]["value"]._root == account.key)
                                                   or (not account._is_guest and "ancestor" in input["search"] and input["search"]["ancestor"]._root == account.key)))
 
+  def condition_pay(action, entity, **kwargs):
+    return action.key_id_str == "pay" and entity._original.state == "cart"
+  
   def condition_notify(action, entity, **kwargs):
     return action.key_id_str == "notify" and entity._original.state == "order"
 
@@ -259,7 +262,7 @@ class Order(orm.BaseExpando):
 
   def condition_state(action, entity, **kwargs):
     return (action.key_id_str == "update_line" and entity.state == "cart") \
-        or (action.key_id_str == "update" and entity.state == "order")
+        or (action.key_id_str == "pay" and entity.state == "order")
 
   def condition_update_and_view_order(account, entity, action, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
@@ -280,12 +283,13 @@ class Order(orm.BaseExpando):
   _permissions = [
       #  action.key_id_str not in ["search"] and...
       # Included payment_status in field permissions, will have to further analyse exclusion...
-      orm.ExecuteActionPermission(('update_line', 'view_order', 'update', 'delete'), condition_not_guest_and_owner_and_cart),
+      orm.ExecuteActionPermission(('update_line', 'view_order', 'update', 'delete', 'pay'), condition_not_guest_and_owner_and_cart),
       orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('delete', condition_taskqueue),
       orm.ExecuteActionPermission(('cron', 'cron_notify'), condition_cron),
       orm.ExecuteActionPermission('see_messages', condition_root_or_owner_or_seller),
+      orm.ExecuteActionPermission('pay', condition_pay),
       orm.ExecuteActionPermission('notify', condition_notify),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
@@ -293,7 +297,7 @@ class Order(orm.BaseExpando):
                                'tax_amount', 'total_amount', 'carrier', '_seller_reference',
                                'payment_status', 'payment_method',
                                '_lines', '_messages.created', '_messages.agent', '_messages.action', '_messages.body',
-                               '_messages._action', '_payment_method', '_seller.name',
+                               '_messages._action', '_seller.name',
                                '_seller.logo',
                                '_seller.follower_count', '_seller._notified_followers_count',
                                '_seller._currency'), condition_root_or_owner_or_seller),
@@ -301,6 +305,7 @@ class Order(orm.BaseExpando):
                                 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                 'payment_method', '_lines', 'carrier'), condition_update_line),
       orm.WriteFieldPermission('state', condition_state),
+      orm.WriteFieldPermission(('payment_status', '_messages'), condition_pay),
       orm.WriteFieldPermission(('payment_status', '_messages'), condition_notify),
       orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('date', 'shipping_address', 'billing_address', '_lines', 'carrier',
@@ -395,12 +400,10 @@ class Order(orm.BaseExpando):
           id='update',
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True),
-              'payment_method': orm.SuperVirtualKeyProperty(),
               'billing_address': orm.SuperLocalStructuredProperty('14'),
               'shipping_address': orm.SuperLocalStructuredProperty('14'),
               'carrier': orm.SuperVirtualKeyProperty(kind='113'),
               '_lines': orm.SuperLocalStructuredProperty(OrderLine, repeated=True),
-              'state': orm.SuperStringProperty(choices=('order',)),
               'read_arguments': orm.SuperJsonProperty()
           },
           _plugin_groups=[
@@ -408,9 +411,7 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
-                      Set(cfg={'d': {'_order.payment_method': 'input.payment_method',
-                                     '_order.state': 'input.state',
-                                     '_order._lines': 'input._lines'}}),
+                      Set(cfg={'d': {'_order._lines': 'input._lines'}}),
                       OrderLineRemove(),
                       OrderStockManagement(),
                       OrderProductSpecsFormat(),
@@ -561,6 +562,48 @@ class Order(orm.BaseExpando):
           ]
       ),
       orm.Action(
+          id='pay',
+          arguments={
+              'key': orm.SuperKeyProperty(kind='34', required=True),
+              'read_arguments': orm.SuperJsonProperty()
+          },
+          _plugin_groups=[
+              orm.PluginGroup(
+                  plugins=[
+                      Context(),
+                      Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
+                      OrderPay(),
+                      OrderSetMessage(cfg={
+                        'expando_fields': 'new_message_fields',
+                        'expando_values': 'new_message'
+                      }),
+                      RulePrepare(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
+                      Write(),
+                      RulePrepare(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY),
+                      Set(cfg={'d': {'output.entity': '_order'}})
+                      # both seller and buyer must get the message
+                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                                        'for_seller': False,
+                                        'subject': notifications.ORDER_NOTIFY_SUBJECT,
+                                        'body': notifications.ORDER_NOTIFY_BODY},
+                                  'd': {'recipient': '_order.buyer_email'}}),
+                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
+                                        'for_seller': True,
+                                        'subject': notifications.ORDER_NOTIFY_SUBJECT,
+                                        'body': notifications.ORDER_NOTIFY_BODY},
+                                  'd': {'recipient': '_order.seller_email'}}),
+                  ]
+              )
+          ]
+      ),
+      orm.Action(
           id='see_messages',
           arguments={
             'key': orm.SuperKeyProperty(kind='34', required=True)
@@ -646,15 +689,3 @@ class Order(orm.BaseExpando):
     emails.append(self.seller_email)
     emails.append(self.buyer_email)
     return emails
-
-  def _get_payment_method(self):
-    self._seller.read()
-    if self._seller.value:
-      self._seller.value._plugin_group.read()
-      if self._seller.value._plugin_group.value:
-        for plugin in self._seller.value._plugin_group.value.plugins:
-          if plugin.key == self.payment_method:
-            return plugin
-          # values of the payment method must be controlled for public
-          # because we do not have permission system for remoteStructuredProperty (for multiple kinds)
-    return None
