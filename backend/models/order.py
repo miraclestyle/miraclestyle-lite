@@ -585,7 +585,7 @@ class Order(orm.BaseExpando):
                       Write(),
                       RulePrepare(),
                       DeleteCache(cfg=DELETE_CACHE_POLICY),
-                      Set(cfg={'d': {'output.entity': '_order'}})
+                      Set(cfg={'d': {'output.entity': '_order'}}),
                       # both seller and buyer must get the message
                       Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
                                         'for_seller': False,
@@ -596,7 +596,7 @@ class Order(orm.BaseExpando):
                                         'for_seller': True,
                                         'subject': notifications.ORDER_NOTIFY_SUBJECT,
                                         'body': notifications.ORDER_NOTIFY_BODY},
-                                  'd': {'recipient': '_order.seller_email'}}),
+                                  'd': {'recipient': '_order.seller_email'}})
                   ]
               )
           ]
