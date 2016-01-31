@@ -223,8 +223,6 @@ class Order(orm.BaseExpando):
                                                              }],
                                                          }
                                                      }),
-      '_payment_method': orm.SuperReferenceProperty(callback=lambda self: self._get_payment_method(),
-                                                    format_callback=lambda self, value: value),
       '_seller_reference': orm.SuperComputedProperty(lambda self: self.seller_reference._structure if self.seller_reference else None),
   }
 
