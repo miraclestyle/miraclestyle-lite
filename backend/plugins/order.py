@@ -24,7 +24,7 @@ class PluginError(errors.BaseKeyValueError):
   KEY = 'plugin_error'
 
 
-
+# This is system plugin, which means end user can not use it!
 class OrderCronNotify(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty(default={})
@@ -113,6 +113,7 @@ class OrderCronNotify(orm.BaseModel):
       context._callbacks.append(('callback', data))
 
 
+# This is system plugin, which means end user can not use it!
 class OrderNotifyTrackerSeen(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -130,6 +131,7 @@ class OrderNotifyTrackerSeen(orm.BaseModel):
       tracker.key.delete()
 
 
+# This is system plugin, which means end user can not use it!
 class OrderNotifyTrackerSet(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -164,6 +166,7 @@ class OrderNotifyTrackerSet(orm.BaseModel):
       new_tracker.put()
 
 
+# This is system plugin, which means end user can not use it!
 class OrderCronDelete(orm.BaseModel):
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
@@ -190,10 +193,6 @@ class OrderCronDelete(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderInit(orm.BaseModel):
-
-  _kind = 99
-
-  _use_rule_engine = False
 
   def run(self, context):
     Order = context.models['34']
@@ -223,10 +222,6 @@ class OrderInit(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class OrderPluginExec(orm.BaseModel):
 
-  _kind = 114
-
-  _use_rule_engine = False
-
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
@@ -246,10 +241,6 @@ class OrderPluginExec(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderUpdateLine(orm.BaseModel):
-
-  _kind = 101
-
-  _use_rule_engine = False
 
   def run(self, context):
     OrderProduct = context.models['125']
@@ -329,10 +320,6 @@ class OrderUpdateLine(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class OrderProductSpecsFormat(orm.BaseModel):
 
-  _kind = 115
-
-  _use_rule_engine = False
-
   def run(self, context):
     ProductInstance = context.models['27']
     order = context._order
@@ -356,10 +343,6 @@ class OrderProductSpecsFormat(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderLineFormat(orm.BaseModel):
-
-  _kind = 104
-
-  _use_rule_engine = False
 
   def run(self, context):
     order = context._order
@@ -395,10 +378,6 @@ class OrderLineFormat(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class OrderCarrierFormat(orm.BaseModel):
 
-  _kind = 122
-
-  _use_rule_engine = False
-
   def run(self, context):
     order = context._order
     carrier = order.carrier.value
@@ -420,10 +399,6 @@ class OrderCarrierFormat(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderFormat(orm.BaseModel):
-
-  _kind = 105
-
-  _use_rule_engine = False
 
   def run(self, context):
     order = context._order
@@ -455,10 +430,6 @@ class OrderFormat(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class OrderLineRemove(orm.BaseModel):
 
-  _kind = 127
-
-  _use_rule_engine = False
-
   def run(self, context):
     order = context._order
     lines = order._lines.value
@@ -471,8 +442,6 @@ class OrderLineRemove(orm.BaseModel):
 
 # This is system plugin, which means end user can not use it!
 class OrderSetMessage(orm.BaseModel):
-
-  _kind = 119
 
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
@@ -519,8 +488,6 @@ class OrderSetMessage(orm.BaseModel):
 # This is system plugin, which means end user can not use it!
 class OrderNotify(orm.BaseModel):
 
-  _kind = 118
-
   cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
@@ -528,8 +495,8 @@ class OrderNotify(orm.BaseModel):
       self.cfg = {}
     order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context)  # will throw an error if the payment method does not exist
     context._order = order
-    order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}, '_payment_method': {}})
-    payment_plugin = order._payment_method
+    order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}})
+    payment_plugin = order.payment_method
     if not payment_plugin:
       raise PluginError('no_payment_method_supplied')
     # payment_plugin => Instance of PaypalPayment for example.
@@ -569,102 +536,25 @@ class OrderNotify(orm.BaseModel):
       tools.log.error('Order not found ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
       raise orm.TerminateAction('order_not_found')
     return order
+  
+  def find_order_stripe(self, context):
+    pass
 
 
-# Not a plugin!
-class OrderAddressLocation(orm.BaseModel):
+# This is system plugin, which means end user can not use it!
+class OrderPay(orm.BaseModel):
 
-  _kind = 106
-
-  _use_rule_engine = False
-
-  country = orm.SuperKeyProperty('1', kind='12', required=True, indexed=False)
-  region = orm.SuperKeyProperty('2', kind='13', indexed=False)
-  postal_codes = orm.SuperStringProperty('3', indexed=False, repeated=True)
-
-  _virtual_fields = {
-      '_country': orm.SuperReferenceProperty(autoload=True, target_field='country'),
-      '_region': orm.SuperReferenceProperty(autoload=True, target_field='region')
-  }
-
-
-class OrderAddressPlugin(orm.BaseModel):
-
-  _kind = 107
-
-  _use_rule_engine = False
-
-  name = orm.SuperStringProperty('1', required=True, indexed=False)
-  active = orm.SuperBooleanProperty('2', required=True, default=True)
-  address_type = orm.SuperStringProperty('3', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
-  exclusion = orm.SuperBooleanProperty('4', required=True, default=False, indexed=False)
-  locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '5', repeated=True, indexed=False)
+  cfg = orm.SuperJsonProperty('1', indexed=False, required=True, default={})
 
   def run(self, context):
-    if not self.active:
-      return  # inactive plugin
-    self.read()  # read locals
-    address_key = '%s_address' % self.address_type
-    address = context.input.get(address_key)
-    if address:
-      address = address.get_location()
-      if not self.validate_address(address):
-        raise PluginError('invalid_address')
-      setattr(context._order, address_key, address)
-
-  def validate_address(self, address):
-    '''
-    @note few problems with postal_code_from and postal_code_to
-    Postal code cant always be a number unless its like that in countries.
-
-    postal_code_from and postal_code_to must be converted into int, because strings cant be compared
-    to achive logical result other than native string's comparing logic:
-
-    native strings compare method:
-    __cmp__(self, other)
-      return len(self) > len(other)
-
-      One way to deal with this is to use postal_codes repeated string property on backend, and
-      provide a user with UI tool where he can build a list of postal codes using
-      postal_code_from and postal_code_to integers, or manually specify each individual postal code.
-      Comparison can be much easier than.
-    '''
-    if self.exclusion:
-      # Shipping only at the following locations.
-      allowed = False
-    else:
-      # Shipping everywhere except at the following locations.
-      allowed = True
-    if self.locations.value:
-      for location in self.locations.value:
-        validate = []
-        validate.append(address.country_code == location._country.code)
-        if location.region:
-          validate.append(address.region_code == location._region.code)
-        if location.postal_codes:
-          validate.append(address.postal_code in location.postal_codes)
-        if all(validate):
-          allowed = self.exclusion
-          break
-    return allowed
-
-
-class OrderCurrencyPlugin(orm.BaseModel):
-
-  _kind = 117
-
-  _use_rule_engine = False
-
-  name = orm.SuperStringProperty('1', required=True, indexed=False)
-  active = orm.SuperBooleanProperty('2', required=True, default=True)
-  currency = orm.SuperKeyProperty('3', kind=Unit, required=True, indexed=False)
-
-  def run(self, context):
-    if not self.active:
-      return  # inactive currency
+    if not isinstance(self.cfg, dict):
+      self.cfg = {}
     order = context._order
-    # In context of add_to_cart action runner does the following:
-    order.currency = copy.deepcopy(self.currency.get())
+    payment_plugin = order.payment_method
+    if not payment_plugin:
+      raise PluginError('no_payment_method_supplied')
+    # payment_plugin => Instance of PaypalPayment for example.
+    payment_plugin.pay(context)
 
 
 class OrderPaymentMethodPlugin(orm.BaseModel):
@@ -677,7 +567,7 @@ class OrderPaymentMethodPlugin(orm.BaseModel):
 
   def _get_system_name(self):
     return self.__class__.__name__.lower()
-
+  
   def run(self, context):
     if not self.active:
       return  # inactive payment
@@ -688,7 +578,6 @@ class OrderPaymentMethodPlugin(orm.BaseModel):
                                               'name': self._get_name()})
 
 
-# This plugin is incomplete!
 class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
 
   _kind = 108
@@ -713,11 +602,12 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       return
     super(OrderPayPalPaymentPlugin, self).run(context)
     # currently we only support paypal, so its enforced by default
-    context._order.payment_method = self.key
+    context._order.payment_method = self
+  
+  def pay(self, context):
+    pass
 
   def notify(self, context):
-    if not self.active:
-      return
     request = context.input['request']
     ipn = request['params']
     tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, wwe have it recorded in OrderMessage, however, this is easier to access.
@@ -876,6 +766,161 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
                            'payment_status': order.payment_status,
                            'ipn': request['body']}
     context.new_message_fields = {'ipn': orm.SuperTextProperty(name='ipn', compressed=True, indexed=False)}
+
+
+class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
+
+  _kind = xxx
+
+  _use_rule_engine = False
+
+  secret_key = orm.SuperStringProperty('3', required=True, indexed=False)  # This field needs to be encrypted. Perhaps we should implement property encryption capability?
+  publishable_key = orm.SuperStringProperty('4', required=True, indexed=False)
+
+  def _get_name(self):
+    return 'Stripe'
+
+  def _get_system_name(self):
+    return 'stripe'
+
+  def run(self, context):
+    if not self.active:
+      return
+    super(OrderStripePaymentPlugin, self).run(context)
+    context._order.payment_method = self
+  
+  def pay(self, context):
+    stripe.api_key = self.secret_key  # Here, obviously, we have to import stripe codebase.
+    request = context.input['request']
+    token = request['stripeToken']
+    order = context._order
+    try:
+      # https://stripe.com/docs/api#create_charge
+      charge = stripe.Charge.create(
+          amount=order.total_amount * (10 ** order.currency.value.digits), # amount in smallest currency unit. https://stripe.com/docs/api#create_charge-amount
+          currency=order.currency.value.code,
+          source=token,
+          description="MIRACLESTYLE Sales Order #%s" % order.key_id_str,
+          statement_descriptor=order._seller.name,
+          metadata={"order_key": order.key_urlsafe}
+      )
+      tools.log.debug('Stripe Charge: %s' % (charge))
+      return
+      '''
+      order.state = 'order'
+      order.payment_status = 'Completed'
+      context.new_message = {'charge_id': charge.id,
+                             'action': context.action.key,
+                             'ancestor': order.key,
+                             'agent': context.account.key,
+                             'body': 'Stripe payment %s.' % order.payment_status,
+                             'payment_status': order.payment_status,
+                             'charge': charge}
+      context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}
+      '''
+    except stripe.error.CardError, e:
+      ip_address = os.environ.get('REMOTE_ADDR')
+      tools.log.error('%s, charge: %s, ip: %s' % (e, charge, ip_address))
+      raise PluginError('Card declined!')
+
+  def notify(self, context):
+    pass
+
+
+# Not a plugin!
+class OrderAddressLocation(orm.BaseModel):
+
+  _kind = 106
+
+  _use_rule_engine = False
+
+  country = orm.SuperKeyProperty('1', kind='12', required=True, indexed=False)
+  region = orm.SuperKeyProperty('2', kind='13', indexed=False)
+  postal_codes = orm.SuperStringProperty('3', indexed=False, repeated=True)
+
+  _virtual_fields = {
+      '_country': orm.SuperReferenceProperty(autoload=True, target_field='country'),
+      '_region': orm.SuperReferenceProperty(autoload=True, target_field='region')
+  }
+
+
+class OrderAddressPlugin(orm.BaseModel):
+
+  _kind = 107
+
+  _use_rule_engine = False
+
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  address_type = orm.SuperStringProperty('3', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
+  exclusion = orm.SuperBooleanProperty('4', required=True, default=False, indexed=False)
+  locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '5', repeated=True, indexed=False)
+
+  def run(self, context):
+    if not self.active:
+      return  # inactive plugin
+    self.read()  # read locals
+    address_key = '%s_address' % self.address_type
+    address = context.input.get(address_key)
+    if address:
+      address = address.get_location()
+      if not self.validate_address(address):
+        raise PluginError('invalid_address')
+      setattr(context._order, address_key, address)
+
+  def validate_address(self, address):
+    '''
+    @note few problems with postal_code_from and postal_code_to
+    Postal code cant always be a number unless its like that in countries.
+
+    postal_code_from and postal_code_to must be converted into int, because strings cant be compared
+    to achive logical result other than native string's comparing logic:
+
+    native strings compare method:
+    __cmp__(self, other)
+      return len(self) > len(other)
+
+      One way to deal with this is to use postal_codes repeated string property on backend, and
+      provide a user with UI tool where he can build a list of postal codes using
+      postal_code_from and postal_code_to integers, or manually specify each individual postal code.
+      Comparison can be much easier than.
+    '''
+    if self.exclusion:
+      # Shipping only at the following locations.
+      allowed = False
+    else:
+      # Shipping everywhere except at the following locations.
+      allowed = True
+    if self.locations.value:
+      for location in self.locations.value:
+        validate = []
+        validate.append(address.country_code == location._country.code)
+        if location.region:
+          validate.append(address.region_code == location._region.code)
+        if location.postal_codes:
+          validate.append(address.postal_code in location.postal_codes)
+        if all(validate):
+          allowed = self.exclusion
+          break
+    return allowed
+
+
+class OrderCurrencyPlugin(orm.BaseModel):
+
+  _kind = 117
+
+  _use_rule_engine = False
+
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  active = orm.SuperBooleanProperty('2', required=True, default=True)
+  currency = orm.SuperKeyProperty('3', kind=Unit, required=True, indexed=False)
+
+  def run(self, context):
+    if not self.active:
+      return  # inactive currency
+    order = context._order
+    # In context of add_to_cart action runner does the following:
+    order.currency = copy.deepcopy(self.currency.get())
 
 
 class OrderTaxPlugin(orm.BaseModel):
@@ -1138,6 +1183,7 @@ class OrderCarrierPlugin(orm.BaseModel):
     return allowed
 
 
+# Not a plugin!
 class OrderDiscountLine(orm.BaseModel):
 
   _kind = 124
@@ -1208,6 +1254,7 @@ class OrderDiscountPlugin(orm.BaseModel):
               break
 
 
+# This is system plugin, which means end user can not use it!
 class OrderStockManagement(orm.BaseModel):
 
   def run(self, context):
