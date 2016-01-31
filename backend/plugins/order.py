@@ -318,6 +318,87 @@ class OrderUpdateLine(orm.BaseModel):
 
 
 # This is system plugin, which means end user can not use it!
+class OrderStockManagement(orm.BaseModel):
+
+  def run(self, context):
+    context.output['line_deleted_out_of_stock'] = []
+    OrderProduct = context.models['125']
+
+    def delete_line(line):
+      line._state = 'deleted'
+      context.output['line_deleted_out_of_stock'].append(line.key)
+
+    @orm.tasklet
+    def get_products():
+      for line in context._order._lines.value:
+        line_product = line.product.value
+        if line._state == 'deleted' or not line_product:
+          continue
+        real_product_key = OrderProduct.get_partial_reference_key_path(line_product.reference)
+        line._product = yield real_product_key.get_async()
+    get_products().get_result()
+
+    for line in context._order._lines.value:
+      if not hasattr(line, '_product'):
+        line._state = 'deleted'
+        continue
+      line_product = line.product.value
+      product = line._product
+      if not product:
+        delete_line(line)
+        continue
+      variant_signature = line_product.variant_signature
+      stocks = None
+      out_of_stock = False
+      product._stock.read()
+      product.variants.read()
+      if product._stock.value and product._stock.value.stocks.value:  # if user defined any stocks
+        stocks = product._stock.value.stocks.value
+      if variant_signature:
+        plucked_variant_signature = variant_signature[:]
+        plucked_variant_signature_map = dict((i, v) for i, v in enumerate(plucked_variant_signature))
+        # remove all allow_custom_value's from spec
+        for i, variant in enumerate(product.variants.value):
+          if variant.allow_custom_value and i in plucked_variant_signature_map:
+            plucked_variant_signature.remove(plucked_variant_signature_map[i])
+        if stocks:
+          skip_additional_stock_checks = False
+          for stock in stocks:
+            if stock.variant_signature == plucked_variant_signature:
+              out_of_stock = stock.availability == 'out of stock'
+              skip_additional_stock_checks = True
+              break  # we found complete match, this product combination is definitely out of stock
+          if not skip_additional_stock_checks:  # no matches for out of stock found
+            # try to find those with ***Any*** because they might match out of stock
+            for stock in stocks:
+              maybe = []
+              for i, part in enumerate(plucked_variant_signature):  # [{'Color': 'Red'}, {'Size': 'XL'}]
+                part = part.iteritems().next()  # ('Color', 'Red')
+                try:
+                  item = stock.variant_signature[i].iteritems().next()  # ('Color', 'Red')
+                  passes = item == part or item[1] == '***Any***'
+                except IndexError as e:
+                  # this is when user did not configure stock improperly
+                  passes = False
+                if passes:
+                  maybe.append(True)
+                else:
+                  maybe.append(False)
+              if all(maybe) and stock.availability == 'out of stock':
+                out_of_stock = True
+                break
+        if out_of_stock:
+          delete_line(line)
+      else:  # if the product did not specify any product signature, find stock without variant_signature and see if there's any that has no stock
+        if stocks:
+          for stock in stocks:
+            if not stock.variant_signature and stock.availability == 'out of stock':
+              out_of_stock = True
+      if out_of_stock:
+        delete_line(line)
+
+
+# This is system plugin, which means end user can not use it!
 class OrderProductSpecsFormat(orm.BaseModel):
 
   def run(self, context):
@@ -770,7 +851,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
 
 class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
 
-  _kind = xxx
+  _kind = 114
 
   _use_rule_engine = False
 
@@ -1254,82 +1335,4 @@ class OrderDiscountPlugin(orm.BaseModel):
               break
 
 
-# This is system plugin, which means end user can not use it!
-class OrderStockManagement(orm.BaseModel):
 
-  def run(self, context):
-    context.output['line_deleted_out_of_stock'] = []
-    OrderProduct = context.models['125']
-
-    def delete_line(line):
-      line._state = 'deleted'
-      context.output['line_deleted_out_of_stock'].append(line.key)
-
-    @orm.tasklet
-    def get_products():
-      for line in context._order._lines.value:
-        line_product = line.product.value
-        if line._state == 'deleted' or not line_product:
-          continue
-        real_product_key = OrderProduct.get_partial_reference_key_path(line_product.reference)
-        line._product = yield real_product_key.get_async()
-    get_products().get_result()
-
-    for line in context._order._lines.value:
-      if not hasattr(line, '_product'):
-        line._state = 'deleted'
-        continue
-      line_product = line.product.value
-      product = line._product
-      if not product:
-        delete_line(line)
-        continue
-      variant_signature = line_product.variant_signature
-      stocks = None
-      out_of_stock = False
-      product._stock.read()
-      product.variants.read()
-      if product._stock.value and product._stock.value.stocks.value:  # if user defined any stocks
-        stocks = product._stock.value.stocks.value
-      if variant_signature:
-        plucked_variant_signature = variant_signature[:]
-        plucked_variant_signature_map = dict((i, v) for i, v in enumerate(plucked_variant_signature))
-        # remove all allow_custom_value's from spec
-        for i, variant in enumerate(product.variants.value):
-          if variant.allow_custom_value and i in plucked_variant_signature_map:
-            plucked_variant_signature.remove(plucked_variant_signature_map[i])
-        if stocks:
-          skip_additional_stock_checks = False
-          for stock in stocks:
-            if stock.variant_signature == plucked_variant_signature:
-              out_of_stock = stock.availability == 'out of stock'
-              skip_additional_stock_checks = True
-              break  # we found complete match, this product combination is definitely out of stock
-          if not skip_additional_stock_checks:  # no matches for out of stock found
-            # try to find those with ***Any*** because they might match out of stock
-            for stock in stocks:
-              maybe = []
-              for i, part in enumerate(plucked_variant_signature):  # [{'Color': 'Red'}, {'Size': 'XL'}]
-                part = part.iteritems().next()  # ('Color', 'Red')
-                try:
-                  item = stock.variant_signature[i].iteritems().next()  # ('Color', 'Red')
-                  passes = item == part or item[1] == '***Any***'
-                except IndexError as e:
-                  # this is when user did not configure stock improperly
-                  passes = False
-                if passes:
-                  maybe.append(True)
-                else:
-                  maybe.append(False)
-              if all(maybe) and stock.availability == 'out of stock':
-                out_of_stock = True
-                break
-        if out_of_stock:
-          delete_line(line)
-      else:  # if the product did not specify any product signature, find stock without variant_signature and see if there's any that has no stock
-        if stocks:
-          for stock in stocks:
-            if not stock.variant_signature and stock.availability == 'out of stock':
-              out_of_stock = True
-      if out_of_stock:
-        delete_line(line)
