@@ -14,8 +14,11 @@
       </div>
 
       <div ng-if="$state.isCompleted() && !notFound" class="top-close top-close-right">
-           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="catalogMenu.toggle()">
-             <icon color="white" type="more_vert"></icon>
+           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="displayCart()">
+             <icon color="white" type="shopping_cart"></icon>
+           </button>
+           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="displayShare()">
+             <icon color="white" type="share"></icon>
            </button>
       </div>
 
