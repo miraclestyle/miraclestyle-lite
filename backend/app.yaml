@@ -26,6 +26,9 @@ libraries:
 - name: ssl
   version: latest
 
+- name: pycrypto
+  version: latest
+
 handlers:
 - url: /.*
   script: http.app

@@ -13,6 +13,8 @@ import urlparse
 import webapp2
 import datetime
 import json
+import base64
+from Crypto.Cipher import AES
 
 from google.appengine.ext import blobstore
 from google.appengine.api import taskqueue, mail, urlfetch, channel
@@ -199,3 +201,33 @@ def channel_send(data):
   return channel.send_message(data['recipient'], json.dumps(output))
 
 secure_cookie = securecookie.SecureCookieSerializer(settings.COOKIE_SECRET)
+
+encryption = AES.new(settings.AES_KEY, AES.MODE_CBC, settings.AES_IV456)
+
+def urlsafe_encrypt(s, raw_prefix=None):
+  if s is None:
+    return s # wont encrypt none, silently
+  elif not isinstance(s, basestring): # other types will throw an error
+    raise ValueError('Type %s cannot be encrypted, only strings are allowed' % type(s).__name__)
+  if raw_prefix is None:
+    raw_prefix = settings.ENCRYPTION_PREFIX # prefix serves as indicator if the value provided is already encrypted
+  if s.startswith(raw_prefix):
+    # if you try to encrypt the already encrypted value, it wont do it silently
+    return s
+  out = encryption.encrypt(s) # we encrypt with aes, then base64 for urlsafety
+  out = base64.b64encode(out)
+  out = out.replace('=', '-')
+  return '%s%s' % (raw_prefix, out)
+
+def urlsafe_decrypt(s, raw_prefix=None):
+  if s is None:
+    return s # wont decrypt none
+  elif not isinstance(s, basestring):
+    raise ValueError('Type %s cannot be decrypted, only strings are allowed' % type(s).__name__)
+  if raw_prefix is None:
+    raw_prefix = settings.ENCRYPTION_PREFIX
+  if not s.startswith(raw_prefix):
+    raise ValueError('Incompatible encrypted value %s, expected prefix %s' % (s, raw_prefix))
+  decode = base64.b64decode(s[len(raw_prefix):].replace('-', '=')) # strip away the prefix, decode the string
+  out = encryption.decrypt(decode) # decrypt it finally
+  return out

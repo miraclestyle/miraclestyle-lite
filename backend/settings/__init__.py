@@ -10,6 +10,9 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
+AES_KEY = '7XQg6j9ZHZByzckr0DzjXQPp4Oug3FXC' # 16, 24 or 32 bytes allowed
+AES_IV456 = '72sawbMVX98RE0n9' # only 16bytes allowed
+ENCRYPTION_PREFIX = 'encrypted'
 
 MIRACLESTYLE_SETTINGS = {
   'DEBUG': False,

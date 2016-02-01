@@ -857,8 +857,9 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
 
   _use_rule_engine = False
 
-  secret_key = orm.SuperStringProperty('3', required=True, indexed=False)  # This field needs to be encrypted. Perhaps we should implement property encryption capability?
-  publishable_key = orm.SuperStringProperty('4', required=True, indexed=False)
+  secret_key = orm.SuperStringEncryptedProperty('3', required=True, indexed=False)  # This field needs to be encrypted. Perhaps we should implement property encryption capability?
+  publishable_key = orm.SuperStringEncryptedProperty('4', required=True, indexed=False)
+  # probably text description needed here?
 
   def _get_name(self):
     return 'Stripe'
@@ -873,13 +874,12 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     context._order.payment_method = self
   
   def pay(self, context):
-    request = context.input['request']
-    token = request['stripeToken']
+    token = context.input['token'] # this could be the request variable but standard action cannot be used see the paypal implementation
     order = context._order
     try:
       # https://stripe.com/docs/api#create_charge
       charge = stripe.Charge.create(
-          api_key=self.secret_key,
+          api_key=self.secret_key.decrypted, # apikey must be passed here because you cannot set module level apikey globally
           amount=order.total_amount * (10 ** order.currency.value.digits), # amount in smallest currency unit. https://stripe.com/docs/api#create_charge-amount
           currency=order.currency.value.code,
           source=token,
