@@ -14199,6 +14199,9 @@ function msieversion() {
         }).factory('outputTypes', ng(function (dateFilter, GLOBAL_CONFIG, modelsMeta) {
             var outputTypes = {
                 SuperDateTimeProperty: function (input, field) {
+                    if (!input) {
+                        return 'None';
+                    }
                     var date = new Date(input),
                         now = new Date(),
                         thisyear = now.getYear() === date.getYear(),
@@ -16191,8 +16194,8 @@ function msieversion() {
                         var defaults = field['default'],
                             value = entity[field.code_name];
                         if (field.type === 'SuperDateTimeProperty' && !defaults) {
-                            defaults = new Date();
-
+                            //defaults = new Date();
+                            // do not set default now() for dates that are null
                         }
                         if (field.repeated && !angular.isArray(defaults)) {
                             defaults = [];
