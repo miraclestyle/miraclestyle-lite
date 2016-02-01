@@ -374,8 +374,8 @@
                         var defaults = field['default'],
                             value = entity[field.code_name];
                         if (field.type === 'SuperDateTimeProperty' && !defaults) {
-                            defaults = new Date();
-
+                            //defaults = new Date();
+                            // do not set default now() for dates that are null
                         }
                         if (field.repeated && !angular.isArray(defaults)) {
                             defaults = [];

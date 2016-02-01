@@ -968,6 +968,9 @@
         }).factory('outputTypes', ng(function (dateFilter, GLOBAL_CONFIG, modelsMeta) {
             var outputTypes = {
                 SuperDateTimeProperty: function (input, field) {
+                    if (!input) {
+                        return 'None';
+                    }
                     var date = new Date(input),
                         now = new Date(),
                         thisyear = now.getYear() === date.getYear(),
