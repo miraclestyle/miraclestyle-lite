@@ -23,6 +23,9 @@ libraries:
 - name: webob
   version: latest
 
+- name: ssl
+  version: latest
+
 handlers:
 - url: /.*
   script: http.app
