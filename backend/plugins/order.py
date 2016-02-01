@@ -18,6 +18,8 @@ import tools
 from models.location import *
 from models.unit import *
 
+import stripe
+
 
 class PluginError(errors.BaseKeyValueError):
 
@@ -871,13 +873,13 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     context._order.payment_method = self
   
   def pay(self, context):
-    stripe.api_key = self.secret_key  # Here, obviously, we have to import stripe codebase.
     request = context.input['request']
     token = request['stripeToken']
     order = context._order
     try:
       # https://stripe.com/docs/api#create_charge
       charge = stripe.Charge.create(
+          api_key=self.secret_key,
           amount=order.total_amount * (10 ** order.currency.value.digits), # amount in smallest currency unit. https://stripe.com/docs/api#create_charge-amount
           currency=order.currency.value.code,
           source=token,

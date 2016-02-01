@@ -213,7 +213,7 @@ class CatalogProduct(orm.BaseExpando):
       'weight': orm.SuperDecimalProperty('7'),
       'volume': orm.SuperDecimalProperty('8'),
       'images': orm.SuperImageLocalStructuredProperty(orm.Image, '9', repeated=True),
-      'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '11', repeated=True)
+      'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '10', repeated=True)
   }
 
   _virtual_fields = {  # sorting must be done by code?
