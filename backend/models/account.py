@@ -443,10 +443,6 @@ class Account(orm.BaseExpando):
   def current_account_session(cls):
     return tools.mem_temp_get('current_account_session')
 
-  @staticmethod
-  def hash_session_id(session_id):
-    return hashlib.md5('%s%s' % (session_id, settings.AUTH_SALT1)).hexdigest()
-
   def session_by_id(self, session_id):
     for session in self.sessions.value:
       if session.session_id == session_id:

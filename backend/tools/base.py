@@ -204,6 +204,14 @@ secure_cookie = securecookie.SecureCookieSerializer(settings.COOKIE_SECRET)
 
 encryption = AES.new(settings.AES_KEY, AES.MODE_CBC, settings.AES_IV456)
 
+def urlsafe_b64encode(data):
+    return base64.urlsafe_b64encode(data).rstrip('=').replace('/', '~')
+
+def urlsafe_b64decode(data):
+    data = data.replace('~', '/')
+    pad = '=' * (4 - (len(data) & 3))
+    return base64.urlsafe_b64decode(data + pad)
+
 def urlsafe_encrypt(s, raw_prefix=None):
   if s is None:
     return s # wont encrypt none, silently
@@ -215,8 +223,7 @@ def urlsafe_encrypt(s, raw_prefix=None):
     # if you try to encrypt the already encrypted value, it wont do it silently
     return s
   out = encryption.encrypt(s) # we encrypt with aes, then base64 for urlsafety
-  out = base64.b64encode(out)
-  out = out.replace('=', '-')
+  out = urlsafe_b64encode(out)
   return '%s%s' % (raw_prefix, out)
 
 def urlsafe_decrypt(s, raw_prefix=None):
@@ -228,6 +235,6 @@ def urlsafe_decrypt(s, raw_prefix=None):
     raw_prefix = settings.ENCRYPTION_PREFIX
   if not s.startswith(raw_prefix):
     raise ValueError('Incompatible encrypted value %s, expected prefix %s' % (s, raw_prefix))
-  decode = base64.b64decode(s[len(raw_prefix):].replace('-', '=')) # strip away the prefix, decode the string
+  decode = urlsafe_b64decode(s[len(raw_prefix):]) # strip away the prefix, decode the string
   out = encryption.decrypt(decode) # decrypt it finally
   return out
