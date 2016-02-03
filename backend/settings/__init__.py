@@ -149,9 +149,8 @@ PRODUCT_CATEGORY_DATA_FILE = os.path.join(ETC_DATA_DIR, 'taxonomy.txt')
 # BLOB Handling
 BLOBKEYMANAGER_KEY = '_BLOBKEYMANAGER'
 # Payment Methods
-AVAILABLE_PAYMENT_METHODS = ('paypal', 'stripe')
+AVAILABLE_PAYMENT_METHODS = ('stripe',) # only stripe is available atm
 AES_KEY = '7XQg6j9ZHZByzckr0DzjXQPp4Oug3FXC' # 16, 24 or 32 bytes allowed
-AES_IV456 = '72sawbMVX98RE0n9' # only 16bytes allowed
 ENCRYPTION_PREFIX = 'encrypted'
 # HTTP client related configs
 CSRF_SALT = '21482499fsd9i348124982ufs89j9f2qofi4knsgye8w9djqwiodnjenj'

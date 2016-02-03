@@ -90,11 +90,7 @@
                 <div ng-class="{'padding-right-40': stage.current < 2 && order.ui.rule.action.update.executable}" class="padding-bottom-16">
                     <h1 class="headline">{{line.product.name}}</h1>
                     <div class="secondary padding-bottom-16">{{line.product.code}}</div>
-                    <input type="hidden" value="{{line.product.name}}" name="item_name_{{line.sequence}}" />
-                    <input type="hidden" value="{{line.sequence}}" name="item_number_{{line.sequence}}" />
-                    <input type="hidden" value="{{line.product.quantity}}" name="quantity_{{line.sequence}}" />
-                    <input type="hidden" value="{{line.product.unit_price}}" name="amount_{{line.sequence}}" />
-                    <input type="hidden" value="{{line.discount}}" name="discount_rate_{{line.sequence}}" />
+ 
                     <table class="card-table">
                         <tbody>
                             <tr>

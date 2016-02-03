@@ -389,6 +389,11 @@ if (typeof module === 'object' && module.exports) {
 
 })();
 
+
+Array.prototype.insert = function (index, item) {
+  this.splice(index, 0, item);
+};
+
 // Production steps of ECMA-262, Edition 5, 15.4.4.14
 // Reference: http://es5.github.io/#x15.4.4.14
 if (!Array.prototype.indexOf) {

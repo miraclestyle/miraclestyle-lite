@@ -174,7 +174,9 @@
                                             return;
                                         }
                                     }
-                                    seller = response.data.entity._seller;
+                                    if (response.data.entity._seller) {
+                                        seller = response.data.entity._seller;
+                                    }
                                     var locals = {
                                         customPlaceholder: null,
                                         spawnAddress: null,
@@ -278,8 +280,6 @@
 
                                     $scope.writable = true;
 
-                                    $scope.PAYPAL_WEBSCR = $sce.trustAsResourceUrl(window.PAYPAL_WEBSCR);
-
                                     $scope.stage = {
                                         checkout: null,
                                         time: 500,
@@ -370,10 +370,16 @@
                                                 track.reviewCartFail();
                                             }
                                         },
+                                        toPayWithCreditCard: function () {
+                                            $scope.stage.animating = 5;
+                                            $scope.stage.out.push(4);
+                                            $scope.stage.current = 5;
+                                        },
                                         converToOrder: function ($event) {
                                             var submit = function () {
-                                                $($event.target).parents('form:first').submit();
-                                            }, saidyes;
+                                                    $($event.target).parents('form:first').submit();
+                                                },
+                                                saidyes;
                                             if ($scope.order.state === 'order') {
                                                 return submit();
                                             }
@@ -841,10 +847,6 @@
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
                                                 deleteMaybe();
                                                 return response;
-                                            })['finally'](function () {
-                                                if ($scope.container.paypal) {
-                                                    $scope.container.paypal.$setPristine();
-                                                }
                                             });
                                         },
                                         showNetTotalAmount: function () {
@@ -1013,24 +1015,6 @@
                                     }());
 
 
-                                    $scope.notifyUrl = $state.engineHref('order-notify', {
-                                        method: 'paypal'
-                                    }, {
-                                        absolute: true
-                                    });
-
-                                    $scope.completePath = $state.engineHref('order-payment-success', {
-                                        key: $scope.order.key
-                                    }, {
-                                        absolute: true
-                                    });
-
-                                    $scope.cancelPath = $state.engineHref('order-payment-canceled', {
-                                        key: $scope.order.key
-                                    }, {
-                                        absolute: true
-                                    });
-
                                     $scope.$watch('order._lines.length', function (neww, old) {
                                         if (neww < 1) {
                                             $scope.notFound = 1;
@@ -1056,6 +1040,73 @@
 
                                     $scope.sellerDetails.getTrack = function () {
                                         return helpers.track.proxyLabelToEvents(track.seller, config.relativeUrl);
+                                    };
+
+                                    $scope.stripe = {
+                                        args: {},
+                                        fields: {
+                                            cc: {
+                                                _maker_: 'order',
+                                                type: 'SuperStringProperty',
+                                                code_name: 'card_number',
+                                                required: true,
+                                                ui: {
+                                                    args: 'stripe.args.card_number',
+                                                    writable: true
+                                                }
+                                            },
+                                            exp1: {
+                                                _maker_: 'order',
+                                                type: 'SuperStringProperty',
+                                                code_name: 'card_exp_1',
+                                                required: true,
+                                                ui: {
+                                                    hideMessages: true,
+                                                    label: false,
+                                                    args: 'stripe.args.card_exp_1',
+                                                    writable: true
+                                                }
+                                            },
+                                            exp2: {
+                                                _maker_: 'order',
+                                                type: 'SuperStringProperty',
+                                                code_name: 'card_exp_2',
+                                                required: true,
+                                                ui: {
+                                                    hideMessages: true,
+                                                    label: false,
+                                                    args: 'stripe.args.card_exp_2',
+                                                    writable: true
+                                                }
+                                            },
+                                            cvc: {
+                                                _maker_: 'order',
+                                                type: 'SuperStringProperty',
+                                                code_name: 'cvc',
+                                                required: true,
+                                                ui: {
+                                                    args: 'stripe.args.cvc',
+                                                    writable: true
+                                                }
+                                            }
+                                        },
+                                        expires: {
+                                            messages: function () {
+                                                var messages = {
+                                                    help: true
+                                                };
+                                                angular.forEach([$scope.stripe.fields.exp1, $scope.stripe.fields.exp2], function (field) {
+                                                    if (field.ui.form.hasErrors() && field.ui.form.field().$dirty) {
+                                                        messages = field.ui.form.messages();
+                                                    }
+                                                });
+                                                return messages;
+                                            },
+                                            shouldShowMessages: function () {
+                                                return true;
+                                            }
+                                        },
+                                        pay: angular.noop
                                     };
 
                                     track.openCart();

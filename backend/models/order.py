@@ -182,7 +182,7 @@ class Order(orm.BaseExpando):
   untaxed_amount = orm.SuperDecimalProperty('9', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
-  payment_method = orm.SuperPluginStorageProperty(('108', '114'), '12', required=False, default=[], compressed=False)  # This is supposed to be a single instance of payment plugin. I am not sure how this will play out to be, but the previous value vas unaceptable in our 'idempotent storage' case scenario since it was a key, and key could be lost if seller deleted entity from his/her plugins anytime after the order was completed.
+  payment_method = orm.SuperStringProperty('12', required=False, default='stripe', choices=settings.AVAILABLE_PAYMENT_METHODS)
   payment_status = orm.SuperStringProperty('13', required=False, indexed=True)
   carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '14')
 
@@ -563,6 +563,7 @@ class Order(orm.BaseExpando):
           id='pay',
           arguments={
               'key': orm.SuperKeyProperty(kind='34', required=True),
+              'token': orm.SuperStringProperty(required=True),
               'read_arguments': orm.SuperJsonProperty()
           },
           _plugin_groups=[

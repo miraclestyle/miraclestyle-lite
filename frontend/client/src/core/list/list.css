@@ -230,3 +230,7 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
 .modal-medium-simple .list-row-one-line.list-row-has-primary .avatar {
     padding: 4px 12px 4px 20px;
 }
+
+.list-margin-bottom-8 {
+    margin-bottom: 8px;
+}

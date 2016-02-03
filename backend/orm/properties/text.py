@@ -53,7 +53,7 @@ class SuperStringProperty(_BaseProperty, StringProperty):
     return search.TextField(name=self.search_document_field_name, value=unicode(value))
 
 
-class EncryptedValue(): # this should probably be moved to values.py
+class EncryptedValue():
 
   def __init__(self, raw):
     self.encrypted = raw
@@ -69,7 +69,7 @@ class EncryptedValue(): # this should probably be moved to values.py
     return self.encrypted
 
   def get_output(self):
-    return self.encrypted # always return encrypted values to the public
+    return self.encrypted # always return encrypted values to the public, because setattr of our system overrides all
 
 
 class SuperStringEncryptedProperty(SuperStringProperty):
@@ -86,7 +86,7 @@ class SuperStringEncryptedProperty(SuperStringProperty):
 
   def _to_base_type(self, value):
     if isinstance(value, EncryptedValue):
-      value = value.encrypted # this is to avoid the constant reshing, encrypt function knows if it should do that
+      value = value.encrypted # this is to avoid the constant rehashing, encrypt function knows if it should do that
     return tools.urlsafe_encrypt(value)
 
   def _from_base_type(self, value):

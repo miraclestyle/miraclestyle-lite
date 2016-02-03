@@ -14,6 +14,8 @@ import webapp2
 import datetime
 import json
 import base64
+
+from Crypto import Random
 from Crypto.Cipher import AES
 
 from google.appengine.ext import blobstore
@@ -27,7 +29,8 @@ from .util import normalize
 from .debug import log
 
 __all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url', 'render_template', 'render_subject_and_body_templates',
-           'channel_create', 'json_dumps', 'json_loads', 'mail_send', 'http_send', 'channel_send', 'secure_cookie']
+           'channel_create', 'json_dumps', 'json_loads', 'mail_send', 'http_send', 'channel_send', 'secure_cookie', 'urlsafe_encrypt',
+           'urlsafe_decrypt']
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -202,15 +205,25 @@ def channel_send(data):
 
 secure_cookie = securecookie.SecureCookieSerializer(settings.COOKIE_SECRET)
 
-encryption = AES.new(settings.AES_KEY, AES.MODE_CBC, settings.AES_IV456)
+def pad(s):
+    return s + b"\0" * (AES.block_size - len(s) % AES.block_size)
 
-def urlsafe_b64encode(data):
-    return base64.urlsafe_b64encode(data).rstrip('=').replace('/', '~')
+def encrypt(message, key=None, key_size=256):
+    if key is None:
+      key = settings.AES_KEY
+    message = pad(message)
+    iv = Random.new().read(AES.block_size)
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    return iv + cipher.encrypt(message)
 
-def urlsafe_b64decode(data):
-    data = data.replace('~', '/')
-    pad = '=' * (4 - (len(data) & 3))
-    return base64.urlsafe_b64decode(data + pad)
+def decrypt(ciphertext, key=None):
+    if key is None:
+      key = settings.AES_KEY
+    iv = ciphertext[:AES.block_size]
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    plaintext = cipher.decrypt(ciphertext[AES.block_size:])
+    return plaintext.rstrip(b"\0")
+
 
 def urlsafe_encrypt(s, raw_prefix=None):
   if s is None:
@@ -222,8 +235,8 @@ def urlsafe_encrypt(s, raw_prefix=None):
   if s.startswith(raw_prefix):
     # if you try to encrypt the already encrypted value, it wont do it silently
     return s
-  out = encryption.encrypt(s) # we encrypt with aes, then base64 for urlsafety
-  out = urlsafe_b64encode(out)
+  out = encrypt(s) # we encrypt with aes, then base64 for urlsafety
+  out = base64.b64encode(out)
   return '%s%s' % (raw_prefix, out)
 
 def urlsafe_decrypt(s, raw_prefix=None):
@@ -235,6 +248,7 @@ def urlsafe_decrypt(s, raw_prefix=None):
     raw_prefix = settings.ENCRYPTION_PREFIX
   if not s.startswith(raw_prefix):
     raise ValueError('Incompatible encrypted value %s, expected prefix %s' % (s, raw_prefix))
-  decode = urlsafe_b64decode(s[len(raw_prefix):]) # strip away the prefix, decode the string
-  out = encryption.decrypt(decode) # decrypt it finally
+  print(s, raw_prefix, s[len(raw_prefix):])
+  decode = base64.b64decode(s[len(raw_prefix):]) # strip away the prefix, decode the string
+  out = decrypt(decode) # decrypt it finally
   return out

@@ -307,6 +307,10 @@
                 condition_type: 'Condition under which this line applies.',
                 price_type: 'Price formula that calculates this price.'
             },
+            order: {
+                card_exp: 'Card expiration printed on the front of your card.',
+                cvc: 'Card verification code printed on the back of your card.'
+            },
             '106': {
                 postal_codes: 'Postal codes this location affects. Specify one postal code per line.'
             },
@@ -359,6 +363,10 @@
             },
             plugins: {
                 kind: 'Rule'
+            },
+            order: {
+                cvc: 'CVC',
+                card_exp: 'Card expiration (MM / YY)',
             },
             '28': {
                 uom: 'Unit of measurement',
@@ -462,7 +470,8 @@
                     '107': 'Address',
                     '117': 'Currency',
                     '108': 'PayPal',
-                    '113': 'Carrier'
+                    '113': 'Carrier',
+                    '114': 'Stripe'
                 }
             }
         });
@@ -532,7 +541,8 @@
             catalogProducts: 'Products',
             history: 'History',
             record: 'Log Entry',
-            sellerPlugins: 'Rules'
+            sellerPlugins: 'Rules',
+            stripeWithConfidence: 'Sell with confidence'
         });
 
         $.extend(GLOBAL_CONFIG.emptyHelp, {

@@ -1,6 +1,13 @@
 (function () {
     'use strict';
     angular.module('app')
+        .directive('encrypted', function () {
+            return {
+                link: function (scope, iElement, iAttrs) {
+                    iElement.attr('type', 'password');
+                }
+            };
+        })
         .directive('repeatedText', ng(function (helpers) {
             return {
                 require: 'ngModel',
@@ -310,6 +317,13 @@
                     }
 
                     return 'select';
+                },
+                SpaceWithText: function (info) {
+                    return 'spacewithtext';
+                },
+                SuperStringEncryptedProperty: function (info) {
+                    info.config.ui.attrs.encrypted = true;
+                    return this.SuperStringProperty(info);
                 },
                 SuperStringProperty: function (info) {
                     var config = info.config;

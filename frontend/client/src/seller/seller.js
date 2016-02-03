@@ -454,6 +454,14 @@
                                     }
                                 }
                             },
+                            '114': {
+                                spacetext: {
+                                    ui: {
+                                        label: GLOBAL_CONFIG.subheaders.stripeWithConfidence,
+                                        text: 'seller/help/stripe.html'
+                                    }
+                                }
+                            },
                             '107': {
                                 exclusion: exclusionSpec(),
                                 locations: {
@@ -646,6 +654,17 @@
                                                 realTotal = 0,
                                                 found = false;
                                             fields = _.toArray(fields);
+                                            if (kind === '114') {
+                                                angular.forEach(fields, function (field, i) {
+                                                    field.name = (parseInt(field.name, 10) * 2).toString();
+                                                });
+                                                fields.push({
+                                                    type: 'SpaceWithText',
+                                                    name: '5',
+                                                    code_name: 'spacetext',
+                                                    ui: {}
+                                                });
+                                            }
                                             fields.sort(helpers.fields.sorter);
                                             config.ui.specifics.fields = fields;
                                             angular.forEach(fields, function (field) {

@@ -20,6 +20,20 @@ from models.unit import *
 
 import stripe
 
+def find_payment_plugin(order):
+  seller = order.seller_reference.get()
+  seller.read({'_plugin_group': {'plugins': {}}})  # read plugin container
+  plugin_container = seller._plugin_group.value
+  if plugin_container:
+    for plugin in seller._plugin_group.value.plugins:
+      if isinstance(plugin, OrderPaymentMethodPlugin):
+        if order.payment_method == plugin._get_system_name():
+          payment_plugin = plugin
+          break
+  if not payment_plugin:
+    raise PluginError('no_payment_method_supplied')
+  return payment_plugin
+
 
 class PluginError(errors.BaseKeyValueError):
 
@@ -579,9 +593,7 @@ class OrderNotify(orm.BaseModel):
     order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context)  # will throw an error if the payment method does not exist
     context._order = order
     order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}})
-    payment_plugin = order.payment_method
-    if not payment_plugin:
-      raise PluginError('no_payment_method_supplied')
+    payment_plugin = find_payment_plugin(order)
     # payment_plugin => Instance of PaypalPayment for example.
     payment_plugin.notify(context)
 
@@ -633,9 +645,7 @@ class OrderPay(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     order = context._order
-    payment_plugin = order.payment_method
-    if not payment_plugin:
-      raise PluginError('no_payment_method_supplied')
+    payment_plugin = find_payment_plugin(order)
     # payment_plugin => Instance of PaypalPayment for example.
     payment_plugin.pay(context)
 
@@ -656,8 +666,7 @@ class OrderPaymentMethodPlugin(orm.BaseModel):
       return  # inactive payment
     if 'payment_methods' not in context.output:
       context.output['payment_methods'] = []
-    context.output['payment_methods'].append({'key': self.key,
-                                              'system_name': self._get_system_name(),
+    context.output['payment_methods'].append({'key': self._get_system_name(),
                                               'name': self._get_name()})
 
 
@@ -858,8 +867,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
   _use_rule_engine = False
 
   secret_key = orm.SuperStringEncryptedProperty('3', required=True, indexed=False)  # This field needs to be encrypted. Perhaps we should implement property encryption capability?
-  publishable_key = orm.SuperStringEncryptedProperty('4', required=True, indexed=False)
-  # probably text description needed here?
+  publishable_key = orm.SuperStringProperty('4', required=True, indexed=False) # this is public information
 
   def _get_name(self):
     return 'Stripe'
@@ -871,7 +879,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     if not self.active:
       return
     super(OrderStripePaymentPlugin, self).run(context)
-    context._order.payment_method = self
+    context._order.payment_method = self._get_system_name()
   
   def pay(self, context):
     token = context.input['token'] # this could be the request variable but standard action cannot be used see the paypal implementation
@@ -883,13 +891,11 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           amount=order.total_amount * (10 ** order.currency.value.digits), # amount in smallest currency unit. https://stripe.com/docs/api#create_charge-amount
           currency=order.currency.value.code,
           source=token,
-          description="MIRACLESTYLE Sales Order #%s" % order.key_id_str,
+          description='MIRACLESTYLE Sales Order #%s' % order.key_id_str,
           statement_descriptor=order._seller.name,
-          metadata={"order_key": order.key_urlsafe}
+          metadata={'order_key': order.key_urlsafe}
       )
       tools.log.debug('Stripe Charge: %s' % (charge))
-      return
-      '''
       order.state = 'order'
       order.payment_status = 'Completed'
       context.new_message = {'charge_id': charge.id,
@@ -900,11 +906,10 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                              'payment_status': order.payment_status,
                              'charge': charge}
       context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}
-      '''
     except stripe.error.CardError, e:
       ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('%s, charge: %s, ip: %s' % (e, charge, ip_address))
-      raise PluginError('Card declined!')
+      raise PluginError('card_declined')
 
   def notify(self, context):
     pass

@@ -1,11 +1,12 @@
-<button md-ink-ripple-action
+
+<button md-ink-ripple
         toolbar-padding-control-element
         type="button"
-        class="action button-transparent button-square color-child-when-disabled"
+        class="action md-button color-child-when-disabled"
         ng-show="order.ui.rule.action.delete.executable && order.id && order._state !== 'deleted'"
         loading
         ng-click="cmd.order.delete(cmd.order.state !== 'order')">
-    <icon type="delete"></icon>
+    Empty
 </button>
 
 <button md-ink-ripple-action

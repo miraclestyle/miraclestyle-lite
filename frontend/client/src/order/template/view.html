@@ -1,6 +1,6 @@
 <div fit-in-modal>
     <activity-spinner toolbar="true"></activity-spinner>
-    <form no-leave-check="true" method="post" name="container.paypal" ng-attr-action="{{PAYPAL_WEBSCR}}">
+    <form no-leave-check="true" method="post" name="container.general">
         <action-toolbar spec="dialog.toolbar"></action-toolbar>
         <div class="modal-body">
             <modal-loading toolbar="true"></modal-loading>
@@ -14,29 +14,6 @@
                 <div ng-if="$state.isCompleted() && !notFound" class="modal-body-inner">
                     <div class="order">
                     
-                        <input type="hidden" name="cmd" value="_cart" />
-                        <input type="hidden" name="upload" value="1" />
-                        <input type="hidden" name="charset" value="utf-8" />
-                        <input type="hidden" name="invoice" value="{{order.key}}" />
-                        <input type="hidden" name="no_shipping" value="2">
-                        <input type="hidden" name="business" value="{{order._payment_method.business}}" />
-                        <input type="hidden" name="return" value="{{completePath}}" />
-                        <input type="hidden" name="cancel_return" value="{{cancelPath}}" />
-                        <input type="hidden" name="notify_url" value="{{notifyUrl}}" />
-                        <input type="hidden" name="rm" value="1" />
-                        <input type="hidden" name="currency_code" value="{{order.currency.code}}" />
-                        <input type="hidden" name="custom" value="{{order.key}}" />
-                        <input type="hidden" name="address_override" value="1" />
-                        <input type="hidden" name="first_name" value="{{order.shipping_address.name}}" />
-                        <input type="hidden" name="address1" value="{{order.shipping_address.street}}" />
-                        <input ng-if="order.shipping_address.street2" type="hidden" name="address2" value="{{order.shipping_address.street2}}" />
-                        <input type="hidden" name="city" value="{{order.shipping_address.city}}" />
-                        <input ng-if="order.shipping_address.country_code === 'US'" type="hidden" name="state" value="{{order.shipping_address.region_code|substr:3}}" />
-                        <input ng-if="order.shipping_address.postal_code" type="hidden" name="zip" value="{{order.shipping_address.postal_code}}" />
-                        <input type="hidden" name="country" value="{{order.shipping_address.country_code}}" />
-                        <input type="hidden" name="email" value="{{order.shipping_address.email}}" />
-                        <input type="hidden" name="tax_cart" value="{{order.tax_amount}}" />
-                        <input type="hidden" name="handling_cart" value="{{order.carrier.subtotal}}" />
 
                         <div ng-if="!stage.checkout"
                              class="order-stage seam-bottom in fixed-height"
@@ -52,7 +29,7 @@
                                 <div class="order-next-stage-inner">
                                   <span class="md-button-text">Proceed To Checkout</span>
                                   <div class="wide-arrow-down">
-                                     <span class="pager">1/4</span>
+                                     <span class="pager">1/5</span>
                                   </div>
                                 </div>
                               </button>
@@ -121,7 +98,7 @@
                                   <div class="order-next-stage-inner">
                                     <span class="md-button-text">Select Shipping Method</span>
                                     <div class="wide-arrow-down">
-                                       <span class="pager">2/4</span>
+                                       <span class="pager">2/5</span>
                                     </div>
                                   </div>
                               </button>
@@ -161,13 +138,14 @@
                                       <div class="order-next-stage-inner">
                                         <span class="md-button-text">Review Cart</span>
                                         <div class="wide-arrow-down">
-                                           <span class="pager">3/4</span>
+                                           <span class="pager">3/5</span>
                                         </div>
                                       </div>
                                     </button>
                                   </div>
                               </div>
                         </div>
+
 
                         <div class="order-stage seam-bottom out fixed-height"
                              order-went-up="stage.endAnimation(4)"
@@ -180,22 +158,84 @@
                             <div ng-if="stage.isAnimating(4)">
                               <div ng-include="'order/lines.html'"></div>
                               <div ng-if="stage.canShowPay()" class="list">
-                                <div class="clearfix">
-                                  <div ng-if="order._payment_method">
-                                    <button ng-click="stage.converToOrder($event)"
-                                            md-ink-ripple
-                                            type="button"
-                                            loading
-                                            class="md-button text-center order-next-stage order-go-pay color-child-when-disabled">
-                                         <span class="md-button-text">
-                                            <span ng-if="order.state !== 'order'">Place Your Order</span>
-                                            <span ng-if="order.state == 'order'">Pay With</span>
-                                          </span>
-                                         <img class="block t100" ng-src="{{helpers.url.local('client/dist/static/order/cc-badges-ppmcvdam.png')}}" alt="Check out with PayPal" />
-                                    </button>
-                                  </div>
-                                </div>
+                                 <button md-ink-ripple 
+                                            loading 
+                                            class="md-button text-center order-next-stage color-child-when-disabled"
+                                            ng-click="stage.toPayWithCreditCard()"
+                                            type="button">
+                                      <div class="order-next-stage-inner">
+                                        <span class="md-button-text">Pay with Card</span>
+                                        <div class="wide-arrow-down">
+                                           <span class="pager">4/5</span>
+                                        </div>
+                                      </div>
+                                 </button>
                               </div>
+                            </div>
+                        </div>
+
+
+                        <div class="order-stage seam-bottom out fixed-height"
+                             order-went-up="stage.endAnimation(5)"
+                             ng-class="{'in': stage.current === 5, 'out': !stage.checkout}">
+
+                            <div ng-show="stage.animating === 5" class="order-loading-wrapper">
+                                  <div ng-include="'core/spinner/spinner.html'"></div>
+                            </div>
+
+                            <div ng-if="stage.isAnimating(5)">
+
+                              <div class="list list-padding">
+
+                                <button loading 
+                                      md-ink-ripple-list ng-click="stripe.payWithConfidence()" 
+                                      type="button" 
+                                      class="list-row list-row-one-line list-row-avatar list-row-has-primary menu-item color-child-when-disabled">
+                                      <div class="list-content-tile">
+                                        <div class="list-primary-tile">
+                                          <div class="avatar"><icon type="lock_outline"></icon></div>
+                                        </div>
+                                        <div class="first">Pay with confidence</div>
+                                      </div>
+                              </button>
+
+                              <button loading 
+                                      md-ink-ripple-list 
+                                      ng-click="stripe.paywithCards()" 
+                                      type="button" 
+                                      class="list-row list-row-one-line list-row-avatar list-row-has-primary menu-item color-child-when-disabled">
+                                      <div class="list-content-tile">
+                                        <div class="list-primary-tile">
+                                          <div class="avatar"><icon type="credit_card"></icon></div>
+                                        </div>
+                                        <div class="first">Pay with card</div>
+                                      </div>
+                              </button>
+
+                                <div ng-form="container.stripe">
+                                   <div form-input="stripe.fields.cc"></div>
+                                    <div class="fields-grouping clearfix">
+                                        <label class="fields-grouping-label">{{GLOBAL_CONFIG.fields.label.order.card_exp}}</label>
+                                      <div class="field-grouping-wrapper credit-card-expire-inputs clearfix">
+                                          <div class="field-grouping" form-input="stripe.fields.exp1"></div>
+                                          <div class="field-grouping padding-top-8 padding-bottom-8 padding-left-8">/</div>
+                                          <div class="field-grouping" form-input="stripe.fields.exp2"></div>
+                                      </div>
+                                      <div ng-if="stripe.expires.shouldShowMessages()" ng-class="{'is-help-erroric': !stripe.expires.messages().help}" ng-messages="stripe.expires.messages()">
+                                        <div ng-message="help">{{GLOBAL_CONFIG.fields.help.order.card_exp}}</div>
+                                        <div ng-message="required">This field requires "numeric" value!</div>
+                                      </div>
+                                    </div>
+                                   <div form-input="stripe.fields.cvc"></div>
+                                </div>
+
+                         
+                                <div ng-if="stage.canShowPay()" class="list order-go-pay">
+                                   <div class="inner">
+                                     <md-button class="md-raised" type="button" loading ng-click="stripe.pay()">PAY <span ng-bind="cmd.order.showTotalAmount()|formatCurrency:order.currency"></span></md-button>
+                                   </div>
+                                </div>
+                            </div>
                             </div>
 
                         </div>

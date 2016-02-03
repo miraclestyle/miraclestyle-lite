@@ -70,9 +70,28 @@
 }
 
 .order-go-pay {
-    padding: 8px 24px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.order-go-pay button {
+    display:block;
+    width: 100%;
+    margin-left:auto;
+    margin-right: auto;
+}
+
+.order-go-pay .inner {
+    margin-right: 4px;
+    margin-left: 4px;
 }
 
 .order-line-no-pointer {
     cursor: auto;
+}
+
+.credit-card-expire-inputs input {
+    width: 24px;
 }

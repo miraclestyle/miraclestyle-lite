@@ -1,6 +1,6 @@
 For frontend builds requirements are:
 
-python
+python2.7
 node
 npm
 gulp
@@ -19,9 +19,21 @@ sudo apt-get install python
 go to frontend/.node
 npm install
 
-go to root
-sh build.sh
 
-or to deploy.sh
+sh deploy.sh arg1 arg2 arg3
+arg1 => possible choices are "production" and "testing"
+arg2 => possible choices are "all" "frontend" "backend"
+arg3 => message for git commit
+arg4 => possible choices are "misc"
 
-it will autocommit to git and deploy both backend and frontend
+first argument changes app.yaml to production or testing
+second argument deploys to frontend, backend or both
+third argument will be used as a commit message
+fourth argument will also upload dispatch, taskqueue entries, indexes
+
+so running
+sh deploy.sh production all "fix stuff" misc will deploy to production backend and frontend along with other .yaml files
+sh deploy.sh testing all "fix stuff again" misc will deploy to testing backend and frontend along with other .yaml files
+
+etc...
+along with other things, script will commit to bitbucket and perform build that will compile all static files accordingly
