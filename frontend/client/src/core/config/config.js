@@ -14,7 +14,7 @@
             },
             disconnectSignInMethod: {
                 title: 'Disconnect the identity?',
-                message: 'If this is the only sign in identity connected to your Miraclestyle account, you will permanently lose access to the account and all of its data after this action is completed!',
+                message: 'If this is the only sign in identity connected to your MIRACLESTYLE account, you will permanently lose access to the account and all of its data after this action is completed!',
                 text: {
                     primary: 'Disconnect'
                 }
@@ -28,7 +28,7 @@
             },
             connectSignInMethod: {
                 title: 'Connect the identity?',
-                message: 'If this sign in identity is already connected to another Miraclestyle account, you will have to disconnect it before you proceed with this action!',
+                message: 'If this sign in identity is already connected to another MIRACLESTYLE account, you will have to disconnect it before you proceed with this action!',
                 text: {
                     primary: 'Connect'
                 }
@@ -77,7 +77,7 @@
             },
             discontinueCatalog: {
                 title: 'Discontinue the catalog?',
-                message: 'A discontinued catalog is not accessible to anyone and is entirely removed from the Miraclestyle app after 15 days. You will be notified once this action is completed.',
+                message: 'A discontinued catalog is not accessible to anyone and is entirely removed from the MIRACLESTYLE app after 15 days. You will be notified once this action is completed.',
                 text: {
                     primary: 'Discontinue'
                 }
@@ -553,7 +553,7 @@
             duplicationInProgressCatalog: 'Catalog scheduled for duplication.',
             administered: 'Administered.',
             identityDisconnected: 'Identity disconnected.',
-            identityTaken: 'This identity is already connected to another Miraclestyle account.',
+            identityTaken: 'This identity is already connected to another MIRACLESTYLE account.',
             identityConnected: 'Identity connected.',
             identityConnectionCanceled: 'Connecting identity canceled.',
             failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
@@ -590,7 +590,7 @@
             catalogProductNotFound: 'This catalog product does not exist.',
             rejectedAccountAccess: 'You rejected access to your account.',
             incorrectAccessToken: 'Incorrect access token. Please try again.',
-            takenByOtherAccount: 'This identity is already connected to another Miraclestyle account.',
+            takenByOtherAccount: 'This identity is already connected to another MIRACLESTYLE account.',
             failedGettingEmail: 'E-mail not provided by the provider.',
             incorrectLinkSettings: 'Incorrect link settings.',
             failedAuthentication: 'Failed authentication with the provider.',
