@@ -1084,3 +1084,9 @@ a[type="button"] {
     top: -100%;
     margin-top: 35px;
 }
+
+.pf {
+    font-size: 40px;
+    color: rgba(0, 0, 0, 0.54);
+    padding:4px;
+}

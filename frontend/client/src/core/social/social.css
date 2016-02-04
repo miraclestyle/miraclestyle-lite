@@ -65,6 +65,10 @@
     padding: 0px;
 }
 
+.ccs .social-grid-item {
+    cursor:inherit;
+}
+
 [class^="socicon-"] {
     font-size: 40px;
     color: rgba(0, 0, 0, 0.54);

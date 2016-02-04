@@ -46,7 +46,8 @@
     <meta property="al:android:url" content="abs url" />
     <meta property="al:android:package" content="com name of the app" />
     #}
-
+    
+    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="fragment" content="!" />
@@ -54,6 +55,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{static_dir('dist/static/socicon/styles.css', True)}}" />
+    <link rel="stylesheet" type="text/css" href="{{static_dir('vendor/paymentfont/css/paymentfont.min.css', True)}}" />
     {% if settings.UNMINIFIED %}
         {% for style in settings.ANGULAR_CSS_PATHS %}
         <link rel="stylesheet" type="text/css" href="{{static_dir('%s' % style, True)}}" /> {% endfor %}

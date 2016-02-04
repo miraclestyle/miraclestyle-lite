@@ -149,7 +149,7 @@
 
                         <div class="order-stage seam-bottom out fixed-height"
                              order-went-up="stage.endAnimation(4)"
-                             ng-class="{'in': stage.current === 4, 'out': !stage.checkout}">
+                             ng-class="{'in': stage.current === 4, 'out': stage.current !== 4, 'out-up': stage.isOut(4)}">
 
                             <div ng-show="stage.animating === 4" class="order-loading-wrapper">
                                   <div ng-include="'core/spinner/spinner.html'"></div>
@@ -177,7 +177,7 @@
 
                         <div class="order-stage seam-bottom out fixed-height"
                              order-went-up="stage.endAnimation(5)"
-                             ng-class="{'in': stage.current === 5, 'out': !stage.checkout}">
+                             ng-class="{'in': stage.current === 5, 'out': stage.current !== 5, 'out-up': stage.isOut(5)}">
 
                             <div ng-show="stage.animating === 5" class="order-loading-wrapper">
                                   <div ng-include="'core/spinner/spinner.html'"></div>
@@ -201,7 +201,7 @@
 
                               <button loading 
                                       md-ink-ripple-list 
-                                      ng-click="stripe.paywithCards()" 
+                                      ng-click="stripe.payWithCard()" 
                                       type="button" 
                                       class="list-row list-row-one-line list-row-avatar list-row-has-primary menu-item color-child-when-disabled">
                                       <div class="list-content-tile">
@@ -212,11 +212,11 @@
                                       </div>
                               </button>
 
-                                <div ng-form="container.stripe">
+                                <div ng-form="stripe.form">
                                    <div form-input="stripe.fields.cc"></div>
                                     <div class="fields-grouping clearfix">
                                         <label class="fields-grouping-label">{{GLOBAL_CONFIG.fields.label.order.card_exp}}</label>
-                                      <div class="field-grouping-wrapper credit-card-expire-inputs clearfix">
+                                      <div validate-card-date year="stripe.args.card_exp_2" month="stripe.args.card_exp_1" class="field-grouping-wrapper credit-card-expire-inputs clearfix">
                                           <div class="field-grouping" form-input="stripe.fields.exp1"></div>
                                           <div class="field-grouping padding-top-8 padding-bottom-8 padding-left-8">/</div>
                                           <div class="field-grouping" form-input="stripe.fields.exp2"></div>
@@ -224,6 +224,7 @@
                                       <div ng-if="stripe.expires.shouldShowMessages()" ng-class="{'is-help-erroric': !stripe.expires.messages().help}" ng-messages="stripe.expires.messages()">
                                         <div ng-message="help">{{GLOBAL_CONFIG.fields.help.order.card_exp}}</div>
                                         <div ng-message="required">This field requires "numeric" value!</div>
+                                        <div ng-message="invalid_card_date">{{GLOBAL_CONFIG.fields.validationErrors.invalid_card_date}}</div>
                                       </div>
                                     </div>
                                    <div form-input="stripe.fields.cvc"></div>
@@ -239,6 +240,20 @@
                             </div>
 
                         </div>
+
+
+                       <div 
+                             class="order-stage seam-bottom out fixed-height"
+                             order-went-up="stage.endAnimation(6)"
+                             ng-class="{'in': stage.current === 6, 'out': stage.current !== 6, 'out-up': stage.isOut(6)}">
+                              <div ng-show="stage.animating === 6" class="order-loading-wrapper">
+                                  <div ng-include="'core/spinner/spinner.html'"></div>
+                              </div>
+                              <div ng-if="stage.isAnimating(6)">
+                                  <div ng-include="'order/lines.html'"></div>
+                              </div>
+                        </div>
+
 
                     </div>
                 </div>

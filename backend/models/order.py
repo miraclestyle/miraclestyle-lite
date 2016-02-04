@@ -297,7 +297,7 @@ class Order(orm.BaseExpando):
                                '_lines', '_messages.created', '_messages.agent', '_messages.action', '_messages.body',
                                '_messages._action', '_seller.name',
                                '_seller.logo',
-                               '_seller.follower_count', '_seller._notified_followers_count',
+                               '_seller._stripe_publishable_key',
                                '_seller._currency'), condition_root_or_owner_or_seller),
       orm.WriteFieldPermission(('date', 'seller_reference',
                                 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',

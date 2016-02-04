@@ -307,6 +307,10 @@
                 condition_type: 'Condition under which this line applies.',
                 price_type: 'Price formula that calculates this price.'
             },
+            '114': {
+                secret_key: 'Live secret key that you can find in your Stripe account settings. Once you save the settings, this value will be encrypted before it is stored in the MIRACLESTYLE app database. For more details read the "Sell with confidence" on this form.',
+                publishable_key: 'Live publishable key that you can find in your Stripe account settings.'
+            },
             order: {
                 card_exp: 'Card expiration printed on the front of your card.',
                 cvc: 'Card verification code printed on the back of your card.'
@@ -353,6 +357,12 @@
                 description: 'Brief description visible beneath the variant input control.',
                 allow_custom_value: 'If enabled, options defined above will be ignored, and buyers will be able to supply a custom value in the variant input control'
             }
+        });
+
+        $.extend(GLOBAL_CONFIG.fields.validationErrors, {
+            invalid_card_number: 'Invalid card number.',
+            invalid_card_cvc: 'Invalid cvc.',
+            invalid_card_date: 'Invalid card date.'
         });
 
         $.extend(GLOBAL_CONFIG.fields.label, {
@@ -605,7 +615,9 @@
             incorrectLinkSettings: 'Incorrect link settings.',
             failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
-            invalidCsrf: 'Invalid request. Please reload your browser.'
+            invalidCsrf: 'Invalid request. Please reload your browser.',
+            orderPaymentCardDeclined: 'Card declined.',
+            orderPaymentCardSuccess: 'Payment completed.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -654,7 +666,9 @@
             admin: 'Admin',
             users: 'Accounts',
             aboutRules: 'About Rules',
-            sellerProfile: 'Seller Profile'
+            sellerProfile: 'Seller Profile',
+            payWithCard: 'Acceptable Cards',
+            payWithConfidence: 'Pay With Confidence'
         });
 
         if (!GLOBAL_CONFIG.backendErrorHandling) {

@@ -46,6 +46,7 @@ class Seller(orm.BaseExpando):
   _virtual_fields = {
       '_plugin_group': orm.SuperRemoteStructuredProperty(SellerPluginContainer),
       '_records': orm.SuperRecordProperty('23'),
+      '_stripe_publishable_key': orm.SuperComputedProperty(lambda self: self.get_stripe_publishable_key()),
       '_currency': orm.SuperReferenceProperty('17', autoload=True, callback=lambda self: self.get_currency_callback(),
                                               format_callback=lambda self, value: value)
   }
@@ -64,7 +65,7 @@ class Seller(orm.BaseExpando):
       orm.ExecuteActionPermission('read', condition_owner_active),
       orm.ExecuteActionPermission('far_cache_groups_flush', condition_owner_active),
       orm.ReadFieldPermission(('_plugin_group'), condition_not_guest_and_owner),
-      orm.ReadFieldPermission(('name', 'logo', '_currency'), condition_owner_active),
+      orm.ReadFieldPermission(('name', 'logo', '_currency', '_stripe_publishable_key'), condition_owner_active),
       orm.WriteFieldPermission(('name', 'logo', '_plugin_group', '_records'), condition_not_guest_and_owner)
   ]
 
@@ -150,6 +151,15 @@ class Seller(orm.BaseExpando):
           ]
       )
   ]
+
+  def get_stripe_publishable_key(self):
+    stripe_publishable_key = None
+    if self.key:
+      self._plugin_group.read()
+      for plugin in self._plugin_group.value.plugins:
+        if plugin.get_kind() == '114':
+          stripe_publishable_key = plugin.publishable_key
+    return stripe_publishable_key    
 
   def get_currency_callback(self):
     currency = None

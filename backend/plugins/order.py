@@ -694,7 +694,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       return
     super(OrderPayPalPaymentPlugin, self).run(context)
     # currently we only support paypal, so its enforced by default
-    context._order.payment_method = self
+    context._order.payment_method = self._get_system_name()
   
   def pay(self, context):
     pass
@@ -884,15 +884,18 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
   def pay(self, context):
     token = context.input['token'] # this could be the request variable but standard action cannot be used see the paypal implementation
     order = context._order
+    order.read({'_seller': {}})
     try:
       # https://stripe.com/docs/api#create_charge
+      # 
+      total = order.total_amount * (Decimal('10') ** order.currency.value.digits)
       charge = stripe.Charge.create(
           api_key=self.secret_key.decrypted, # apikey must be passed here because you cannot set module level apikey globally
-          amount=order.total_amount * (10 ** order.currency.value.digits), # amount in smallest currency unit. https://stripe.com/docs/api#create_charge-amount
+          amount=long(total), # amount in smallest currency unit. https://stripe.com/docs/api#create_charge-amount, casting it into integer
           currency=order.currency.value.code,
           source=token,
           description='MIRACLESTYLE Sales Order #%s' % order.key_id_str,
-          statement_descriptor=order._seller.name,
+          statement_descriptor=order._seller.value.name,
           metadata={'order_key': order.key_urlsafe}
       )
       tools.log.debug('Stripe Charge: %s' % (charge))

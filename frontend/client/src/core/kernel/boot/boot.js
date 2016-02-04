@@ -637,6 +637,7 @@ if (!Array.prototype.indexOf) {
             },
             subheaders: {},
             fields: {
+                validationErrors: {},
                 help: {},
                 label: {},
                 translateChoices: {},

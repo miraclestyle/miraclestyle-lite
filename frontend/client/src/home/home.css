@@ -56,7 +56,7 @@
 }
 
 .ui-view-wrapper {
-    margin-top: 56px;
+    padding-top: 56px;
     -webkit-overflow-scrolling: touch;
     overflow: auto;
 }
