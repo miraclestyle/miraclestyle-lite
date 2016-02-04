@@ -951,6 +951,9 @@ body .list-row-is-clickable-and-hoverable:hover, body .list-row-is-active, body 
 .modal-medium-simple .list-row-one-line.list-row-has-primary .avatar {
   padding: 4px 12px 4px 20px; }
 
+.list-margin-bottom-8 {
+  margin-bottom: 8px; }
+
 .snackbar {
   display: block;
   overflow: hidden;
@@ -1601,6 +1604,9 @@ body .mb15 {
 
 .padding-bottom-8 {
   padding-bottom: 8px; }
+
+.padding-left-8 {
+  padding-left: 8px; }
 
 .padding-24 {
   padding: 24px; }
@@ -2318,6 +2324,11 @@ a[type="button"] {
   top: -100%;
   margin-top: 35px; }
 
+.pf {
+  font-size: 40px;
+  color: rgba(0, 0, 0, 0.54);
+  padding: 4px; }
+
 .modal-open {
   overflow: hidden; }
 
@@ -2626,6 +2637,9 @@ div[disabled] .select-box {
 
 .social-grid.padding-0 {
   padding: 0px; }
+
+.ccs .social-grid-item {
+  cursor: inherit; }
 
 [class^="socicon-"] {
   font-size: 40px;
@@ -3120,7 +3134,7 @@ button.product-quantity-button {
   z-index: 18; }
 
 .ui-view-wrapper {
-  margin-top: 56px;
+  padding-top: 56px;
   -webkit-overflow-scrolling: touch;
   overflow: auto; }
 
@@ -3206,9 +3220,25 @@ html:not(.js) .requires-js {
   padding-bottom: 8px; }
 
 .order-go-pay {
-  padding: 8px 24px; }
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 8px;
+  padding-bottom: 8px; }
+
+.order-go-pay button {
+  display: block;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto; }
+
+.order-go-pay .inner {
+  margin-right: 4px;
+  margin-left: 4px; }
 
 .order-line-no-pointer {
   cursor: auto; }
+
+.credit-card-expire-inputs input {
+  width: 24px; }
 
 /*# sourceMappingURL=style.css.map */

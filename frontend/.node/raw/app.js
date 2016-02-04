@@ -389,6 +389,11 @@ if (typeof module === 'object' && module.exports) {
 
 })();
 
+
+Array.prototype.insert = function (index, item) {
+  this.splice(index, 0, item);
+};
+
 // Production steps of ECMA-262, Edition 5, 15.4.4.14
 // Reference: http://es5.github.io/#x15.4.4.14
 if (!Array.prototype.indexOf) {
@@ -632,6 +637,7 @@ if (!Array.prototype.indexOf) {
             },
             subheaders: {},
             fields: {
+                validationErrors: {},
                 help: {},
                 label: {},
                 translateChoices: {},
@@ -1510,7 +1516,7 @@ if (window.DEBUG) {
             },
             disconnectSignInMethod: {
                 title: 'Disconnect the identity?',
-                message: 'If this is the only sign in identity connected to your Miraclestyle account, you will permanently lose access to the account and all of its data after this action is completed!',
+                message: 'If this is the only sign in identity connected to your MIRACLESTYLE account, you will permanently lose access to the account and all of its data after this action is completed!',
                 text: {
                     primary: 'Disconnect'
                 }
@@ -1524,7 +1530,7 @@ if (window.DEBUG) {
             },
             connectSignInMethod: {
                 title: 'Connect the identity?',
-                message: 'If this sign in identity is already connected to another Miraclestyle account, you will have to disconnect it before you proceed with this action!',
+                message: 'If this sign in identity is already connected to another MIRACLESTYLE account, you will have to disconnect it before you proceed with this action!',
                 text: {
                     primary: 'Connect'
                 }
@@ -1573,7 +1579,7 @@ if (window.DEBUG) {
             },
             discontinueCatalog: {
                 title: 'Discontinue the catalog?',
-                message: 'A discontinued catalog is not accessible to anyone and is entirely removed from the Miraclestyle app after 15 days. You will be notified once this action is completed.',
+                message: 'A discontinued catalog is not accessible to anyone and is entirely removed from the MIRACLESTYLE app after 15 days. You will be notified once this action is completed.',
                 text: {
                     primary: 'Discontinue'
                 }
@@ -1803,6 +1809,14 @@ if (window.DEBUG) {
                 condition_type: 'Condition under which this line applies.',
                 price_type: 'Price formula that calculates this price.'
             },
+            '114': {
+                secret_key: 'Live secret key that you can find in your Stripe account settings. Once you save the settings, this value will be encrypted before it is stored in the MIRACLESTYLE app database. For more details read the "Sell with confidence" on this form.',
+                publishable_key: 'Live publishable key that you can find in your Stripe account settings.'
+            },
+            order: {
+                card_exp: 'Card expiration printed on the front of your card.',
+                cvc: 'Card verification code printed on the back of your card.'
+            },
             '106': {
                 postal_codes: 'Postal codes this location affects. Specify one postal code per line.'
             },
@@ -1847,6 +1861,12 @@ if (window.DEBUG) {
             }
         });
 
+        $.extend(GLOBAL_CONFIG.fields.validationErrors, {
+            invalid_card_number: 'Invalid card number.',
+            invalid_card_cvc: 'Invalid cvc.',
+            invalid_card_date: 'Invalid card date.'
+        });
+
         $.extend(GLOBAL_CONFIG.fields.label, {
             search: {
                 indexID: 'Search options',
@@ -1855,6 +1875,10 @@ if (window.DEBUG) {
             },
             plugins: {
                 kind: 'Rule'
+            },
+            order: {
+                cvc: 'CVC',
+                card_exp: 'Card expiration (MM / YY)',
             },
             '28': {
                 uom: 'Unit of measurement',
@@ -1958,7 +1982,8 @@ if (window.DEBUG) {
                     '107': 'Address',
                     '117': 'Currency',
                     '108': 'PayPal',
-                    '113': 'Carrier'
+                    '113': 'Carrier',
+                    '114': 'Stripe'
                 }
             }
         });
@@ -2028,7 +2053,8 @@ if (window.DEBUG) {
             catalogProducts: 'Products',
             history: 'History',
             record: 'Log Entry',
-            sellerPlugins: 'Rules'
+            sellerPlugins: 'Rules',
+            stripeWithConfidence: 'Sell with confidence'
         });
 
         $.extend(GLOBAL_CONFIG.emptyHelp, {
@@ -2049,7 +2075,7 @@ if (window.DEBUG) {
             duplicationInProgressCatalog: 'Catalog scheduled for duplication.',
             administered: 'Administered.',
             identityDisconnected: 'Identity disconnected.',
-            identityTaken: 'This identity is already connected to another Miraclestyle account.',
+            identityTaken: 'This identity is already connected to another MIRACLESTYLE account.',
             identityConnected: 'Identity connected.',
             identityConnectionCanceled: 'Connecting identity canceled.',
             failedGeneratingAuthorizaitonUrl: 'Failed accessing identity, please try again.',
@@ -2086,12 +2112,14 @@ if (window.DEBUG) {
             catalogProductNotFound: 'This catalog product does not exist.',
             rejectedAccountAccess: 'You rejected access to your account.',
             incorrectAccessToken: 'Incorrect access token. Please try again.',
-            takenByOtherAccount: 'This identity is already connected to another Miraclestyle account.',
+            takenByOtherAccount: 'This identity is already connected to another MIRACLESTYLE account.',
             failedGettingEmail: 'E-mail not provided by the provider.',
             incorrectLinkSettings: 'Incorrect link settings.',
             failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
-            invalidCsrf: 'Invalid request. Please reload your browser.'
+            invalidCsrf: 'Invalid request. Please reload your browser.',
+            orderPaymentCardDeclined: 'Card declined.',
+            orderPaymentCardSuccess: 'Payment completed.'
         });
 
         $.extend(GLOBAL_CONFIG.toolbar.titles, {
@@ -2140,7 +2168,9 @@ if (window.DEBUG) {
             admin: 'Admin',
             users: 'Accounts',
             aboutRules: 'About Rules',
-            sellerProfile: 'Seller Profile'
+            sellerProfile: 'Seller Profile',
+            payWithCard: 'Acceptable Cards',
+            payWithConfidence: 'Pay With Confidence'
         });
 
         if (!GLOBAL_CONFIG.backendErrorHandling) {
@@ -10401,6 +10431,13 @@ function msieversion() {
 (function () {
     'use strict';
     angular.module('app')
+        .directive('encrypted', function () {
+            return {
+                link: function (scope, iElement, iAttrs) {
+                    iElement.attr('type', 'password');
+                }
+            };
+        })
         .directive('repeatedText', ng(function (helpers) {
             return {
                 require: 'ngModel',
@@ -10710,6 +10747,13 @@ function msieversion() {
                     }
 
                     return 'select';
+                },
+                SpaceWithText: function (info) {
+                    return 'spacewithtext';
+                },
+                SuperStringEncryptedProperty: function (info) {
+                    info.config.ui.attrs.encrypted = true;
+                    return this.SuperStringProperty(info);
                 },
                 SuperStringProperty: function (info) {
                     var config = info.config;
@@ -22092,6 +22136,77 @@ angular.module('app')
                 }
             };
         }))
+        .directive('validateCardNumber', function () {
+            return {
+                require: 'ngModel',
+                link: function (scope, elem, attr, ngModel) {
+                    //For DOM -> model validation
+                    ngModel.$parsers.unshift(function (value) {
+                        var valid = window.Stripe.card.validateCardNumber(value);
+                        ngModel.$setValidity('invalid_card_number', valid);
+                        return valid ? value : undefined;
+                    });
+
+                    //For model -> DOM validation
+                    ngModel.$formatters.unshift(function (value) {
+                        var valid = window.Stripe.card.validateCardNumber(value);
+                        ngModel.$setValidity('invalid_card_number', valid);
+                        return value;
+                    });
+                }
+            };
+        })
+        .directive('validateCvc', function () {
+            return {
+                require: 'ngModel',
+                link: function (scope, elem, attr, ngModel) {
+                    //For DOM -> model validation
+                    ngModel.$parsers.unshift(function (value) {
+                        var valid = window.Stripe.card.validateCVC(value);
+                        ngModel.$setValidity('invalid_card_cvc', valid);
+                        return valid ? value : undefined;
+                    });
+
+                    //For model -> DOM validation
+                    ngModel.$formatters.unshift(function (value) {
+                        var valid = window.Stripe.card.validateCVC(value);
+                        ngModel.$setValidity('invalid_card_cvc', valid);
+                        return value;
+                    });
+                }
+            };
+        })
+        .directive('validateCardDate', function () {
+            return {
+                require: '^validateCardDate',
+                controller: function () {
+                    this.models = {};
+                },
+                link: function (scope, elem, attr, validateCardDate) {
+                    var controllers = validateCardDate.models;
+                    scope.$watchGroup([attr.year, attr.month], function (oldvalues, newvalues) {
+                        // Whenever the comparison model changes we'll re-validate
+                        var valid = window.Stripe.card.validateExpiry(validateCardDate.models.month.$modelValue, validateCardDate.models.year.$modelValue);
+                        angular.forEach(controllers, function (ngModel, key) {
+                            ngModel.$setValidity('invalid_card_date', valid);
+                        });
+                    });
+                }
+            };
+        })
+        .directive('validateCardDateItem', function () {
+            return {
+                require: ['^validateCardDate', 'ngModel'],
+                link: function (scope, elem, attr, ctrls) {
+                    var ngModel = ctrls[1],
+                        validateCardDate = ctrls[0];
+                    validateCardDate.models[attr.validateCardDateItem] = ngModel;
+                    scope.$on('$destroy', function () {
+                        delete validateCardDate.models[attr.validateCardDateItem];
+                    });
+                }
+            };
+        })
         .directive('orderWentUp', ng(function ($timeout) {
             return {
                 link: function (scope, element, attrs) {
@@ -22250,7 +22365,9 @@ angular.module('app')
                                             return;
                                         }
                                     }
-                                    seller = response.data.entity._seller;
+                                    if (response.data.entity._seller) {
+                                        seller = response.data.entity._seller;
+                                    }
                                     var locals = {
                                         customPlaceholder: null,
                                         spawnAddress: null,
@@ -22354,8 +22471,6 @@ angular.module('app')
 
                                     $scope.writable = true;
 
-                                    $scope.PAYPAL_WEBSCR = $sce.trustAsResourceUrl(window.PAYPAL_WEBSCR);
-
                                     $scope.stage = {
                                         checkout: null,
                                         time: 500,
@@ -22446,10 +22561,16 @@ angular.module('app')
                                                 track.reviewCartFail();
                                             }
                                         },
+                                        toPayWithCreditCard: function () {
+                                            $scope.stage.animating = 5;
+                                            $scope.stage.out.push(4);
+                                            $scope.stage.current = 5;
+                                        },
                                         converToOrder: function ($event) {
                                             var submit = function () {
-                                                $($event.target).parents('form:first').submit();
-                                            }, saidyes;
+                                                    $($event.target).parents('form:first').submit();
+                                                },
+                                                saidyes;
                                             if ($scope.order.state === 'order') {
                                                 return submit();
                                             }
@@ -22917,10 +23038,6 @@ angular.module('app')
                                                 $scope.carrier.selected = response.data.entity.carrier ? response.data.entity.carrier.reference : null;
                                                 deleteMaybe();
                                                 return response;
-                                            })['finally'](function () {
-                                                if ($scope.container.paypal) {
-                                                    $scope.container.paypal.$setPristine();
-                                                }
                                             });
                                         },
                                         showNetTotalAmount: function () {
@@ -23089,24 +23206,6 @@ angular.module('app')
                                     }());
 
 
-                                    $scope.notifyUrl = $state.engineHref('order-notify', {
-                                        method: 'paypal'
-                                    }, {
-                                        absolute: true
-                                    });
-
-                                    $scope.completePath = $state.engineHref('order-payment-success', {
-                                        key: $scope.order.key
-                                    }, {
-                                        absolute: true
-                                    });
-
-                                    $scope.cancelPath = $state.engineHref('order-payment-canceled', {
-                                        key: $scope.order.key
-                                    }, {
-                                        absolute: true
-                                    });
-
                                     $scope.$watch('order._lines.length', function (neww, old) {
                                         if (neww < 1) {
                                             $scope.notFound = 1;
@@ -23132,6 +23231,156 @@ angular.module('app')
 
                                     $scope.sellerDetails.getTrack = function () {
                                         return helpers.track.proxyLabelToEvents(track.seller, config.relativeUrl);
+                                    };
+
+                                    $scope.stripe = {
+                                        args: {},
+                                        pay: function () {
+                                            window.Stripe.setPublishableKey($scope.seller._stripe_publishable_key);
+                                            if (!$scope.stripe.form.$valid) {
+                                                return helpers.form.wakeUp($scope.stripe.form);
+                                            }
+                                            $scope.disableUI(true);
+                                            function stripeResponseHandler(status, response) {
+                                                if (response.error) {
+                                                    // Show the errors on the form
+                                                    $scope.disableUI(false);
+                                                    snackbar.show(response.error.message);
+                                                } else {
+                                                    // token contains id, last4, and card type
+                                                    models['34'].actions.pay({
+                                                        key: $scope.order.key,
+                                                        token: response.id
+                                                    }, {
+                                                        disableUI: true
+                                                    }).then(function (response) {
+                                                        locals.updateLiveEntity(response);
+                                                        locals.reactOnUpdate();
+                                                        snackbar.showK('orderPaymentCardSuccess');
+                                                        $scope.stage.animating = 6;
+                                                        $scope.stage.out.push(5);
+                                                        $scope.stage.current = 6;
+                                                        $scope.stage.checkout = 1;
+                                                    }, function (response) {
+                                                        if (response && response.data.errors && response.data.errors.plugin_error) {
+                                                            if ($.inArray('card_declined', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentCardDeclined');
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            }
+
+                                            window.Stripe.card.createToken({
+                                                number: $scope.stripe.args.card_number,
+                                                cvc: $scope.stripe.args.cvc,
+                                                exp_month: $scope.stripe.args.card_exp_1,
+                                                exp_year: $scope.stripe.args.card_exp_2
+                                            }, stripeResponseHandler);
+                                        },
+                                        payWithCard: function () {
+                                            $modal.open({
+                                                templateUrl: 'core/models/manage.html',
+                                                controller: ng(function ($scope) {
+                                                    $scope.cards = ['visa', 'mastercard', 'express', 'american-express', 'jcb', 'discover', 'diners'];
+                                                    $scope.dialog = {};
+                                                    $scope.dialog.templateBodyUrl = 'order/pay_with_card.html';
+                                                    $scope.dialog.toolbar = {
+                                                        hideSave: true,
+                                                        leftIcon: 'arrow_back',
+                                                        title: GLOBAL_CONFIG.toolbar.titles.payWithCard
+                                                    };
+                                                })
+                                            });
+                                        },
+                                        payWithConfidence: function () {
+                                            $modal.open({
+                                                templateUrl: 'core/models/manage.html',
+                                                controller: ng(function ($scope) {
+                                                    $scope.dialog = {};
+                                                    $scope.dialog.templateBodyUrl = 'order/pay_with_confidence.html';
+                                                    $scope.dialog.toolbar = {
+                                                        hideSave: true,
+                                                        leftIcon: 'arrow_back',
+                                                        title: GLOBAL_CONFIG.toolbar.titles.payWithConfidence
+                                                    };
+                                                })
+                                            });
+                                        },
+                                        fields: {
+                                            cc: {
+                                                _maker_: 'order',
+                                                type: 'SuperStringProperty',
+                                                code_name: 'card_number',
+                                                required: true,
+                                                ui: {
+                                                    args: 'stripe.args.card_number',
+                                                    writable: true,
+                                                    attrs: {
+                                                        'validate-card-number': true
+                                                    }
+                                                }
+                                            },
+                                            exp1: {
+                                                _maker_: 'order',
+                                                type: 'SuperStringProperty',
+                                                code_name: 'card_exp_1',
+                                                required: true,
+                                                ui: {
+                                                    attrs: {
+                                                        'validate-card-date-item': 'month'
+                                                    },
+                                                    hideMessages: true,
+                                                    label: false,
+                                                    args: 'stripe.args.card_exp_1',
+                                                    writable: true
+                                                }
+                                            },
+                                            exp2: {
+                                                _maker_: 'order',
+                                                type: 'SuperStringProperty',
+                                                code_name: 'card_exp_2',
+                                                required: true,
+                                                ui: {
+                                                    attrs: {
+                                                        'validate-card-date-item': 'year'
+                                                    },
+                                                    hideMessages: true,
+                                                    label: false,
+                                                    args: 'stripe.args.card_exp_2',
+                                                    writable: true
+                                                }
+                                            },
+                                            cvc: {
+                                                _maker_: 'order',
+                                                type: 'SuperStringProperty',
+                                                code_name: 'cvc',
+                                                required: true,
+                                                ui: {
+                                                    attrs: {
+                                                        'validate-cvc': true
+                                                    },
+                                                    args: 'stripe.args.cvc',
+                                                    writable: true
+                                                }
+                                            }
+                                        },
+                                        expires: {
+                                            messages: function () {
+                                                var messages = {
+                                                    help: true
+                                                };
+                                                angular.forEach([$scope.stripe.fields.exp1, $scope.stripe.fields.exp2], function (field) {
+                                                    if (field.ui.form.hasErrors() && field.ui.form.field().$dirty) {
+                                                        messages = field.ui.form.messages();
+                                                    }
+                                                });
+                                                return messages;
+                                            },
+                                            shouldShowMessages: function () {
+                                                return true;
+                                            }
+                                        }
                                     };
 
                                     track.openCart();
@@ -23612,6 +23861,14 @@ angular.module('app')
                                     }
                                 }
                             },
+                            '114': {
+                                spacetext: {
+                                    ui: {
+                                        label: GLOBAL_CONFIG.subheaders.stripeWithConfidence,
+                                        text: 'seller/help/stripe.html'
+                                    }
+                                }
+                            },
                             '107': {
                                 exclusion: exclusionSpec(),
                                 locations: {
@@ -23804,6 +24061,17 @@ angular.module('app')
                                                 realTotal = 0,
                                                 found = false;
                                             fields = _.toArray(fields);
+                                            if (kind === '114') {
+                                                angular.forEach(fields, function (field, i) {
+                                                    field.name = (parseInt(field.name, 10) * 2).toString();
+                                                });
+                                                fields.push({
+                                                    type: 'SpaceWithText',
+                                                    name: '5',
+                                                    code_name: 'spacetext',
+                                                    ui: {}
+                                                });
+                                            }
                                             fields.sort(helpers.fields.sorter);
                                             config.ui.specifics.fields = fields;
                                             angular.forEach(fields, function (field) {
