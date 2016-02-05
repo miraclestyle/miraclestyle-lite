@@ -7,7 +7,7 @@ Created on Aug 25, 2014
 
 import datetime
 import copy
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 import os
 
 from google.appengine.api import urlfetch
@@ -888,7 +888,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     try:
       # https://stripe.com/docs/api#create_charge
       # 
-      total = order.total_amount * (Decimal('10') ** order.currency.value.digits)
+      total = order.total_amount * (Decimal('10') ** order.currency.value.digits)  # I think it is better to do it with long(). But here it is, just in case we need it: amount=(order.total_amount * (10 ** order.currency.value.digits)).quantize(order.currency.value.digits, rounding=ROUND_DOWN)
       charge = stripe.Charge.create(
           api_key=self.secret_key.decrypted, # apikey must be passed here because you cannot set module level apikey globally
           amount=long(total), # amount in smallest currency unit. https://stripe.com/docs/api#create_charge-amount, casting it into integer
