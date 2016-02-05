@@ -8,6 +8,7 @@ Created on May 13, 2014
 from decimal import Decimal
 from xml.etree import ElementTree
 
+
 import orm
 
 
@@ -22,6 +23,8 @@ class UnitCurrencyUpdateWrite(orm.BaseModel):
     if not update_file_path:
       raise orm.TerminateAction()
     Unit = context.models['17']
+    keys = Unit.query(Unit.measurement == 'Currency').fetch(keys_only=True)
+    orm.delete_multi(keys) # delete all currencies
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')
@@ -104,6 +107,8 @@ class UnitUpdateWrite(orm.BaseModel):
     if not update_file_path:
       raise orm.TerminateAction()
     Unit = context.models['17']
+    keys = Unit.query(Unit.measurement != 'Currency').fetch(keys_only=True)
+    orm.delete_multi(keys) # delete all currencies
     with file(update_file_path) as f:
       tree = ElementTree.fromstring(f.read())
       root = tree.findall('data')

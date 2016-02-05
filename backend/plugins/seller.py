@@ -68,7 +68,7 @@ class SellerSetupDefaults(orm.BaseModel):
   def run(self, context):
     SellerPluginContainer = context.models['22']
     OrderAddressPlugin = context.models['107']
-    OrderPayPalPaymentPlugin = context.models['108']
+    OrderStripePaymentPlugin = context.models['114']
     Unit = context.models['17']
     OrderCurrencyPlugin = context.models['117']
     OrderCarrierPlugin = context.models['113']
@@ -84,7 +84,7 @@ class SellerSetupDefaults(orm.BaseModel):
     default_address_billing = OrderAddressPlugin(name='Billing worldwide', exclusion=False, address_type='billing', active=True)
     default_carrier = OrderCarrierPlugin(name='Free international shipping', active=True, lines=[OrderCarrierLine(name='Shipping everywhere', active=True)])
     default_currency = OrderCurrencyPlugin(name='Currency (USD)', currency=Unit.build_key('usd'), active=True)
-    default_paypal_payment = OrderPayPalPaymentPlugin(name='PayPal payments', reciever_email=context.account._primary_email, business=context.account._primary_email, active=False)
+    default_stripe_payment = OrderStripePaymentPlugin(name='Stripe payments', secret_key='sk_test_DJU4A4Rd0hA9dvKq4RUdAKe5', publishable_key='pk_test_Sqlu2AWd4VZSkjI2uxRfxlKf', active=False)
     default_discount = OrderDiscountPlugin(name='Discounts',
                                            lines=[OrderDiscountLine(name='Discount 10% on quantity over 5',
                                                                     condition_type='quantity',
@@ -99,7 +99,7 @@ class SellerSetupDefaults(orm.BaseModel):
                  default_carrier,
                  default_currency,
                  default_discount,
-                 default_paypal_payment,
+                 default_stripe_payment,
                  default_tax]
       if not plugin_group:
         plugin_group = SellerPluginContainer(plugins=plugins)
