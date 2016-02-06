@@ -28,3 +28,30 @@ http://miraclestyle.appspot.com/api/endpoint
 
 direct access to module subdomian:
 http://backend-dot-miraclestyle.appspot.com/api/endpoint
+
+Deploying app:
+
+sh deploy.sh arg1 arg2 arg3
+
+arg1 => possible choices are "production" and "testing"
+arg2 => possible choices are "all" "frontend" "backend"
+arg3 => message for git commit
+arg4 => possible choices are "misc"
+
+the first argument changes app.yaml to production or testing
+
+the second argument deploys to the frontend, backend or both
+
+the third argument will be used as a commit message
+
+the fourth argument will also upload dispatch, taskqueue entries, indexes
+
+Example:
+
+sh deploy.sh production all "fix stuff" misc will deploy to production backend and frontend along with other .yaml files
+sh deploy.sh testing all "fix stuff again" misc will deploy to testing backend and frontend along with other .yaml files
+
+
+Along with other things, the script will commit to bitbucket and perform build that will compile all static files accordingly.
+
+PS: It won't work if you do not have appcfg.py python node executables
