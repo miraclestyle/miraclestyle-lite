@@ -48,8 +48,8 @@ the fourth argument will also upload dispatch, taskqueue entries, indexes
 
 Example:
 
-sh deploy.sh production all "fix stuff" misc will deploy to production backend and frontend along with other .yaml files
-sh deploy.sh testing all "fix stuff again" misc will deploy to testing backend and frontend along with other .yaml files
+sh deploy.sh production all "fix stuff" misc - will deploy to production backend and frontend along with other .yaml files
+sh deploy.sh testing all "fix stuff again" misc - will deploy to testing backend and frontend along with other .yaml files
 
 
 Along with other things, the script will commit to bitbucket and perform build that will compile all static files accordingly.
