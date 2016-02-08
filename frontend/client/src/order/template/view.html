@@ -229,6 +229,7 @@
                                     </div>
                                    <div form-input="stripe.fields.cvc"></div>
                                 </div>
+                            </div>
 
                          
                                 <div ng-if="stage.canShowPay()" class="list order-go-pay">
@@ -236,7 +237,7 @@
                                      <md-button class="md-raised" type="button" loading ng-click="stripe.pay()">PAY <span ng-bind="cmd.order.showTotalAmount()|formatCurrency:order.currency"></span></md-button>
                                    </div>
                                 </div>
-                            </div>
+                            
                             </div>
 
                         </div>
