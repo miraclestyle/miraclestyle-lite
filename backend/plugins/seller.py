@@ -84,7 +84,7 @@ class SellerSetupDefaults(orm.BaseModel):
     default_address_billing = OrderAddressPlugin(name='Billing worldwide', exclusion=False, address_type='billing', active=True)
     default_carrier = OrderCarrierPlugin(name='Free international shipping', active=True, lines=[OrderCarrierLine(name='Shipping everywhere', active=True)])
     default_currency = OrderCurrencyPlugin(name='Currency (USD)', currency=Unit.build_key('usd'), active=True)
-    default_stripe_payment = OrderStripePaymentPlugin(name='Stripe payments', secret_key='sk_test_DJU4A4Rd0hA9dvKq4RUdAKe5', publishable_key='pk_test_Sqlu2AWd4VZSkjI2uxRfxlKf', active=False)
+    default_stripe_payment = OrderStripePaymentPlugin(name='Stripe payments', secret_key='secret_key', publishable_key='publishable_key', active=False)
     default_discount = OrderDiscountPlugin(name='Discounts',
                                            lines=[OrderDiscountLine(name='Discount 10% on quantity over 5',
                                                                     condition_type='quantity',
