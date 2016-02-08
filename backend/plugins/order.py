@@ -915,7 +915,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       if (e.type == 'card_error'):
         raise PluginError(e.code)
       else:
-        raise PluginError('plugin_error')
+        raise PluginError('payment_failed')
       
 
   def notify(self, context):
