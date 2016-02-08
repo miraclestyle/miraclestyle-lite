@@ -1143,8 +1143,41 @@
                                                         $scope.stage.checkout = 1;
                                                     }, function (response) {
                                                         if (response && response.data.errors && response.data.errors.plugin_error) {
+                                                            if ($.inArray('payment_failed', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentFailed');
+                                                            }
+                                                            if ($.inArray('invalid_number', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentInvalidNumber');
+                                                            }
+                                                            if ($.inArray('invalid_expiry_month', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentInvalidExpiryMonth');
+                                                            }
+                                                            if ($.inArray('invalid_expiry_year', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentInvalidExpiryYear');
+                                                            }
+                                                            if ($.inArray('invalid_cvc', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentInvalidCVC');
+                                                            }
+                                                            if ($.inArray('incorrect_number', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentIncorrectNumber');
+                                                            }
+                                                            if ($.inArray('expired_card', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentExpiredCard');
+                                                            }
+                                                            if ($.inArray('incorrect_cvc', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentIncorrectCVC');
+                                                            }
+                                                            if ($.inArray('incorrect_zip', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentIncorrectZip');
+                                                            }
                                                             if ($.inArray('card_declined', response.data.errors.plugin_error)) {
                                                                 snackbar.showK('orderPaymentCardDeclined');
+                                                            }
+                                                            if ($.inArray('missing', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentMissing');
+                                                            }
+                                                            if ($.inArray('processing_error', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentProcessingError');
                                                             }
                                                         }
                                                     });
