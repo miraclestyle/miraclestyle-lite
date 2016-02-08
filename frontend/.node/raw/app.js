@@ -18085,8 +18085,9 @@ function msieversion() {
                 var image = scope.$eval(attrs.sliderImage),
                     run = function () {
                         var bar = element.parents('.modal:first').find('.new-pricetag-bar'),
-                            newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
-                            newWidth = Math.ceil(newHeight * image.proportion),
+                            wholeHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
+                            newHeight = wholeHeight,
+                            newWidth = (newHeight * image.proportion),
                             imageSize = newHeight > newWidth ? newHeight : newWidth,
                             originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
@@ -18096,7 +18097,7 @@ function msieversion() {
                                 element.off('load', fn);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
-                        image._realWidth = newWidth;
+
                         element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
@@ -23274,40 +23275,40 @@ angular.module('app')
                                                         $scope.stage.checkout = 1;
                                                     }, function (response) {
                                                         if (response && response.data.errors && response.data.errors.plugin_error) {
-                                                            if ($.inArray('payment_failed', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('payment_failed', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentFailed');
                                                             }
-                                                            if ($.inArray('invalid_number', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('invalid_number', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentInvalidNumber');
                                                             }
-                                                            if ($.inArray('invalid_expiry_month', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('invalid_expiry_month', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentInvalidExpiryMonth');
                                                             }
-                                                            if ($.inArray('invalid_expiry_year', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('invalid_expiry_year', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentInvalidExpiryYear');
                                                             }
-                                                            if ($.inArray('invalid_cvc', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('invalid_cvc', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentInvalidCVC');
                                                             }
-                                                            if ($.inArray('incorrect_number', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('incorrect_number', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentIncorrectNumber');
                                                             }
-                                                            if ($.inArray('expired_card', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('expired_card', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentExpiredCard');
                                                             }
-                                                            if ($.inArray('incorrect_cvc', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('incorrect_cvc', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentIncorrectCVC');
                                                             }
-                                                            if ($.inArray('incorrect_zip', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('incorrect_zip', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentIncorrectZip');
                                                             }
-                                                            if ($.inArray('card_declined', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('card_declined', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentCardDeclined');
                                                             }
-                                                            if ($.inArray('missing', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('missing', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentMissing');
                                                             }
-                                                            if ($.inArray('processing_error', response.data.errors.plugin_error)) {
+                                                            if ($.inArray('processing_error', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentProcessingError');
                                                             }
                                                         }
