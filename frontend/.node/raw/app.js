@@ -23264,6 +23264,7 @@ angular.module('app')
                                                         key: $scope.order.key,
                                                         token: response.id
                                                     }, {
+                                                        activitySpinner: true,
                                                         disableUI: true
                                                     }).then(function (response) {
                                                         locals.updateLiveEntity(response);
