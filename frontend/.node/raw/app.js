@@ -2118,7 +2118,18 @@ if (window.DEBUG) {
             failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.',
-            orderPaymentCardDeclined: 'Card declined.',
+            orderPaymentFailed: 'Error occurred on the server.',
+            orderPaymentInvalidNumber: 'The card number is not a valid credit card number.',
+            orderPaymentInvalidExpiryMonth: 'The card\'s expiration month is invalid.',
+            orderPaymentInvalidExpiryYear: 'The card\'s expiration year is invalid.',
+            orderPaymentInvalidCVC: 'The card\'s security code is invalid.',
+            orderPaymentIncorrectNumber: 'The card number is incorrect.',
+            orderPaymentExpiredCard: 'The card has expired.',
+            orderPaymentIncorrectCVC: 'The card\'s security code is incorrect.',
+            orderPaymentIncorrectZip: 'The card\'s zip code failed validation.',
+            orderPaymentCardDeclined: 'The card was declined.',
+            orderPaymentMissing: 'There is no card on a customer that is being charged.',
+            orderPaymentProcessingError: 'An error occurred while processing the card.',
             orderPaymentCardSuccess: 'Payment completed.'
         });
 
@@ -23263,8 +23274,41 @@ angular.module('app')
                                                         $scope.stage.checkout = 1;
                                                     }, function (response) {
                                                         if (response && response.data.errors && response.data.errors.plugin_error) {
+                                                            if ($.inArray('payment_failed', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentFailed');
+                                                            }
+                                                            if ($.inArray('invalid_number', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentInvalidNumber');
+                                                            }
+                                                            if ($.inArray('invalid_expiry_month', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentInvalidExpiryMonth');
+                                                            }
+                                                            if ($.inArray('invalid_expiry_year', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentInvalidExpiryYear');
+                                                            }
+                                                            if ($.inArray('invalid_cvc', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentInvalidCVC');
+                                                            }
+                                                            if ($.inArray('incorrect_number', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentIncorrectNumber');
+                                                            }
+                                                            if ($.inArray('expired_card', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentExpiredCard');
+                                                            }
+                                                            if ($.inArray('incorrect_cvc', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentIncorrectCVC');
+                                                            }
+                                                            if ($.inArray('incorrect_zip', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentIncorrectZip');
+                                                            }
                                                             if ($.inArray('card_declined', response.data.errors.plugin_error)) {
                                                                 snackbar.showK('orderPaymentCardDeclined');
+                                                            }
+                                                            if ($.inArray('missing', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentMissing');
+                                                            }
+                                                            if ($.inArray('processing_error', response.data.errors.plugin_error)) {
+                                                                snackbar.showK('orderPaymentProcessingError');
                                                             }
                                                         }
                                                     });
@@ -23278,13 +23322,13 @@ angular.module('app')
                                                 exp_year: $scope.stripe.args.card_exp_2
                                             }, stripeResponseHandler);
                                         },
-                                        payWithCard: function () {
+                                        acceptableCards: function () {
                                             $modal.open({
                                                 templateUrl: 'core/models/manage.html',
                                                 controller: ng(function ($scope) {
-                                                    $scope.cards = ['visa', 'mastercard', 'express', 'american-express', 'jcb', 'discover', 'diners'];
+                                                    $scope.cards = ['visa', 'mastercard', 'american-express', 'jcb', 'discover', 'diners'];
                                                     $scope.dialog = {};
-                                                    $scope.dialog.templateBodyUrl = 'order/pay_with_card.html';
+                                                    $scope.dialog.templateBodyUrl = 'order/acceptable_cards.html';
                                                     $scope.dialog.toolbar = {
                                                         hideSave: true,
                                                         leftIcon: 'arrow_back',

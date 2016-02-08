@@ -3099,7 +3099,7 @@ button.product-quantity-button {
   display: none; }
 
 .main-toolbar.ngloaded {
-  display: block; }
+  display: flex; }
 
 .main-toolbar.ngloaded.hidden {
   display: none; }
@@ -3129,14 +3129,16 @@ button.product-quantity-button {
   padding-right: 16px; }
 
 .main-toolbar {
-  display: block;
-  position: absolute;
+  display: flex;
+  /*position: absolute;*/
   z-index: 18; }
 
 .ui-view-wrapper {
-  padding-top: 56px;
+  padding-top: 0px;
+  /*56px*/
   -webkit-overflow-scrolling: touch;
-  overflow: auto; }
+  overflow: auto;
+  display: flex; }
 
 body, html {
   overflow: hidden; }
