@@ -616,7 +616,18 @@
             failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.',
-            orderPaymentCardDeclined: 'Card declined.',
+            orderPaymentFailed: 'Error occurred on the server.',
+            orderPaymentInvalidNumber: 'The card number is not a valid credit card number.',
+            orderPaymentInvalidExpiryMonth: 'The card\'s expiration month is invalid.',
+            orderPaymentInvalidExpiryYear: 'The card\'s expiration year is invalid.',
+            orderPaymentInvalidCVC: 'The card\'s security code is invalid.',
+            orderPaymentIncorrectNumber: 'The card number is incorrect.',
+            orderPaymentExpiredCard: 'The card has expired.',
+            orderPaymentIncorrectCVC: 'The card\'s security code is incorrect.',
+            orderPaymentIncorrectZip: 'The card\'s zip code failed validation.',
+            orderPaymentCardDeclined: 'The card was declined.',
+            orderPaymentMissing: 'There is no card on a customer that is being charged.',
+            orderPaymentProcessingError: 'An error occurred while processing the card.',
             orderPaymentCardSuccess: 'Payment completed.'
         });
 
