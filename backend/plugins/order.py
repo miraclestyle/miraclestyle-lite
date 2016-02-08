@@ -912,11 +912,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     except stripe.error.CardError, e:
       ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('error: %s, ip: %s' % (e, ip_address))
-      if (e.type == 'card_error'):
-        raise PluginError(e.code)
-      else:
-        raise PluginError('payment_failed')
-      
+      raise PluginError(e.code)
 
   def notify(self, context):
     pass
