@@ -911,7 +911,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}
     except stripe.error.CardError, e:
       ip_address = os.environ.get('REMOTE_ADDR')
-      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
       raise PluginError(e.code)
 
   def notify(self, context):
