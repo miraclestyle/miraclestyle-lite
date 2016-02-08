@@ -1191,7 +1191,7 @@
                                                 exp_year: $scope.stripe.args.card_exp_2
                                             }, stripeResponseHandler);
                                         },
-                                        payWithCard: function () {
+                                        acceptableCards: function () {
                                             $modal.open({
                                                 templateUrl: 'core/models/manage.html',
                                                 controller: ng(function ($scope) {
