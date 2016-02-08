@@ -98,8 +98,9 @@
                 var image = scope.$eval(attrs.sliderImage),
                     run = function () {
                         var bar = element.parents('.modal:first').find('.new-pricetag-bar'),
-                            newHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
-                            newWidth = Math.ceil(newHeight * image.proportion),
+                            wholeHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
+                            newHeight = wholeHeight,
+                            newWidth = (newHeight * image.proportion),
                             imageSize = newHeight > newWidth ? newHeight : newWidth,
                             originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
@@ -109,7 +110,7 @@
                                 element.off('load', fn);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
-                        image._realWidth = newWidth;
+
                         element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
