@@ -20913,11 +20913,18 @@ angular.module('app')
                                             $scope.currentVariationPure = [];
                                             $scope.notInitialLoad = false;
                                             angular.forEach($scope.product.variants, function (v, i) {
-
+                                                var opt = v.options[0];
+                                                if (angular.isDefined(variantSignatureAsDicts)) {
+                                                    if (angular.isObject(variantSignatureAsDicts[i])) {
+                                                        opt = _.values(variantSignatureAsDicts[i])[0];
+                                                    } else {
+                                                        opt = (variantSignatureAsDicts[i] ? v.options[variantSignatureAsDicts[i]] : v.options[0]);
+                                                    }
+                                                }
                                                 $scope.variants.push({
                                                     name: v.name,
                                                     options: v.options,
-                                                    option: (variantSignatureAsDicts && variantSignatureAsDicts[i] ? v.options[variantSignatureAsDicts[i]] : v.options[0]),
+                                                    option: opt,
                                                     description: v.description,
                                                     allow_custom_value: v.allow_custom_value
                                                 });
@@ -21491,6 +21498,10 @@ angular.module('app')
                                     } else {
                                         track.closeProductDrawer();
                                     }
+
+                                    shareWatch();
+                                    spawnShare();
+                                    $scope.$apply();
                                 }
 
                                 $scope.addToCart = addToCart;
