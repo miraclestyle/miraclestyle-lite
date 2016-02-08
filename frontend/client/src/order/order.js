@@ -1162,9 +1162,9 @@
                                             $modal.open({
                                                 templateUrl: 'core/models/manage.html',
                                                 controller: ng(function ($scope) {
-                                                    $scope.cards = ['visa', 'mastercard', 'express', 'american-express', 'jcb', 'discover', 'diners'];
+                                                    $scope.cards = ['visa', 'mastercard', 'american-express', 'jcb', 'discover', 'diners'];
                                                     $scope.dialog = {};
-                                                    $scope.dialog.templateBodyUrl = 'order/pay_with_card.html';
+                                                    $scope.dialog.templateBodyUrl = 'order/acceptable_cards.html';
                                                     $scope.dialog.toolbar = {
                                                         hideSave: true,
                                                         leftIcon: 'arrow_back',
