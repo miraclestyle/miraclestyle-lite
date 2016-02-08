@@ -35,7 +35,7 @@ DEFAULT_HOST_SETTINGS = {
   'CATALOG_DISCONTINUED_LIFE': 1,
   'ORDER_CART_LIFE': 1,
   'ORDER_UNPAID_LIFE': 1,
-  'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 0, 'seconds': 30},
+  'ORDER_CRON_NOTIFY_TIMER': {'hours': 24, 'minutes': 0, 'seconds': 0},
   'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
   'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
   'GOOGLE_OAUTH2': {
