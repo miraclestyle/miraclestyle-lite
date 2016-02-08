@@ -189,7 +189,7 @@ class Order(orm.BaseExpando):
   _default_indexed = False
 
   _virtual_fields = {
-      '_seller': orm.SuperReferenceStructuredProperty('23', target_field='seller_reference'),
+      '_seller': orm.SuperReferenceStructuredProperty('23', autoload=True, target_field='seller_reference'),
       '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True, search={
           'default': {
               'filters': [],

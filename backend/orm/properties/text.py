@@ -59,6 +59,9 @@ class EncryptedValue():
     self.encrypted = raw
     self.decrypted = tools.urlsafe_decrypt(self.encrypted)
 
+  def __deepcopy__(self, memo):
+    return EncryptedValue(self.encrypted)
+
   def __str__(self):
     return self.encrypted
 
