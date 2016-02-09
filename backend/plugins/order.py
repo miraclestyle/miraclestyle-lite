@@ -28,8 +28,8 @@ def find_payment_plugin(order):
     for plugin in seller._plugin_group.value.plugins:
       if isinstance(plugin, OrderPaymentMethodPlugin):
         if order.payment_method == plugin._get_system_name():
-          payment_plugin = plugin
-          break
+          if plugin.active:
+            payment_plugin = plugin
   if not payment_plugin:
     raise PluginError('no_payment_method_supplied')
   return payment_plugin
