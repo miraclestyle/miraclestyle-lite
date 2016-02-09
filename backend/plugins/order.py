@@ -663,6 +663,7 @@ class OrderPaymentMethodPlugin(orm.BaseModel):
   def run(self, context):
     if not self.active:
       return  # inactive payment
+    context._order.payment_method = self._get_system_name()
 
 
 class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
