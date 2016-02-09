@@ -21,6 +21,7 @@ from models.unit import *
 import stripe
 
 def find_payment_plugin(order):
+  payment_plugin = None
   seller = order.seller_reference.get()
   seller.read({'_plugin_group': {'plugins': {}}})  # read plugin container
   plugin_container = seller._plugin_group.value
