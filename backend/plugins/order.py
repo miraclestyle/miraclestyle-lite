@@ -882,6 +882,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     token = context.input['token'] # this could be the request variable but standard action cannot be used see the paypal implementation
     order = context._order
     order.read({'_seller': {}})
+    ip_address = os.environ.get('REMOTE_ADDR')
     try:
       # https://stripe.com/docs/api#create_charge
       # 
@@ -895,7 +896,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           statement_descriptor=order._seller.value.name,
           metadata={'order_key': order.key_urlsafe, 'order_url': tools.absolute_url('%s/%s/%s' % ('seller', 'order', order.key_urlsafe))}
       )
-      tools.log.debug('Stripe Charge: %s' % (charge))
+      tools.log.debug('Stripe Charge: %s, ip: %s' % (charge, ip_address))
       order.state = 'order'
       order.payment_status = 'Completed'
       context.new_message = {'charge_id': charge.id,
@@ -907,27 +908,21 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                              'charge': charge}
       context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}
     except stripe.error.APIConnectionError, e:
-      ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('error: %s, ip: %s' % (e, ip_address))
       raise PluginError('api_connection_error')
     except stripe.error.APIError, e:
-      ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('error: %s, ip: %s' % (e, ip_address))
       raise PluginError('api_error')
     except stripe.error.AuthenticationError, e:
-      ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('error: %s, ip: %s' % (e, ip_address))
       raise PluginError('authentication_error')
     except stripe.error.CardError, e:
-      ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
       raise PluginError(e.code)
     except stripe.error.InvalidRequestError, e:
-      ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('error: %s, ip: %s' % (e, ip_address))
       raise PluginError('invalid_request_error')
     except stripe.error.RateLimitError, e:
-      ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('error: %s, ip: %s' % (e, ip_address))
       raise PluginError('rate_limit_error')
 
