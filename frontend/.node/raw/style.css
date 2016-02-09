@@ -3808,12 +3808,12 @@ button.product-quantity-button {
 }
 .main-toolbar {
     display: flex;
-    /*position: absolute;*/
+    position: absolute;
     z-index: 18;
 }
 
 .ui-view-wrapper {
-    padding-top: 0px; /*56px*/
+    margin-top: 56px; /*56px*/
     -webkit-overflow-scrolling: touch;
     overflow: auto;
     display:flex;

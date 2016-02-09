@@ -20914,7 +20914,7 @@ angular.module('app')
                                             $scope.notInitialLoad = false;
                                             angular.forEach($scope.product.variants, function (v, i) {
                                                 var opt = v.options[0];
-                                                if (angular.isDefined(variantSignatureAsDicts)) {
+                                                if (variantSignatureAsDicts) {
                                                     console.log(angular.isObject(variantSignatureAsDicts[i]), variantSignatureAsDicts[i]);
                                                     if (angular.isObject(variantSignatureAsDicts[i])) {
                                                         opt = _.values(variantSignatureAsDicts[i])[0];
