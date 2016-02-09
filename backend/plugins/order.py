@@ -663,10 +663,6 @@ class OrderPaymentMethodPlugin(orm.BaseModel):
   def run(self, context):
     if not self.active:
       return  # inactive payment
-    if 'payment_methods' not in context.output:
-      context.output['payment_methods'] = []
-    context.output['payment_methods'].append({'key': self._get_system_name(),
-                                              'name': self._get_name()})
 
 
 class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
