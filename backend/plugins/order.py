@@ -591,6 +591,8 @@ class OrderNotify(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context)  # will throw an error if the payment method does not exist
+    raise orm.TerminateAction('stripe_test_end')
+    return
     context._order = order
     order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}})
     payment_plugin = find_payment_plugin(order)
@@ -1357,4 +1359,6 @@ class OrderDiscountPlugin(orm.BaseModel):
             if discount_line.evaluate_condition(price_data):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
               break
+
+
 
