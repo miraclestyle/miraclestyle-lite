@@ -893,7 +893,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           source=token,
           description='MIRACLESTYLE Sales Order #%s' % order.key_id_str,
           statement_descriptor=order._seller.value.name,
-          metadata={'order_key': order.key_urlsafe}
+          metadata={'order_key': order.key_urlsafe, 'order_url': absolute_url('%s/%s/%s' % ('seller', 'order', order.key_urlsafe))}
       )
       tools.log.debug('Stripe Charge: %s' % (charge))
       order.state = 'order'
