@@ -906,10 +906,30 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                              'payment_status': order.payment_status,
                              'charge': charge}
       context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}
+    except stripe.error.APIConnectionError, e:
+      ip_address = os.environ.get('REMOTE_ADDR')
+      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      raise PluginError('api_connection_error')
+    except stripe.error.APIError, e:
+      ip_address = os.environ.get('REMOTE_ADDR')
+      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      raise PluginError('api_error')
+    except stripe.error.AuthenticationError, e:
+      ip_address = os.environ.get('REMOTE_ADDR')
+      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      raise PluginError('authentication_error')
     except stripe.error.CardError, e:
       ip_address = os.environ.get('REMOTE_ADDR')
       tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
       raise PluginError(e.code)
+    except stripe.error.InvalidRequestError, e:
+      ip_address = os.environ.get('REMOTE_ADDR')
+      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      raise PluginError('invalid_request_error')
+    except stripe.error.RateLimitError, e:
+      ip_address = os.environ.get('REMOTE_ADDR')
+      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      raise PluginError('rate_limit_error')
 
   def notify(self, context):
     pass
