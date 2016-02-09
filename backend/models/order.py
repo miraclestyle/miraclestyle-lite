@@ -182,7 +182,7 @@ class Order(orm.BaseExpando):
   untaxed_amount = orm.SuperDecimalProperty('9', required=True, indexed=False)
   tax_amount = orm.SuperDecimalProperty('10', required=True, indexed=False)
   total_amount = orm.SuperDecimalProperty('11', required=True, indexed=False)
-  payment_method = orm.SuperStringProperty('12', required=False, default='stripe', choices=settings.AVAILABLE_PAYMENT_METHODS)
+  payment_method = orm.SuperStringProperty('12', required=False, choices=settings.AVAILABLE_PAYMENT_METHODS)
   payment_status = orm.SuperStringProperty('13', required=False, indexed=True)
   carrier = orm.SuperLocalStructuredProperty(OrderCarrier, '14')
 
