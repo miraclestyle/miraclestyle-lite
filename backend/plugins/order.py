@@ -851,7 +851,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
                            'action': context.action.key,
                            'ancestor': order.key,
                            'agent': Account.build_key('system'),
-                           'body': 'PayPal payment %s.%s' % (order.payment_status, context.message_body),
+                           'body': 'Payment %s.%s' % (order.payment_status, context.message_body),
                            'payment_status': order.payment_status,
                            'ipn': request['body']}
     context.new_message_fields = {'ipn': orm.SuperTextProperty(name='ipn', compressed=True, indexed=False)}
@@ -902,7 +902,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                              'action': context.action.key,
                              'ancestor': order.key,
                              'agent': context.account.key,
-                             'body': 'Stripe payment %s.' % order.payment_status,
+                             'body': 'Payment %s.' % order.payment_status,
                              'payment_status': order.payment_status,
                              'charge': charge}
       context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}
