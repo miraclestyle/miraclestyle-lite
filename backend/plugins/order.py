@@ -546,7 +546,7 @@ class OrderSetMessage(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     OrderMessage = context.models['35']
-    # this could be extended to allow params
+    #Â this could be extended to allow params
     order_message = {}
     default_values = {}
     default_values['agent'] = self.cfg.get('agent', 'account.key')
@@ -633,7 +633,9 @@ class OrderNotify(orm.BaseModel):
     return order
   
   def find_order_stripe(self, context):
-    pass
+    request = context.input['request']
+    ip_address = os.environ.get('REMOTE_ADDR')
+    tools.log.debug('request: %s, ip: %s' % (request, ip_address))
 
 
 # This is system plugin, which means end user can not use it!
@@ -810,7 +812,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       variable.
       Expired: This authorization has expired and cannot be captured.
       Failed: The payment has failed. This happens only if the payment was
-      made from your customer’s bank account.
+      made from your customerâ€™s bank account.
       Pending: The payment is pending. See pending_reason for more
       information.
       Refunded: You refunded the payment.
@@ -885,7 +887,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     ip_address = os.environ.get('REMOTE_ADDR')
     try:
       # https://stripe.com/docs/api#create_charge
-      # 
+      #
       total = order.total_amount * (Decimal('10') ** order.currency.value.digits)  # I think it is better to do it with long(). But here it is, just in case we need it: amount=(order.total_amount * (10 ** order.currency.value.digits)).quantize(order.currency.value.digits, rounding=ROUND_DOWN)
       charge = stripe.Charge.create(
           api_key=self.secret_key.decrypted, # apikey must be passed here because you cannot set module level apikey globally
