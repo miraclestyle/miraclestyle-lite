@@ -635,7 +635,7 @@ class OrderNotify(orm.BaseModel):
   def find_order_stripe(self, context):
     request = context.input['request']
     ip_address = os.environ.get('REMOTE_ADDR')
-    tools.log.debug('request: %s, ip: %s' % (request, ip_address))
+    tools.log.debug('Stripe Event: %s, ip: %s' % (request, ip_address))
 
 
 # This is system plugin, which means end user can not use it!
@@ -1357,6 +1357,4 @@ class OrderDiscountPlugin(orm.BaseModel):
             if discount_line.evaluate_condition(price_data):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
               break
-
-
 
