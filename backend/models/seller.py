@@ -166,7 +166,7 @@ class Seller(orm.BaseExpando):
     if self.key:
       self._plugin_group.read()
       for plugin in self._plugin_group.value.plugins:
-        if plugin.get_kind() == '117':
+        if ((plugin.get_kind() == '117') and (plugin.active)):
           currency = plugin.currency
       if currency is not None:
         currency = currency.get_async()
