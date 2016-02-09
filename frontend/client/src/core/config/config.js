@@ -616,7 +616,8 @@
             failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.',
-            orderPaymentFailed: 'Error occurred on the server.',
+            orderPaymentNoPaymentMethodSupplied: 'Payments are not admitted at this moment.',
+            orderPaymentFailed: 'An error occurred on the server.',
             orderPaymentInvalidNumber: 'The card number is not a valid credit card number.',
             orderPaymentInvalidExpiryMonth: 'The card\'s expiration month is invalid.',
             orderPaymentInvalidExpiryYear: 'The card\'s expiration year is invalid.',
@@ -714,7 +715,7 @@
                 return false;
             },
             internal_server_error: function (errors) {
-                return 'Error occurred on the server.';
+                return 'An error occurred on the server.';
             },
             action_denied: function () {
                 return 'You do not have permission to perform this action.';
