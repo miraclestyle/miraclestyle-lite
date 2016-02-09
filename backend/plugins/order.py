@@ -635,7 +635,7 @@ class OrderNotify(orm.BaseModel):
     return order
   
   def find_order_stripe(self, context):
-    request = context.input['request']
+    request = context.input['request'].json_body
     ip_address = os.environ.get('REMOTE_ADDR')
     tools.log.debug('Stripe Event: %s, ip: %s' % (request, ip_address))
 
