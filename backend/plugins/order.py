@@ -546,7 +546,7 @@ class OrderSetMessage(orm.BaseModel):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
     OrderMessage = context.models['35']
-    #Â this could be extended to allow params
+    # this could be extended to allow params
     order_message = {}
     default_values = {}
     default_values['agent'] = self.cfg.get('agent', 'account.key')
@@ -812,7 +812,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
       variable.
       Expired: This authorization has expired and cannot be captured.
       Failed: The payment has failed. This happens only if the payment was
-      made from your customerâ€™s bank account.
+      made from your customer's bank account.
       Pending: The payment is pending. See pending_reason for more
       information.
       Refunded: You refunded the payment.
