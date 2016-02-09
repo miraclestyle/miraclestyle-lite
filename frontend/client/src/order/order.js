@@ -1144,6 +1144,9 @@
                                                         $scope.stage.checkout = 1;
                                                     }, function (response) {
                                                         if (response && response.data.errors && response.data.errors.plugin_error) {
+                                                            if ($.inArray('no_payment_method_supplied', response.data.errors.plugin_error) ==! -1) {
+                                                                snackbar.showK('orderPaymentNoPaymentMethodSupplied');
+                                                            }
                                                             if ($.inArray('payment_failed', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentFailed');
                                                             }
