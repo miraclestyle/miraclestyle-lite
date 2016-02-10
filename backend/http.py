@@ -261,16 +261,22 @@ class CatalogCron(RequestHandler):
     iom.Engine.run(input)
 
 
-class OrderNotify(RequestHandler):
+class OrderNotifyPayPal(RequestHandler):
 
-  def respond(self, payment_method):
+  def respond(self):
     params = ['body', 'content_type', 'method', 'url', 'scheme', 'host', 'host_url', 'path_url',
               'path', 'path_qs', 'query_string', 'headers', 'GET', 'POST', 'params', 'cookies']
     input = self.get_input()
-    input.update({'action_model': '34', 'payment_method': payment_method, 'action_id': 'notify', 'request': {}})
+    input.update({'action_model': '34', 'action_id': 'notify', 'payment_method': 'paypal', 'request': {}})
     for param in params:
       input['request'][param] = getattr(self.request, param)
     iom.Engine.run(input)
+    
+class OrderNotifyStripe(RequestHandler):
+
+  def respond(self):
+    # here we have to respond here, I think.
+    iom.Engine.run({'action_model': '34', 'action_id': 'notify', 'payment_method': 'stripe', 'request': self.get_input()})
 
 
 class OrderCron(RequestHandler):
@@ -296,7 +302,8 @@ ROUTES = [('/api/endpoint', Endpoint),
           ('/api/account/login/<provider>', AccountLogin),
           ('/api/account/logout', AccountLogout),
           ('/api/catalog/cron', CatalogCron),
-          ('/api/order/notify/<payment_method>', OrderNotify),
+          ('/api/order/notify/paypal', OrderNotifyPayPal),
+          ('/api/order/notify/stripe', OrderNotifyStripe),
           ('/api/order/cron', OrderCron),
           ('/api/order/cron_notify', OrderCronNotify)]
 
