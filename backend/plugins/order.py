@@ -603,7 +603,7 @@ class OrderNotify(orm.BaseModel):
     options = self.cfg.get('options')
     paypal = options['paypal']
     url = paypal['webscr']
-    request = context.input['request']
+    request = context.input.get('request')
     ipn = request['params']
     # validate if the request came from ipn
     ip_address = os.environ.get('REMOTE_ADDR')
@@ -636,9 +636,7 @@ class OrderNotify(orm.BaseModel):
   
   def find_order_stripe(self, context):
     # ip_address = os.environ.get('REMOTE_ADDR')
-    tools.log.debug('Stripe Event: %s' % (tools.get_attr(context.raw_input, 'data.object.metadata.order_key')))
-        
-    
+    tools.log.debug('Stripe Event: %s' % (tools.get_attr(context.input, 'request.data.object.metadata.order_key')))
 
 
 # This is system plugin, which means end user can not use it!
@@ -702,7 +700,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     pass
 
   def notify(self, context):
-    request = context.input['request']
+    request = context.input.get('request')
     ipn = request['params']
     tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, wwe have it recorded in OrderMessage, however, this is easier to access.
     ipn_payment_status = ipn['payment_status']
@@ -884,7 +882,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     context._order.payment_method = self._get_system_name()
   
   def pay(self, context):
-    token = context.input['token'] # this could be the request variable but standard action cannot be used see the paypal implementation
+    token = context.input.get('token') # this could be the request variable but standard action cannot be used see the paypal implementation
     order = context._order
     order.read({'_seller': {}})
     ip_address = os.environ.get('REMOTE_ADDR')
