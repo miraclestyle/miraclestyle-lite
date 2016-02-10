@@ -269,8 +269,6 @@ class OrderNotify(RequestHandler):
     input = self.get_input()
     input.update({'action_model': '34', 'payment_method': payment_method, 'action_id': 'notify', 'request': {}})
     for param in params:
-      if param == 'body':
-        input['request'][param] = self.request.json_body
       input['request'][param] = getattr(self.request, param)
     iom.Engine.run(input)
 
