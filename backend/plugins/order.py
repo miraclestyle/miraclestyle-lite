@@ -636,7 +636,7 @@ class OrderNotify(orm.BaseModel):
   
   def find_order_stripe(self, context):
     # ip_address = os.environ.get('REMOTE_ADDR')
-    tools.log.debug('Stripe Event: %s' % (tools.get_attr(context.input, 'request.data.object.metadata.order_key')))
+    tools.log.debug('Stripe Event: %s' % (context.input.get('request')))
 
 
 # This is system plugin, which means end user can not use it!
