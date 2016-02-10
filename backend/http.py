@@ -276,7 +276,11 @@ class OrderNotifyStripe(RequestHandler):
 
   def respond(self):
     # here we have to respond here, I think.
-    iom.Engine.run({'action_model': '34', 'action_id': 'notify', 'payment_method': 'stripe', 'request': self.get_input()})
+    request = self.get_input()
+    input = {'action_model': '34', 'action_id': 'notify', 'payment_method': 'stripe'}
+    input['__request__'] = request.pop('__request__', None)
+    input['request'] = request
+    iom.Engine.run(input)
 
 
 class OrderCron(RequestHandler):
