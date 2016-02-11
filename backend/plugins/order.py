@@ -1080,17 +1080,12 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       if event.type == 'charge.updated':
         previous_metadata = tools.get_attr(event.data, 'previous_attributes.metadata')
         if previous_metadata:
-          if hasattr(previous_metadata, 'origin') or hasattr(previous_metadata, 'order_reference'):
-            new_charge = get_charge(charge.id)
-            if hasattr(previous_metadata, 'origin'):
-              new_charge.metadata.origin = previous_metadata.origin
-            if hasattr(previous_metadata, 'order_reference'):
-              new_charge.metadata.order_reference = previous_metadata.order_reference
-            save_charge(new_charge)
-            context.message_body = 'Charge metadata restored.'
-          else:
-            tools.log.debug('Stripe Event: %s, ip: %s' % (event, ip_address))
-            raise orm.TerminateAction('irrelevant_event')
+          new_charge = get_charge(charge.id)
+          new_charge.metadata.origin = tools.absolute_url('')
+          new_charge.metadata.order_reference = order.key_urlsafe
+          new_charge.metadata.order_url = tools.absolute_url('%s/%s/%s' % ('seller', 'order', order.key_urlsafe))
+          save_charge(new_charge)
+          context.message_body = 'Charge metadata restored.'
         else:
           tools.log.debug('Stripe Event: %s, ip: %s' % (event, ip_address))
           raise orm.TerminateAction('irrelevant_event')
