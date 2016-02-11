@@ -946,10 +946,6 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
   def notify(self, context):
     ip_address = os.environ.get('REMOTE_ADDR')
     request = context.input.get('request')
-    event_id = tools.get_attr(context.input, 'request.id')
-    event_type = tools.get_attr(context.input, 'request.type')
-    request_metadata = tools.get_attr(context.input, 'request.data.object.metadata')
-    previous_request_metadata = tools.get_attr(context.input, 'request.data.previous_attributes.metadata')
     order = context._order
     context.message_body = ''
     
@@ -976,9 +972,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
         raise PluginError('rate_limit_error')
     
     def validate_event(event):
-      event_metadata = tools.get_attr(event.data, 'object.metadata')
-      previous_event_metadata = tools.get_attr(event.data, 'previous_attributes.metadata')
-      if (event.object != 'event' or event.type != event_type or event_metadata != request_metadata or previous_event_metadata != previous_request_metadata):
+      if (request != event.__dict__):
         tools.log.error('Event Mismatch! event: %s, request: %s, ip: %s' % (event, request, ip_address))
         raise orm.TerminateAction('invalid_event')
       OrderMessage = context.models['35']
@@ -1045,8 +1039,8 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       We capture this event and restore metadata to original state.
       However, this may iritate a seller and that can be a problem.
       '''
-      def amount_message(message, amount, code):
-        currency_key = Unit.build_key(latest_refund.currency)
+      def amount_message(message, amount, currency_code):
+        currency_key = Unit.build_key(currency_code)
         currency = currency_key.get()
         if currency:
           reverted_amount = (Decimal(amount) * (Decimal('10') ** -currency.digits)).quantize(Decimal('10') ** -currency.digits, rounding=ROUND_DOWN)
@@ -1058,17 +1052,18 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       if event.type == 'charge.refunded':
         if charge.amount_refunded == charge.amount:
           order.payment_status = 'Refunded'
+          message_body = amount_message('\nTotal amount refunded:', charge.amount_refunded, charge.currency)
+          context.message_body = 'Payment Refunded.%s' % message_body
         else:
           latest_refund = None
           for refund in charge.refunds.data:
             if (latest_refund is None) or (latest_refund.created < refund.created):
               latest_refund = refund
           order.payment_status = 'Partially Refunded'
-        message_body = amount_message('\nAmount refunded:', latest_refund.amount, latest_refund.currency)
-        context.message_body = 'Payment %s.%s' % (order.payment_status, message_body)
+          message_body = amount_message('\nAmount refunded:', latest_refund.amount, latest_refund.currency)
+          context.message_body = 'Payment Partially Refunded.%s' % message_body
       if event.type in ['charge.dispute.created', 'charge.dispute.closed', 'charge.dispute.funds_reinstated', 'charge.dispute.funds_withdrawn', 'charge.dispute.updated']:
         order.payment_status = 'Disputed'
-        dispute_message = amount_message('\nAmount disputed:', charge.dispute.amount, charge.dispute.currency)
         message_body = ''
         if event.type == 'charge.dispute.created':
           message_body = '\nDispute created.'
@@ -1080,8 +1075,8 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           message_body = '\nDispute funds withdrawn.'
         if event.type == 'charge.dispute.updated':
           message_body = '\nDispute updated.'
-        context.message_body = 'Payment %s.%s%s' % ('Disputed', message_body, dispute_message)
-        context.message_body = '%s %s' % (message_body, dispute_message)
+        dispute_message = amount_message('\nAmount disputed:', charge.dispute.amount, charge.dispute.currency)
+        context.message_body = 'Payment Disputed.%s%s' % (message_body, dispute_message)
       if event.type == 'charge.updated':
         previous_metadata = tools.get_attr(event.data, 'previous_attributes.metadata')
         if previous_metadata:
@@ -1092,7 +1087,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
             if previous_metadata.order_reference:
               new_charge.metadata.order_reference = previous_metadata.order_reference
             save_charge(new_charge)
-            context.message_body = '\nCharge metadata restored.'
+            context.message_body = 'Charge metadata restored.'
           else:
             tools.log.debug('Stripe Event: %s, ip: %s' % (event, ip_address))
             raise orm.TerminateAction('irrelevant_event')
@@ -1101,7 +1096,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           raise orm.TerminateAction('irrelevant_event')
     
     # Ask Stripe for the event object.
-    event = get_event(event_id)
+    event = get_event(request['id'])
     
     # Verify event is genuine and check for event duplicates.
     validate_event(event)
