@@ -873,7 +873,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
 
   _use_rule_engine = False
 
-  secret_key = orm.SuperStringEncryptedProperty('3', required=True, indexed=False)  # This field needs to be encrypted. Perhaps we should implement property encryption capability?
+  secret_key = orm.SuperStringEncryptedProperty('3', placeholder='<secret key>', required=True, indexed=False)  # This field needs to be encrypted. Perhaps we should implement property encryption capability?
   publishable_key = orm.SuperStringProperty('4', required=True, indexed=False) # this is public information
 
   def _get_name(self):

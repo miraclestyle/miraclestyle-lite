@@ -248,7 +248,6 @@ def urlsafe_decrypt(s, raw_prefix=None):
     raw_prefix = settings.ENCRYPTION_PREFIX
   if not s.startswith(raw_prefix):
     raise ValueError('Incompatible encrypted value %s, expected prefix %s' % (s, raw_prefix))
-  print(s, raw_prefix, s[len(raw_prefix):])
   decode = base64.b64decode(s[len(raw_prefix):]) # strip away the prefix, decode the string
   out = decrypt(decode) # decrypt it finally
   return out

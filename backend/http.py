@@ -402,6 +402,7 @@ class LoginAs(BaseTestHandler):
         self.secure_cookie_set(settings.COOKIE_AUTH_KEY, '%s|%s' % (account.key_urlsafe, session.session_id), httponly=True)
         self.redirect('/')
 
+
 if settings.DEBUG:
   for k, o in globals().items():
     if inspect.isclass(o) and issubclass(o, BaseTestHandler):

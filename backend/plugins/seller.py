@@ -12,7 +12,7 @@ import tools
 
 import orm
 
-__all__ = ['SellerSetupDefaults', 'SellerDeleteFarCacheGroups', 'SellerMaybeDeleteFarCacheGroups']
+__all__ = ['SellerSetupDefaults', 'SellerDeleteFarCacheGroups', 'SellerMaybeDeleteFarCacheGroups', 'SellerInterceptEncryptedValue']
 
 
 class SellerMaybeDeleteFarCacheGroups(orm.BaseModel):
@@ -66,6 +66,7 @@ class SellerDeleteFarCacheGroups(orm.BaseModel):
 class SellerSetupDefaults(orm.BaseModel):
 
   def run(self, context):
+    print(context._seller._plugin_group.value.plugins)
     SellerPluginContainer = context.models['22']
     OrderAddressPlugin = context.models['107']
     OrderStripePaymentPlugin = context.models['114']
@@ -148,3 +149,18 @@ class SellerSetupDefaults(orm.BaseModel):
         plugin_group.plugins.append(default_carrier)
       else:
         always_active(default_carrier_find)
+
+class SellerInterceptEncryptedValue(orm.BaseModel):
+
+  def run(self, context):
+    seller = context._seller
+    seller._original._plugin_group.read()
+    dictmap = {}
+    for plugin in seller._original._plugin_group.value.plugins:
+      if plugin.get_kind() == '114':
+        dictmap[plugin.key] = plugin
+    seller._plugin_group.read()
+    for plugin in seller._plugin_group.value.plugins:
+      if plugin.key in dictmap:
+        if plugin.secret_key.decrypted == plugin.__class__.secret_key._placeholder:
+          plugin.secret_key = dictmap[plugin.key].secret_key.decrypted

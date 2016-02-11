@@ -4,7 +4,6 @@
         .directive('encrypted', function () {
             return {
                 link: function (scope, iElement, iAttrs) {
-                    iElement.attr('type', 'password');
                 }
             };
         })

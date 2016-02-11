@@ -133,6 +133,7 @@ class Seller(orm.BaseExpando):
                       Set(cfg={'d': {'_seller.name': 'input.name',
                                      '_seller.logo': 'input.logo',
                                      '_seller._plugin_group': 'input._plugin_group'}}),
+                      SellerInterceptEncryptedValue(),
                       SellerSetupDefaults(),
                       SellerMaybeDeleteFarCacheGroups(),
                       RulePrepare(),

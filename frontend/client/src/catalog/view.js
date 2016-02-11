@@ -86,7 +86,7 @@
                                             angular.forEach($scope.product.variants, function (v, i) {
                                                 var opt = v.options[0];
                                                 if (variantSignatureAsDicts) {
-                                                    console.log(angular.isObject(variantSignatureAsDicts[i]), variantSignatureAsDicts[i]);
+                                                    //console.log(angular.isObject(variantSignatureAsDicts[i]), variantSignatureAsDicts[i]);
                                                     if (angular.isObject(variantSignatureAsDicts[i])) {
                                                         opt = _.values(variantSignatureAsDicts[i])[0];
                                                     } else {

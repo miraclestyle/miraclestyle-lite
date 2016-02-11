@@ -55,24 +55,28 @@ class SuperStringProperty(_BaseProperty, StringProperty):
 
 class EncryptedValue():
 
-  def __init__(self, raw):
+  def __init__(self, field, raw):
+    self.set(raw)
+    self.field = field
+
+  def set(self, raw):
     self.encrypted = raw
     self.decrypted = tools.urlsafe_decrypt(self.encrypted)
 
   def __deepcopy__(self, memo):
-    return EncryptedValue(self.encrypted)
+    return self.decrypted
 
   def __str__(self):
-    return self.encrypted
+    return self.field._placeholder
 
   def __unicode__(self):
-    return self.encrypted
+    return self.field._placeholder
 
   def __repr__(self):
-    return self.encrypted
+    return self.field._placeholder
 
   def get_output(self):
-    return self.encrypted # always return encrypted values to the public, because setattr of our system overrides all
+    return self.field._placeholder
 
 
 class SuperStringEncryptedProperty(SuperStringProperty):
@@ -87,10 +91,37 @@ class SuperStringEncryptedProperty(SuperStringProperty):
     entity.foobar.decrypted => programming interface e.g. Charge.create() whatnot
   """
 
+  def __init__(self, *args, **kwargs):
+    self._placeholder = kwargs.pop('placeholder', None)
+    if not isinstance(self._placeholder, str):
+      raise Exception('Placeholder must be string')
+    super(SuperStringEncryptedProperty, self).__init__(*args, **kwargs)
+
   def _to_base_type(self, value):
     if isinstance(value, EncryptedValue):
       value = value.encrypted # this is to avoid the constant rehashing, encrypt function knows if it should do that
     return tools.urlsafe_encrypt(value)
 
   def _from_base_type(self, value):
-    return EncryptedValue(value)
+    return EncryptedValue(self, value)
+
+  def _set_value(self, entity, value):
+    # __set__
+    encrypted_value = tools.urlsafe_encrypt(value)
+    property_value = self._get_value(entity)
+    property_value.set(encrypted_value)
+    super(SuperStringEncryptedProperty, self)._set_value(entity, encrypted_value)
+
+  def _get_value(self, entity):
+    # __get__
+    get = super(SuperStringEncryptedProperty, self)._get_value(entity)
+    value_name = '%s_decrypted_value' % self._name
+    if value_name in entity._values:
+      property_value = entity._values[value_name]
+    else:
+      if not isinstance(get, EncryptedValue):
+        property_value = EncryptedValue(self, get)
+      else:
+        property_value = get
+      entity._values[value_name] = property_value
+    return property_value
