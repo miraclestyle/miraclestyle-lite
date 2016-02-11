@@ -611,7 +611,7 @@ class OrderNotify(orm.BaseModel):
     url = tools.get_attr(self.cfg, 'options.paypal.webscr')
     ip_address = os.environ.get('REMOTE_ADDR')
     request = context.input.get('request')
-    ipn = request['params']
+    ipn = request['ipn']
     result_content = None
     tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, we have it recorded in OrderMessage, however, this is easier to access.
     try:
@@ -636,19 +636,31 @@ class OrderNotify(orm.BaseModel):
     request = context.input.get('request')
     event_object = tools.get_attr(context.input, 'request.object', '')
     event_type = tools.get_attr(context.input, 'request.type', '')
-    origin = tools.get_attr(context.input, 'request.data.object.metadata.origin')
-    order_reference = tools.get_attr(context.input, 'request.data.object.metadata.order_reference')
-    url = tools.absolute_url('')
+    charge_id = None
     tools.log.debug('Stripe Event: %s, ip: %s' % (request, ip_address))  # Control point.
     # We make sure untrusted data concerns us.
     supported_events = ['charge.refunded', 'charge.dispute.closed',
                         'charge.dispute.created', 'charge.dispute.funds_reinstated',
                         'charge.dispute.funds_withdrawn', 'charge.dispute.updated']
-    if (event_object != 'event') or (event_type not in supported_events) or (origin != url) or (order_reference is None):
+    if (event_object != 'event') or (event_type not in supported_events):
       tools.log.debug('Stripe Event: %s, ip: %s' % (request, ip_address))
       raise orm.TerminateAction('irrelevant_event')
     # We verify the data in notify plugin method.
-    return orm.SuperKeyProperty(kind='34').value_format(order_reference)
+    if (event_type == 'charge.refunded'):
+      charge_id = tools.get_attr(context.input, 'request.data.object.id')
+    else:
+      charge_id = tools.get_attr(context.input, 'request.data.object.charge')
+    if isinstance(charge_id, (str, unicode)) and charge_id.startswith('ch_'):
+      OrderMessage = context.models['35']
+      order_message = OrderMessage.query(orm.GenericProperty('charge_id') == charge_id).get()
+      if isinstance(order_message, OrderMessage):
+        return order_message.key_parent
+      else:
+        tools.log.error('Order not found! request: %s, ip: %s' % (request, ip_address))
+        raise orm.TerminateAction('order_not_found')
+    else:
+      tools.log.error('Order not found! request: %s, ip: %s' % (request, ip_address))
+      raise orm.TerminateAction('order_not_found')
 
 
 # This is system plugin, which means end user can not use it!
@@ -714,7 +726,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
   def notify(self, context):
     ip_address = os.environ.get('REMOTE_ADDR')
     request = context.input.get('request')
-    ipn = request['params']
+    ipn = request['ipn']
     ipn_payment_status = ipn['payment_status']
     order = context._order
     context.message_body = ''
@@ -972,50 +984,6 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       if len(order_messages):
         raise orm.TerminateAction('duplicate_entry')
     
-    def get_charge(charge_id):
-      try:
-        return stripe.Charge.retrieve(charge_id, api_key=self.secret_key.decrypted)
-      except stripe.error.APIConnectionError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('api_connection_error')
-      except stripe.error.APIError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('api_error')
-      except stripe.error.AuthenticationError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('authentication_error')
-      except stripe.error.CardError, e:
-        tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
-        raise PluginError(e.code)
-      except stripe.error.InvalidRequestError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('invalid_request_error')
-      except stripe.error.RateLimitError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('rate_limit_error')
-    
-    def save_charge(charge):
-      try:
-        charge.save()
-      except stripe.error.APIConnectionError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('api_connection_error')
-      except stripe.error.APIError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('api_error')
-      except stripe.error.AuthenticationError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('authentication_error')
-      except stripe.error.CardError, e:
-        tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
-        raise PluginError(e.code)
-      except stripe.error.InvalidRequestError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('invalid_request_error')
-      except stripe.error.RateLimitError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
-        raise PluginError('rate_limit_error')
-    
     def set_payment_status(event):
       '''
       Here we deal with the following elements:
@@ -1025,13 +993,6 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       https://stripe.com/docs/api#refunds
       https://stripe.com/docs/api#disputes
       We deal with chrage.refund and charge dispute events ATM.
-      We can not deal with charge.updated event.
-      Charge updates may have debilitating repercussions on order
-      if seller updates metadata values (which is signaled by charge.updated).
-      This may render webhooks for particular order ineffective.
-      We can capture this event and restore metadata to original state, however,
-      saving a charge back to stripe triggers next charge.updated event,
-      thus creating loop makes a lot of complications along the way.
       '''
       def amount_message(message, amount, currency_code):
         currency_key = Unit.build_key(currency_code)
@@ -1042,8 +1003,8 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
         else:
           return ''
       
-      charge = event.data.object
       if event.type == 'charge.refunded':
+        charge = event.data.object
         if charge.amount_refunded == charge.amount:
           order.payment_status = 'Refunded'
           message_body = amount_message('\nTotal amount refunded:', charge.amount_refunded, charge.currency)
@@ -1057,6 +1018,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           message_body = amount_message('\nAmount refunded:', latest_refund.amount, latest_refund.currency)
           context.message_body = 'Payment Partially Refunded.%s' % message_body
       if event.type in ['charge.dispute.created', 'charge.dispute.closed', 'charge.dispute.funds_reinstated', 'charge.dispute.funds_withdrawn', 'charge.dispute.updated']:
+        dispute = event.data.object
         order.payment_status = 'Disputed'
         message_body = ''
         if event.type == 'charge.dispute.created':
@@ -1069,7 +1031,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           message_body = '\nDispute funds withdrawn.'
         if event.type == 'charge.dispute.updated':
           message_body = '\nDispute updated.'
-        dispute_message = amount_message('\nAmount disputed:', charge.dispute.amount, charge.dispute.currency)
+        dispute_message = amount_message('\nAmount disputed:', dispute.amount, dispute.currency)
         context.message_body = 'Payment Disputed.%s%s' % (message_body, dispute_message)
     
     # Ask Stripe for the event object.
