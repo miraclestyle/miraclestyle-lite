@@ -636,20 +636,12 @@ class OrderNotify(orm.BaseModel):
     request = context.input.get('request')
     event_object = tools.get_attr(context.input, 'request.object', '')
     event_type = tools.get_attr(context.input, 'request.type', '')
-    previous_origin = tools.get_attr(context.input, 'request.data.previous_attributes.metadata.origin')
-    previous_order_reference = tools.get_attr(context.input, 'request.data.previous_attributes.metadata.order_reference')
-    if previous_origin:
-      origin = previous_origin
-    else:
-      origin = tools.get_attr(context.input, 'request.data.object.metadata.origin')
-    if previous_order_reference:
-      order_reference = previous_order_reference
-    else:
-      order_reference = tools.get_attr(context.input, 'request.data.object.metadata.order_reference')
+    origin = tools.get_attr(context.input, 'request.data.object.metadata.origin')
+    order_reference = tools.get_attr(context.input, 'request.data.object.metadata.order_reference')
     url = tools.absolute_url('')
     tools.log.debug('Stripe Event: %s, ip: %s' % (request, ip_address))  # Control point.
     # We make sure untrusted data concerns us.
-    supported_events = ['charge.refunded', 'charge.updated', 'charge.dispute.closed',
+    supported_events = ['charge.refunded', 'charge.dispute.closed',
                         'charge.dispute.created', 'charge.dispute.funds_reinstated',
                         'charge.dispute.funds_withdrawn', 'charge.dispute.updated']
     if (event_object != 'event') or (event_type not in supported_events) or (origin != url) or (order_reference is None):
@@ -1032,12 +1024,14 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       https://stripe.com/docs/api#charges
       https://stripe.com/docs/api#refunds
       https://stripe.com/docs/api#disputes
-      Cureently we deal with charge.updated event as well.
+      We deal with chrage.refund and charge dispute events ATM.
+      We can not deal with charge.updated event.
       Charge updates may have debilitating repercussions on order
       if seller updates metadata values (which is signaled by charge.updated).
       This may render webhooks for particular order ineffective.
-      We capture this event and restore metadata to original state.
-      However, this may iritate a seller and that can be a problem.
+      We can capture this event and restore metadata to original state, however,
+      saving a charge back to stripe triggers next charge.updated event,
+      thus creating loop makes a lot of complications along the way.
       '''
       def amount_message(message, amount, currency_code):
         currency_key = Unit.build_key(currency_code)
@@ -1077,18 +1071,6 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           message_body = '\nDispute updated.'
         dispute_message = amount_message('\nAmount disputed:', charge.dispute.amount, charge.dispute.currency)
         context.message_body = 'Payment Disputed.%s%s' % (message_body, dispute_message)
-      if event.type == 'charge.updated':
-        previous_metadata = tools.get_attr(event.data, 'previous_attributes.metadata')
-        if previous_metadata:
-          new_charge = get_charge(charge.id)
-          new_charge.metadata.origin = tools.absolute_url('')
-          new_charge.metadata.order_reference = order.key_urlsafe
-          new_charge.metadata.order_url = tools.absolute_url('%s/%s/%s' % ('seller', 'order', order.key_urlsafe))
-          save_charge(new_charge)
-          context.message_body = 'Charge metadata restored.'
-        else:
-          tools.log.debug('Stripe Event: %s, ip: %s' % (event, ip_address))
-          raise orm.TerminateAction('irrelevant_event')
     
     # Ask Stripe for the event object.
     event = get_event(request['id'])
