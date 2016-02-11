@@ -1050,8 +1050,8 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                            'agent': Account.build_key('system'),
                            'body': context.message_body,
                            'payment_status': order.payment_status,
-                           'event': {}}
-    context.new_message_fields = {'event': orm.SuperJsonProperty(name='event', compressed=True, indexed=False)}  # Or should it bi pickle property?
+                           'event': event}
+    context.new_message_fields = {'event': orm.SuperPickleProperty(name='event', compressed=True, indexed=False)}  # Or should it bi json property?
 
 
 # Not a plugin!
