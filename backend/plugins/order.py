@@ -972,7 +972,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
         raise PluginError('rate_limit_error')
     
     def validate_event(event):
-      if (request != event.__dict__):
+      if (request != event):
         tools.log.error('Event Mismatch! event: %s, request: %s, ip: %s' % (event, request, ip_address))
         raise orm.TerminateAction('invalid_event')
       OrderMessage = context.models['35']
