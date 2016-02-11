@@ -2118,7 +2118,8 @@ if (window.DEBUG) {
             failedAuthentication: 'Failed authentication with the provider.',
             outOfStockLinesRemoved: 'Some of the products on the order were out of stock and have been removed from the order.',
             invalidCsrf: 'Invalid request. Please reload your browser.',
-            orderPaymentFailed: 'Error occurred on the server.',
+            orderPaymentNoPaymentMethodSupplied: 'Payments are not admitted at this moment.',
+            orderPaymentFailed: 'An error occurred on the server.',
             orderPaymentInvalidNumber: 'The card number is not a valid credit card number.',
             orderPaymentInvalidExpiryMonth: 'The card\'s expiration month is invalid.',
             orderPaymentInvalidExpiryYear: 'The card\'s expiration year is invalid.',
@@ -2216,7 +2217,7 @@ if (window.DEBUG) {
                 return false;
             },
             internal_server_error: function (errors) {
-                return 'Error occurred on the server.';
+                return 'An error occurred on the server.';
             },
             action_denied: function () {
                 return 'You do not have permission to perform this action.';
@@ -10445,7 +10446,6 @@ function msieversion() {
         .directive('encrypted', function () {
             return {
                 link: function (scope, iElement, iAttrs) {
-                    iElement.attr('type', 'password');
                 }
             };
         })
@@ -20915,7 +20915,7 @@ angular.module('app')
                                             angular.forEach($scope.product.variants, function (v, i) {
                                                 var opt = v.options[0];
                                                 if (variantSignatureAsDicts) {
-                                                    console.log(angular.isObject(variantSignatureAsDicts[i]), variantSignatureAsDicts[i]);
+                                                    //console.log(angular.isObject(variantSignatureAsDicts[i]), variantSignatureAsDicts[i]);
                                                     if (angular.isObject(variantSignatureAsDicts[i])) {
                                                         opt = _.values(variantSignatureAsDicts[i])[0];
                                                     } else {
@@ -23288,6 +23288,9 @@ angular.module('app')
                                                         $scope.stage.checkout = 1;
                                                     }, function (response) {
                                                         if (response && response.data.errors && response.data.errors.plugin_error) {
+                                                            if ($.inArray('no_payment_method_supplied', response.data.errors.plugin_error) ==! -1) {
+                                                                snackbar.showK('orderPaymentNoPaymentMethodSupplied');
+                                                            }
                                                             if ($.inArray('payment_failed', response.data.errors.plugin_error) ==! -1) {
                                                                 snackbar.showK('orderPaymentFailed');
                                                             }
