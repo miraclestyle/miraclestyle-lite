@@ -613,6 +613,7 @@ class OrderNotify(orm.BaseModel):
     request = context.input.get('request')
     ipn = request['params']
     result_content = None
+    tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, we have it recorded in OrderMessage, however, this is easier to access.
     try:
       result = urlfetch.fetch(url=url,
                               payload='cmd=_notify-validate&%s' % request['body'],
@@ -646,6 +647,7 @@ class OrderNotify(orm.BaseModel):
     else:
       order_reference = tools.get_attr(context.input, 'request.data.object.metadata.order_reference')
     url = tools.absolute_url('')
+    tools.log.debug('Stripe Event: %s, ip: %s' % (request, ip_address))  # Control point.
     # We make sure untrusted data concerns us.
     supported_events = ['charge.refunded', 'charge.updated', 'charge.dispute.closed',
                         'charge.dispute.created', 'charge.dispute.funds_reinstated',
@@ -726,7 +728,6 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     context.message_body = ''
     shipping_address = order.shipping_address.value
     order_currency = order.currency.value
-    tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, we have it recorded in OrderMessage, however, this is easier to access.
     
     def duplicate_check():
       OrderMessage = context.models['35']
