@@ -264,14 +264,13 @@ class CatalogCron(RequestHandler):
 class OrderNotifyPayPal(RequestHandler):
 
   def respond(self):
-    params = ['body', 'content_type', 'method', 'url', 'scheme', 'host', 'host_url', 'path_url',
-              'path', 'path_qs', 'query_string', 'headers', 'GET', 'POST', 'params', 'cookies']
-    input = self.get_input()
-    input.update({'action_model': '34', 'action_id': 'notify', 'payment_method': 'paypal', 'request': {}})
-    for param in params:
-      input['request'][param] = getattr(self.request, param)
+    request = self.get_input()
+    input = {'action_model': '34', 'action_id': 'notify', 'payment_method': 'paypal'}
+    input['__request__'] = request.pop('__request__', None)
+    input['request'] = {'body': getattr(self.request, 'body'), 'ipn': request}
     iom.Engine.run(input)
-    
+
+
 class OrderNotifyStripe(RequestHandler):
 
   def respond(self):
