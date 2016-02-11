@@ -927,7 +927,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                              'body': 'Payment %s.' % order.payment_status,
                              'payment_status': order.payment_status,
                              'charge': charge}
-      context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}  # Or should it bi pickle property?
+      context.new_message_fields = {'charge': orm.SuperPickleProperty(name='charge', compressed=True, indexed=False)}  # Or should it bi json property?
     except stripe.error.APIConnectionError, e:
       tools.log.error('error: %s, ip: %s' % (e, ip_address))
       raise PluginError('api_connection_error')
@@ -1051,7 +1051,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                            'body': context.message_body,
                            'payment_status': order.payment_status,
                            'event': event}
-    context.new_message_fields = {'event': orm.SuperPickleProperty(name='event', compressed=True, indexed=False)}  # Or should it bi json property?
+    context.new_message_fields = {'event': orm.SuperPickleProperty(name='event', compressed=True, indexed=False)}  # Or should it bi json property? While configured as json, this field reported an error when trying to store event object!
 
 
 # Not a plugin!
