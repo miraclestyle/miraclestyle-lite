@@ -590,25 +590,29 @@ class OrderNotify(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    order = getattr(self, 'find_order_%s' % context.input.get('payment_method'))(context)  # will throw an error if the payment method does not exist
-    raise orm.TerminateAction('stripe_test_end')
-    return
-    context._order = order
+    ip_address = os.environ.get('REMOTE_ADDR')
+    requested_payment_method = context.input.get('payment_method')
+    request = context.input.get('request')
+    order_key = getattr(self, 'find_order_key_%s' % requested_payment_method)(context)  # will throw an error if the payment method does not exist
+    order = order_key.get()
+    if not order or order.state != 'order':
+      tools.log.error('Order not found! request: %s, ip: %s' % (request, ip_address))
+      raise orm.TerminateAction('order_not_found')
     order.read({'_lines': {'config': {'search': {'options': {'limit': 0}}}}})
+    if order.payment_method != requested_payment_method:
+      tools.log.error('Payment mismatch. order_payment_method: %s, requested_payment_method: %s, ip: %s' % (order.payment_method, requested_payment_method, ip_address))
+      raise orm.TerminateAction('payment_method_mismatch')
+    context._order = order
     payment_plugin = find_payment_plugin(order)
     # payment_plugin => Instance of PaypalPayment for example.
     payment_plugin.notify(context)
 
-  def find_order_paypal(self, context):
-    options = self.cfg.get('options')
-    paypal = options['paypal']
-    url = paypal['webscr']
+  def find_order_key_paypal(self, context):
+    url = tools.get_attr(self.cfg, 'options.paypal.webscr')
+    ip_address = os.environ.get('REMOTE_ADDR')
     request = context.input.get('request')
     ipn = request['params']
-    # validate if the request came from ipn
-    ip_address = os.environ.get('REMOTE_ADDR')
     result_content = None
-    valid = False
     try:
       result = urlfetch.fetch(url=url,
                               payload='cmd=_notify-validate&%s' % request['body'],
@@ -616,27 +620,41 @@ class OrderNotify(orm.BaseModel):
                               deadline=60,
                               headers={'Content-Type': 'application/x-www-form-urlencoded', 'Connection': 'Close'})
       result_content = result.content
-      if result_content != 'VERIFIED':
-        tools.log.error('Paypal ipn message not valid, ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
-      else:
-        valid = True
     except Exception as e:
       tools.log.error('%s, ipn: %s, content: %s, ip: %s' % (e, ipn, result_content, ip_address))
-    if not valid:
-      raise orm.TerminateAction('invalid_ipn')
+    if result_content != 'VERIFIED':
+        tools.log.error('Paypal ipn message not valid. ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
+        raise orm.TerminateAction('invalid_ipn')
     if 'custom' not in ipn:
-      tools.log.error('Invalid order reference ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
-      raise orm.TerminateAction('no_order_id')
-    order_key = orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
-    order = order_key.get()
-    if not order or order.state != 'order':
-      tools.log.error('Order not found ipn: %s, content: %s, ip: %s' % (ipn, result_content, ip_address))
-      raise orm.TerminateAction('order_not_found')
-    return order
+      tools.log.debug('PayPal Event. ipn: %s, ip: %s' % (ipn, ip_address))
+      raise orm.TerminateAction('irrelevant_event')
+    return orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
   
-  def find_order_stripe(self, context):
-    # ip_address = os.environ.get('REMOTE_ADDR')
-    tools.log.debug('Stripe Event: %s' % (context.input.get('request')))
+  def find_order_key_stripe(self, context):
+    ip_address = os.environ.get('REMOTE_ADDR')
+    request = context.input.get('request')
+    event_object = tools.get_attr(context.input, 'request.object', '')
+    event_type = tools.get_attr(context.input, 'request.type', '')
+    previous_origin = tools.get_attr(context.input, 'request.data.previous_attributes.metadata.origin')
+    previous_order_reference = tools.get_attr(context.input, 'request.data.previous_attributes.metadata.order_reference')
+    if previous_origin:
+      origin = previous_origin
+    else:
+      origin = tools.get_attr(context.input, 'request.data.object.metadata.origin')
+    if previous_order_reference:
+      order_reference = previous_order_reference
+    else:
+      order_reference = tools.get_attr(context.input, 'request.data.object.metadata.order_reference')
+    url = tools.absolute_url('')
+    # We make sure untrusted data concerns us.
+    supported_events = ['charge.refunded', 'charge.updated', 'charge.dispute.closed',
+                        'charge.dispute.created', 'charge.dispute.funds_reinstated',
+                        'charge.dispute.funds_withdrawn', 'charge.dispute.updated']
+    if (event_object != 'event') or (event_type not in supported_events) or (origin != url) or (order_reference is None):
+      tools.log.debug('Stripe Event: %s, ip: %s' % (request, ip_address))
+      raise orm.TerminateAction('irrelevant_event')
+    # We verify the data in notify plugin method.
+    return orm.SuperKeyProperty(kind='34').value_format(order_reference)
 
 
 # This is system plugin, which means end user can not use it!
@@ -700,26 +718,22 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     pass
 
   def notify(self, context):
+    ip_address = os.environ.get('REMOTE_ADDR')
     request = context.input.get('request')
     ipn = request['params']
-    tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, wwe have it recorded in OrderMessage, however, this is easier to access.
     ipn_payment_status = ipn['payment_status']
     order = context._order
-    ip_address = os.environ.get('REMOTE_ADDR')
     context.message_body = ''
     shipping_address = order.shipping_address.value
     order_currency = order.currency.value
+    tools.log.debug('IPN: %s' % (ipn))  # We will keep this for some time, we have it recorded in OrderMessage, however, this is easier to access.
     
     def duplicate_check():
       OrderMessage = context.models['35']
       order_messages = OrderMessage.query(orm.GenericProperty('ipn_txn_id') == ipn['txn_id']).fetch()
       for order_message in order_messages:
         if order_message.payment_status == ipn_payment_status:
-          raise orm.TerminateAction('duplicate_entry')  # ipns that come in with same payment_status are to be rejected
-          # by the way, we cannot raise exceptions cause that will cause status code other than 200 and cause that the same
-          # ipn will be called again until it reaches 200 status response code
-          # ipn will retry for x amount of times till it gives up
-          # so we might as well use `return` statement to exit silently
+          raise orm.TerminateAction('duplicate_entry')
     
     def new_mismatch(order_value, ipn_value):
       # 'Seller settings receiver e-mail: testA@example.com - Paypal Payment receiver e-mail: testB@example.com'
@@ -888,8 +902,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     ip_address = os.environ.get('REMOTE_ADDR')
     try:
       # https://stripe.com/docs/api#create_charge
-      #
-      total = order.total_amount * (Decimal('10') ** order.currency.value.digits)  # I think it is better to do it with long(). But here it is, just in case we need it: amount=(order.total_amount * (10 ** order.currency.value.digits)).quantize(order.currency.value.digits, rounding=ROUND_DOWN)
+      total = order.total_amount * (Decimal('10') ** order.currency.value.digits)  # I think it is better to do it with long(). But here it is, just in case we need it: amount=(order.total_amount * (Decimal('10') ** order.currency.value.digits)).quantize(Decimal('10') ** order.currency.value.digits, rounding=ROUND_DOWN)
       charge = stripe.Charge.create(
           api_key=self.secret_key.decrypted, # apikey must be passed here because you cannot set module level apikey globally
           amount=long(total), # amount in smallest currency unit. https://stripe.com/docs/api#create_charge-amount, casting it into integer
@@ -897,7 +910,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
           source=token,
           description='MIRACLESTYLE Sales Order #%s' % order.key_id_str,
           statement_descriptor=order._seller.value.name,
-          metadata={'order_key': order.key_urlsafe, 'order_url': tools.absolute_url('%s/%s/%s' % ('seller', 'order', order.key_urlsafe))}
+          metadata={'origin': tools.absolute_url(''), 'order_reference': order.key_urlsafe, 'order_url': tools.absolute_url('%s/%s/%s' % ('seller', 'order', order.key_urlsafe))}
       )
       tools.log.debug('Stripe Charge: %s, ip: %s' % (charge, ip_address))
       order.state = 'order'
@@ -909,7 +922,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                              'body': 'Payment %s.' % order.payment_status,
                              'payment_status': order.payment_status,
                              'charge': charge}
-      context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}
+      context.new_message_fields = {'charge': orm.SuperJsonProperty(name='charge', compressed=True, indexed=False)}  # Or should it bi pickle property?
     except stripe.error.APIConnectionError, e:
       tools.log.error('error: %s, ip: %s' % (e, ip_address))
       raise PluginError('api_connection_error')
@@ -930,7 +943,180 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       raise PluginError('rate_limit_error')
 
   def notify(self, context):
-    pass
+    ip_address = os.environ.get('REMOTE_ADDR')
+    request = context.input.get('request')
+    event_id = tools.get_attr(context.input, 'request.id')
+    event_type = tools.get_attr(context.input, 'request.type')
+    request_metadata = tools.get_attr(context.input, 'request.data.object.metadata')
+    previous_request_metadata = tools.get_attr(context.input, 'request.data.previous_attributes.metadata')
+    order = context._order
+    context.message_body = ''
+    
+    def get_event(event_id):
+      try:
+        return stripe.Event.retrieve(event_id, api_key=self.secret_key.decrypted)
+      except stripe.error.APIConnectionError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('api_connection_error')
+      except stripe.error.APIError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('api_error')
+      except stripe.error.AuthenticationError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('authentication_error')
+      except stripe.error.CardError, e:
+        tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
+        raise PluginError(e.code)
+      except stripe.error.InvalidRequestError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('invalid_request_error')
+      except stripe.error.RateLimitError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('rate_limit_error')
+    
+    def validate_event(event):
+      event_metadata = tools.get_attr(event.data, 'object.metadata')
+      previous_event_metadata = tools.get_attr(event.data, 'previous_attributes.metadata')
+      if (event.object != 'event' or event.type != event_type or event_metadata != request_metadata or previous_event_metadata != previous_request_metadata):
+        tools.log.error('Event Mismatch! event: %s, request: %s, ip: %s' % (event, request, ip_address))
+        raise orm.TerminateAction('invalid_event')
+      OrderMessage = context.models['35']
+      order_messages = OrderMessage.query(orm.GenericProperty('event_id') == event.id).fetch()
+      if len(order_messages):
+        raise orm.TerminateAction('duplicate_entry')
+    
+    def get_charge(charge_id):
+      try:
+        return stripe.Charge.retrieve(charge_id, api_key=self.secret_key.decrypted)
+      except stripe.error.APIConnectionError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('api_connection_error')
+      except stripe.error.APIError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('api_error')
+      except stripe.error.AuthenticationError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('authentication_error')
+      except stripe.error.CardError, e:
+        tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
+        raise PluginError(e.code)
+      except stripe.error.InvalidRequestError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('invalid_request_error')
+      except stripe.error.RateLimitError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('rate_limit_error')
+    
+    def save_charge(charge):
+      try:
+        charge.save()
+      except stripe.error.APIConnectionError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('api_connection_error')
+      except stripe.error.APIError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('api_error')
+      except stripe.error.AuthenticationError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('authentication_error')
+      except stripe.error.CardError, e:
+        tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
+        raise PluginError(e.code)
+      except stripe.error.InvalidRequestError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('invalid_request_error')
+      except stripe.error.RateLimitError, e:
+        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        raise PluginError('rate_limit_error')
+    
+    def set_payment_status(event):
+      '''
+      Here we deal with the following elements:
+      https://stripe.com/docs/api#events
+      https://stripe.com/docs/api#event_types
+      https://stripe.com/docs/api#charges
+      https://stripe.com/docs/api#refunds
+      https://stripe.com/docs/api#disputes
+      Cureently we deal with charge.updated event as well.
+      Charge updates may have debilitating repercussions on order
+      if seller updates metadata values (which is signaled by charge.updated).
+      This may render webhooks for particular order ineffective.
+      We capture this event and restore metadata to original state.
+      However, this may iritate a seller and that can be a problem.
+      '''
+      def amount_message(message, amount, code):
+        currency_key = Unit.build_key(latest_refund.currency)
+        currency = currency_key.get()
+        if currency:
+          reverted_amount = (Decimal(amount) * (Decimal('10') ** -currency.digits)).quantize(Decimal('10') ** -currency.digits, rounding=ROUND_DOWN)
+          return '%s %s %s.' % (message, currency.code, reverted_amount)
+        else:
+          return ''
+      
+      charge = event.data.object
+      if event.type == 'charge.refunded':
+        if charge.amount_refunded == charge.amount:
+          order.payment_status = 'Refunded'
+        else:
+          latest_refund = None
+          for refund in charge.refunds.data:
+            if (latest_refund is None) or (latest_refund.created < refund.created):
+              latest_refund = refund
+          order.payment_status = 'Partially Refunded'
+        message_body = amount_message('\nAmount refunded:', latest_refund.amount, latest_refund.currency)
+        context.message_body = 'Payment %s.%s' % (order.payment_status, message_body)
+      if event.type in ['charge.dispute.created', 'charge.dispute.closed', 'charge.dispute.funds_reinstated', 'charge.dispute.funds_withdrawn', 'charge.dispute.updated']:
+        order.payment_status = 'Disputed'
+        dispute_message = amount_message('\nAmount disputed:', charge.dispute.amount, charge.dispute.currency)
+        message_body = ''
+        if event.type == 'charge.dispute.created':
+          message_body = '\nDispute created.'
+        if event.type == 'charge.dispute.closed':
+          message_body = '\nDispute closed.'
+        if event.type == 'charge.dispute.funds_reinstated':
+          message_body = '\nDispute funds reinstated.'
+        if event.type == 'charge.dispute.funds_withdrawn':
+          message_body = '\nDispute funds withdrawn.'
+        if event.type == 'charge.dispute.updated':
+          message_body = '\nDispute updated.'
+        context.message_body = 'Payment %s.%s%s' % ('Disputed', message_body, dispute_message)
+        context.message_body = '%s %s' % (message_body, dispute_message)
+      if event.type == 'charge.updated':
+        previous_metadata = tools.get_attr(event.data, 'previous_attributes.metadata')
+        if previous_metadata:
+          if previous_metadata.origin or previous_metadata.order_reference:
+            new_charge = get_charge(charge.id)
+            if previous_metadata.origin:
+              new_charge.metadata.origin = previous_metadata.origin
+            if previous_metadata.order_reference:
+              new_charge.metadata.order_reference = previous_metadata.order_reference
+            save_charge(new_charge)
+            context.message_body = '\nCharge metadata restored.'
+          else:
+            tools.log.debug('Stripe Event: %s, ip: %s' % (event, ip_address))
+            raise orm.TerminateAction('irrelevant_event')
+        else:
+          tools.log.debug('Stripe Event: %s, ip: %s' % (event, ip_address))
+          raise orm.TerminateAction('irrelevant_event')
+    
+    # Ask Stripe for the event object.
+    event = get_event(event_id)
+    
+    # Verify event is genuine and check for event duplicates.
+    validate_event(event)
+    
+    set_payment_status(event)
+    
+    # Produce final message
+    Account = context.models['11']
+    context.new_message = {'event_id': event.id,
+                           'action': context.action.key,
+                           'ancestor': order.key,
+                           'agent': Account.build_key('system'),
+                           'body': context.message_body,
+                           'payment_status': order.payment_status,
+                           'event': event}
+    context.new_message_fields = {'event': orm.SuperJsonProperty(name='event', compressed=True, indexed=False)}  # Or should it bi pickle property?
 
 
 # Not a plugin!
