@@ -654,7 +654,6 @@ class OrderNotify(orm.BaseModel):
       OrderMessage = context.models['35']
       order_message = OrderMessage.query(orm.GenericProperty('charge_id') == charge_id).get()
       if isinstance(order_message, OrderMessage):
-        tools.log.debug('Order Message: %s, ip: %s' % (order_message, ip_address))
         return order_message.key_parent
       else:
         tools.log.error('Order not found! request: %s, ip: %s' % (request, ip_address))
@@ -1480,6 +1479,3 @@ class OrderDiscountPlugin(orm.BaseModel):
             if discount_line.evaluate_condition(price_data):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
               break
-
-
-
