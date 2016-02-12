@@ -577,6 +577,9 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   transactional=True,
                   plugins=[
+                      # Transaction failures can still cause payment charges to succeed.
+                      # Isolate as little plugins as possible in transaction to minimize transaction failures.
+                      # We can also implement a two step payment to make the payment more robust.
                       OrderPay(),
                       OrderSetMessage(cfg={
                         'expando_fields': 'new_message_fields',
@@ -585,7 +588,11 @@ class Order(orm.BaseExpando):
                       Write(),
                       RulePrepare(),
                       DeleteCache(cfg=DELETE_CACHE_POLICY),
-                      Set(cfg={'d': {'output.entity': '_order'}}),
+                      Set(cfg={'d': {'output.entity': '_order'}})
+                  ]
+              ),
+              orm.PluginGroup(
+                  plugins=[
                       # both seller and buyer must get the message
                       Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
                                         'for_seller': False,
@@ -597,7 +604,7 @@ class Order(orm.BaseExpando):
                                         'subject': notifications.ORDER_NOTIFY_SUBJECT,
                                         'body': notifications.ORDER_NOTIFY_BODY},
                                   'd': {'recipient': '_order.seller_email'}}),
-                      OrderFailTransaction()
+                      FailTransaction()
                   ]
               )
           ]
@@ -613,7 +620,12 @@ class Order(orm.BaseExpando):
                       Context(),
                       Read(),
                       RulePrepare(),
-                      RuleExec(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=True,
+                  plugins=[
                       OrderNotifyTrackerSeen()
                   ]
               )
@@ -636,7 +648,7 @@ class Order(orm.BaseExpando):
                   ]
               ),
               orm.PluginGroup(
-                  transactional=False,
+                  transactional=True,
                   plugins=[
                       Write(),
                       Set(cfg={'d': {'output.entity': '_order'}}),
@@ -655,7 +667,12 @@ class Order(orm.BaseExpando):
                       Context(),
                       Read(),
                       RulePrepare(),
-                      RuleExec(),
+                      RuleExec()
+                  ]
+              ),
+              orm.PluginGroup(
+                  transactional=False,
+                  plugins=[
                       OrderCronNotify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
                                                  'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
                                                  'body': notifications.ORDER_LOG_MESSAGE_BODY},
