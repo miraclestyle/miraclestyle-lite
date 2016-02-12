@@ -596,7 +596,8 @@ class Order(orm.BaseExpando):
                                         'for_seller': True,
                                         'subject': notifications.ORDER_NOTIFY_SUBJECT,
                                         'body': notifications.ORDER_NOTIFY_BODY},
-                                  'd': {'recipient': '_order.seller_email'}})
+                                  'd': {'recipient': '_order.seller_email'}}),
+                      OrderFailTransaction()
                   ]
               )
           ]
