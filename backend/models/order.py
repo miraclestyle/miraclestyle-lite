@@ -569,9 +569,7 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   plugins=[
                       Context(),
-                      Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
-                      RulePrepare(),
-                      RuleExec()
+                      Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}})
                   ]
               ),
               orm.PluginGroup(
@@ -585,6 +583,8 @@ class Order(orm.BaseExpando):
                         'expando_fields': 'new_message_fields',
                         'expando_values': 'new_message'
                       }),
+                      RulePrepare(),
+                      RuleExec(),
                       Write(),
                       RulePrepare(),
                       DeleteCache(cfg=DELETE_CACHE_POLICY),
