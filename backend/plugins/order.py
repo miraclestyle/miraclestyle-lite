@@ -1480,7 +1480,7 @@ class OrderDiscountPlugin(orm.BaseModel):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
               break
 
-class OrderFailTransaction(orm.BaseModel):
+class FailTransaction(orm.BaseModel):
   
   def run(self, context):
     new_var = None
