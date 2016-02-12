@@ -673,6 +673,7 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   transactional=False,
                   plugins=[
+                      # This plugin isolates its parts in transaction, so the group is wrapped in transaction.
                       OrderCronNotify(cfg={'s': {'sender': settings.NOTIFY_EMAIL,
                                                  'subject': notifications.ORDER_LOG_MESSAGE_SUBJECT,
                                                  'body': notifications.ORDER_LOG_MESSAGE_BODY},
