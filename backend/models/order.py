@@ -287,7 +287,6 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission('delete', condition_taskqueue),
       orm.ExecuteActionPermission(('cron', 'cron_notify'), condition_cron),
       orm.ExecuteActionPermission('see_messages', condition_root_or_owner_or_seller),
-      orm.ExecuteActionPermission('pay', condition_pay),
       orm.ExecuteActionPermission('notify', condition_notify),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
@@ -571,11 +570,6 @@ class Order(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(cfg={'read': {'_lines': {'config': {'search': {'options': {'limit': 0}}}}}}),
-                      OrderPay(),
-                      OrderSetMessage(cfg={
-                        'expando_fields': 'new_message_fields',
-                        'expando_values': 'new_message'
-                      }),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -583,6 +577,11 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   transactional=True,
                   plugins=[
+                      OrderPay(),
+                      OrderSetMessage(cfg={
+                        'expando_fields': 'new_message_fields',
+                        'expando_values': 'new_message'
+                      }),
                       Write(),
                       RulePrepare(),
                       DeleteCache(cfg=DELETE_CACHE_POLICY),
