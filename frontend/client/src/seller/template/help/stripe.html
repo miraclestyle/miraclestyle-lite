@@ -1,1 +1,43 @@
-When you input the "Secret key" value and save the settings your data is sent over encrypted network connection to our servers and, prior to being stored in our database, the value is encrypted with a separate encryption key. After that, the value is never returned from the servers, and, therefore, remains invisible to you. The value is used to charge a buyer's card on behalf of your Stripe account when the buyer makes and purchase from you. This practice adds another layer of security to the value and protects it from malicious data reads that may occur under circumstances such as compromised sign-in identity account.
+<div class="padding-bottom-8">
+                    When you input the "Secret key" value and save
+                    the settings your data is sent over encrypted network connection
+                    to our servers and, prior to being stored in our database,
+                    the value is encrypted with a separate encryption key.
+                    After that, the value is never returned from the servers,
+                    and, therefore, remains invisible to you.
+                    The value is used to charge a buyer's card on behalf
+                    of your Stripe account when the buyer makes and purchase from you.
+                    This practice adds another layer of security to
+                    the value and protects it from malicious
+                    data reads that may occur under circumstances such as
+                    compromised sign-in identity account.
+                  </div>
+                  <div class="padding-bottom-8">
+                    To ensure that the Miraclestyle app receives important updates
+                    regarding the charges previously occurred
+                    on the app proceed with the following steps:
+                  </div>
+                  <div>
+                    - copy the "Webhook endpoint" value from below;
+                  </div>
+                  <div>
+                    - navigate to your Stripe account webhook settings (<a href="https://dashboard.stripe.com/account/webhooks" target="_blank">https://dashboard.stripe.com/account/webhooks</a>);
+                  </div>
+                  <span>
+                    - click "+ Add endpoint..." button;
+                  </div>
+                  <div>
+                    - paste the copied "Webhook endpoint" value in the "URL" field;
+                  </div>
+                  <div>
+                    - select the "live Mode";
+                  </div>
+                  <div>
+                    - from "Select events" mark "charge.refunded" checkbox and all checkboxes that begin with "charge.dispute.";
+                  </div>
+                  <div class="padding-bottom-8">
+                    - click "Create endpoint" button to finish.
+                  </div>
+                  <div>
+                    For more information on webhooks please consult Stripe documentation at <a href="https://stripe.com/docs/webhooks" target="_blank">https://stripe.com/docs/webhooks</a>.
+                  </div>
