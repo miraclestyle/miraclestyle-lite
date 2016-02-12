@@ -61,11 +61,9 @@ class Seller(orm.BaseExpando):
     return account._is_taskqueue
 
   _permissions = [
-      orm.ExecuteActionPermission(('create', 'update', 'prepare'), condition_not_guest_and_owner),
-      orm.ExecuteActionPermission('read', condition_owner_active),
+      orm.ExecuteActionPermission(('create', 'read', 'update', 'prepare'), condition_not_guest_and_owner),
       orm.ExecuteActionPermission('far_cache_groups_flush', condition_owner_active),
-      orm.ReadFieldPermission(('_plugin_group'), condition_not_guest_and_owner),
-      orm.ReadFieldPermission(('name', 'logo', '_currency', '_stripe_publishable_key'), condition_owner_active),
+      orm.ReadFieldPermission(('name', 'logo', '_plugin_group', '_currency', '_stripe_publishable_key'), condition_not_guest_and_owner),
       orm.WriteFieldPermission(('name', 'logo', '_plugin_group', '_records'), condition_not_guest_and_owner)
   ]
 
