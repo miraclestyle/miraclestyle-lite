@@ -957,14 +957,6 @@
                                     return sellerTrack;
                                 };
 
-                                $scope.catalogMenu.stateChanged = function (state) {
-                                    if (state) {
-                                        track.openCatalogDrawer();
-                                    } else {
-                                        track.closeCatalogDrawer();
-                                    }
-                                };
-
 
                             });
                         })

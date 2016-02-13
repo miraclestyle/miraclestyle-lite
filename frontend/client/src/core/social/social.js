@@ -8,21 +8,19 @@
                 if (!$scope.share) {
                     $scope.share = {};
                 }
-                if (!$scope.share.menu) {
-                    $scope.$watch('share.menu.stateChanged', function (v1, v2) {
-                        if (v1) {
-                            track.openShareDrawer();
-                        } else {
-                            track.closeShareDrawer();
-                        }
-                    });
-                }
                 return (function ($scope) {
 
                     if (!$scope.menu) {
                         $scope.menu = {};
                         helpers.sideNav.setup($scope.menu, 'sharer');
                     }
+                    $scope.menu.stateChanged = function (v1, v2) {
+                        if (v1) {
+                            track.openShareDrawer();
+                        } else {
+                            track.closeShareDrawer();
+                        }
+                    };
 
                     $scope.socials = [{
                         name: 'Facebook',

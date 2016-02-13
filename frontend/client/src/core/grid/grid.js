@@ -241,7 +241,10 @@
                         marginRight: ''
                     });
                     if (that.columns) {
-                        item.css('width', 'calc((' + (100 / that.columns) + '%) - ' + (that.config.margin * 2) + 'px)');
+                        var colsize = (100 / that.columns);
+                        if (colsize > 0) {
+                            item.css('width', 'calc((' + colsize + '%) - ' + (that.config.margin * 2) + 'px)');
+                        }
                     } else {
                         item.css('width', '');
                     }
