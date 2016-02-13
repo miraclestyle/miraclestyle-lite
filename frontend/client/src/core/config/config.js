@@ -308,6 +308,7 @@
                 price_type: 'Price formula that calculates this price.'
             },
             '114': {
+                webhook_endpoint: 'Live webhook endpoint that you have to setup in your Stripe account settings. For more details read the "Sell with confidence" on this form.',
                 secret_key: 'Live secret key that you can find in your Stripe account settings. Once you save the settings, this value will be encrypted before it is stored in the MIRACLESTYLE app database. For more details read the "Sell with confidence" on this form.',
                 publishable_key: 'Live publishable key that you can find in your Stripe account settings.'
             },

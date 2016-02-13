@@ -664,6 +664,17 @@
                                                     code_name: 'spacetext',
                                                     ui: {}
                                                 });
+
+                                                fields.push({
+                                                    _maker_: '114',
+                                                    type: 'SuperStringProperty',
+                                                    name: fields.length * 2 + 1,
+                                                    code_name: 'webhook_endpoint',
+                                                    required: false,
+                                                    ui: {}
+                                                });
+
+                                                $scope.args.webhook_endpoint = helpers.url.abs('api/order/notify/stripe');
                                             }
                                             fields.sort(helpers.fields.sorter);
                                             config.ui.specifics.fields = fields;
