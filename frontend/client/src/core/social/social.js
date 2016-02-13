@@ -13,13 +13,18 @@
                     if (!$scope.menu) {
                         $scope.menu = {};
                         helpers.sideNav.setup($scope.menu, 'sharer');
+                        $scope.menu.stateChanged = function (v1, v2) {
+                            var track = $scope.menu.getTracker();
+                            if (v1) {
+                                track.openShareDrawer();
+                            } else {
+                                track.closeShareDrawer();
+                            }
+                        };
                     }
-                    $scope.menu.stateChanged = function (v1, v2) {
-                        if (v1) {
-                            track.openShareDrawer();
-                        } else {
-                            track.closeShareDrawer();
-                        }
+
+                    $scope.menu.getTracker = function () {
+                        return track;
                     };
 
                     $scope.socials = [{
