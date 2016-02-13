@@ -769,6 +769,8 @@
                                             $scope.container.messages.$setSubmitted(true);
                                             $scope.container.messages.$setPristine(true);
                                             $scope.messages.forceReflow();
+                                            copydraft.key = $scope.order.key;
+                                            newMessage.key = $scope.order.key;
                                             if (justMessage) {
                                                 return newMessage;
                                             }
