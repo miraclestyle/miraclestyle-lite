@@ -125,7 +125,7 @@ def absolute_url(path):
   host = webapp2.get_request().host
   if settings.NOTIFICATION_HOSTNAME:
     host = settings.NOTIFICATION_HOSTNAME
-  return '%s/%s' % (settings.get_host_url(webapp2.get_request().host), path)
+  return '%s/%s' % (settings.get_host_url(host), path)
 
 
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
