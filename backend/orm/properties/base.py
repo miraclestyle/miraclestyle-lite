@@ -18,6 +18,8 @@ from ..base import *
 import tools
 import settings
 
+import Image
+
 
 class FormatError(Exception):
   pass
@@ -637,19 +639,19 @@ class _BaseImageProperty(_BaseBlobProperty):
     mapper(values).get_result()
 
   def generate_measurements(self, values):
-    """
-    max_read_size = 64
     for value in values:
       if value.proportion is None:
         if settings.DEVELOPMENT_SERVER:
           r = urlfetch.fetch('%s=s1000' % value.serving_url, deadline=60)
-          data = r.content[:max_read_size]
+          data = r.content
+          image = images.Image(image_data=data)
+          value.proportion = float(image.width) / float(image.height)
         else:
           with cloudstorage.open(value.gs_object_name[3:], 'r') as f:
-            data = f.read(max_read_size)
-        image = images.Image(image_data=data)
-        value.proportion = float(image.width) / float(image.height)
-    """
+            image = Image.open(f)
+            width, height = image.size
+            value.proportion = float(width) / float(height)
+    return
     ctx = get_context()
 
     @tasklet
