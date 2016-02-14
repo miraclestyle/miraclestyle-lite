@@ -7,10 +7,12 @@ Created on Jul 9, 2013
 
 import cgi
 import copy
+import requests
 
 import cloudstorage
 from google.appengine.ext import blobstore
 from google.appengine.api import images, urlfetch
+
 
 from ..base import *
 import tools
@@ -635,6 +637,19 @@ class _BaseImageProperty(_BaseBlobProperty):
     mapper(values).get_result()
 
   def generate_measurements(self, values):
+    """
+    max_read_size = 64
+    for value in values:
+      if value.proportion is None:
+        if settings.DEVELOPMENT_SERVER:
+          r = urlfetch.fetch('%s=s1000' % value.serving_url, deadline=60)
+          data = r.content[:max_read_size]
+        else:
+          with cloudstorage.open(value.gs_object_name[3:], 'r') as f:
+            data = f.read(max_read_size)
+        image = images.Image(image_data=data)
+        value.proportion = float(image.width) / float(image.height)
+    """
     ctx = get_context()
 
     @tasklet

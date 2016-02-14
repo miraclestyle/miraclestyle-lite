@@ -21,6 +21,7 @@ MIRACLESTYLE_SETTINGS = {
   'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 10, 'seconds': 0},
   'BUCKET_PATH': 'themiraclestyle.appspot.com',
   'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
+  'NOTIFICATION_HOSTNAME': 'miraclestyle.com', # probably we need this because it might also use backend. prefix, needs to be tested
   'GOOGLE_OAUTH2': {
     'client_id': '794606722914-tue5sq5v7b459lq4rorvtm98m421pioj.apps.googleusercontent.com', 
     'client_secret': 'pvUWETG11c8mRh1IwN0qjYnm'
@@ -57,12 +58,14 @@ HOSTS_SPECIFIC_SETTINGS = {
     'LAG': False
   },
   'themiraclestyle-testing-site.appspot.com': {
-    'FORCE_SSL': True
+    'FORCE_SSL': True,
+    'NOTIFICATION_HOSTNAME': 'themiraclestyle-testing-site.appspot.com'
   },
   'themiraclestyle.appspot.com': MIRACLESTYLE_SETTINGS,
   'miraclestyle.com': MIRACLESTYLE_SETTINGS,
   'www.miraclestyle.com': MIRACLESTYLE_SETTINGS
 }
+
 
 HOST_SPECIFIC_SETTINGS = HOSTS_SPECIFIC_SETTINGS.get(HOST_NAME, DEFAULT_HOST_SETTINGS)
 for k, v in DEFAULT_HOST_SETTINGS.items():
@@ -70,6 +73,7 @@ for k, v in DEFAULT_HOST_SETTINGS.items():
     HOST_SPECIFIC_SETTINGS[k] = v
 
 # Server side config
+NOTIFICATION_HOSTNAME = HOSTS_SPECIFIC_SETTINGS.get('NOTIFICATION_HOSTNAME', None) # none to use current request's hostname
 FORCE_SSL = HOST_SPECIFIC_SETTINGS['FORCE_SSL']
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 SILENCE_STDOUT = False
