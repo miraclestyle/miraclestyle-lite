@@ -1753,7 +1753,7 @@ if (window.DEBUG) {
         GLOBAL_CONFIG.tracker.catalogHome.cart = GLOBAL_CONFIG.tracker.cartHomeCatalog;
         GLOBAL_CONFIG.tracker.catalogSellerCatalogs.cart = GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog;
         GLOBAL_CONFIG.tracker.catalogLink.cart = GLOBAL_CONFIG.tracker.cartLinkCatalog;
-        GLOBAL_CONFIG.tracker.catalogLinkByProduct = GLOBAL_CONFIG.tracker.cartLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogLinkByProduct.cart = GLOBAL_CONFIG.tracker.cartLinkCatalog;
         GLOBAL_CONFIG.tracker.catalogEmbed.cart = GLOBAL_CONFIG.tracker.cartEmbedCatalog;
 
         GLOBAL_CONFIG.tracker.cartHomeCatalog.product = GLOBAL_CONFIG.tracker.productHomeCatalogCart;
