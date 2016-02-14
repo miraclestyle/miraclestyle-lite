@@ -102,6 +102,7 @@ class OrderCronNotify(orm.BaseModel):
     tools.log.debug('Sending %s trackers' % len(notifications))
     for notification in notifications:
       tracker, message_count, order = notification
+      order.read() # will autoload stuff
       buyer = order.key_root.get()
       seller = order.seller_reference._root.get()
       recipient = None
