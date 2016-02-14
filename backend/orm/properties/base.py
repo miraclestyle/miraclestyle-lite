@@ -651,32 +651,7 @@ class _BaseImageProperty(_BaseBlobProperty):
             image = Image.open(f)
             width, height = image.size
             value.proportion = float(width) / float(height)
-    return
-    ctx = get_context()
-
-    @tasklet
-    def measure(value):
-      if value.proportion is None:
-        pause = 0.5
-        for i in xrange(4):
-          try:
-            # http://stackoverflow.com/q/14944317/376238
-            fetched_image = yield ctx.urlfetch('%s=s1000' % value.serving_url, deadline=60)
-            break
-          except Exception as e:
-            time.sleep(pause)
-            pause = pause * 2
-        image = images.Image(image_data=fetched_image.content)
-        value.proportion = float(image.width) / float(image.height)
-        raise Return(True)
-
-    @tasklet
-    def mapper(values):
-      yield map(measure, values)
-      raise Return(True)
-
-    mapper(values).get_result()
-
+            
   def process(self, values):
     ''' @note
     This method is primarily used for images' transformation and copying.
