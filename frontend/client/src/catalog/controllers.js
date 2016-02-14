@@ -44,7 +44,7 @@
                 outDirection: false,
                 link: true,
                 productLink: true,
-                track: helpers.track.events.catalogLink,
+                track: helpers.track.events.catalogLinkByProduct,
                 variantSignatureAsDicts: helpers.url.jsonFromUrlsafe($state.params.variant),
                 afterClose: function () {
                     $state.go('home');
@@ -62,7 +62,7 @@
                 inDirection: false,
                 outDirection: false,
                 productLink: true,
-                track: helpers.track.events.catalogLink,
+                track: helpers.track.events.catalogLinkByProduct,
                 afterClose: function () {
                     $state.go('home');
                 },

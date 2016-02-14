@@ -209,6 +209,7 @@
             catalogHome: locals.makeActions('Home', locals.catalogActions),
             catalogSellerCatalogs: locals.makeActions('Seller / Catalogs', locals.catalogActions),
             catalogLink: locals.makeActions('Link', locals.catalogActions),
+            catalogLinkByProduct: locals.makeActions('Link', locals.catalogActions),
             catalogEmbed: locals.makeActions('Embed', locals.catalogActions),
 
             productHomeCatalog: locals.makeActions('Home / Catalog', locals.productActions),
@@ -244,12 +245,14 @@
         GLOBAL_CONFIG.tracker.catalogHome.product = GLOBAL_CONFIG.tracker.productHomeCatalog;
         GLOBAL_CONFIG.tracker.catalogSellerCatalogs.product = GLOBAL_CONFIG.tracker.productSellerCatalogsCatalog;
         GLOBAL_CONFIG.tracker.catalogLink.product = GLOBAL_CONFIG.tracker.productLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogLinkByProduct.product = GLOBAL_CONFIG.tracker.productLink;
         GLOBAL_CONFIG.tracker.catalogEmbed.product = GLOBAL_CONFIG.tracker.productEmbedCatalog;
 
         GLOBAL_CONFIG.tracker.catalogHome.cart = GLOBAL_CONFIG.tracker.cartHomeCatalog;
         GLOBAL_CONFIG.tracker.catalogSellerCatalogs.cart = GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog;
         GLOBAL_CONFIG.tracker.catalogLink.cart = GLOBAL_CONFIG.tracker.cartLinkCatalog;
-        GLOBAL_CONFIG.tracker.catalogEmbed.cart = GLOBAL_CONFIG.tracker.cartBuyerCarts;
+        GLOBAL_CONFIG.tracker.catalogLinkByProduct = GLOBAL_CONFIG.tracker.cartLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogEmbed.cart = GLOBAL_CONFIG.tracker.cartEmbedCatalog;
 
         GLOBAL_CONFIG.tracker.cartHomeCatalog.product = GLOBAL_CONFIG.tracker.productHomeCatalogCart;
         GLOBAL_CONFIG.tracker.cartSellerCatalogsCatalog.product = GLOBAL_CONFIG.tracker.productSellerCatalogsCatalogCart;
@@ -266,6 +269,7 @@
         GLOBAL_CONFIG.tracker.catalogHome.seller = GLOBAL_CONFIG.tracker.sellerHomeCatalog;
         GLOBAL_CONFIG.tracker.catalogSellerCatalogs.seller = GLOBAL_CONFIG.tracker.sellerSellerCatalogsCatalog;
         GLOBAL_CONFIG.tracker.catalogLink.seller = GLOBAL_CONFIG.tracker.sellerLinkCatalog;
+        GLOBAL_CONFIG.tracker.catalogLinkByProduct.seller = GLOBAL_CONFIG.tracker.sellerLinkCatalog;
         GLOBAL_CONFIG.tracker.catalogEmbed.seller = GLOBAL_CONFIG.tracker.sellerEmbedCatalog;
 
 
