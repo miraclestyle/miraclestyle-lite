@@ -12,13 +12,13 @@
   {% if account.key == entity.seller_reference._root %}
   {% if entity.state == 'cart' %}
   Seller
-  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name}}</a>"
+  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.name}}</a>"
   left {% if message_count > 1 %}{{message_count}} messages{% else %}a message{% endif %} on your
   <a href="{{order_link(entity, for_seller)}}">cart</a>.
   {% endif %}
   {% if entity.state != 'cart' %}
   Seller
-  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.value.name}}</a>"
+  "<a href="{{absolute_url('seller/%s' % entity.seller_reference.urlsafe())}}">{{entity._seller.name}}</a>"
   left {% if message_count > 1 %}{{message_count}} messages{% else %}a message{% endif %} on your order
   "<a href="{{order_link(entity, for_seller)}}">#{{entity.key_id}}</a>."
   {% endif %}
