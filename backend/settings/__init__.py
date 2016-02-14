@@ -37,7 +37,7 @@ DEFAULT_HOST_SETTINGS = {
   }
 }
 
-MIRACLESTYLE_SETTINGS = {
+PRODUCTION_HOST_SETTINGS = {
   'DEBUG': False,
   'FORCE_SSL': True,
   'CATALOG_UNPUBLISHED_LIFE': 15,
@@ -60,10 +60,9 @@ HOSTS_SPECIFIC_SETTINGS = {
     'LAG': False,
     'NOTIFICATION_HOSTNAME': None
   },
-  'themiraclestyle-testing-site.appspot.com': DEFAULT_HOST_SETTINGS,
-  'themiraclestyle.appspot.com': MIRACLESTYLE_SETTINGS,
-  'miraclestyle.com': MIRACLESTYLE_SETTINGS,
-  'www.miraclestyle.com': MIRACLESTYLE_SETTINGS
+  'themiraclestyle.appspot.com': PRODUCTION_HOST_SETTINGS,
+  'miraclestyle.com': PRODUCTION_HOST_SETTINGS,
+  'www.miraclestyle.com': PRODUCTION_HOST_SETTINGS
 }
 
 
