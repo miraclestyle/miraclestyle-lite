@@ -11,7 +11,33 @@ import os
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 
-MIRACLESTYLE_SETTINGS = {
+DEFAULT_HOST_SETTINGS = {
+  'DEBUG': True,
+  'FORCE_SSL': True,
+  'LAG': False,
+  'CATALOG_UNPUBLISHED_LIFE': 1,
+  'CATALOG_DISCONTINUED_LIFE': 1,
+  'ORDER_CART_LIFE': 1,
+  'ORDER_UNPAID_LIFE': 1,
+  'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 0, 'seconds': 30},
+  'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
+  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
+  'NOTIFICATION_HOSTNAME': 'themiraclestyle-testing-site.appspot.com',
+  'GOOGLE_OAUTH2': {
+    'client_id': '262487344336-vkpvegjrp7q3isfr73vod7q9m0piu9gd.apps.googleusercontent.com', 
+    'client_secret': 'AtUlgzsKycfOueKYUrX6CYIn'
+  },
+  'FACEBOOK_OAUTH2': {
+    'client_id': '114231673409', 
+    'client_secret': '7a467a6d24ba35343d09ce672faf98c2'
+  },
+  'LINKEDIN_OAUTH2': {
+    'client_id': '77xclva9s9qsex', 
+    'client_secret': 'cYHLJehkmDGm1j9n'
+  }
+}
+
+PRODUCTION_HOST_SETTINGS = {
   'DEBUG': False,
   'FORCE_SSL': True,
   'CATALOG_UNPUBLISHED_LIFE': 15,
@@ -28,42 +54,15 @@ MIRACLESTYLE_SETTINGS = {
   }
 }
 
-DEFAULT_HOST_SETTINGS = {
-  'DEBUG': True,
-  'FORCE_SSL': False,
-  'LAG': False,
-  'CATALOG_UNPUBLISHED_LIFE': 1,
-  'CATALOG_DISCONTINUED_LIFE': 1,
-  'ORDER_CART_LIFE': 1,
-  'ORDER_UNPAID_LIFE': 1,
-  'ORDER_CRON_NOTIFY_TIMER': {'hours': 0, 'minutes': 0, 'seconds': 30},
-  'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
-  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
-  'GOOGLE_OAUTH2': {
-    'client_id': '262487344336-vkpvegjrp7q3isfr73vod7q9m0piu9gd.apps.googleusercontent.com', 
-    'client_secret': 'AtUlgzsKycfOueKYUrX6CYIn'
-  },
-  'FACEBOOK_OAUTH2': {
-    'client_id': '114231673409', 
-    'client_secret': '7a467a6d24ba35343d09ce672faf98c2'
-  },
-  'LINKEDIN_OAUTH2': {
-    'client_id': '77xclva9s9qsex', 
-    'client_secret': 'cYHLJehkmDGm1j9n'
-  }
-}
 HOSTS_SPECIFIC_SETTINGS = {
   'localhost:9982': {
     'FORCE_SSL': False,
-    'LAG': False
+    'LAG': False,
+    'NOTIFICATION_HOSTNAME': None
   },
-  'themiraclestyle-testing-site.appspot.com': {
-    'FORCE_SSL': True,
-    'NOTIFICATION_HOSTNAME': 'themiraclestyle-testing-site.appspot.com'
-  },
-  'themiraclestyle.appspot.com': MIRACLESTYLE_SETTINGS,
-  'miraclestyle.com': MIRACLESTYLE_SETTINGS,
-  'www.miraclestyle.com': MIRACLESTYLE_SETTINGS
+  'themiraclestyle.appspot.com': PRODUCTION_HOST_SETTINGS,
+  'miraclestyle.com': PRODUCTION_HOST_SETTINGS,
+  'www.miraclestyle.com': PRODUCTION_HOST_SETTINGS
 }
 
 
@@ -73,7 +72,7 @@ for k, v in DEFAULT_HOST_SETTINGS.items():
     HOST_SPECIFIC_SETTINGS[k] = v
 
 # Server side config
-NOTIFICATION_HOSTNAME = HOSTS_SPECIFIC_SETTINGS.get('NOTIFICATION_HOSTNAME', None) # none to use current request's hostname
+NOTIFICATION_HOSTNAME = HOST_SPECIFIC_SETTINGS['NOTIFICATION_HOSTNAME']
 FORCE_SSL = HOST_SPECIFIC_SETTINGS['FORCE_SSL']
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
 SILENCE_STDOUT = False
