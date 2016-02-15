@@ -813,7 +813,7 @@ $(function () {
                 failure();
             } else {
                 angular.bootstrap(document, ['app'], {
-                    strictDi: true
+                    strictDi: false
                 });
             }
         }, failure);
@@ -22577,6 +22577,7 @@ angular.module('app')
                                             $scope.stage.animating = 5;
                                             $scope.stage.out.push(4);
                                             $scope.stage.current = 5;
+                                            track.payWithCardSuccess();
                                         },
                                         complete: function () {
                                             $scope.stage.out = [];
@@ -23246,10 +23247,9 @@ angular.module('app')
                                                     // Show the errors on the form
                                                     $scope.disableUI(false);
                                                     snackbar.show(response.error.message);
-                                                    track.payWithCardFail();
+                                                    track.payFail();
                                                 } else {
                                                     // token contains id, last4, and card type
-                                                    track.payWithCardFail();
                                                     models['34'].actions.pay({
                                                         key: $scope.order.key,
                                                         token: response.id
