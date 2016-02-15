@@ -242,10 +242,10 @@
                                     }
                                 },
                                 type: {
-                                    /*'12': 'local',
+                                    '12': 'local',
                                     '17': 'local',
                                     '24': 'local',
-                                    '13': 'local',*/
+                                    '13': 'local',
                                     'default': 'memory'
                                 }
                             },
@@ -267,6 +267,7 @@
                                             if (neww !== old) {
                                                 var args = info.scope.$eval(info.config.ui.parentArgs);
                                                 args.region = null;
+                                                info.config.ui.specifics.entities.empty();
                                                 info.config.ui.specifics.initial(); // refresh results
                                             }
                                         });
@@ -377,7 +378,7 @@
                         args,
                         opts = {},
                         exists = _.memoize(function (key) {
-                            return _.findWhere(config.ui.specifics.entities, {key: key});
+                            return _.findWhere(config.ui.specifics.entities, {key: key}) !== undefined;
                         }),
                         override = config.ui.specifics.override || {},
                         actionArguments = (config.kind ? modelsMeta.getActionArguments(config.kind, 'search') : {}),
@@ -466,7 +467,7 @@
                                             return model.actions.search(findArgs(term, actionArguments), opts).then(function (response) {
                                                 var entities = response.data.entities;
                                                 angular.forEach(entities, function (ent) {
-                                                    if (exists(ent.key)) {
+                                                    if (!exists(ent.key)) {
                                                         config.ui.specifics.entities.push(ent);
                                                     }
                                                 });
