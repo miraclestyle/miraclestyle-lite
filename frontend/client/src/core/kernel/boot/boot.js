@@ -813,7 +813,7 @@ $(function () {
                 failure();
             } else {
                 angular.bootstrap(document, ['app'], {
-                    strictDi: true
+                    strictDi: false
                 });
             }
         }, failure);
