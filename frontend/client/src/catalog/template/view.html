@@ -36,8 +36,8 @@
                     catalog-pricetag-position="pricetag">
                     <div class="catalog-pricetag-wrapper">
                         <div class="catalog-pricetag-dot"></div>
-                         <button data-pricetag-id="{{image.id}}-{{pricetag.id}}" md-ink-ripple md-ink-ripple-pulsate-options="{repeat: 'infinite', speed: 2000}" md-ink-ripple-pulsate="$state.fullyReady" type="button" class="button-transparent catalog-pricetag-link " loading="loadingProduct" ng-click="viewProduct(image, pricetag, $event)">
-                            {{pricetag.value.price|formatCurrency:catalog._seller._currency}}
+                         <button bindonce bo-text="pricetag.value.price|formatCurrency:catalog._seller._currency" data-pricetag-id="{{::image.id}}-{{::pricetag.id}}" md-ink-ripple md-ink-ripple-pulsate-options="{repeat: 'infinite', speed: 2000}" md-ink-ripple-pulsate="$state.fullyReady" type="button" class="button-transparent catalog-pricetag-link " loading="loadingProduct" ng-click="viewProduct(image, pricetag, $event)">
+                          
                          </button>
                      </div>
                 </div>

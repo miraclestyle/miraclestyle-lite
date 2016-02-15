@@ -66,9 +66,11 @@
                                         found = select.items[i];
                                     }
                                 } else {
+                                    console.log(val);
                                     found = _.findWhere(select.items, {
                                         key: val
                                     });
+                                    console.log(found);
                                 }
                                 return found;
                             };
