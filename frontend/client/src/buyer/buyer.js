@@ -151,6 +151,11 @@
                     var opts = {
                         cartMode: carts,
                         cartModeRead: carts,
+                        events: {
+                            newOrder: function (order) {
+                                $scope.search.results.push(order);
+                            }
+                        },
                         popFrom: ($event ? helpers.clicks.realEventTarget($event.target) : false)
                     }, viewPromise, directView = $event === false;
                     if (viewOpts) {

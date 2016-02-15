@@ -597,11 +597,12 @@
 
 
                                     function afterAddingToCart(response) {
-                                        if (config.events && config.events.addToCart) {
-                                            config.events.addToCart.call(this, response);
-                                        }
-                                        var sellerCacheKey = 'current' + sellerKey,
+                                        var deleted = response.data.entity._lines.length === 0 && $scope.orderLineCount > 1,
+                                            sellerCacheKey = 'current' + sellerKey,
                                             memoized = models['34'].getCache(sellerCacheKey);
+                                        if (config.events && config.events.addToCart) {
+                                            config.events.addToCart.call(this, response, deleted);
+                                        }
                                         if (memoized) {
                                             $.extend(memoized.data.entity, response.data.entity);
                                         } else {
@@ -625,7 +626,7 @@
                                             $scope.canAddToCart = true;
                                         }
 
-                                        if (response.data.entity._lines.length === 0 && $scope.orderLineCount > 1) {
+                                        if (deleted) {
                                             deleteOrder();
                                         }
                                         $scope.orderLineCount = response.data.entity._lines.length;

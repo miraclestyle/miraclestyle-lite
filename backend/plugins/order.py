@@ -226,6 +226,7 @@ class OrderInit(orm.BaseModel):
       order = Order(parent=context.input.get('buyer'))
       order.state = 'cart'
       order.seller_reference = seller_key
+      order._seller.read() # read for output
       order.make_original()
       order._lines = []
     else:

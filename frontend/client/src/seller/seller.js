@@ -199,6 +199,11 @@
         $scope.view = function (order, $event, viewOpts) {
             var opts = {
                 sellerMode: carts,
+                events: {
+                    newOrder: function (order) {
+                        $scope.search.results.push(order);
+                    }
+                },
                 track: helpers.track.noop.cartBuyerCarts,
                 popFrom: helpers.clicks.realEventTarget($event.target)
             };
