@@ -921,10 +921,11 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       tools.log.debug('Stripe Charge: %s, ip: %s' % (charge, ip_address))
       order.state = 'order'
       order.payment_status = 'Completed'
+      Account = context.models['11']
       context.new_message = {'charge_id': charge.id,
                              'action': context.action.key,
                              'ancestor': order.key,
-                             'agent': context.account.key,
+                             'agent': Account.build_key('system'),
                              'body': 'Payment %s.' % order.payment_status,
                              'payment_status': order.payment_status,
                              'charge': charge}
