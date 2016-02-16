@@ -293,7 +293,7 @@ class Order(orm.BaseExpando):
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('delete', condition_taskqueue),
       orm.ExecuteActionPermission(('cron', 'cron_notify'), condition_cron),
-      orm.ExecuteActionPermission('see_messages', condition_root_or_owner_or_seller),
+      orm.ExecuteActionPermission('see_messages', condition_buyer_or_seller),
       orm.ExecuteActionPermission('notify', condition_notify),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
