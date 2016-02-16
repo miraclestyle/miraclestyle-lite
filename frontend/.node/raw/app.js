@@ -18093,7 +18093,7 @@ function msieversion() {
                             newHeight = wholeHeight,
                             newWidth = Math.round(newHeight * image.proportion),
                             imageSize = newHeight > newWidth ? newHeight : newWidth,
-                            originalNewHeight = newHeight,
+                            //originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
@@ -18101,7 +18101,7 @@ function msieversion() {
                                 element.off('load', fn);
                             };
                         //console.log(newHeight * image.proportion, image.proportion, newHeight);
-                        newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
+                        //newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
 
                         element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
@@ -24112,7 +24112,11 @@ angular.module('app')
                                                     name: fields.length * 2 + 1,
                                                     code_name: 'webhook_endpoint',
                                                     required: false,
-                                                    ui: {}
+                                                    ui: {
+                                                        attrs: {
+                                                            'onclick' : 'this.select()'
+                                                        }
+                                                    }
                                                 });
 
                                                 $scope.args.webhook_endpoint = helpers.url.abs('api/order/notify/stripe');
