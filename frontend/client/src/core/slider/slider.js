@@ -102,7 +102,7 @@
                             newHeight = wholeHeight,
                             newWidth = Math.round(newHeight * image.proportion),
                             imageSize = newHeight > newWidth ? newHeight : newWidth,
-                            originalNewHeight = newHeight,
+                            //originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
@@ -110,7 +110,7 @@
                                 element.off('load', fn);
                             };
                         //console.log(newHeight * image.proportion, image.proportion, newHeight);
-                        newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
+                        //newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
 
                         element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)

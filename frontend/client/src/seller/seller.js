@@ -676,7 +676,11 @@
                                                     name: fields.length * 2 + 1,
                                                     code_name: 'webhook_endpoint',
                                                     required: false,
-                                                    ui: {}
+                                                    ui: {
+                                                        attrs: {
+                                                            'onclick' : 'this.select()'
+                                                        }
+                                                    }
                                                 });
 
                                                 $scope.args.webhook_endpoint = helpers.url.abs('api/order/notify/stripe');
