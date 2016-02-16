@@ -18091,7 +18091,7 @@ function msieversion() {
                         var bar = element.parents('.modal:first').find('.new-pricetag-bar'),
                             wholeHeight = element.parents('.fixed-height:first').innerHeight() - window.SCROLLBAR_WIDTH - (bar.length ? bar.outerHeight() : 0),
                             newHeight = wholeHeight,
-                            newWidth = Math.round(newHeight * image.proportion),
+                            newWidth = Math.ceil(newHeight * image.proportion),
                             imageSize = newHeight > newWidth ? newHeight : newWidth,
                             //originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
