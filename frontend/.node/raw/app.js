@@ -18095,6 +18095,8 @@ function msieversion() {
                             imageSize = newHeight > newWidth ? newHeight : newWidth,
                             //originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
+                            imgSrc = helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize,
+                            theImg,
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
                                 //console.log(element.get(0).width, newWidth);
@@ -18103,13 +18105,36 @@ function msieversion() {
                         //console.log(newHeight * image.proportion, image.proportion, newHeight);
                         //newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
 
-                        element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
+                        /*element.on('load', fn).attr('src', helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize)
                             .width(newWidth)
                             .height(newHeight);
 
                         reactingElement
                             .width(newWidth)
-                            .height(newHeight);
+                            .height(newHeight);*/
+
+                        function spawnSizes(ww, hh, src) {
+                            element.width(ww)
+                                   .height(hh);
+                            if (src) {
+                                element.attr('src', src);
+                            }
+
+                            reactingElement
+                                .width(ww)
+                                .height(hh);
+                            scope.$emit('reMeasureImageSlider');
+                        }
+
+                        theImg = new Image();
+                        theImg.onload = function () {
+                            spawnSizes(this.width, this.height, imgSrc);
+                        };
+                        theImg.src = imgSrc;
+                        element.on('load', fn);
+                        spawnSizes(newWidth, newHeight);
+
+
                     },
                     resize = function () {
                         run();
