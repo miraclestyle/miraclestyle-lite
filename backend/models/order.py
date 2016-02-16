@@ -232,7 +232,7 @@ class Order(orm.BaseExpando):
   def condition_cron(account, **kwargs):
     return account._is_cron
 
-  def condition_not_guest_and_owner_and_cart(account, entity, **kwargs):
+  def condition_not_guest_and_buyer_and_cart(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "cart"
 
@@ -287,7 +287,7 @@ class Order(orm.BaseExpando):
   _permissions = [
       #  action.key_id_str not in ["search"] and...
       # Included payment_status in field permissions, will have to further analyse exclusion...
-      orm.ExecuteActionPermission(('update_line', 'view_order', 'update', 'delete', 'pay'), condition_not_guest_and_owner_and_cart),
+      orm.ExecuteActionPermission(('update_line', 'view_order', 'update', 'delete', 'pay'), condition_not_guest_and_buyer_and_cart),
       orm.ExecuteActionPermission(('read'), condition_root_or_buyer_or_seller),
       orm.ExecuteActionPermission(('log_message'), condition_buyer_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
