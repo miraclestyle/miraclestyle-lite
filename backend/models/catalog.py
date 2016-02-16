@@ -748,6 +748,7 @@ class Catalog(orm.BaseExpando):
                       Context(),
                       Read(),
                       Set(cfg={'s': {'_catalog.state': 'published'},
+                               'd': {'catalog_original_state': '_catalog._original.state'},
                                'f': {'_catalog.published_date': lambda: datetime.datetime.now()}}),
                       RulePrepare(),
                       RuleExec()
@@ -780,6 +781,7 @@ class Catalog(orm.BaseExpando):
                       Context(),
                       Read(),
                       Set(cfg={'s': {'_catalog.state': 'discontinued'},
+                               'd': {'catalog_original_state': '_catalog._original.state'},
                                'f': {'_catalog.discontinued_date': lambda: datetime.datetime.now()}}),
                       RulePrepare(),
                       RuleExec()
@@ -811,6 +813,7 @@ class Catalog(orm.BaseExpando):
                       Context(),
                       Read(),
                       Set(cfg={'s': {'_catalog.state': 'discontinued'},
+                               'd': {'catalog_original_state': '_catalog._original.state'},
                                'f': {'_catalog.discontinued_date': lambda: datetime.datetime.now()}}),
                       RulePrepare(),
                       RuleExec()
