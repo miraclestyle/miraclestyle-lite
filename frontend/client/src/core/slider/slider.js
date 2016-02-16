@@ -108,6 +108,7 @@
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
                                 //console.log(element.get(0).width, newWidth);
                                 element.off('load', fn);
+                                console.log(this.width, this.height);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
 

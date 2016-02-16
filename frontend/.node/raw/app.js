@@ -2187,7 +2187,6 @@ if (window.DEBUG) {
             users: 'Accounts',
             aboutRules: 'About Rules',
             sellerProfile: 'Seller Profile',
-            payWithCard: 'Acceptable Cards',
             payWithConfidence: 'Pay With Confidence'
         });
 
@@ -18100,6 +18099,7 @@ function msieversion() {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
                                 //console.log(element.get(0).width, newWidth);
                                 element.off('load', fn);
+                                console.log(this.width, this.height);
                             };
                         newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
 
@@ -21439,7 +21439,7 @@ angular.module('app')
 
 
                                     function afterAddingToCart(response) {
-                                        var deleted = response.data.entity._lines.length === 0 && $scope.orderLineCount > 1,
+                                        var deleted = response.data.entity._lines.length === 0,
                                             sellerCacheKey = 'current' + sellerKey,
                                             memoized = models['34'].getCache(sellerCacheKey);
                                         if (config.events && config.events.addToCart) {
@@ -21468,7 +21468,7 @@ angular.module('app')
                                             $scope.canAddToCart = true;
                                         }
 
-                                        if (deleted) {
+                                        if (deleted && $scope.orderLineCount > 1) {
                                             deleteOrder();
                                         }
                                         $scope.orderLineCount = response.data.entity._lines.length;
@@ -22387,6 +22387,7 @@ angular.module('app')
                                                 $scope.order._messages = messages;
                                             } else {
                                                 lines = [];
+                                                $scope.order._messages = [];
                                             }
                                             if (config.noLines) {
                                                 $scope.order._lines = lines;
@@ -23318,21 +23319,6 @@ angular.module('app')
                                                 exp_month: $scope.stripe.args.card_exp_1,
                                                 exp_year: $scope.stripe.args.card_exp_2
                                             }, stripeResponseHandler);
-                                        },
-                                        acceptableCards: function () {
-                                            $modal.open({
-                                                templateUrl: 'core/models/manage.html',
-                                                controller: ng(function ($scope) {
-                                                    $scope.cards = ['visa', 'mastercard', 'american-express', 'jcb', 'discover', 'diners'];
-                                                    $scope.dialog = {};
-                                                    $scope.dialog.templateBodyUrl = 'order/acceptable_cards.html';
-                                                    $scope.dialog.toolbar = {
-                                                        hideSave: true,
-                                                        leftIcon: 'arrow_back',
-                                                        title: GLOBAL_CONFIG.toolbar.titles.payWithCard
-                                                    };
-                                                })
-                                            });
                                         },
                                         payWithConfidence: function () {
                                             $modal.open({
