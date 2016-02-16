@@ -1169,21 +1169,6 @@
                                                 exp_year: $scope.stripe.args.card_exp_2
                                             }, stripeResponseHandler);
                                         },
-                                        acceptableCards: function () {
-                                            $modal.open({
-                                                templateUrl: 'core/models/manage.html',
-                                                controller: ng(function ($scope) {
-                                                    $scope.cards = ['visa', 'mastercard', 'american-express', 'jcb', 'discover', 'diners'];
-                                                    $scope.dialog = {};
-                                                    $scope.dialog.templateBodyUrl = 'order/acceptable_cards.html';
-                                                    $scope.dialog.toolbar = {
-                                                        hideSave: true,
-                                                        leftIcon: 'arrow_back',
-                                                        title: GLOBAL_CONFIG.toolbar.titles.payWithCard
-                                                    };
-                                                })
-                                            });
-                                        },
                                         payWithConfidence: function () {
                                             $modal.open({
                                                 templateUrl: 'core/models/manage.html',
