@@ -685,7 +685,6 @@
             users: 'Accounts',
             aboutRules: 'About Rules',
             sellerProfile: 'Seller Profile',
-            payWithCard: 'Acceptable Cards',
             payWithConfidence: 'Pay With Confidence'
         });
 
