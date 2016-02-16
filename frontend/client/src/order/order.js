@@ -237,6 +237,7 @@
                                                 $scope.order._messages = messages;
                                             } else {
                                                 lines = [];
+                                                $scope.order._messages = [];
                                             }
                                             if (config.noLines) {
                                                 $scope.order._lines = lines;

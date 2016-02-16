@@ -597,7 +597,7 @@
 
 
                                     function afterAddingToCart(response) {
-                                        var deleted = response.data.entity._lines.length === 0 && $scope.orderLineCount > 1,
+                                        var deleted = response.data.entity._lines.length === 0,
                                             sellerCacheKey = 'current' + sellerKey,
                                             memoized = models['34'].getCache(sellerCacheKey);
                                         if (config.events && config.events.addToCart) {
@@ -626,7 +626,7 @@
                                             $scope.canAddToCart = true;
                                         }
 
-                                        if (deleted) {
+                                        if (deleted && $scope.orderLineCount > 1) {
                                             deleteOrder();
                                         }
                                         $scope.orderLineCount = response.data.entity._lines.length;
