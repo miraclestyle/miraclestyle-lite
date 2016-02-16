@@ -938,7 +938,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       tools.log.error('%s. ip: %s' % (e.message, ip_address))
       raise PluginError('api_error')
     except stripe.error.AuthenticationError, e:
-      tools.log.error('%s. ip: %s' % (e.message, ip_address))
+      tools.log.error('Authentication with Stripe API failed. ip: %s' %  ip_address)
       raise PluginError('authentication_error')
     except stripe.error.CardError, e:
       tools.log.error('%s. code: %s, ip: %s' % (e.message, e.code, ip_address))
@@ -966,7 +966,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
         tools.log.error('%s. ip: %s' % (e.message, ip_address))
         raise PluginError('api_error')
       except stripe.error.AuthenticationError, e:
-        tools.log.error('%s. ip: %s' % (e.message, ip_address))
+        tools.log.error('Authentication with Stripe API failed. ip: %s' %  ip_address)
         raise PluginError('authentication_error')
       except stripe.error.CardError, e:
         tools.log.error('%s. code: %s, ip: %s' % (e.message, e.code, ip_address))
