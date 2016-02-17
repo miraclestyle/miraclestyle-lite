@@ -932,22 +932,22 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
                              'charge': charge}
       context.new_message_fields = {'charge': orm.SuperPickleProperty(name='charge', compressed=True, indexed=False)}  # Or should it bi json property?
     except stripe.error.APIConnectionError, e:
-      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      tools.log.error('%s. ip: %s' % (e.message, ip_address))
       raise PluginError('api_connection_error')
     except stripe.error.APIError, e:
-      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      tools.log.error('%s. ip: %s' % (e.message, ip_address))
       raise PluginError('api_error')
     except stripe.error.AuthenticationError, e:
-      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      tools.log.error('Authentication with Stripe API failed. ip: %s' %  ip_address)
       raise PluginError('authentication_error')
     except stripe.error.CardError, e:
-      tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
+      tools.log.error('%s. code: %s, ip: %s' % (e.message, e.code, ip_address))
       raise PluginError(e.code)
     except stripe.error.InvalidRequestError, e:
-      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      tools.log.error('%s. ip: %s' % (e.message, ip_address))
       raise PluginError('invalid_request_error')
     except stripe.error.RateLimitError, e:
-      tools.log.error('error: %s, ip: %s' % (e, ip_address))
+      tools.log.error('%s. ip: %s' % (e.message, ip_address))
       raise PluginError('rate_limit_error')
 
   def notify(self, context):
@@ -960,22 +960,22 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       try:
         return stripe.Event.retrieve(event_id, api_key=self.secret_key.decrypted)
       except stripe.error.APIConnectionError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        tools.log.error('%s. ip: %s' % (e.message, ip_address))
         raise PluginError('api_connection_error')
       except stripe.error.APIError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        tools.log.error('%s. ip: %s' % (e.message, ip_address))
         raise PluginError('api_error')
       except stripe.error.AuthenticationError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        tools.log.error('Authentication with Stripe API failed. ip: %s' %  ip_address)
         raise PluginError('authentication_error')
       except stripe.error.CardError, e:
-        tools.log.error('error: %s, code: %s, ip: %s' % (e, e.code, ip_address))
+        tools.log.error('%s. code: %s, ip: %s' % (e.message, e.code, ip_address))
         raise PluginError(e.code)
       except stripe.error.InvalidRequestError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        tools.log.error('%s. ip: %s' % (e.message, ip_address))
         raise PluginError('invalid_request_error')
       except stripe.error.RateLimitError, e:
-        tools.log.error('error: %s, ip: %s' % (e, ip_address))
+        tools.log.error('%s. ip: %s' % (e.message, ip_address))
         raise PluginError('rate_limit_error')
     
     def validate_event(event):

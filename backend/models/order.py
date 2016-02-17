@@ -232,15 +232,21 @@ class Order(orm.BaseExpando):
   def condition_cron(account, **kwargs):
     return account._is_cron
 
-  def condition_not_guest_and_owner_and_cart(account, entity, **kwargs):
+  def condition_not_guest_and_buyer_and_cart(account, entity, **kwargs):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "cart"
 
-  def condition_root_or_owner_or_seller(account, entity, **kwargs):
+  def condition_root_or_buyer_or_seller(account, entity, **kwargs):
     if entity._original.seller_reference is None:
       return False
     return account._root_admin or (not account._is_guest and ((entity._original.key_root == account.key)
                                                               or (entity._original.seller_reference._root == account.key)))
+
+  def condition_buyer_or_seller(account, entity, **kwargs):
+    if entity._original.seller_reference is None:
+      return False
+    return not account._is_guest and ((entity._original.key_root == account.key)
+                                      or (entity._original.seller_reference._root == account.key))
 
   def condition_search(account, action, entity, input, **kwargs):
     return action.key_id_str == "search" and (account._root_admin
@@ -281,12 +287,13 @@ class Order(orm.BaseExpando):
   _permissions = [
       #  action.key_id_str not in ["search"] and...
       # Included payment_status in field permissions, will have to further analyse exclusion...
-      orm.ExecuteActionPermission(('update_line', 'view_order', 'update', 'delete', 'pay'), condition_not_guest_and_owner_and_cart),
-      orm.ExecuteActionPermission(('read', 'log_message'), condition_root_or_owner_or_seller),
+      orm.ExecuteActionPermission(('update_line', 'view_order', 'update', 'delete', 'pay'), condition_not_guest_and_buyer_and_cart),
+      orm.ExecuteActionPermission(('read'), condition_root_or_buyer_or_seller),
+      orm.ExecuteActionPermission(('log_message'), condition_buyer_or_seller),
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('delete', condition_taskqueue),
       orm.ExecuteActionPermission(('cron', 'cron_notify'), condition_cron),
-      orm.ExecuteActionPermission('see_messages', condition_root_or_owner_or_seller),
+      orm.ExecuteActionPermission('see_messages', condition_buyer_or_seller),
       orm.ExecuteActionPermission('notify', condition_notify),
 
       orm.ReadFieldPermission(('created', 'updated', 'state', 'date', 'seller_reference',
@@ -297,14 +304,14 @@ class Order(orm.BaseExpando):
                                '_messages._action', '_seller.name',
                                '_seller.logo',
                                '_seller._stripe_publishable_key',
-                               '_seller._currency'), condition_root_or_owner_or_seller),
+                               '_seller._currency'), condition_root_or_buyer_or_seller),
       orm.WriteFieldPermission(('date', 'seller_reference',
                                 'currency', 'untaxed_amount', 'tax_amount', 'total_amount',
                                 'payment_method', '_lines', 'carrier'), condition_update_line),
       orm.WriteFieldPermission('state', condition_state),
       orm.WriteFieldPermission(('payment_status', '_messages'), condition_pay),
       orm.WriteFieldPermission(('payment_status', '_messages'), condition_notify),
-      orm.WriteFieldPermission('_messages', condition_root_or_owner_or_seller),
+      orm.WriteFieldPermission('_messages', condition_buyer_or_seller),
       orm.WriteFieldPermission(('date', 'shipping_address', 'billing_address', '_lines', 'carrier',
                                 'untaxed_amount', 'tax_amount', 'total_amount', 'payment_method'), condition_update_and_view_order),
       orm.DenyWriteFieldPermission(('_lines.taxes', '_lines.product.reference',
