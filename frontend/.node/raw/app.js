@@ -21875,7 +21875,10 @@ angular.module('app')
                         if (actions.length) {
                             size = actions.outerWidth();
                         }
-                        crumb.css('padding-right', size + 16);
+                        if (!size) {
+                            size = 16;
+                        }
+                        crumb.css('padding-right', size);
                     };
                 }),
                 link: function (scope, element, attrs, ctrl) {
