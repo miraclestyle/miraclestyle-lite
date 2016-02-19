@@ -13360,7 +13360,7 @@ function msieversion() {
                 url: {
                     local: function (path) {
                         if (window.ENGINE.CORDOVA.ACTIVE) {
-                            return cordova.file.applicationDirectory + 'www/' + path;
+                            return window.cordova.file.applicationDirectory + 'www/' + path;
                         }
                         return '/' + path;
                     },
@@ -13386,11 +13386,13 @@ function msieversion() {
                         if (path.indexOf('#') !== -1) {
                             path = path.split('#')[0];
                         }
-                        var query = path.split('?')[1];
-                        var vars = query.split('&');
-                        for (var i = 0; i < vars.length; i++) {
-                            var pair = vars[i].split('=');
-                            if (decodeURIComponent(pair[0]) == variable) {
+                        var query = path.split('?')[1],
+                            vars = query.split('&'),
+                            i = 0,
+                            pair;
+                        for (i = 0; i < vars.length; i++) {
+                            pair = vars[i].split('=');
+                            if (decodeURIComponent(pair[0]) === variable) {
                                 return decodeURIComponent(pair[1]);
                             }
                         }
@@ -14903,7 +14905,7 @@ function msieversion() {
                     });
                 }
             };
-        })).directive('pollResults', ng(function ($rootScope) {
+        })).directive('pollResults', ng(function ($rootScope, $timeout) {
             return {
                 scope: {
                     config: '=pollResults'
@@ -14916,12 +14918,34 @@ function msieversion() {
                         timer = null,
                         suspend = false,
                         seen = {},
+                        updater = {},
                         destroy,
+                        setUpdater = function (key, field, value, deleted) {
+                            if (!updater[key] && !deleted) {
+                                updater[key] = {};
+                            }
+                            if (deleted && updater && updater[key] && updater[key].hasOwnProperty(field)) {
+                                delete updater[key][field];
+                            }
+                            if (!updater[key] && deleted) {
+                                delete updater[key];
+                            }
+
+                            if (!deleted) {
+                                updater[key][field] = value;
+                            }
+                            if (Object.keys(updater).length) {
+                                scope.updaterDirty = true;
+                            } else {
+                                scope.updaterDirty = false;
+                            }
+                        },
                         poll = function () {
                             if (timer) {
                                 clearTimeout(timer);
                             }
                             timer = setTimeout(function () {
+                                console.log(suspend);
                                 if (suspend) {
                                     // do nothing if suspend is active
                                     return poll();
@@ -14934,22 +14958,48 @@ function msieversion() {
                                         var entities = (response ? response.data.entities : false);
                                         if (entities) {
                                             angular.forEach(entities, function (value) {
-                                                if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
+                                                var current = _.findWhere(scope.config.results, {key: value.key});
+                                                if (!seen[value.key] && !current) {
                                                     scope.newItems.unshift(value);
+                                                    scope.dirty = true;
+                                                    seen[value.key] = true;
+                                                    scope.newDirty = true;
+                                                } else {
+                                                    if (scope.config.comparator) {
+                                                        scope.config.comparator(current, value, setUpdater);
+                                                    }
                                                 }
-                                                seen[value.key] = true;
                                             });
                                         }
+                                        scope.dirty = scope.newDirty || scope.updaterDirty;
                                         poll();
                                     }
                                 });
-                            }, 30000);
+                            }, 60000);
                         };
                     scope.thing = attrs.pollResultsThing;
                     scope.newItems = [];
+                    scope.dirty = false;
                     scope.seeNewItems = function () {
+                        scope.dirty = false;
+                        scope.updaterDirty = false;
+                        scope.newDirty = false;
                         scope.config.results.prepend(scope.newItems);
                         scope.newItems.length = 0;
+                        if (scope.config.sorter) {
+                            scope.config.results.sort(scope.config.sorter);
+                        }
+                        if (updater) {
+                            angular.forEach(scope.config.results, function (res) {
+                                angular.forEach(updater, function (value, key) {
+                                    var ent = _.findWhere(scope.config.results, {key: key});
+                                    $.extend(ent, value);
+                                });
+                            });
+                        }
+                        //scope.config.results.splice(0, 10);
+
+                        updater = {};
                     };
                     scope.$watch(function () {
                         return attrs.pollResults && config && config.loader;
@@ -14961,8 +15011,10 @@ function msieversion() {
                     });
 
                     destroy = $rootScope.$watch('overlays', function (neww, old) {
-                        if (!neww) {
+                        if (neww) {
                             suspend = true;
+                        } else {
+                            suspend = false;
                         }
                     });
 
@@ -18095,12 +18147,21 @@ function msieversion() {
                             imageSize = newHeight > newWidth ? newHeight : newWidth,
                             //originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
+                            spawnSizes = function (ww, hh) {
+                                element.width(ww)
+                                       .height(hh);
+                                reactingElement
+                                    .width(ww)
+                                    .height(hh);
+                                scope.$emit('reMeasureImageSlider');
+                            },
                             imgSrc = helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize,
-                            theImg,
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
                                 //console.log(element.get(0).width, newWidth);
                                 element.off('load', fn);
+                                element.css({width: '', height: ''});
+                                spawnSizes(element[0].width, element[0].height);
                             };
                         //console.log(newHeight * image.proportion, image.proportion, newHeight);
                         //newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
@@ -18112,26 +18173,7 @@ function msieversion() {
                         reactingElement
                             .width(newWidth)
                             .height(newHeight);*/
-
-                        function spawnSizes(ww, hh, src) {
-                            element.width(ww)
-                                   .height(hh);
-                            if (src) {
-                                element.attr('src', src);
-                            }
-
-                            reactingElement
-                                .width(ww)
-                                .height(hh);
-                            scope.$emit('reMeasureImageSlider');
-                        }
-
-                        theImg = new Image();
-                        theImg.onload = function () {
-                            spawnSizes(this.width, this.height, imgSrc);
-                        };
-                        theImg.src = imgSrc;
-                        element.on('load', fn);
+                        element.on('load', fn).attr('src', imgSrc);
                         spawnSizes(newWidth, newHeight);
 
 
@@ -19182,7 +19224,9 @@ angular.module('app')
             $scope.search = {
                 results: [],
                 loader: false,
-                loaded: false
+                loaded: false,
+                sorter: helpers.order.sorter,
+                comparator: helpers.order.poolResultsComparator
             };
 
             $scope.$watch(function maybeRemoveSearchResult() {
@@ -22181,6 +22225,48 @@ angular.module('app')
 
 
     angular.module('app')
+        .run(ng(function (helpers) {
+            if (!helpers.order) {
+                helpers.order = {};
+            }
+            helpers.order.sorter = function (current, next) {
+                var d1 = new Date(current.updated),
+                    d2 = new Date(next.updated);
+                return d1.getTime() < d2.getTime();
+            };
+
+            helpers.order.poolResultsComparator = function (current, value, setUpdater) {
+                var passesUpdated = false,
+                    passesTracker = false;
+                if (!current.updated && value.updated) {
+                    passesUpdated = true;
+                }
+                if ((current.updated && value.updated) && (current.updated.getTime() !== value.updated.getTime())) {
+                    passesUpdated = true;
+                }
+                if (passesUpdated) {
+                    setUpdater(current.key, 'updated', value.updated);
+                } else {
+                    setUpdater(current.key, 'updated', null, true);
+                }
+                if (current._tracker !== value._tracker) {
+                    if ((current._tracker && value._tracker) && (((current._tracker.buyer !== value._tracker.buyer) || (value._tracker.seller !== current._tracker.seller)))) {
+                        setUpdater(current.key, '_tracker', value._tracker);
+                        passesTracker = true;
+
+                    }
+
+                    if ((current._tracker && !value._tracker) || (!current._tracker && value._tracker)) {
+                        setUpdater(current.key, '_tracker', value._tracker);
+                        passesTracker = true;
+                    }
+
+                    if (!passesTracker) {
+                        setUpdater(current.key, '_tracker', null, true);
+                    }
+                }
+            };
+        }))
         .directive('alwaysScrollToBottom', ng(function ($timeout) {
             return {
                 link: function (scope, element, attrs) {
@@ -22987,6 +23073,9 @@ angular.module('app')
                                                         $scope.messages.seen = true;
                                                         models['34'].actions.see_messages({
                                                             key: $scope.order.key
+                                                        }).then(function () {
+                                                            $scope.order._tracker = null;
+                                                            locals.reactOnUpdate();
                                                         });
                                                     }
                                                     $scope.messages.forceReflow();
@@ -23641,11 +23730,12 @@ angular.module('app')
 
         $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cartSellerList : GLOBAL_CONFIG.emptyHelp.orderSellerList);
 
-
         $scope.search = {
             results: [],
             loader: {},
-            loaded: false
+            loaded: false,
+            sorter: helpers.order.sorter,
+            comparator: helpers.order.poolResultsComparator
         };
 
         $scope.$watch(function maybeRemoveSearchResult() {
