@@ -37,6 +37,11 @@
                     </tbody>
                 </table>
             </div>
+             <div ng-if="(order._tracker && ((order._tracker.buyer && order.parent.parent.key === currentAccount.key) || (order._tracker.seller && order._seller.parent.key === currentAccount.key)))" class="card-action-top-right">
+                <span md-ink-ripple-action loading class="pulsate button-square block color-child-when-disabled">
+                    <icon type="chat_bubble"></icon>
+                </span>
+            </div>
          </button>
     </div>
 </div>

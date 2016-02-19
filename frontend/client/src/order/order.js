@@ -3,6 +3,48 @@
 
 
     angular.module('app')
+        .run(ng(function (helpers) {
+            if (!helpers.order) {
+                helpers.order = {};
+            }
+            helpers.order.sorter = function (current, next) {
+                var d1 = new Date(current.updated),
+                    d2 = new Date(next.updated);
+                return d1.getTime() < d2.getTime();
+            };
+
+            helpers.order.poolResultsComparator = function (current, value, setUpdater) {
+                var passesUpdated = false,
+                    passesTracker = false;
+                if (!current.updated && value.updated) {
+                    passesUpdated = true;
+                }
+                if ((current.updated && value.updated) && (current.updated.getTime() !== value.updated.getTime())) {
+                    passesUpdated = true;
+                }
+                if (passesUpdated) {
+                    setUpdater(current.key, 'updated', value.updated);
+                } else {
+                    setUpdater(current.key, 'updated', null, true);
+                }
+                if (current._tracker !== value._tracker) {
+                    if ((current._tracker && value._tracker) && (((current._tracker.buyer !== value._tracker.buyer) || (value._tracker.seller !== current._tracker.seller)))) {
+                        setUpdater(current.key, '_tracker', value._tracker);
+                        passesTracker = true;
+
+                    }
+
+                    if ((current._tracker && !value._tracker) || (!current._tracker && value._tracker)) {
+                        setUpdater(current.key, '_tracker', value._tracker);
+                        passesTracker = true;
+                    }
+
+                    if (!passesTracker) {
+                        setUpdater(current.key, '_tracker', null, true);
+                    }
+                }
+            };
+        }))
         .directive('alwaysScrollToBottom', ng(function ($timeout) {
             return {
                 link: function (scope, element, attrs) {
@@ -809,6 +851,9 @@
                                                         $scope.messages.seen = true;
                                                         models['34'].actions.see_messages({
                                                             key: $scope.order.key
+                                                        }).then(function () {
+                                                            $scope.order._tracker = null;
+                                                            locals.reactOnUpdate();
                                                         });
                                                     }
                                                     $scope.messages.forceReflow();

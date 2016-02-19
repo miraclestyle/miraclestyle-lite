@@ -104,12 +104,21 @@
                             imageSize = newHeight > newWidth ? newHeight : newWidth,
                             //originalNewHeight = newHeight,
                             reactingElement = element.parents('.image-slider-item:first'),
+                            spawnSizes = function (ww, hh) {
+                                element.width(ww)
+                                       .height(hh);
+                                reactingElement
+                                    .width(ww)
+                                    .height(hh);
+                                scope.$emit('reMeasureImageSlider');
+                            },
                             imgSrc = helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize,
-                            theImg,
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
                                 //console.log(element.get(0).width, newWidth);
                                 element.off('load', fn);
+                                element.css({width: '', height: ''});
+                                spawnSizes(element[0].width, element[0].height);
                             };
                         //console.log(newHeight * image.proportion, image.proportion, newHeight);
                         //newWidth = helpers.newWidthByHeight(newWidth, originalNewHeight, newHeight);
@@ -121,26 +130,7 @@
                         reactingElement
                             .width(newWidth)
                             .height(newHeight);*/
-
-                        function spawnSizes(ww, hh, src) {
-                            element.width(ww)
-                                   .height(hh);
-                            if (src) {
-                                element.attr('src', src);
-                            }
-
-                            reactingElement
-                                .width(ww)
-                                .height(hh);
-                            scope.$emit('reMeasureImageSlider');
-                        }
-
-                        theImg = new Image();
-                        theImg.onload = function () {
-                            spawnSizes(this.width, this.height, imgSrc);
-                        };
-                        theImg.src = imgSrc;
-                        element.on('load', fn);
+                        element.on('load', fn).attr('src', imgSrc);
                         spawnSizes(newWidth, newHeight);
 
 

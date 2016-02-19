@@ -177,11 +177,12 @@
 
         $scope.listHelp = (carts ? GLOBAL_CONFIG.emptyHelp.cartSellerList : GLOBAL_CONFIG.emptyHelp.orderSellerList);
 
-
         $scope.search = {
             results: [],
             loader: {},
-            loaded: false
+            loaded: false,
+            sorter: helpers.order.sorter,
+            comparator: helpers.order.poolResultsComparator
         };
 
         $scope.$watch(function maybeRemoveSearchResult() {

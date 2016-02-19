@@ -70,7 +70,7 @@
                 url: {
                     local: function (path) {
                         if (window.ENGINE.CORDOVA.ACTIVE) {
-                            return cordova.file.applicationDirectory + 'www/' + path;
+                            return window.cordova.file.applicationDirectory + 'www/' + path;
                         }
                         return '/' + path;
                     },
@@ -96,11 +96,13 @@
                         if (path.indexOf('#') !== -1) {
                             path = path.split('#')[0];
                         }
-                        var query = path.split('?')[1];
-                        var vars = query.split('&');
-                        for (var i = 0; i < vars.length; i++) {
-                            var pair = vars[i].split('=');
-                            if (decodeURIComponent(pair[0]) == variable) {
+                        var query = path.split('?')[1],
+                            vars = query.split('&'),
+                            i = 0,
+                            pair;
+                        for (i = 0; i < vars.length; i++) {
+                            pair = vars[i].split('=');
+                            if (decodeURIComponent(pair[0]) === variable) {
                                 return decodeURIComponent(pair[1]);
                             }
                         }
@@ -1613,7 +1615,7 @@
                     });
                 }
             };
-        })).directive('pollResults', ng(function ($rootScope) {
+        })).directive('pollResults', ng(function ($rootScope, $timeout) {
             return {
                 scope: {
                     config: '=pollResults'
@@ -1626,12 +1628,34 @@
                         timer = null,
                         suspend = false,
                         seen = {},
+                        updater = {},
                         destroy,
+                        setUpdater = function (key, field, value, deleted) {
+                            if (!updater[key] && !deleted) {
+                                updater[key] = {};
+                            }
+                            if (deleted && updater && updater[key] && updater[key].hasOwnProperty(field)) {
+                                delete updater[key][field];
+                            }
+                            if (!updater[key] && deleted) {
+                                delete updater[key];
+                            }
+
+                            if (!deleted) {
+                                updater[key][field] = value;
+                            }
+                            if (Object.keys(updater).length) {
+                                scope.updaterDirty = true;
+                            } else {
+                                scope.updaterDirty = false;
+                            }
+                        },
                         poll = function () {
                             if (timer) {
                                 clearTimeout(timer);
                             }
                             timer = setTimeout(function () {
+                                console.log(suspend);
                                 if (suspend) {
                                     // do nothing if suspend is active
                                     return poll();
@@ -1644,22 +1668,48 @@
                                         var entities = (response ? response.data.entities : false);
                                         if (entities) {
                                             angular.forEach(entities, function (value) {
-                                                if (!seen[value.key] && !_.findWhere(scope.config.results, {key: value.key})) {
+                                                var current = _.findWhere(scope.config.results, {key: value.key});
+                                                if (!seen[value.key] && !current) {
                                                     scope.newItems.unshift(value);
+                                                    scope.dirty = true;
+                                                    seen[value.key] = true;
+                                                    scope.newDirty = true;
+                                                } else {
+                                                    if (scope.config.comparator) {
+                                                        scope.config.comparator(current, value, setUpdater);
+                                                    }
                                                 }
-                                                seen[value.key] = true;
                                             });
                                         }
+                                        scope.dirty = scope.newDirty || scope.updaterDirty;
                                         poll();
                                     }
                                 });
-                            }, 30000);
+                            }, 60000);
                         };
                     scope.thing = attrs.pollResultsThing;
                     scope.newItems = [];
+                    scope.dirty = false;
                     scope.seeNewItems = function () {
+                        scope.dirty = false;
+                        scope.updaterDirty = false;
+                        scope.newDirty = false;
                         scope.config.results.prepend(scope.newItems);
                         scope.newItems.length = 0;
+                        if (scope.config.sorter) {
+                            scope.config.results.sort(scope.config.sorter);
+                        }
+                        if (updater) {
+                            angular.forEach(scope.config.results, function (res) {
+                                angular.forEach(updater, function (value, key) {
+                                    var ent = _.findWhere(scope.config.results, {key: key});
+                                    $.extend(ent, value);
+                                });
+                            });
+                        }
+                        //scope.config.results.splice(0, 10);
+
+                        updater = {};
                     };
                     scope.$watch(function () {
                         return attrs.pollResults && config && config.loader;
@@ -1671,8 +1721,10 @@
                     });
 
                     destroy = $rootScope.$watch('overlays', function (neww, old) {
-                        if (!neww) {
+                        if (neww) {
                             suspend = true;
+                        } else {
+                            suspend = false;
                         }
                     });
 

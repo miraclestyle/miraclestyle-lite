@@ -190,6 +190,8 @@ class Order(orm.BaseExpando):
 
   _virtual_fields = {
       '_seller': orm.SuperReferenceStructuredProperty('23', autoload=True, target_field='seller_reference'),
+      '_tracker': orm.SuperReferenceProperty('136', autoload=True, callback=lambda self: self.get_tracker(),
+                                              format_callback=lambda self, value: value),
       '_lines': orm.SuperRemoteStructuredProperty(OrderLine, repeated=True, search={
           'default': {
               'filters': [],
@@ -301,7 +303,7 @@ class Order(orm.BaseExpando):
                                'tax_amount', 'total_amount', 'carrier', '_seller_reference',
                                'payment_status', 'payment_method',
                                '_lines', '_messages.created', '_messages.agent', '_messages.action', '_messages.body',
-                               '_messages._action', '_seller.name',
+                               '_messages._action', '_tracker', '_seller.name',
                                '_seller.logo',
                                '_seller._stripe_publishable_key',
                                '_seller._currency'), condition_root_or_buyer_or_seller),
@@ -632,7 +634,8 @@ class Order(orm.BaseExpando):
               orm.PluginGroup(
                   transactional=True,
                   plugins=[
-                      OrderNotifyTrackerSeen()
+                      OrderNotifyTrackerSeen(),
+                      DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
               )
           ]
@@ -712,3 +715,9 @@ class Order(orm.BaseExpando):
     emails.append(self.seller_email)
     emails.append(self.buyer_email)
     return emails
+
+  def get_tracker(self):
+    tracker = None
+    if self.key:
+      tracker = OrderNotifyTracker.build_key(self.key.urlsafe()).get()
+    return tracker

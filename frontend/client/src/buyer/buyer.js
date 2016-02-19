@@ -129,7 +129,9 @@
             $scope.search = {
                 results: [],
                 loader: false,
-                loaded: false
+                loaded: false,
+                sorter: helpers.order.sorter,
+                comparator: helpers.order.poolResultsComparator
             };
 
             $scope.$watch(function maybeRemoveSearchResult() {

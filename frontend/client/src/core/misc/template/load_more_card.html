@@ -1,7 +1,7 @@
-<div class="card card-load-more ng-scope" ng-show="newItems.length">
+<div class="card card-load-more ng-scope" ng-show="dirty">
     <button md-ink-ripple type="button" class="menu-item card-inner" loading ng-click="seeNewItems()">
         <div class="card-inner-padding">
-            <h1 class="headline text-center">View <span ng-bind="newItems.length"></span> <span ng-if="thing">new {{thing}}<span ng-show="newItems.length > 1">s</span></span><span ng-if="!thing">new</span></h1>
+            <icon class="refresh-icon" type="refresh"></icon>
         </div>
      </button>
 </div>
