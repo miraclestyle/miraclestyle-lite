@@ -21715,7 +21715,7 @@ angular.module('app')
                                 });
                                 imagesReader.showLoaderAlways = true;
 
-                                track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.homeCatalog, relativeCatalogUrl);
+                                track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.catalogHome, relativeCatalogUrl);
                                 sellerTrack = helpers.track.proxyLabelToEvents(track.seller, relativeCatalogUrl);
 
                                 $scope.imagesReader = imagesReader;
@@ -22235,6 +22235,12 @@ angular.module('app')
                 return d1.getTime() < d2.getTime();
             };
 
+            helpers.order.messagesSorter = function (current, next) {
+                var d1 = new Date(current.created),
+                    d2 = new Date(next.created);
+                return d1.getTime() < d2.getTime();
+            };
+
             helpers.order.poolResultsComparator = function (current, value, setUpdater) {
                 var passesUpdated = false,
                     passesTracker = false;
@@ -22740,7 +22746,7 @@ angular.module('app')
                                     $scope.cartModeRead = cartMode;
                                     $scope.sellerMode = sellerMode;
                                     $scope.order = response.data.entity;
-                                    track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.buyerCarts, config.relativeUrl);
+                                    track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.cartBuyerCarts, config.relativeUrl);
                                     $scope.seller = seller;
                                     $scope.currentAccount = currentAccount;
                                     $scope.addresses = {
@@ -22929,6 +22935,7 @@ angular.module('app')
                                                                 changed = true;
                                                             }
                                                         });
+                                                        $scope.order._messages.sort(helpers.order.messagesSorter);
                                                         if (changed) {
                                                             $scope.messages.forceReflow();
                                                         }
@@ -22990,6 +22997,7 @@ angular.module('app')
                                                 };
                                             if (!message) {
                                                 $scope.messages.draft.message = '';
+                                                newMessage.created = new Date();
                                                 $scope.order._messages.push(newMessage);
                                             }
                                             $scope.container.messages.$setSubmitted(true);
