@@ -804,7 +804,7 @@
                                 });
                                 imagesReader.showLoaderAlways = true;
 
-                                track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.homeCatalog, relativeCatalogUrl);
+                                track = helpers.track.proxyLabelToEvents(config.track || helpers.track.noop.catalogHome, relativeCatalogUrl);
                                 sellerTrack = helpers.track.proxyLabelToEvents(track.seller, relativeCatalogUrl);
 
                                 $scope.imagesReader = imagesReader;
