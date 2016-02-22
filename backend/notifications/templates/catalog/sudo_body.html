@@ -2,8 +2,13 @@
 
 {% block body %}
 <span>
+  {% if entity.state != 'discontinued' %}
   Administrative action was taken against your catalog
   "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name}}</a>."
+  {% else %}
+  Administrative action was taken against your catalog
+  "{{entity.name}}."
+  {% endif %}
 </span><br/><br/>
 <span>
   The catalog is {{entity.state}}.
