@@ -2,9 +2,7 @@
 
 {% block body %}
 <span>
-  Your catalog
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name}}</a>"
-  was successfully discontinued.
+  Your catalog "{{entity.name}}" was successfully discontinued.
 </span><br/><br/>
 <span>
   Here are few reminders to be aware of:
@@ -23,6 +21,6 @@
 </span><br/><br/>
 <span>
   A discontinued catalog is not accessible to anyone
-  and is entirely removed from the Miraclestyle app after 15 days.
+  and is entirely removed from the MIRACLESTYLE app after 15 days.
 </span>
 {% endblock %}
