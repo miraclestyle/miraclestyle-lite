@@ -7,18 +7,7 @@
             if (!helpers.order) {
                 helpers.order = {};
             }
-            helpers.order.sorter = function (current, next) {
-                var d1 = new Date(current.updated),
-                    d2 = new Date(next.updated);
-                return d1.getTime() < d2.getTime();
-            };
-
-            helpers.order.messagesSorter = function (current, next) {
-                var d1 = new Date(current.created),
-                    d2 = new Date(next.created);
-                return d1.getTime() < d2.getTime();
-            };
-
+ 
             helpers.order.poolResultsComparator = function (current, value, setUpdater) {
                 var passesUpdated = false,
                     passesTracker = false;
@@ -713,7 +702,6 @@
                                                                 changed = true;
                                                             }
                                                         });
-                                                        $scope.order._messages.sort(helpers.order.messagesSorter);
                                                         if (changed) {
                                                             $scope.messages.forceReflow();
                                                         }
@@ -797,6 +785,9 @@
                                             var that = this;
                                             if (!$scope.order._lines.length) {
                                                 snackbar.showK('messangerDisabledWhenEmpty');
+                                                return;
+                                            }
+                                            if ($scope.messages.draft.message === undefined || !$scope.messages.draft.message.length) {
                                                 return;
                                             }
                                             if ($scope.container.messages.$valid) {

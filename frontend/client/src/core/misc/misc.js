@@ -1642,7 +1642,7 @@
                             }
 
                             if (!deleted) {
-                                updater[key][field] = value;
+                                updater[key][field] = true;
                             }
                             if (Object.keys(updater).length) {
                                 scope.updaterDirty = true;
@@ -1655,8 +1655,7 @@
                                 clearTimeout(timer);
                             }
                             timer = setTimeout(function () {
-                                console.log(suspend);
-                                if (suspend) {
+                                if (suspend || scope.seeing) {
                                     // do nothing if suspend is active
                                     return poll();
                                 }
@@ -1667,14 +1666,17 @@
                                         }
                                         var entities = (response ? response.data.entities : false);
                                         if (entities) {
+                                            scope.lastResults = entities;
+                                            if (scope.lastResults.length !== scope.config.results.length) {
+                                                scope.newDirty = true;
+                                            }
                                             angular.forEach(entities, function (value) {
                                                 var current = _.findWhere(scope.config.results, {key: value.key});
                                                 if (!seen[value.key] && !current) {
-                                                    scope.newItems.unshift(value);
                                                     scope.dirty = true;
                                                     seen[value.key] = true;
                                                     scope.newDirty = true;
-                                                } else {
+                                                } else if (current) {
                                                     if (scope.config.comparator) {
                                                         scope.config.comparator(current, value, setUpdater);
                                                     }
@@ -1688,28 +1690,20 @@
                             }, 60000);
                         };
                     scope.thing = attrs.pollResultsThing;
-                    scope.newItems = [];
                     scope.dirty = false;
                     scope.seeNewItems = function () {
+                        scope.seeing = true;
                         scope.dirty = false;
                         scope.updaterDirty = false;
                         scope.newDirty = false;
-                        scope.config.results.prepend(scope.newItems);
-                        scope.newItems.length = 0;
-                        if (scope.config.sorter) {
-                            scope.config.results.sort(scope.config.sorter);
-                        }
-                        if (updater) {
-                            angular.forEach(scope.config.results, function (res) {
-                                angular.forEach(updater, function (value, key) {
-                                    var ent = _.findWhere(scope.config.results, {key: key});
-                                    $.extend(ent, value);
-                                });
-                            });
-                        }
-                        //scope.config.results.splice(0, 10);
+
+                        //scope.config.results.empty();
+                        //scope.config.results.extend(scope.lastResults);
+                        scope.config.results = scope.lastResults;
 
                         updater = {};
+
+                        scope.seeing = false;
                     };
                     scope.$watch(function () {
                         return attrs.pollResults && config && config.loader;

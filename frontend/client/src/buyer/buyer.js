@@ -130,7 +130,6 @@
                 results: [],
                 loader: false,
                 loaded: false,
-                sorter: helpers.order.sorter,
                 comparator: helpers.order.poolResultsComparator
             };
 

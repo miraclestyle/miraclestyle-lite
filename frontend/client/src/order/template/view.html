@@ -267,7 +267,7 @@
 
                     <div load-more-button="messages.reader"></div>
                     
-                    <div ng-click="messages.resendMaybe(message)" class="message-row clearfix" ng-repeat="message in order._messages" ng-init="
+                    <div ng-click="messages.resendMaybe(message)" class="message-row clearfix" ng-repeat="message in order._messages | orderBy: 'created'" ng-init="
                           isYou = !message._agent || message._agent.key === currentAccount.key;
                           isBuyer = message._agent.key === order.parent.parent.key && !isYou;
                           isSeller = message._agent.key === order._seller_reference.parent.key && !isYou;
