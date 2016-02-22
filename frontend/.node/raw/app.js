@@ -14932,7 +14932,7 @@ function msieversion() {
                             }
 
                             if (!deleted) {
-                                updater[key][field] = value;
+                                updater[key][field] = true;
                             }
                             if (Object.keys(updater).length) {
                                 scope.updaterDirty = true;
@@ -14945,8 +14945,7 @@ function msieversion() {
                                 clearTimeout(timer);
                             }
                             timer = setTimeout(function () {
-                                console.log(suspend);
-                                if (suspend) {
+                                if (suspend || scope.seeing) {
                                     // do nothing if suspend is active
                                     return poll();
                                 }
@@ -14957,14 +14956,17 @@ function msieversion() {
                                         }
                                         var entities = (response ? response.data.entities : false);
                                         if (entities) {
+                                            scope.lastResults = entities;
+                                            if (scope.lastResults.length !== scope.config.results.length) {
+                                                scope.newDirty = true;
+                                            }
                                             angular.forEach(entities, function (value) {
                                                 var current = _.findWhere(scope.config.results, {key: value.key});
                                                 if (!seen[value.key] && !current) {
-                                                    scope.newItems.unshift(value);
                                                     scope.dirty = true;
                                                     seen[value.key] = true;
                                                     scope.newDirty = true;
-                                                } else {
+                                                } else if (current) {
                                                     if (scope.config.comparator) {
                                                         scope.config.comparator(current, value, setUpdater);
                                                     }
@@ -14978,28 +14980,20 @@ function msieversion() {
                             }, 60000);
                         };
                     scope.thing = attrs.pollResultsThing;
-                    scope.newItems = [];
                     scope.dirty = false;
                     scope.seeNewItems = function () {
+                        scope.seeing = true;
                         scope.dirty = false;
                         scope.updaterDirty = false;
                         scope.newDirty = false;
-                        scope.config.results.prepend(scope.newItems);
-                        scope.newItems.length = 0;
-                        if (scope.config.sorter) {
-                            scope.config.results.sort(scope.config.sorter);
-                        }
-                        if (updater) {
-                            angular.forEach(scope.config.results, function (res) {
-                                angular.forEach(updater, function (value, key) {
-                                    var ent = _.findWhere(scope.config.results, {key: key});
-                                    $.extend(ent, value);
-                                });
-                            });
-                        }
-                        //scope.config.results.splice(0, 10);
+
+                        //scope.config.results.empty();
+                        //scope.config.results.extend(scope.lastResults);
+                        scope.config.results = scope.lastResults;
 
                         updater = {};
+
+                        scope.seeing = false;
                     };
                     scope.$watch(function () {
                         return attrs.pollResults && config && config.loader;
@@ -19225,7 +19219,6 @@ angular.module('app')
                 results: [],
                 loader: false,
                 loaded: false,
-                sorter: helpers.order.sorter,
                 comparator: helpers.order.poolResultsComparator
             };
 
@@ -22229,18 +22222,7 @@ angular.module('app')
             if (!helpers.order) {
                 helpers.order = {};
             }
-            helpers.order.sorter = function (current, next) {
-                var d1 = new Date(current.updated),
-                    d2 = new Date(next.updated);
-                return d1.getTime() < d2.getTime();
-            };
-
-            helpers.order.messagesSorter = function (current, next) {
-                var d1 = new Date(current.created),
-                    d2 = new Date(next.created);
-                return d1.getTime() < d2.getTime();
-            };
-
+ 
             helpers.order.poolResultsComparator = function (current, value, setUpdater) {
                 var passesUpdated = false,
                     passesTracker = false;
@@ -22935,7 +22917,6 @@ angular.module('app')
                                                                 changed = true;
                                                             }
                                                         });
-                                                        $scope.order._messages.sort(helpers.order.messagesSorter);
                                                         if (changed) {
                                                             $scope.messages.forceReflow();
                                                         }
@@ -23019,6 +23000,9 @@ angular.module('app')
                                             var that = this;
                                             if (!$scope.order._lines.length) {
                                                 snackbar.showK('messangerDisabledWhenEmpty');
+                                                return;
+                                            }
+                                            if ($scope.messages.draft.message === undefined || !$scope.messages.draft.message.length) {
                                                 return;
                                             }
                                             if ($scope.container.messages.$valid) {
@@ -23742,7 +23726,6 @@ angular.module('app')
             results: [],
             loader: {},
             loaded: false,
-            sorter: helpers.order.sorter,
             comparator: helpers.order.poolResultsComparator
         };
 
