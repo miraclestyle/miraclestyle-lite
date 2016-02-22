@@ -2,8 +2,7 @@
 
 {% block body %}
 <span>
-  Administrative action was taken against your catalog
-  "<a href="{{absolute_url('catalog/%s' % entity.key_urlsafe)}}">{{entity.name}}</a>."
+  Administrative action was taken against your catalog "{{entity.name}}."
 </span><br/><br/>
 <span>
   The catalog is {{entity.state}}.
