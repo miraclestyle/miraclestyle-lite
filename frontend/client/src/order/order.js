@@ -693,12 +693,14 @@
                                                         changed = false,
                                                         items = response.data.entity._messages;
                                                     angular.forEach($scope.order._messages, function (value, key) {
-                                                        map[value.key] = 1;
+                                                        map[value.key] = value;
                                                     });
                                                     angular.forEach(items, function (value) {
                                                         if (!map[value.key]) {
                                                             $scope.order._messages.push(value);
                                                             changed = true;
+                                                        } else {
+                                                            $.extend(map[value.key], value);
                                                         }
                                                     });
                                                     if (changed) {
@@ -750,7 +752,9 @@
                                                 if (!response.data.entity) {
                                                     return;
                                                 }
+                                                var created = newMessage.created;
                                                 $.extend(newMessage, response.data.entity._messages[0]);
+                                                newMessage.created = created;
                                                 newMessage._failed = false;
                                                 locals.reactOnStateChange(response);
                                                 track.sendMessageSuccess();
