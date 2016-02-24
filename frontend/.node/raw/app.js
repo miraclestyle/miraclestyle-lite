@@ -23061,12 +23061,14 @@ angular.module('app')
                                                 $scope.messages.toggling = false;
                                                 $scope.messages.open = !isOpen;
                                                 $scope.messages.seen = true;
-                                                models['34'].actions.see_messages({
-                                                    key: $scope.order.key
-                                                }).then(function () {
-                                                    $scope.order._tracker = null;
-                                                    locals.reactOnUpdate();
-                                                });
+                                                if ($scope.order.ui.rule.action.see_messages.executable) {
+                                                    models['34'].actions.see_messages({
+                                                        key: $scope.order.key
+                                                    }).then(function () {
+                                                        $scope.order._tracker = null;
+                                                        locals.reactOnUpdate();
+                                                    });
+                                                }
                                                 $scope.messages.forceReflow();
                                             });
                                         });
