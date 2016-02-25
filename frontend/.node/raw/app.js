@@ -1507,6 +1507,7 @@ if (window.DEBUG) {
         var locals = {};
 
         locals.guideByHost = {
+            'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw',
             'themiraclestyle-testing-site.appspot.com': 'ah5zfnRoZW1pcmFjbGVzdHlsZS10ZXN0aW5nLXNpdGVyLAsSAjExGICAgMDIk50KDAsSAjIzIgZzZWxsZXIMCxICMzEYgICAgOCwhQoM'
         };
 
@@ -22097,8 +22098,10 @@ angular.module('app')
                             _seller: {},
                             _images: {
                                 config: {
-                                    options: {
-                                        limit: 50000
+                                    search: {
+                                        options: {
+                                            limit: 50000
+                                        }
                                     }
                                 }
                             }
