@@ -149,38 +149,40 @@
         }))
         .controller('AboutController', ng(function ($scope, helpers) {
             $scope.socials = [{
-                name: 'Facebook',
-                key: 'facebook',
-                command: 'https://www.facebook.com/themiraclestyle/'
-            },/* {
-                name: 'Twitter',
-                key: 'twitter',
-                command: 'https://twitter.com/themiraclestyle'
-            }, {
-                name: 'Pinterest',
-                key: 'pinterest',
-                command: 'https://www.pinterest.com/themiraclestyle/'
-            }, {
-                name: 'Instagram',
-                key: 'instagram',
-                command: 'https://www.instagram.com/themiraclestyle/'
-            }, {
-                name: 'Linkedin',
-                key: 'linkedin',
-                command: 'https://www.linkedin.com/company/miraclestyle'
-            }, {
-                name: 'YouTube',
-                icon: 'youtube',
-                command: 'https://www.youtube.com/channel/UCy8iFLR6b1NXX8mhCgv2toA',
-            }, {
-                name: 'Google+',
-                icon: 'googleplus',
-                command: 'https://plus.google.com/b/117800240045842886424/',
-            }, {
-                name: 'Tumblr',
-                key: 'tumblr',
-                command: 'http://themiraclestyle.tumblr.com/'
-            }*/];
+                    name: 'Facebook',
+                    key: 'facebook',
+                    command: 'https://www.facebook.com/themiraclestyle/'
+                },
+                /* {
+                                name: 'Twitter',
+                                key: 'twitter',
+                                command: 'https://twitter.com/themiraclestyle'
+                            }, {
+                                name: 'Pinterest',
+                                key: 'pinterest',
+                                command: 'https://www.pinterest.com/themiraclestyle/'
+                            }, {
+                                name: 'Instagram',
+                                key: 'instagram',
+                                command: 'https://www.instagram.com/themiraclestyle/'
+                            }, {
+                                name: 'Linkedin',
+                                key: 'linkedin',
+                                command: 'https://www.linkedin.com/company/miraclestyle'
+                            }, {
+                                name: 'YouTube',
+                                icon: 'youtube',
+                                command: 'https://www.youtube.com/channel/UCy8iFLR6b1NXX8mhCgv2toA',
+                            }, {
+                                name: 'Google+',
+                                icon: 'googleplus',
+                                command: 'https://plus.google.com/b/117800240045842886424/',
+                            }, {
+                                name: 'Tumblr',
+                                key: 'tumblr',
+                                command: 'http://themiraclestyle.tumblr.com/'
+                            }*/
+            ];
 
             $scope.share = function (soc) {
                 return soc.command;
@@ -192,6 +194,65 @@
 
             $scope.setPageToolbarTitle('about');
 
+        }))
+        .controller('QuickGuideController', ng(function ($scope, models, errorHandling, $state, $modal, GLOBAL_CONFIG, helpers) {
+            var key =  GLOBAL_CONFIG.guideKey,
+                controller;
+
+            $scope.site.toolbar.hidden = true;
+
+            controller = ng(function ($scope) {
+                $scope.$state.promise(function () {
+                    return models['31'].actions.read({
+                        key: key,
+                        // 5 rpcs
+                        read_arguments: {
+                            _seller: {},
+                            _images: {
+                                config: {
+                                    limit: 50000
+                                }
+                            }
+                        }
+                    }, {
+                        ignoreErrors: 2
+                    });
+                }, function ($scope, response) {
+                    var errors,
+                        entity;
+                    if (response) {
+                        errors = response.data.errors;
+                        if (errors) {
+                            if ((errors.not_found || errors.malformed_key)) {
+                                $scope.notFound = true;
+                            } else {
+                                $scope.close();
+                                errorHandling.snackbar(errors);
+                            }
+                            return;
+                        }
+                    }
+                    entity = response.data.entity;
+                    if (!entity._images.length) {
+                        $scope.noImages = true;
+                        return;
+                    }
+
+                    $scope.close = function () {
+                        $state.go('home');
+                        $scope.$close();
+                    };
+                    $scope.catalog = entity;
+                });
+            });
+
+            $modal.open({
+                templateUrl: 'home/guide.html',
+                windowClass: 'no-overflow',
+                controller: controller,
+                inDirection: false,
+                outDirection: false
+            });
         }))
         .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
             var args = {

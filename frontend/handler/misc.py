@@ -65,6 +65,7 @@ settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                         (r'/copyright_policy', CopyrightPage, 'copyright'),
 
                         # other
+                        (r'/guide', base.AngularBlank),
                         (r'/login/status', base.AngularBlank),
                         (r'/seller/order/<key>', base.AngularBlank),
                         (r'/seller/cart/<key>', base.AngularBlank),

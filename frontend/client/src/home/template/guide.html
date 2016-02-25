@@ -1,0 +1,24 @@
+<div class="fitter" fit-in-modal>
+
+<modal-loading></modal-loading>
+<div class="modal-body fixed-height relative">
+<form name="container.form" method="post">
+  <div class="clearfix">
+
+      <div ng-hide="hideClose" class="top-close">
+           <button md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" md-ink-ripple-action ripple-light loading type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled" ng-click="close()">
+             <icon color="white" type="close"></icon>
+           </button>
+      </div>
+
+      <div ng-if="modalOptions.opened && $state.isCompleted() && !notFound" class="image-slider-outer unselectable">
+         <div catalog-ready="$state.fullyReady" ng-class="{'swoop-from-left-finish': true}" image-slider="catalog._images" class="image-slider swoop-from-left"> 
+             <div ng-repeat="image in catalog._images" class="image-slider-item">
+               <img class="not-pointable" slider-image="image" /> 
+            </div>
+         </div>
+      </div>
+</form>
+
+</div> 
+</div>

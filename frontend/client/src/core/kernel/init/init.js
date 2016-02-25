@@ -161,6 +161,12 @@
                 title: 'copyright_policy',
                 templateUrl: 'home/copyright_policy.html',
             })
+            .state('guide', {
+                url: '/guide',
+                title: 'Guide',
+                template: '',
+                controller: 'QuickGuideController'
+            })
             .state('admin-list', {
                 url: '/admin/list/:kind/:query',
                 templateUrl: function ($stateParams) {

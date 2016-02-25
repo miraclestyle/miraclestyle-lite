@@ -4,6 +4,12 @@
     angular.module('app').config(ng(function (GLOBAL_CONFIG, $injector) {
         var locals = {};
 
+        locals.guideByHost = {
+            'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw'
+        };
+
+        GLOBAL_CONFIG.guideKey = locals.guideByHost[window.location.host];
+
         $.extend(GLOBAL_CONFIG.modals.confirmations, {
             discardWithFieldsRequired: {
                 title: 'Discard changes?',
