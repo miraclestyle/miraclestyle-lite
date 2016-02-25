@@ -210,7 +210,9 @@
                             _seller: {},
                             _images: {
                                 config: {
-                                    limit: 50000
+                                    options: {
+                                        limit: 50000
+                                    }
                                 }
                             }
                         }
