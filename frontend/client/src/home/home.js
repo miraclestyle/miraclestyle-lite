@@ -195,70 +195,86 @@
             $scope.setPageToolbarTitle('about');
 
         }))
-        .controller('QuickGuideController', ng(function ($scope, models, errorHandling, $state, $modal, GLOBAL_CONFIG, helpers) {
-            var key =  GLOBAL_CONFIG.guideKey,
-                controller;
+        .factory('guide', ng(function (GLOBAL_CONFIG, $modal, models, errorHandling, $state, helpers) {
 
-            $scope.site.toolbar.hidden = true;
+            function open(config) {
+                config = helpers.alwaysObject(config);
+                var key = GLOBAL_CONFIG.guideKey,
+                    controller;
 
-            controller = ng(function ($scope) {
-                $scope.$state.promise(function () {
-                    return models['31'].actions.read({
-                        key: key,
-                        // 5 rpcs
-                        read_arguments: {
-                            _seller: {},
-                            _images: {
-                                config: {
-                                    search: {
-                                        options: {
-                                            limit: 50000
+                controller = ng(function ($scope) {
+                    $scope.$state.promise(function () {
+                        return models['31'].actions.read({
+                            key: key,
+                            // 5 rpcs
+                            read_arguments: {
+                                _seller: {},
+                                _images: {
+                                    config: {
+                                        search: {
+                                            options: {
+                                                limit: 50000
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                    }, {
-                        ignoreErrors: 2
-                    });
-                }, function ($scope, response) {
-                    var errors,
-                        entity;
-                    if (response) {
-                        errors = response.data.errors;
-                        if (errors) {
-                            if ((errors.not_found || errors.malformed_key)) {
-                                $scope.notFound = true;
-                            } else {
-                                $scope.close();
-                                errorHandling.snackbar(errors);
+                        }, {
+                            ignoreErrors: 2
+                        });
+                    }, function ($scope, response) {
+                        var errors,
+                            entity;
+                        if (response) {
+                            errors = response.data.errors;
+                            if (errors) {
+                                if ((errors.not_found || errors.malformed_key)) {
+                                    $scope.notFound = true;
+                                } else {
+                                    $scope.close();
+                                    errorHandling.snackbar(errors);
+                                }
+                                return;
                             }
+                        }
+                        entity = response.data.entity;
+                        if (!entity._images.length) {
+                            $scope.noImages = true;
                             return;
                         }
-                    }
-                    entity = response.data.entity;
-                    if (!entity._images.length) {
-                        $scope.noImages = true;
-                        return;
-                    }
 
-                    $scope.close = function () {
-                        $state.go('home');
-                        $scope.$close();
-                    };
-                    $scope.catalog = entity;
+                        $scope.close = function () {
+                            if (!config.homepage) {
+                                $state.go('home');
+                            } else {
+                                $.cookie('sawguide', 1, {expires: 30});
+                            }
+                            $scope.$close();
+                        };
+                        $scope.catalog = entity;
+                    });
                 });
-            });
 
-            $modal.open({
-                templateUrl: 'home/guide.html',
-                windowClass: 'no-overflow',
-                controller: controller,
-                inDirection: false,
-                outDirection: false
-            });
+                $modal.open({
+                    templateUrl: 'home/guide.html',
+                    windowClass: 'no-overflow',
+                    controller: controller,
+                    inDirection: false,
+                    outDirection: false
+                });
+            }
+            return {
+                open: open
+            };
         }))
-        .controller('HomePageController', ng(function ($scope, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
+        .controller('QuickGuideController', ng(function ($scope, guide, $timeout) {
+
+            $scope.site.toolbar.hidden = true;
+            $timeout(function () {
+                guide.open();
+            }, 300);
+        }))
+        .controller('HomePageController', ng(function ($scope, currentAccount, guide, $timeout, models, modals, $state, $stateParams, helpers, $q, modelsMeta) {
             var args = {
                     search: {
                         filters: [{
@@ -330,6 +346,15 @@
             promise.then(function () {
                 $scope.search.loader.load();
             });
+
+            if (!$.cookie('sawguide') && currentAccount._is_guest) {
+                $timeout(function () {
+                    guide.open({
+                        homepage: true
+                    });
+                }, 300);
+            }
+
 
 
         }));
