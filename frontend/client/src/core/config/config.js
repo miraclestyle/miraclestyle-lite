@@ -6,7 +6,7 @@
 
         locals.guideByHost = {
             'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw',
-            'themiraclestyle-testing-site.appspot.com': 'asd'
+            'themiraclestyle-testing-site.appspot.com': 'ah5zfnRoZW1pcmFjbGVzdHlsZS10ZXN0aW5nLXNpdGVyZAsSAjExGICAgMDIk50KDAsSAjIzIgZzZWxsZXIMCxICMzEiPzU2NTMxNjQ4MDQwMTQwODBfZHVwbGljYXRlXzFlNDEyZWYyLWNiZjMtNGE0OS04ZDcwLTFlYjkzOGYxNGEwNww'
         };
 
         GLOBAL_CONFIG.guideKey = locals.guideByHost[window.location.host];
