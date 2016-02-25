@@ -1508,7 +1508,7 @@ if (window.DEBUG) {
 
         locals.guideByHost = {
             'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw',
-            'themiraclestyle-testing-site.appspot.com': 'ah5zfnRoZW1pcmFjbGVzdHlsZS10ZXN0aW5nLXNpdGVyLAsSAjExGICAgMDIk50KDAsSAjIzIgZzZWxsZXIMCxICMzEYgICAgOCwhQoM'
+            'themiraclestyle-testing-site.appspot.com': 'asd'
         };
 
         GLOBAL_CONFIG.guideKey = locals.guideByHost[window.location.host];
@@ -22117,6 +22117,7 @@ angular.module('app')
                             errors = response.data.errors;
                             if (errors) {
                                 if ((errors.not_found || errors.malformed_key)) {
+                                    $state.go('home');
                                     $scope.notFound = true;
                                 } else {
                                     $scope.close();
