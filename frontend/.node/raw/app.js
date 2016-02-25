@@ -22117,6 +22117,7 @@ angular.module('app')
                             errors = response.data.errors;
                             if (errors) {
                                 if ((errors.not_found || errors.malformed_key)) {
+                                    $scope.close();
                                     $state.go('home');
                                     $scope.notFound = true;
                                 } else {
