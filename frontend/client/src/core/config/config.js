@@ -5,6 +5,7 @@
         var locals = {};
 
         locals.guideByHost = {
+            'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw',
             'themiraclestyle-testing-site.appspot.com': 'ah5zfnRoZW1pcmFjbGVzdHlsZS10ZXN0aW5nLXNpdGVyLAsSAjExGICAgMDIk50KDAsSAjIzIgZzZWxsZXIMCxICMzEYgICAgOCwhQoM'
         };
 
