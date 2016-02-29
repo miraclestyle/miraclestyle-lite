@@ -7,9 +7,9 @@
         locals.guideByHost = {
             'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw',
             'themiraclestyle-testing-site.appspot.com': 'ah5zfnRoZW1pcmFjbGVzdHlsZS10ZXN0aW5nLXNpdGVyZAsSAjExGICAgMDIk50KDAsSAjIzIgZzZWxsZXIMCxICMzEiPzU2NTMxNjQ4MDQwMTQwODBfZHVwbGljYXRlXzFlNDEyZWYyLWNiZjMtNGE0OS04ZDcwLTFlYjkzOGYxNGEwNww',
-            'themiraclestyle.appspot.com': 'https://themiraclestyle.appspot.com/catalog/ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw',
-            'miraclestyle.com': 'https://miraclestyle.com/catalog/ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw',
-            'www.miraclestyle.com': 'https://www.miraclestyle.com/catalog/ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw'
+            'themiraclestyle.appspot.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw',
+            'miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw',
+            'www.miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw'
         };
 
         GLOBAL_CONFIG.guideKey = locals.guideByHost[window.location.host];
