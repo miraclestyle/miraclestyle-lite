@@ -112,7 +112,7 @@
                                     .height(hh);
                                 scope.$emit('reMeasureImageSlider');
                             },
-                            imgSrc = helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize,
+                            imgSrc = helpers.url.handleProtocol(image.serving_url) + '=s' + (imageSize * (window.devicePixelRatio || 1)),
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
                                 //console.log(element.get(0).width, newWidth);
