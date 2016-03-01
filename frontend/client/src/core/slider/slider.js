@@ -117,7 +117,9 @@
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
                                 //console.log(element.get(0).width, newWidth);
                                 element.off('load', fn);
-                                element.css({width: '', height: ''});
+                                if (window.devicePixelRatio < 2) {
+                                    element.css({width: '', height: ''});
+                                }
                                 spawnSizes(element[0].width, element[0].height);
                             };
                         //console.log(newHeight * image.proportion, image.proportion, newHeight);
