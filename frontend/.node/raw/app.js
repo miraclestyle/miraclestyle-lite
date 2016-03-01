@@ -1508,7 +1508,10 @@ if (window.DEBUG) {
 
         locals.guideByHost = {
             'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw',
-            'themiraclestyle-testing-site.appspot.com': 'asd'
+            'themiraclestyle-testing-site.appspot.com': 'ah5zfnRoZW1pcmFjbGVzdHlsZS10ZXN0aW5nLXNpdGVyZAsSAjExGICAgMDIk50KDAsSAjIzIgZzZWxsZXIMCxICMzEiPzU2NTMxNjQ4MDQwMTQwODBfZHVwbGljYXRlXzFlNDEyZWYyLWNiZjMtNGE0OS04ZDcwLTFlYjkzOGYxNGEwNww',
+            'themiraclestyle.appspot.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw',
+            'miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw',
+            'www.miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw'
         };
 
         GLOBAL_CONFIG.guideKey = locals.guideByHost[window.location.host];
@@ -18156,7 +18159,7 @@ function msieversion() {
                                     .height(hh);
                                 scope.$emit('reMeasureImageSlider');
                             },
-                            imgSrc = helpers.url.handleProtocol(image.serving_url) + '=s' + imageSize,
+                            imgSrc = helpers.url.handleProtocol(image.serving_url) + '=s' + (imageSize * (window.devicePixelRatio || 1)),
                             fn = function () {
                                 scope.$broadcast('readySingleImageSlider', reactingElement);
                                 //console.log(element.get(0).width, newWidth);
