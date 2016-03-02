@@ -151,6 +151,8 @@ KNOWN_BOT_AGENTS = [
         'Googlebot-Image',
         'Googlebot-Mobile',
         'Googlebot',
+        'Google',
+        'Plus',
         'GrapeshotCrawler',
         'gslfbot',
         'GurujiBot',
