@@ -11,6 +11,7 @@ threadsafe: true
   # min_pending_latency: 30ms  # default value
   # max_pending_latency: automatic
   # max_concurrent_requests: 50
+
 # https://cloud.google.com/appengine/docs/python/modules/#Python_Instance_scaling_and_class
 # https://cloud.google.com/appengine/docs/python/config/appconfig#scaling_and_instance_types
 
