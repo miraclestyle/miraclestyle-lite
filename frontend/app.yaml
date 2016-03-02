@@ -4,6 +4,16 @@ version: 1
 runtime: python27
 api_version: 1
 threadsafe: true
+# instance_class: F1 # F1 - 128MB; 600Mhz; $0.05 / F2 - 256MB; 1.2Ghz; $0.10 / F4 - 512MB; 2.4Ghz; $0.20 / F4_1G - 1024MB; 2.4Ghz; $0.30 / B8 - 1024MB; 4.8Ghz; $0.40
+# automatic_scaling:
+  # min_idle_instances: 1
+  # max_idle_instances: automatic  # default value
+  # min_pending_latency: 30ms  # default value
+  # max_pending_latency: automatic
+  # max_concurrent_requests: 50
+# https://cloud.google.com/appengine/docs/python/modules/#Python_Instance_scaling_and_class
+# https://cloud.google.com/appengine/docs/python/config/appconfig#scaling_and_instance_types
+
 
 
 
