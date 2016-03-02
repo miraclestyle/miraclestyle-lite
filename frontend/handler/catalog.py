@@ -22,7 +22,7 @@ class CatalogView(base.SeoOrAngular):
     data = self.api_endpoint(payload=data)
     catalog = data['entity']
     tpl = {'catalog': catalog,
-           'title': '%s %s' % (catalog['_seller']['name'], catalog['name']),
+           'title': catalog['name'],
            'updated': catalog['updated'],
            'image': '%s=s360' % catalog['_images'][0]['serving_url'],
            'path': self.uri_for('catalog.view', _full=True, key=catalog['key'])
