@@ -8,7 +8,10 @@ instance_class: B2 # B1 - 128MB; 600Mhz; $0.05 / B2 - 256MB; 1.2Ghz; $0.10 / B4 
 basic_scaling:
   max_instances: 10
   idle_timeout: 30s
-  # Billing begins when an instance starts and ends fifteen minutes after a basic instance has finished processing its last request.
+
+# https://cloud.google.com/appengine/docs/python/modules/#Python_Instance_scaling_and_class
+# https://cloud.google.com/appengine/docs/python/config/appconfig#scaling_and_instance_types
+# Billing begins when an instance starts and ends fifteen minutes after a basic instance has finished processing its last request.
 
 libraries:
 
