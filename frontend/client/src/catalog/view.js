@@ -245,12 +245,12 @@
                                     },
                                     twitter: {
                                         url: productUrl,
-                                        text: 'Product - ' + $scope.product.name
+                                        text: $scope.product.name
                                     },
                                     pinterest: {
                                         url: productUrl,
                                         media: image(600),
-                                        description: 'Share on pinterest'
+                                        description: $scope.product.name
                                     },
                                     googleplus: {
                                         url: productUrl
