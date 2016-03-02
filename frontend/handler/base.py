@@ -416,7 +416,9 @@ KNOWN_BOT_AGENTS = [
         'Zao',
         'Zealbot',
         'zspider',
-        'ZyBorg']
+        'ZyBorg',]
+
+SEO_AGENT_CONTAINS = ['Google (+https://developers.google.com/+/web/snippet/)']
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -581,7 +583,11 @@ class SeoOrAngular(AngularBlank):
     if agent:
       general_match = re.search('(bot|crawl|slurp|spider|facebook|twitter|pinterest|linkedin)', agent)
       manual_debug = self.request.cookies.get('seo') == '1' or self.request.get('__seo') == '1'
-      return  general_match or manual_debug or agent in KNOWN_BOT_AGENTS
+      match = general_match or manual_debug or agent in KNOWN_BOT_AGENTS
+      for contains in SEO_AGENT_CONTAINS:
+        if contains in agent:
+            match = True
+      return match
     return False
 
   def respond_angular(self, *args, **kwargs):
