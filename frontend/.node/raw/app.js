@@ -21161,12 +21161,12 @@ angular.module('app')
                                     },
                                     twitter: {
                                         url: productUrl,
-                                        text: 'Product - ' + $scope.product.name
+                                        text: $scope.product.name
                                     },
                                     pinterest: {
                                         url: productUrl,
                                         media: image(600),
-                                        description: 'Share on pinterest'
+                                        description: $scope.product.name
                                     },
                                     googleplus: {
                                         url: productUrl
@@ -21727,12 +21727,12 @@ angular.module('app')
                                 },
                                 twitter: {
                                     url: catalogUrl,
-                                    text: 'Catalog - ' + $scope.catalog.name
+                                    text: $scope.catalog.name
                                 },
                                 pinterest: {
                                     url: catalogUrl,
                                     media: helpers.url.handleProtocol($scope.catalog._images[0].serving_url + '=s600'),
-                                    description: 'Share on pinterest'
+                                    description: $scope.catalog.name
                                 },
                                 googleplus: {
                                     url: catalogUrl
