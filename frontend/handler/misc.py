@@ -47,6 +47,11 @@ class SupportPage(base.SeoOrAngular):
   def respond_seo(self):
     self.render('seo/misc/support.html', {'route_name': 'support', 'page_title': 'Support'})
 
+class GuidePage(base.SeoOrAngular):
+
+  def respond_seo(self):
+    self.render('seo/misc/guide.html', {'route_name': 'guide', 'page_title': 'Guide'})
+
 
 settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                         (r'/buyer/orders', base.AngularBlank),
@@ -63,9 +68,9 @@ settings.ROUTES.extend(((r'/collections', base.AngularBlank),
                         (r'/tos', TosPage, 'tos'),
                         (r'/privacy_policy', PrivacyPage, 'privacy'),
                         (r'/copyright_policy', CopyrightPage, 'copyright'),
+                        (r'/guide', GuidePage, 'guide'),
 
                         # other
-                        (r'/guide', base.AngularBlank),
                         (r'/login/status', base.AngularBlank),
                         (r'/seller/order/<key>', base.AngularBlank),
                         (r'/seller/cart/<key>', base.AngularBlank),
