@@ -1,4 +1,4 @@
-application: themiraclestyle
+application: themiraclestyle-testing-site
 
 dispatch:
   - url: '*/api/*'

@@ -11,6 +11,8 @@ import inspect
 import urllib
 import time
 import json
+import hashlib
+import uuid
 
 import orm
 import iom
@@ -131,12 +133,20 @@ class RequestHandler(webapp2.RequestHandler):
       if not self.current_account._is_guest and (self.current_account._csrf != self.current_csrf):
         self.abort(403)
 
+  def set_csrf_token(self):
+    csrftoken = self.request.cookies.get('csrftoken')
+    if not csrftoken:
+      token = hashlib.md5(str(uuid.uuid4())).hexdigest()
+      self.request.cookies['csrftoken'] = token
+      self.response.set_cookie('csrftoken', token)
+
   @orm.toplevel
   def dispatch(self):
     # @tools.detail_profile(HTTP_PERFORMANCE_TEXT)
     dispatch_time = tools.Profile()
     if settings.LAG:
       time.sleep(settings.LAG)
+    self.set_csrf_token()
     self.load_current_account()
     self.load_csrf()
     self.validate_csrf()

@@ -30,7 +30,7 @@ from .debug import log
 
 __all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url', 'absolute_url', 'render_template', 'render_subject_and_body_templates',
            'channel_create', 'json_dumps', 'json_loads', 'mail_send', 'http_send', 'channel_send', 'secure_cookie', 'urlsafe_encrypt',
-           'urlsafe_decrypt', 'get_remote_addr']
+           'urlsafe_decrypt', 'get_remote_addr', 'get_csrf_token']
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -227,7 +227,6 @@ def decrypt(ciphertext, key=None):
     plaintext = cipher.decrypt(ciphertext[AES.block_size:])
     return plaintext.rstrip(b"\0")
 
-
 def urlsafe_encrypt(s, raw_prefix=None):
   if s is None:
     return s # wont encrypt none, silently
@@ -257,3 +256,6 @@ def urlsafe_decrypt(s, raw_prefix=None):
 
 def get_remote_addr():
   return webapp2.get_request().remote_addr
+
+def get_csrf_token():
+  return webapp2.get_request().cookies.get('csrftoken')
