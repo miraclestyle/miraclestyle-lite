@@ -349,7 +349,7 @@
                 $scope.search.loader.load();
             });
 
-            if (!$.cookie('sawguide') && currentAccount._is_guest) {
+            if (currentAccount._is_guest) {
                 $timeout(function () {
                     guide.open({
                         homepage: true
