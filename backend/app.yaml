@@ -6,7 +6,7 @@ api_version: 1
 threadsafe: true
 instance_class: B2 # B1 - 128MB; 600Mhz; $0.05 / B2 - 256MB; 1.2Ghz; $0.10 / B4 - 512MB; 2.4Ghz; $0.20 / B4_1G - 1024MB; 2.4Ghz; $0.30 / B8 - 1024MB; 4.8Ghz; $0.40
 basic_scaling:
-  max_instances: 10
+  max_instances: 3
   idle_timeout: 30s
 
 # https://cloud.google.com/appengine/docs/python/modules/#Python_Instance_scaling_and_class
