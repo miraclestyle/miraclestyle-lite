@@ -254,3 +254,6 @@ def urlsafe_decrypt(s, raw_prefix=None):
   decode = base64.b64decode(s[len(raw_prefix):]) # strip away the prefix, decode the string
   out = decrypt(decode) # decrypt it finally
   return out
+
+def get_remote_addr():
+  return webapp2.get_request().remote_addr

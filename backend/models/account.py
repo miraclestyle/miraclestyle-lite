@@ -416,7 +416,8 @@ class Account(orm.BaseExpando):
   def get_csrf(self):
     session = self.current_account_session()
     if not session:
-      return hashlib.md5(os.environ['REMOTE_ADDR'] + settings.CSRF_SALT).hexdigest()
+      remoteaddr = tools.get_remote_addr()
+      return hashlib.md5(remoteaddr + settings.CSRF_SALT).hexdigest()
     return hashlib.md5('%s-%s' % (session.session_id, settings.CSRF_SALT)).hexdigest()
 
   @classmethod
