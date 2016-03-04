@@ -1509,9 +1509,9 @@ if (window.DEBUG) {
         locals.guideByHost = {
             'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw',
             'themiraclestyle-testing-site.appspot.com': 'ah5zfnRoZW1pcmFjbGVzdHlsZS10ZXN0aW5nLXNpdGVyZAsSAjExGICAgMDIk50KDAsSAjIzIgZzZWxsZXIMCxICMzEiPzU2NTMxNjQ4MDQwMTQwODBfZHVwbGljYXRlXzFlNDEyZWYyLWNiZjMtNGE0OS04ZDcwLTFlYjkzOGYxNGEwNww',
-            'themiraclestyle.appspot.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw',
-            'miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw',
-            'www.miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgNeMCgw'
+            'themiraclestyle.appspot.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAwOGKCgw',
+            'miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAwOGKCgw',
+            'www.miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAwOGKCgw'
         };
 
         GLOBAL_CONFIG.guideKey = locals.guideByHost[window.location.host];
@@ -22242,7 +22242,7 @@ angular.module('app')
                 $scope.search.loader.load();
             });
 
-            if (!$.cookie('sawguide') && currentAccount._is_guest) {
+            if (currentAccount._is_guest) {
                 $timeout(function () {
                     guide.open({
                         homepage: true
