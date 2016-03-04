@@ -592,7 +592,7 @@ class OrderNotify(orm.BaseModel):
   def run(self, context):
     if not isinstance(self.cfg, dict):
       self.cfg = {}
-    ip_address = os.environ.get('REMOTE_ADDR')
+    ip_address = tools.get_remote_addr()
     requested_payment_method = context.input.get('payment_method')
     request = context.input.get('request')
     order_key = getattr(self, 'find_order_key_%s' % requested_payment_method)(context)  # will throw an error if the payment method does not exist
@@ -611,7 +611,7 @@ class OrderNotify(orm.BaseModel):
 
   def find_order_key_paypal(self, context):
     url = tools.get_attr(self.cfg, 'options.paypal.webscr')
-    ip_address = os.environ.get('REMOTE_ADDR')
+    ip_address = tools.get_remote_addr()
     request = context.input.get('request')
     ipn = request['ipn']
     result_content = None
@@ -634,7 +634,7 @@ class OrderNotify(orm.BaseModel):
     return orm.SuperKeyProperty(kind='34').value_format(ipn['custom'])
   
   def find_order_key_stripe(self, context):
-    ip_address = os.environ.get('REMOTE_ADDR')
+    ip_address = tools.get_remote_addr()
     request = context.input.get('request')
     event_object = tools.get_attr(context.input, 'request.object', '')
     event_type = tools.get_attr(context.input, 'request.type', '')
@@ -726,7 +726,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
     pass
 
   def notify(self, context):
-    ip_address = os.environ.get('REMOTE_ADDR')
+    ip_address = tools.get_remote_addr()
     request = context.input.get('request')
     ipn = request['ipn']
     ipn_payment_status = ipn['payment_status']
@@ -906,7 +906,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
     token = context.input.get('token') # this could be the request variable but standard action cannot be used see the paypal implementation
     order = context._order
     order.read({'_seller': {}})
-    ip_address = os.environ.get('REMOTE_ADDR')
+    ip_address = tools.get_remote_addr()
     try:
       # https://stripe.com/docs/api#create_charge
       total = order.total_amount * (Decimal('10') ** order.currency.value.digits)  # I think it is better to do it with long(). But here it is, just in case we need it: amount=(order.total_amount * (Decimal('10') ** order.currency.value.digits)).quantize(Decimal('10') ** order.currency.value.digits, rounding=ROUND_DOWN)
@@ -951,7 +951,7 @@ class OrderStripePaymentPlugin(OrderPaymentMethodPlugin):
       raise PluginError('rate_limit_error')
 
   def notify(self, context):
-    ip_address = os.environ.get('REMOTE_ADDR')
+    ip_address = tools.get_remote_addr()
     request = context.input.get('request')
     order = context._order
     context.message_body = ''

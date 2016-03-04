@@ -30,7 +30,7 @@ from .debug import log
 
 __all__ = ['rule_prepare', 'rule_exec', 'callback_exec', 'blob_create_upload_url', 'absolute_url', 'render_template', 'render_subject_and_body_templates',
            'channel_create', 'json_dumps', 'json_loads', 'mail_send', 'http_send', 'channel_send', 'secure_cookie', 'urlsafe_encrypt',
-           'urlsafe_decrypt']
+           'urlsafe_decrypt', 'get_remote_addr']
 
 
 class JSONEncoder(json.JSONEncoder):

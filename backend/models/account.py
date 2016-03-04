@@ -105,7 +105,7 @@ class Account(orm.BaseExpando):
   _default_indexed = False
 
   _virtual_fields = {
-      'ip_address': orm.SuperComputedProperty(lambda self: os.environ.get('REMOTE_ADDR')),
+      'ip_address': orm.SuperComputedProperty(lambda self: tools.get_remote_addr()),
       '_primary_email': orm.SuperComputedProperty(lambda self: self.primary_email()),
       '_csrf': orm.SuperComputedProperty(lambda self: self.get_csrf()),
       '_records': orm.SuperRecordProperty('11')
@@ -416,7 +416,7 @@ class Account(orm.BaseExpando):
   def get_csrf(self):
     session = self.current_account_session()
     if not session:
-      return hashlib.md5(os.environ['REMOTE_ADDR'] + settings.CSRF_SALT).hexdigest()
+      return hashlib.md5(tools.get_remote_addr() + settings.CSRF_SALT).hexdigest()
     return hashlib.md5('%s-%s' % (session.session_id, settings.CSRF_SALT)).hexdigest()
 
   @classmethod
