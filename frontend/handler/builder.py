@@ -24,7 +24,7 @@ class BuildAngularIndexHTML(base.Angular):
       version = '?v=%s' % os.environ.get('CURRENT_VERSION_ID')
     else:
       version = ''
-    static_dir = '%s/' % settings.HOST_URL
+    static_dir = '%s/' % self.request.host_url
     if self.request.get('static_dir') is not None:
       static_dir = self.request.get('static_dir')
     return '%sclient/%s%s' % (static_dir, file_path, version)
