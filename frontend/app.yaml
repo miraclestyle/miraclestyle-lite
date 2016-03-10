@@ -26,12 +26,10 @@ handlers:
   application_readable: true
 
 - url: /favicon.ico
-  static_files: client/dist/favicon.png
   upload: client/dist/favicon.png
   expiration: "360d 5h"
 
 - url: /robots.txt
-  static_files: client/dist/robots.txt
   upload: client/dist/robots.txt
   expiration: "360d 5h"
 
