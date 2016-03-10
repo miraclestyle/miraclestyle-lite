@@ -55,8 +55,9 @@ for k, v in DEFAULT_HOST_SETTINGS.items():
     HOST_SPECIFIC_SETTINGS[k] = v
 
 # META
-SITE_META_TITLE = "E-commerce Platform, Online Product Catalog Publisher"
-SITE_META_DESCRIPTION = "Easily sell online with POS equipped product catalogs. Create, publish and distribute POS equipped product catalogs with MIRACLESTYLE'S e-commerce platform."
+
+SITE_META_TITLE = "MIRACLESTYLE"
+SITE_META_DESCRIPTION = "SELL YOUR FASHION & LUXURY PIECES WITH STYLE & PRESTIGE"
 SITE_META_TWITTER_USERNAME = 'miraclestyle'
 
 DEBUG = HOST_SPECIFIC_SETTINGS['DEBUG']
