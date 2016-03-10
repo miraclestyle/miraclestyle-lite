@@ -11,42 +11,50 @@ import codecs
 import shutil
 import subprocess
 
+'''Settings file for defaut module'''
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_DIR = os.path.join(ROOT_DIR, 'client')
 CLIENT_COMPONENTS_DIR = os.path.join(CLIENT_DIR, 'src')
+HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
 
-MIRACLESTYLE_SETTINGS = {
+DEFAULT_HOST_SETTINGS = {
+  'DEBUG': True,
+  'FORCE_SSL': True,
+  'UNMINIFIED': False,
+  'LAG': False,
+  'SITE_NAME': 'ANON',
+  'SITE_META_TITLE': 'ANON',
+  'SITE_META_DESCRIPTION': 'ANON',
+  'SITE_META_TWITTER_USERNAME': 'miraclestyle',
+  'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
+  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
+  'GOOGLE_TAG_MANAGER_ID_WEB': 'GTM-TGBGSH',
+  'GOOGLE_ANALYTICS_TRACKING_ID': 'UA-68614444-1'
+}
+
+PRODUCTION_HOST_SETTINGS = {
   'DEBUG': False,
   'FORCE_SSL': True,
+  'UNMINIFIED': False,
+  'SITE_NAME': 'MIRACLESTYLE',
+  'SITE_META_TITLE': 'MIRACLESTYLE',
+  'SITE_META_DESCRIPTION': 'SELL YOUR FASHION & LUXURY PIECES WITH STYLE & PRESTIGE',
+  'SITE_META_TWITTER_USERNAME': 'miraclestyle',
   'BUCKET_PATH': 'themiraclestyle.appspot.com',
   'PAYPAL_WEBSCR': 'https://www.paypal.com/cgi-bin/webscr',
   'GOOGLE_TAG_MANAGER_ID_WEB': 'GTM-MPC3DQ',
   'GOOGLE_ANALYTICS_TRACKING_ID': 'UA-71911367-1'
 }
 
-HOST_NAME = os.environ.get('DEFAULT_VERSION_HOSTNAME', os.environ.get('HTTP_HOST'))
-
-DEFAULT_HOST_SETTINGS = {
-  'DEBUG': True,
-  'FORCE_SSL': False,
-  'UNMINIFIED': False,
-  'LAG': False,
-  'BUCKET_PATH': 'themiraclestyle-testing-site.appspot.com',
-  'PAYPAL_WEBSCR': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
-  'GOOGLE_TAG_MANAGER_ID_WEB': 'GTM-TGBGSH',
-  'GOOGLE_ANALYTICS_TRACKING_ID': 'UA-68614444-1'
-}
 HOSTS_SPECIFIC_SETTINGS = {
   'localhost:9982': {
     'FORCE_SSL': False,
     'UNMINIFIED': True
   },
-  'themiraclestyle-testing-site.appspot.com': {
-    'FORCE_SSL': True
-  },
-  'themiraclestyle.appspot.com': MIRACLESTYLE_SETTINGS,
-  'miraclestyle.com': MIRACLESTYLE_SETTINGS,
-  'www.miraclestyle.com': MIRACLESTYLE_SETTINGS
+  'themiraclestyle.appspot.com': PRODUCTION_HOST_SETTINGS,
+  'miraclestyle.com': PRODUCTION_HOST_SETTINGS,
+  'www.miraclestyle.com': PRODUCTION_HOST_SETTINGS
 }
 
 HOST_SPECIFIC_SETTINGS = HOSTS_SPECIFIC_SETTINGS.get(HOST_NAME, DEFAULT_HOST_SETTINGS)
@@ -54,10 +62,6 @@ for k, v in DEFAULT_HOST_SETTINGS.items():
   if k not in HOST_SPECIFIC_SETTINGS:
     HOST_SPECIFIC_SETTINGS[k] = v
 
-# META
-SITE_META_TITLE = "E-commerce Platform, Online Product Catalog Publisher"
-SITE_META_DESCRIPTION = "Easily sell online with POS equipped product catalogs. Create, publish and distribute POS equipped product catalogs with MIRACLESTYLE'S e-commerce platform."
-SITE_META_TWITTER_USERNAME = 'miraclestyle'
 
 DEBUG = HOST_SPECIFIC_SETTINGS['DEBUG']
 LAG = HOST_SPECIFIC_SETTINGS['LAG']
@@ -66,23 +70,27 @@ FORCE_SSL = HOST_SPECIFIC_SETTINGS['FORCE_SSL']
 GOOGLE_TAG_MANAGER_ID_WEB = HOST_SPECIFIC_SETTINGS['GOOGLE_TAG_MANAGER_ID_WEB']
 GOOGLE_ANALYTICS_TRACKING_ID = HOST_SPECIFIC_SETTINGS['GOOGLE_ANALYTICS_TRACKING_ID']
 PAYPAL_WEBSCR = HOST_SPECIFIC_SETTINGS['PAYPAL_WEBSCR']
+# META
+SITE_NAME = HOST_SPECIFIC_SETTINGS['SITE_NAME']
+SITE_META_TITLE = HOST_SPECIFIC_SETTINGS['SITE_META_TITLE']
+SITE_META_DESCRIPTION = HOST_SPECIFIC_SETTINGS['SITE_META_DESCRIPTION']
+SITE_META_TWITTER_USERNAME = HOST_SPECIFIC_SETTINGS['SITE_META_TWITTER_USERNAME']
 
+########## Global settings ##########
 DEVELOPMENT_SERVER = os.getenv('SERVER_SOFTWARE', '').startswith('Development')
-
 ACTIVE_HANDLERS = ('misc', 'catalog', 'home', 'builder')
+ROUTES = []
+JINJA_GLOBALS = {}
+JINJA_FILTERS = {}
+TEMPLATE_CACHE = 0
+WEBAPP2_EXTRAS = {}
+
 
 def get_host_url(hostname):
   http = 'http://'
   if os.environ.get('HTTPS') == 'on' or FORCE_SSL:
     http = 'https://'
   return '%s%s' % (http, hostname)
-
-ROUTES = []
-JINJA_GLOBALS = {}
-JINJA_FILTERS = {}
-
-TEMPLATE_CACHE = 0
-WEBAPP2_EXTRAS = {}
 
 
 def _angular_vendor_js(debug):
@@ -128,6 +136,7 @@ def _angular_vendor_js(debug):
       env('vendor/angular-google-chart/ng-google-chart.js'),
       env('vendor/angular-markdown-directive/markdown.js')
   )
+
 
 ANGULAR_VENDOR_JS = _angular_vendor_js(UNMINIFIED)
 ANGULAR_VENDOR_CSS = ()
@@ -182,8 +191,10 @@ ANGULAR_ACTIVE_COMPONENTS = [
     'core/kernel/init'
 ]
 
+
 ANGULAR_JAVASCRIPT_PATHS.extend(ANGULAR_VENDOR_JS)
 ANGULAR_CSS_PATHS.extend(ANGULAR_VENDOR_CSS)
+
 
 _client_dir_length = len(CLIENT_DIR) + 1
 _client_components_dir_length = len(CLIENT_COMPONENTS_DIR) + 1
@@ -314,6 +325,7 @@ def build(templates=True, statics=True, js_and_css=True, write=False, vendors=Tr
         print('Failed building index.html for %s. Error %s' % (provider, e))
 
   return buff
+
 
 if __name__ == '__main__':
   build(write=True)

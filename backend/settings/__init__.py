@@ -139,7 +139,7 @@ LINKEDIN_OAUTH2 = {
 ########## Global settings ##########
 LOGIN_METHODS = [GOOGLE_OAUTH2, FACEBOOK_OAUTH2, LINKEDIN_OAUTH2]
 NOTIFY_EMAIL = 'Miraclestyle <notify-noreply@miraclestyle.com>'
-ROOT_ADMINS = ('elvin@miraclestyle.com', 'edis@miraclestyle.com')
+ROOT_ADMINS = ('elvin@miraclestyle.com', 'edis@miraclestyle.com', 'support@miraclestyle.com')
 SEARCH_PAGE = 10
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'  # This formating is used for input and output.
 MAX_MESSAGE_SIZE = 1024
