@@ -1513,7 +1513,7 @@ if (window.DEBUG) {
 
         locals.guideByHost = {
             'localhost:9982': 'aiBkZXZ-dGhlbWlyYWNsZXN0eWxlLXRlc3Rpbmctc2l0ZXIsCxICMTEYgICAgID4hQkMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAgMqgCQw',
-            'themiraclestyle-testing-site.appspot.com': 'ah5zfnRoZW1pcmFjbGVzdHlsZS10ZXN0aW5nLXNpdGVyZAsSAjExGICAgMDIk50KDAsSAjIzIgZzZWxsZXIMCxICMzEiPzU2NTMxNjQ4MDQwMTQwODBfZHVwbGljYXRlXzFlNDEyZWYyLWNiZjMtNGE0OS04ZDcwLTFlYjkzOGYxNGEwNww',
+            'themiraclestyle-testing-site.appspot.com': false,
             'themiraclestyle.appspot.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAwOGKCgw',
             'miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAwOGKCgw',
             'www.miraclestyle.com': 'ahFzfnRoZW1pcmFjbGVzdHlsZXIsCxICMTEYgICAgKvzhwoMCxICMjMiBnNlbGxlcgwLEgIzMRiAgICAwOGKCgw'
@@ -22099,6 +22099,10 @@ angular.module('app')
                 config = helpers.alwaysObject(config);
                 var key = GLOBAL_CONFIG.guideKey,
                     controller;
+
+                if (!key) {
+                    return;
+                }
 
                 controller = ng(function ($scope) {
                     $scope.$state.promise(function () {
