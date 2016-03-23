@@ -202,6 +202,10 @@
                 var key = GLOBAL_CONFIG.guideKey,
                     controller;
 
+                if (!key) {
+                    return;
+                }
+
                 controller = ng(function ($scope) {
                     $scope.$state.promise(function () {
                         return models['31'].actions.read({
