@@ -19,6 +19,47 @@
   price
   availability ?
 
+  old html...
+
+  <section>
+    <div itemscope itemtype="http://schema.org/Product">
+      <div class="product-detail"><span itemprop="category">{{category}}</span></div>
+      <div class="product-detail">
+        <span itemprop="name">{{title}}</span>
+      </div>
+      <div class="product-images">
+        {% for img in product.images %}
+        <div class="product-image">
+            <img itemprop="image" src="{{img.serving_url|autohttps}}=s550" alt="{{product.name}} Image {{loop.index}}" />
+        </div>
+        {% endfor %}
+      </div>
+      <div class="product-detail">
+        <span itemprop="description">
+          {{product.description}}
+        </span>
+      </div>
+      
+      <div class="product-detail"><span itemprop="mpn">{{code}}</span></div>
+     
+      <span itemprop="offers" class="product-detail" itemscope itemtype="http://schema.org/Offer">
+          <div class="product-detail">
+              
+            <meta itemprop="priceCurrency" content="{{currency.code}}" />
+            {{currency.symbol}} <span itemprop="price">{{price}}</span>
+          </div>
+       
+          <div class="product-detail">
+            <span itemprop="seller" itemscope itemtype="http://schema.org/Organization">
+                            <span itemprop="name">{{catalog._seller.name}}</span>
+                          </span>
+          </div>
+   
+        </span>
+    </div>
+  </section>
+
+
 #}
 
 {# twitter has card of type product, so we are good with that https://dev.twitter.com/cards/types/product #}
@@ -85,42 +126,236 @@
 
 {% block content %}
 
-<section>
-  <div itemscope itemtype="http://schema.org/Product">
-    <div class="product-detail"><span itemprop="category">{{category}}</span></div>
-    <div class="product-detail">
-      <span itemprop="name">{{title}}</span>
-    </div>
-    <div class="product-images">
-      {% for img in product.images %}
-      <div class="product-image">
-          <img itemprop="image" src="{{img.serving_url|autohttps}}=s550" alt="{{product.name}} Image {{loop.index}}" />
-      </div>
-      {% endfor %}
-    </div>
-    <div class="product-detail">
-      <span itemprop="description">
-        {{product.description}}
-      </span>
-    </div>
-    
-    <div class="product-detail"><span itemprop="mpn">{{code}}</span></div>
-   
-    <span itemprop="offers" class="product-detail" itemscope itemtype="http://schema.org/Offer">
-        <div class="product-detail">
-            
-          <meta itemprop="priceCurrency" content="{{currency.code}}" />
-          {{currency.symbol}} <span itemprop="price">{{price}}</span>
-        </div>
-     
-        <div class="product-detail">
-          <span itemprop="seller" itemscope itemtype="http://schema.org/Organization">
-                          <span itemprop="name">{{catalog._seller.name}}</span>
-                        </span>
-        </div>
+<div modal-render="true" tabindex="-1" role="dialog" class="modal md-dialog ng-isolate-scope no-overflow pop tmp-pop-in35 visible rendered" 
+     style="z-index: 1060;">
+    <div class="modal-dialog" ng-class="{'modal-sm': size == 'sm', 'modal-lg': size == 'lg'}">
+        <div class="modal-content" modal-transclude="">
+            <div fit-in-modal="" class="ng-scope">
  
-      </span>
-  </div>
-</section>
+                <form ng-submit="save()" name="container.form" class="ng-pristine ng-valid ng-valid-required" style="">
+                    <div class="modal-body">
+                        <div ng-hide="hideClose" class="top-close">
+                            <a href="{{uri_for('catalog.view', key=catalog.key)}}" md-ink-ripple-action="" md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" ripple-light="" loading="" type="button" class="button-transparent catalog-close-button button-square color-child-when-disabled ripple-presence" ng-click="close()">
+                                <div ng-transclude="" class="md-icon md-icon-close md-icon-color-white" ng-bind="icon" color="white" type="close">close</div>
+                                
+                            </a>
+                        </div>
+                        <!-- ngIf: $state.isCompleted() -->
+                        <div class="top-close top-close-right ng-scope" style="">
+                            <a href="{{currenturl}}?sidebaropen=6" md-ink-ripple-action="" md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" ripple-light="" loading="" type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled pull-right ripple-presence" ng-click="productMenu.toggle()">
+                                <div ng-transclude="" class="md-icon md-icon-info_outline md-icon-color-white" ng-bind="icon" color="white" type="info_outline">info_outline</div>
+                    
+                            </a>
+                            <a href="{{currenturl}}?sidebaropen=3" md-ink-ripple-action="" md-ink-ripple-pulsate-options="{color: true, speed: 1000}" md-ink-ripple-pulsate="$state.fullyReady" ripple-light="" loading="" type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled pull-left ripple-presence" ng-click="displayShare()">
+                                <div ng-transclude="" class="md-icon md-icon-share md-icon-color-white" ng-bind="icon" color="white" type="share">share</div>
+                            
+                            </a>
+                        </div>
+                        <!-- end ngIf: $state.isCompleted() -->
+                        <div class="fixed-height relative overflow-x unselectable" style="height: 100%;">
+                            <div ng-show="$state.isCompleted()" class="" style="">
+                                <!-- ngIf: product.images.length && modalOptions.opened -->
+                                <div image-slider="product.images" class="image-slider swoop-from-left ng-scope swoop-from-left-finish" style="width: 1000%;">
+
+                                    {% for img in product.images %}
+                                    <div class="image-slider-item ng-scope">
+                                        <img class="not-pointable" alt="{{product.name}} Image {{loop.index}}" data-src="{{img.serving_url|autohttps}}" src="{{img.serving_url|autohttps}}=s800"> 
+                                    </div>
+                                    {% endfor %}
+ 
+                                </div>
+                                <!-- end ngIf: product.images.length && modalOptions.opened -->
+                                <!-- ngIf: !product.images.length -->
+                            </div>
+                        </div>
+                        <!-- ngIf: $state.isCompleted() -->
+
+                        <md-sidenav md-state-changed="productMenu.stateChanged" ng-if="$state.isCompleted()" md-is-open="true" md-swipe-right="productMenu.close()" layout="column" class="{% if sidebaropen == '6' %}right wide-sidenav md-closed slide drawer ng-scope ng-isolate-scope in{% else %}right wide-sidenav md-closed slide drawer out invisible ng-scope ng-isolate-scope{% endif %}" md-component-id="productMenu.id" tabindex="-1" style="">
+                            <md-content>
+                                <div class="product-detail-content">
+                                    <div class="list list-padding">
+                                        <div class="list-row list-row-three-line list-row-large-multiline">
+                                            <div class="list-content-tile">
+                                                <h1 ng-bind="product.name" class="headline ng-binding">1</h1>
+                                                <!-- <span class="second">{{product._category.name}}</span> -->
+                                                <span ng-bind="product.code" class="second padding-bottom-16 ng-binding">{{product.code}}</span>
+                                                <span ng-bind-html="product.description | escape | autobr" class="body1 ng-binding">{{product.description}}</span>
+                                            </div>
+                                        </div>
+                                        <div class="product-price list-row list-row-two-lines">
+                                            <div class="list-content-tile">
+                                                <span class="first">
+                                                <span ng-bind="catalog._seller._currency.code" class="ng-binding">{{catalog._seller._currency.code}}</span>
+                                                <span ng-bind="product.unit_price|formatCurrency:catalog._seller._currency:false" class="ng-binding">{{product.unit_price}}</span>
+                                                </span>
+                                                <span ng-bind="stockText" class="second ng-binding">In stock</span>
+                                            </div>
+                                        </div>
+                                        <!-- ngRepeat: variant in variants -->
+                                        <div class="product-quantifier">
+                                            <md-input-container class="md-input-has-value">
+                                                <label for="input_00W">
+                                                Quantity (<span ng-bind="product._uom.name" class="ng-binding">{{product._uom.name}}</span>)
+                                                </label>
+                                                <div class="product-quantity-controls clearfix">
+                                                    <div class="product-quantity-control">
+                                                        <button class="product-quantity-button product-quantity-button-deincrease button-square color-child-when-disabled md-button ripple-presence" ng-transclude="" ripple-action="" md-ink-ripple-click="true" ng-click="decreaseQuantity()" loading="!canAddToCart">
+                                                            <div ng-transclude="" class="md-icon md-icon-remove md-icon-color-normal" ng-bind="icon" type="remove">remove</div>
+                                                        </button>
+                                                    </div>
+                                                    <div class="product-quantity-input-wrapper">
+                                                        <input ng-change="changedQuantity()" loading="" class="text-input product-quantity-input display1 ng-pristine ng-untouched ng-valid md-input ng-valid-required" name="productQuantity" min="0" ng-required="true" ng-disabled="!canAddToCart" type="numeric" ng-model="productManager.quantity" id="input_00W" required="required">
+                                                    </div>
+                                                    <div class="product-quantity-control">
+                                                        <button class="product-quantity-button product-quantity-button-increase button-square color-child-when-disabled md-button ripple-presence" ng-transclude="" ripple-action="" md-ink-ripple-click="true" ng-click="increaseQuantity()" loading="!canAddToCart || !quantityIncrement" type="button">
+                                                            <div ng-transclude="" class="md-icon md-icon-add md-icon-color-normal" ng-bind="icon" type="add">add</div>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div ng-messages="container.form.productQuantity.$error" class="ng-inactive">
+                                                    <!-- ngMessage: required -->
+                                                </div>
+                                            </md-input-container>
+                                        </div>
+                                        <div class="clearfix button-set list-row list-row-one-line list-content-tile">
+                                            <button class="md-button ripple-presence" ng-transclude="" type="button" ng-click="addToCart()" loading="disableUpdateCart">
+                                            <span ng-show="!hasThisProduct" class="ng-scope">Add To Cart</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </md-content>
+                        </md-sidenav>
+                        <!-- end ngIf: $state.isCompleted() -->
+                        <!-- ngIf: $state.isCompleted() -->
+                        <md-sidenav ng-if="$state.isCompleted()" md-swipe-right="variantMenu.close()" layout="column" class="{% if sidebaropen == '5' %}right wide-sidenav md-closed slide drawer ng-scope ng-isolate-scope in{% else %}right wide-sidenav md-closed slide drawer out invisible ng-scope ng-isolate-scope{% endif %}" md-component-id="variantMenu.id" tabindex="-1" style="">
+                            <md-content>
+                                <!-- ngIf: !variantChooser.allow_custom_value -->
+                                <div ng-if="!variantChooser.allow_custom_value" class="list seam-bottom list-padding word-break-word ng-scope">
+                                    <div class="list-row list-row-two-lines">
+                                        <div class="list-content-tile">
+                                            <span class="first ng-binding" ng-bind="variantChooser.name"></span>
+                                            <span class="second ng-binding" ng-bind="variantChooser.description"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- end ngIf: !variantChooser.allow_custom_value -->
+                                <!-- ngIf: variantChooser.allow_custom_value -->
+                                <!-- ngIf: !variantChooser.allow_custom_value -->
+                                <div ng-if="!variantChooser.allow_custom_value" class="list list-padding ng-scope">
+                                    <!-- ngRepeat: opt in variantChooser.options -->
+                                </div>
+                                <!-- end ngIf: !variantChooser.allow_custom_value -->
+                            </md-content>
+                        </md-sidenav>
+                        <!-- end ngIf: $state.isCompleted() -->
+                        <!-- ngInclude: 'core/social/sidenav.html' -->
+                        <div ng-include="'core/social/sidenav.html'" class="ng-scope" style="">
+                            <!-- ngIf: $state.isCompleted() && !notFound -->
+                            <md-sidenav md-state-changed="share.menu.stateChanged" ng-if="$state.isCompleted() &amp;&amp; !notFound" md-swipe-right="share.menu.close()" layout="column" class="{% if sidebaropen == '3' %}right wide-sidenav md-closed slide drawer ng-scope ng-isolate-scope in{% else %}right wide-sidenav md-closed slide drawer out invisible ng-scope ng-isolate-scope{% endif %}" md-component-id="share.menu.id" tabindex="-1" style="">
+                                <md-content>
+                                    <!-- ngInclude: 'core/social/share.html' -->
+                                    <div ng-include="'core/social/share.html'" class="ng-scope">
+                                        <div ng-form="share.form" class="ng-pristine ng-valid ng-scope ng-valid-required">
+                                            <div class="list seam-bottom list-padding">
+                                                <div class="social-grid">
+                                                    <!-- ngRepeat: soc in share.socials -->
+                                                    <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="" style="">
+                                                        <div class="social-grid-item-line">
+                                                            <div class="socicon-facebook"></div>
+                                                        </div>
+                                                    </button>
+                                                    <!-- end ngRepeat: soc in share.socials -->
+                                                    <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="" style="">
+                                                        <div class="social-grid-item-line">
+                                                            <div class="socicon-twitter"></div>
+                                                        </div>
+                                                    </button>
+                                                    <!-- end ngRepeat: soc in share.socials -->
+                                                    <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="" style="">
+                                                        <div class="social-grid-item-line">
+                                                            <div class="socicon-pinterest"></div>
+                                                        </div>
+                                                    </button>
+                                                    <!-- end ngRepeat: soc in share.socials -->
+                                                    <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="" style="">
+                                                        <div class="social-grid-item-line">
+                                                            <div class="socicon-reddit"></div>
+                                                        </div>
+                                                    </button>
+                                                    <!-- end ngRepeat: soc in share.socials -->
+                                                    <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="" style="">
+                                                        <div class="social-grid-item-line">
+                                                            <div class="socicon-linkedin"></div>
+                                                        </div>
+                                                    </button>
+                                                    <!-- end ngRepeat: soc in share.socials -->
+                                                    <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="" style="">
+                                                        <div class="social-grid-item-line">
+                                                            <div class="socicon-googleplus"></div>
+                                                        </div>
+                                                    </button>
+                                                    <!-- end ngRepeat: soc in share.socials -->
+                                                    <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="" style="">
+                                                        <div class="social-grid-item-line">
+                                                            <div class="socicon-tumblr"></div>
+                                                        </div>
+                                                    </button>
+                                                    <!-- end ngRepeat: soc in share.socials -->
+                                                </div>
+                                            </div>
+                                            <!-- ngIf: share.link.enabled -->
+                                            <div ng-if="share.link.enabled" ng-class="{'seam-bottom': share.embed.enabled}" class="list list-padding ng-scope">
+                                                <div class="list-subheader subheader">Link</div>
+                                                <div form-builder="share.link.fields" class="ng-scope">
+                                                    <!-- ngRepeat: fieldConfig in configurations -->
+                                                    <div ng-repeat="fieldConfig in configurations" class="ng-scope">
+                                                        <!-- ngIf: fieldConfig.ui.group -->
+                                                        <!-- ngIf: !fieldConfig.ui.group -->
+                                                        <div ng-if="!fieldConfig.ui.group" form-input="fieldConfig" class="ng-scope">
+                                                            <md-input-container ng-class="{'no-label': config.ui.label === false}" class="ng-scope md-input-has-value no-label">
+                                                                <!-- ngIf: config.ui.label !== false -->
+                                                                <textarea class="ng-pristine ng-untouched ng-valid md-input ng-valid-required" name="url" ng-required="config.required" ng-model="share.link.values.url" ng-disabled="!true" loading="!true" readonly="true" onclick="this.select()" ng-focus="share.track.focusShareLink()" msd-elastic="" id="input_00X">{{path}}</textarea>
+                                                                <!-- ngIf: config.ui.form.shouldShowMessages() -->
+                                                                <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()" class="ng-scope ng-inactive">
+                                                                    <!-- ngMessage: help -->
+                                                                    <!-- ngMessage: required -->
+                                                                </div>
+                                                                <!-- end ngIf: config.ui.form.shouldShowMessages() -->
+                                                                <div class="md-placeholder"></div>
+                                                            </md-input-container>
+                                                        </div>
+                                                        <!-- end ngIf: !fieldConfig.ui.group -->
+                                                    </div>
+                                                    <!-- end ngRepeat: fieldConfig in configurations -->
+                                                </div>
+                                            </div>
+                                            <!-- end ngIf: share.link.enabled -->
+                                            <!-- ngIf: share.embed.enabled -->
+                                        </div>
+                                    </div>
+                                </md-content>
+                            </md-sidenav>
+                            <!-- end ngIf: $state.isCompleted() && !notFound -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+  jQuery(document).ready(function($) {
+      var tw = 0,
+          wh = $(window).height(),
+          size = '=s' + wh;
+      $('[data-src]').height(wh).each(function () {
+          $(this).attr('src', $(this).data('src') + size).load(function () {
+              tw += this.width;
+          });
+      });
+  });
+</script>
 
 {% endblock %}

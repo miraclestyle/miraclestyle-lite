@@ -53,7 +53,10 @@ class CatalogProductView(base.SeoOrAngular):
         'read_arguments': {
             '_images': {
                 'config': {
-                    'keys': [catalog_image_key]
+                    'keys': [catalog_image_key],
+                    'options': {
+                      'limit': 1000
+                    }
                 },
                 'pricetags': {
                     '_product': {

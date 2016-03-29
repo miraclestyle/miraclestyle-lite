@@ -23,15 +23,18 @@
 {% endblock %}
  
 {% block content %}
- 
-{% for catalog in catalogs %}
-<div class="grid-item">
-    <a href="{{uri_for('catalog.view', key=catalog.key)}}" class="button-transparent button-block ripple-presence">
-        <img alt="{{catalog.name}}" class="not-pointable" src="{{catalog.cover.serving_url|autohttps}}=s240" style="visibility: visible;">
-    </a>
+ <div class="list list-padding ng-scope">
+
+<div autoload-on-vertical-scroll-end="search" grid-scale="" ng-show="search.results.length" class="grid-wrapper clearfix" style="">
+    {% for catalog in catalogs %}
+    <div grid-scale-item class="grid-item grid-generator ng-scope visible" style="width: calc(16.6667% - 2px);">
+        <a md-ink-ripple="" ripple-light="" href="{{uri_for('catalog.view', key=catalog.key)}}" class="button-transparent button-block ripple-presence">
+            <img class="not-pointable ng-isolate-scope" src="{{catalog.cover.serving_url|autohttps}}=s240" style="visibility: inherit;">
+        </a>
+    </div> 
+    {% endfor %}
+    <!-- end ngRepeat: result in search.results track by $index -->
+</div>      
 </div>
-{% endfor %}
-
-
 
 {% endblock %}

@@ -93,31 +93,223 @@ facebook, pinterest and google + uses these
 
 {% endblock %}
 
+{% block toolbar_title %}
+{{catalog.name}}
+{% endblock %}
+
 {% block content %}
 
-<section>
-  
-  <article>
-    <h1>{{catalog.name}}</h1>
-    <div>{{catalog._seller.name}}</div>
 
-    {% for img in catalog._images %}
-        <div class="catalog-image relative">
-           <div><img class="not-pointable" src="{{img.serving_url|autohttps}}=s550"> </div>
-           <ul>
-           {% for pricetag in img.pricetags %}
-                <li>
-                   <a href="{{uri_for('catalog.product.view', key=catalog.key, image_id=img.id, pricetag_id=pricetag.id)}}">
-                        {{pricetag.value.price}} {{catalog._seller._currency.symbol}}
-                   </a>
-                </li>
+<div  modal-render="true"
+      tabindex="-1" role="dialog"
+      class="modal md-dialog ng-isolate-scope no-overflow pop tmp-pop-in9 visible rendered"
+ 
+ 
+      style="z-index: 1050;">
+    <div class="modal-dialog">
+      <div class="modal-content" modal-transclude="">
+      <div class="fitter ng-scope" fit-in-modal="">
+ 
+<div class="modal-body fixed-height relative">
+<form name="container.form" method="post" action="" class="ng-pristine ng-valid ng-valid-required" style="">
+
+  <div class="clearfix">
+
+      <div class="top-close">
+           <a md-ink-ripple-action=""
+                   ripple-light=""
+                   loading=""
+                   type="button"
+                   class="button-transparent button-square catalog-close-button color-child-when-disabled ripple-presence"
+                   href="{{uri_for('home')}}">
+             <div ng-transclude="" class="md-icon md-icon-close md-icon-color-white" ng-bind="icon" color="white" type="close">close</div>
+           </a>
+      </div>
+
+       <div class="top-close top-close-right ng-scope" style="">
+           <button md-ink-ripple-action="" ripple-light="" loading="" type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled pull-right ripple-presence" ng-click="displayCart()">
+             <div ng-transclude="" class="md-icon md-icon-shopping_cart md-icon-color-white" ng-bind="icon" color="white" type="shopping_cart">shopping_cart</div>
+           </button>
+           <a md-ink-ripple-action="" ripple-light="" loading="" type="button" class="button-transparent button-square catalog-close-button color-child-when-disabled pull-left ripple-presence" href="{{currenturl}}?sidebaropen=2">
+             <div ng-transclude="" class="md-icon md-icon-share md-icon-color-white" ng-bind="icon" color="white" type="share">share</div>
+          </a>
+      </div> 
+
+      <div class="image-slider-outer unselectable ng-scope" style="height: 100%;">
+         <div image-slider="catalog._images" class="image-slider swoop-from-left swoop-from-left-finish" style="width: 1000%;"> 
+            {% for img in catalog._images %}
+            <div ng-repeat="image in catalog._images" class="image-slider-item ng-scope">
+               <img class="not-pointable" slider-image="image" src="{{img.serving_url|autohttps}}=s800" data-src="{{img.serving_url|autohttps}}"> 
+               {% for pricetag in img.pricetags %}
+               <div class="button catalog-pricetag ng-scope" catalog-pricetag-position="pricetag" style="top: {{pricetag.position_top}}px; left: {{pricetag.position_left}}px;visibility: visible;">
+                    <div class="catalog-pricetag-wrapper">
+                        <div class="catalog-pricetag-dot"></div>
+                         <a md-ink-ripple="" href="{{uri_for('catalog.product.view', key=catalog.key, image_id=img.id, pricetag_id=pricetag.id)}}" type="button" class="button-transparent catalog-pricetag-link  ripple-presence">{{pricetag.value.price}} {{catalog._seller._currency.symbol}}</a>
+                     </div>
+                </div>
+                {% endfor %}
+            </div>
             {% endfor %}
+         </div>
+      </div>
 
-            </ul>
-        </div> 
-    {% endfor %} 
+      <div class="ng-scope" style="">
+          <md-sidenav layout="column" class="{% if sidebaropen == '2' %}right wide-sidenav md-closed slide drawer ng-scope ng-isolate-scope in{% else %}right wide-sidenav md-closed slide drawer out invisible ng-scope ng-isolate-scope{% endif %}" style="">
+              <md-content>
+                  <div class="ng-scope">
+                      <div ng-form="share.form" class="ng-pristine ng-valid ng-scope ng-valid-required">
+                          <div class="list seam-bottom list-padding">
+                              <div class="social-grid">
+                                  <!-- ngRepeat: soc in share.socials -->
+                                  <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="">
+                                      <div class="social-grid-item-line">
+                                          <div class="socicon-facebook"></div>
+                                      </div>
+                                  </button>
+                                  <!-- end ngRepeat: soc in share.socials -->
+                                  <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="">
+                                      <div class="social-grid-item-line">
+                                          <div class="socicon-twitter"></div>
+                                      </div>
+                                  </button>
+                                  <!-- end ngRepeat: soc in share.socials -->
+                                  <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="">
+                                      <div class="social-grid-item-line">
+                                          <div class="socicon-pinterest"></div>
+                                      </div>
+                                  </button>
+                                  <!-- end ngRepeat: soc in share.socials -->
+                                  <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="">
+                                      <div class="social-grid-item-line">
+                                          <div class="socicon-reddit"></div>
+                                      </div>
+                                  </button>
+                                  <!-- end ngRepeat: soc in share.socials -->
+                                  <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="">
+                                      <div class="social-grid-item-line">
+                                          <div class="socicon-linkedin"></div>
+                                      </div>
+                                  </button>
+                                  <!-- end ngRepeat: soc in share.socials -->
+                                  <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="">
+                                      <div class="social-grid-item-line">
+                                          <div class="socicon-googleplus"></div>
+                                      </div>
+                                  </button>
+                                  <!-- end ngRepeat: soc in share.socials -->
+                                  <button ng-click="share.share(soc)" type="button" ng-repeat="soc in share.socials" class="social-grid-item ng-scope ripple-presence" md-ink-ripple="">
+                                      <div class="social-grid-item-line">
+                                          <div class="socicon-tumblr"></div>
+                                      </div>
+                                  </button>
+                                  <!-- end ngRepeat: soc in share.socials -->
+                              </div>
+                          </div>
+                          <div class="list list-padding ng-scope seam-bottom">
+                              <div class="list-subheader subheader">Link</div>
+                              <div form-builder="share.link.fields" class="ng-scope">
+                                  <!-- ngRepeat: fieldConfig in configurations -->
+                                  <div ng-repeat="fieldConfig in configurations" class="ng-scope">
+                                      <div ng-if="!fieldConfig.ui.group" form-input="fieldConfig" class="ng-scope">
+                                          <md-input-container ng-class="{'no-label': config.ui.label === false}" class="ng-scope md-input-has-value no-label">
+                                              <textarea class="ng-pristine ng-untouched ng-valid md-input ng-valid-required" name="url" ng-required="config.required" ng-model="share.link.values.url" ng-disabled="!true" loading="!true" readonly="true" onclick="this.select()" ng-focus="share.track.focusShareLink()" msd-elastic="" id="input_00G">{{uri_for('catalog.view', key=catalog.key, _full=True)}}</textarea>
+                                              <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()" class="ng-scope ng-inactive">
+                                              </div>
+                                              <div class="md-placeholder"></div>
+                                          </md-input-container>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                          <div ng-if="share.embed.enabled" class="list list-padding ng-scope">
+                              <div class="list-subheader subheader">Embed</div>
+                              <div form-builder="share.embed.fields" class="ng-scope">
+                                  <!-- ngRepeat: fieldConfig in configurations -->
+                                  <div ng-repeat="fieldConfig in configurations" class="ng-scope">
+                                      <!-- ngIf: fieldConfig.ui.group -->
+                                      <!-- ngIf: !fieldConfig.ui.group -->
+                                      <div ng-if="!fieldConfig.ui.group" form-input="fieldConfig" class="ng-scope">
+                                          <md-input-container ng-class="{'no-label': config.ui.label === false}" class="ng-scope md-input-has-value">
+                                              <!-- ngIf: config.ui.label !== false --><label ng-if="config.ui.label !== false" class="ng-binding ng-scope" for="input_00H">Width</label><!-- end ngIf: config.ui.label !== false -->
+                                              <input class="ng-pristine ng-untouched ng-valid md-input ng-valid-required" name="width" ng-required="config.required" ng-model="share.embed.values.width" ng-disabled="!true" loading="!true" ng-change="share.embed.setCode()" type="text" id="input_00H" value="100%" required="required">
+                                              <!-- ngIf: config.ui.form.shouldShowMessages() -->
+                                              <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()" class="ng-scope ng-inactive">
+                                              </div>
+                                              <div class="md-placeholder"></div>
+                                          </md-input-container>
+                                      </div>
+                                      <!-- end ngIf: !fieldConfig.ui.group -->
+                                  </div>
+                                  <!-- end ngRepeat: fieldConfig in configurations -->
+                                  <div ng-repeat="fieldConfig in configurations" class="ng-scope">
+                                      <!-- ngIf: fieldConfig.ui.group -->
+                                      <!-- ngIf: !fieldConfig.ui.group -->
+                                      <div ng-if="!fieldConfig.ui.group" form-input="fieldConfig" class="ng-scope">
+                                          <md-input-container ng-class="{'no-label': config.ui.label === false}" class="ng-scope md-input-has-value">
+                                              <!-- ngIf: config.ui.label !== false --><label ng-if="config.ui.label !== false" class="ng-binding ng-scope" for="input_00I">Height</label><!-- end ngIf: config.ui.label !== false -->
+                                              <input class="ng-pristine ng-untouched ng-valid md-input ng-valid-required" name="height" ng-required="config.required" ng-model="share.embed.values.height" ng-disabled="!true" loading="!true" ng-change="share.embed.setCode()" type="text" value="100%" id="input_00I" required="required">
+                                              <!-- ngIf: config.ui.form.shouldShowMessages() -->
+                                              <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()" class="ng-scope ng-inactive">
+                                                  <!-- ngMessage: help -->
+                                                  <!-- ngMessage: required -->
+                                                  <!-- ngMessage: invalid_card_number -->
+                                                  <!-- ngMessage: invalid_card_cvc -->
+                                              </div>
+                                              <!-- end ngIf: config.ui.form.shouldShowMessages() -->
+                                              <div class="md-placeholder"></div>
+                                          </md-input-container>
+                                      </div>
+                                      <!-- end ngIf: !fieldConfig.ui.group -->
+                                  </div>
+                                  <!-- end ngRepeat: fieldConfig in configurations -->
+                                  <div ng-repeat="fieldConfig in configurations" class="ng-scope">
+                                      <!-- ngIf: fieldConfig.ui.group -->
+                                      <!-- ngIf: !fieldConfig.ui.group -->
+                                      <div ng-if="!fieldConfig.ui.group" form-input="fieldConfig" class="ng-scope">
+                                          <md-input-container ng-class="{'no-label': config.ui.label === false}" class="ng-scope md-input-has-value">
+                                              <!-- ngIf: config.ui.label !== false --><label ng-if="config.ui.label !== false" class="ng-binding ng-scope" for="input_00J">Code</label><!-- end ngIf: config.ui.label !== false -->
+                                              <textarea class="ng-pristine ng-untouched ng-valid md-input ng-valid-required" name="code" ng-required="config.required" ng-model="share.embed.values.code" ng-disabled="!true" loading="!true" readonly="true" onclick="this.select()" ng-focus="share.track.focusShareEmbedCode()" msd-elastic="" id="input_00J">&lt;iframe width="100%" height="100%" src="{{uri_for('embed.catalog', key=catalog.key, _full=True)}}" frameborder="0" allowfullscreen &gt;&lt;/iframe&gt;</textarea>
+                                              <!-- ngIf: config.ui.form.shouldShowMessages() -->
+                                              <div ng-if="config.ui.form.shouldShowMessages()" ng-messages="config.ui.form.messages()" class="ng-scope ng-inactive">
+                                                  <!-- ngMessage: help -->
+                                                  <!-- ngMessage: required -->
+                                              </div>
+                                              <!-- end ngIf: config.ui.form.shouldShowMessages() -->
+                                              <div class="md-placeholder"></div>
+                                          </md-input-container>
+                                      </div>
+                                      <!-- end ngIf: !fieldConfig.ui.group -->
+                                  </div>
+                                  <!-- end ngRepeat: fieldConfig in configurations -->
+                              </div>
+                          </div>
+                          <!-- end ngIf: share.embed.enabled -->
+                      </div>
+                  </div>
+              </md-content>
+          </md-sidenav>
+          <!-- end ngIf: $state.isCompleted() && !notFound -->
+      </div>
+ 
+       
+    </div>
+</form>
 
-  </article>
-
-</section>
+</div> 
+</div>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+  jQuery(document).ready(function($) {
+      var tw = 0,
+          wh = $(window).height(),
+          size = '=s' + wh;
+      $('[data-src]').height(wh).each(function () {
+          $(this).attr('src', $(this).data('src') + size).load(function () {
+              tw += this.width;
+          });
+      });
+  });
+</script>
 {% endblock %}

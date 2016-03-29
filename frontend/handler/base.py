@@ -468,6 +468,8 @@ class RequestHandler(webapp2.RequestHandler):
     super(RequestHandler, self).__init__(*args, **kwargs)
     self.data = {}
     self.template = {}
+    self.template['currenturl'] = self.request.path
+    self.template['sidebaropen'] = self.request.get('sidebaropen')
 
   def send_json(self, data, serialize=True):
     ''' sends `data` to be serialized in json format, and sets content type application/json utf8'''
