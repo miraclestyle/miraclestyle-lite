@@ -207,7 +207,7 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     entities.append(context._catalog.key_urlsafe)
     product_keys = []
     for image in context._catalog._images.value:
-      product_keys.extend(image.products.value)
+      product_keys.extend([product.key_urlsafe for product in image.products.value])
     context._catalog._images = []
     entities.extend(product_keys)
     context._catalog._delete_custom_indexes = {}
