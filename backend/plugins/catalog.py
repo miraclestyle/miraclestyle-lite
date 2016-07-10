@@ -178,22 +178,14 @@ class CatalogSearchDocumentWrite(orm.BaseModel):
                       'cover.value.proportion': orm.SuperStringProperty(search_document_field_name='cover_proportion')}
     product_fields = {'key_parent._parent.entity.name': orm.SuperStringProperty(search_document_field_name='catalog_name'),
                       'key_parent._parent._parent.entity.name': orm.SuperStringProperty(search_document_field_name='seller_name'),
-                      'key_parent._parent._parent.entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo'),
-                      '_category.value.parent_record': orm.SuperKeyProperty(kind='24', search_document_field_name='category_parent_record'),
-                      '_category.value.name': orm.SuperStringProperty(search_document_field_name='category_name'),
-                      '_category.value.complete_name': orm.SuperTextProperty(search_document_field_name='category_complete_name')}
-    context._catalog._images.read({'config': {'search': {'options': {'limit': 0}}}, 'pricetags': {'_product': {'_category': {}}}})
+                      'key_parent._parent._parent.entity.logo.value.serving_url': orm.SuperStringProperty(search_document_field_name='seller_logo')}
     products = []
     for image in context._catalog._images.value:
-      products.extend([pricetag._product.value for pricetag in image.pricetags.value])
+      products.extend(image.products.value)
     context._catalog._images = []  # dismember images from put queue to avoid too many rpcs
     write_index = True
     if not len(products):
       write_index = False  # catalogs with no products are not allowed to be indexed
-    for product in products:
-      if 'indexable' not in product._category.value.state:
-        write_index = False
-        break
     results = None
     if write_index:
       documents.extend([context._catalog.get_search_document(catalog_fields)])
@@ -213,10 +205,9 @@ class CatalogSearchDocumentDelete(orm.BaseModel):
     index_name = self.cfg.get('index', None)
     entities = []
     entities.append(context._catalog.key_urlsafe)
-    context._catalog._images.read({'config': {'search': {'options': {'limit': 0}}}, 'pricetags': {'_product': {}}})
     product_keys = []
     for image in context._catalog._images.value:
-      product_keys.extend([pricetag._product.value.key_urlsafe for pricetag in image.pricetags.value])
+      product_keys.extend(image.products.value)
     context._catalog._images = []
     entities.extend(product_keys)
     context._catalog._delete_custom_indexes = {}
@@ -254,32 +245,32 @@ class CatalogSearch(orm.BaseModel):
     context._more = more
 
 
-class CatalogProcessPricetags(orm.BaseModel):
+class CatalogProcessProducts(orm.BaseModel):
 
   def run(self, context):
-    pricetags = {}
+    products = {}
     catalog_images = context._catalog._images.value
     if catalog_images:
       for catalog_image in catalog_images:
-        if catalog_image.pricetags.value:
-          for pricetag in catalog_image.pricetags.value:
-            pricetag_key = pricetag.key
-            if pricetag_key not in pricetags:
-              pricetags[pricetag_key] = []
-            pricetags[pricetag_key].append(pricetag)
-      for pricetag_key, _pricetags in pricetags.iteritems():
-        if len(_pricetags) > 1:
-          for pricetag in _pricetags:
-            if pricetag._state == 'deleted':
-              pricetag._state = 'removed'
+        if catalog_image.products.value:
+          for product in catalog_image.products.value:
+            product_key = product.key
+            if product_key not in products:
+              products[product_key] = []
+            products[product_key].append(product)
+      for product_key, _products in products.iteritems():
+        if len(_products) > 1:
+          for product in _products:
+            if product._state == 'deleted':
+              product._state = 'removed'
 
 
-class CatalogPricetagSetDuplicatedPosition(orm.BaseModel):
+class CatalogProductSetDuplicatedPosition(orm.BaseModel):
 
   def run(self, context):
-    pricetags = context._catalog._images.value[0].pricetags.value
-    if pricetags:
-      for pricetag in pricetags:
-        if pricetag._state == 'duplicated':
-          pricetag.position_left = (pricetag.image_width / 2) - 5 # this math cant be improved because we do not know pricetag width, we only know it's height
-          pricetag.position_top = (pricetag.image_height / 2) - 5 # but we assume anyways that it's gonna have minimum width of 64 and height 36
+    products = context._catalog._images.value[0].products.value
+    if products:
+      for product in products:
+        if product._state == 'duplicated':
+          product.position_left = (product.image_width / 2) - 5 # this math cant be improved because we do not know product width, we only know it's height
+          product.position_top = (product.image_height / 2) - 5 # but we assume anyways that it's gonna have minimum width of 64 and height 36
