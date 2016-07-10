@@ -19,8 +19,7 @@ from plugins.base import *
 from plugins.catalog import *
 
 
-__all__ = ['CatalogProductCategory', 'CatalogProductVariant', 'CatalogProductInstance',
-           'CatalogProduct', 'CatalogPricetag', 'CatalogImage', 'Catalog']
+__all__ = ['CatalogProductCategory', 'CatalogProduct', 'CatalogImage', 'Catalog']
 
 
 class CatalogProductCategory(orm.BaseModel):
@@ -105,159 +104,33 @@ class CatalogProductCategory(orm.BaseModel):
   ]
 
 
-class CatalogProductVariant(orm.BaseModel):
-
-  _kind = 26
-
-  _use_rule_engine = False
-
-  name = orm.SuperStringProperty('1', required=True, indexed=False)
-  options = orm.SuperStringProperty('2', repeated=True, indexed=False)
-  description = orm.SuperTextProperty('3')
-  allow_custom_value = orm.SuperBooleanProperty('4', required=True, indexed=False, default=False)
-
-
-class CatalogProductStock(orm.BaseModel):
-
-  _kind = 133
-
-  _use_rule_engine = False
-
-  variant_signature = orm.SuperJsonProperty('1', required=True, default=[], indexed=False)
-  availability = orm.SuperStringProperty('2', required=True, indexed=False, choices=('in stock', 'available for order', 'out of stock', 'preorder'))
-
-  @classmethod
-  def hash_signature(cls, variant_signature):
-    return hashlib.md5(json.dumps(variant_signature)).hexdigest()
-
-  @classmethod
-  def prepare_key(cls, input, **kwargs):
-    return cls.build_key(cls.hash_signature(input.get('variant_signature')), parent=kwargs.get('parent'))
-
-  def prepare(self, **kwargs):
-    self.key = self.prepare_key({'variant_signature': self.variant_signature}, parent=kwargs.get('parent')) # we always no matter what set the id to this
-
-
-class CatalogProductStockContainer(orm.BaseModel):
-
-  _kind = 134
-
-  _use_rule_engine = False
-
-  stocks = orm.SuperLocalStructuredProperty(CatalogProductStock, '1', repeated=True, indexed=False)
-
-
-class CatalogProductInstance(orm.BaseExpando):
-
-  _kind = 27
-
-  _use_rule_engine = False
-
-  sequence = orm.SuperIntegerProperty('1', required=True, indexed=True)
-  variant_options = orm.SuperStringProperty('2', repeated=True, indexed=True)
-
-  _default_indexed = False
-
-  _expando_fields = {
-      'code': orm.SuperStringProperty('3'),
-      'description': orm.SuperTextProperty('4'),
-      'unit_price': orm.SuperDecimalProperty('5'),
-      'weight': orm.SuperDecimalProperty('6'),
-      'volume': orm.SuperDecimalProperty('7'),
-      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '8', repeated=True)
-  }
-
-  @classmethod
-  def prepare_key(cls, input, **kwargs):
-    return cls.build_key(None, parent=kwargs.get('parent'))
-
-  def prepare(self, **kwargs):
-    parent = kwargs.get('parent')
-    if not self.key_id:
-      self.key = self.prepare_key({}, parent=parent)
-    else:
-      self.key = self.build_key(self.key_id, parent=parent)
-    if self.key_id is None and self.sequence is None:
-      key = 'prepare_%s' % self.key.urlsafe()
-      sequence = tools.mem_temp_get(key, tools.Nonexistent)
-      if sequence is tools.Nonexistent:
-        entity = self.query(ancestor=self.key.parent()).order(-self.__class__.sequence).get()
-        if not entity:
-          sequence = 0
-        else:
-          sequence = entity.sequence
-        tools.mem_temp_set(key, sequence)
-      else:
-        tools.mem_temp_set(key, sequence + 1)
-      if self._sequence is None:
-        self._sequence = 0
-      self.sequence = self._sequence + sequence + 1
-
-
+# This entity has to be extensible by a user to include custom attributes (formerly known as variants), and it is hereby assumed that this is possible with current class configuration!!
 class CatalogProduct(orm.BaseExpando):
 
   _kind = 28
 
   _use_rule_engine = False
 
-  category = orm.SuperKeyProperty('1', kind='24', required=True, indexed=False)
+  uom = orm.SuperKeyProperty('1', kind='17', required=True, indexed=False)  # default=Unit.build_key('unit')
   name = orm.SuperStringProperty('2', required=True, indexed=False)
-  uom = orm.SuperKeyProperty('3', kind='17', required=True, indexed=False)  # default=Unit.build_key('unit')
-  code = orm.SuperStringProperty('4', required=True, indexed=False)
-  description = orm.SuperTextProperty('5', required=True)  # Soft limit 64kb.
-  unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
+  code = orm.SuperStringProperty('3', required=True, indexed=False)
+  description = orm.SuperTextProperty('4', required=True)  # Soft limit 64kb.
+  unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  availability = orm.SuperStringProperty('6', required=True, indexed=False, choices=('in stock', 'available for order', 'out of stock', 'preorder'))
+  image_width = orm.SuperIntegerProperty('7', required=True, indexed=False)  # This could be removed if we stick to percentage possitioning, though that setup has not been tested!
+  image_height = orm.SuperIntegerProperty('8', required=True, indexed=False)  # This could be removed if we stick to percentage possitioning, though that setup has not been tested!
+  position_top = orm.SuperFloatProperty('9', required=True, indexed=False)  # This can represent percentage possition with three decimal precision (e.g. 99.999$)!
+  position_left = orm.SuperFloatProperty('10', required=True, indexed=False)  # This can represent percentage possition with three decimal precision (e.g. 99.999$)!
 
   _default_indexed = False
 
   _expando_fields = {
-      'weight': orm.SuperDecimalProperty('7'),
-      'volume': orm.SuperDecimalProperty('8'),
-      'images': orm.SuperImageLocalStructuredProperty(orm.Image, '9', repeated=True),
-      'variants': orm.SuperLocalStructuredProperty(CatalogProductVariant, '10', repeated=True)
+      'weight': orm.SuperDecimalProperty('11'),
+      'volume': orm.SuperDecimalProperty('12')
   }
 
   _virtual_fields = {  # sorting must be done by code?
-      '_instances': orm.SuperRemoteStructuredProperty('27',
-                                                      name='12',
-                                                      repeated=True,
-                                                      search={'default': {'filters': [], 'orders': [{'field': 'sequence', 'operator': 'desc'}]},
-                                                              'cfg': {
-                                                          'filters': {'variant_options': orm.SuperStringProperty(repeated=True)},
-                                                          'indexes': [{'ancestor': True, 'filters': [('variant_options', ['ALL_IN'])], 'orders': [('sequence', ['desc'])]},
-                                                                      {'ancestor': True, 'filters': [], 'orders': [('sequence', ['desc'])]}],
-                                                      }}),
-      '_stock': orm.SuperRemoteStructuredProperty(CatalogProductStockContainer, name='13', autoload=True),
-      '_category': orm.SuperReferenceStructuredProperty(CatalogProductCategory, target_field='category'),
       '_uom': orm.SuperReferenceStructuredProperty('17', target_field='uom', autoload=True)
-  }
-
-  def prepare(self, **kwargs):
-    parent = kwargs.get('parent')
-    self.key = self.build_key(parent._id_str, parent=parent)
-
-  @classmethod
-  def get_complete_key_path(cls, image_key, product_key):
-    product_key_flat = list(product_key.flat())
-    complete_key_path = []
-    complete_key_path.extend(image_key.flat())
-    complete_key_path.extend(product_key_flat[-4:])
-    return orm.Key(*complete_key_path)
-
-
-class CatalogPricetag(orm.BaseModel):
-
-  _kind = 29
-
-  _use_rule_engine = False
-
-  image_width = orm.SuperIntegerProperty('1', required=True, indexed=False)
-  image_height = orm.SuperIntegerProperty('2', required=True, indexed=False)
-  position_top = orm.SuperFloatProperty('3', required=True, indexed=False)
-  position_left = orm.SuperFloatProperty('4', required=True, indexed=False)
-  value = orm.SuperJsonProperty('5', required=True, indexed=False)
-
-  _virtual_fields = {
-      '_product': orm.SuperRemoteStructuredProperty(CatalogProduct, required=False),  # this cant be required, because every time we need to save a pricetag, we would have to load the product
   }
 
   def prepare(self, **kwargs):
@@ -271,7 +144,7 @@ class CatalogImage(orm.Image):
   _use_rule_engine = False
 
   sequence = orm.SuperIntegerProperty('7', required=True, indexed=True)
-  pricetags = orm.SuperLocalStructuredProperty(CatalogPricetag, '8', repeated=True)
+  products = orm.SuperLocalStructuredProperty(CatalogProduct, '8', repeated=True)
 
   def prepare(self, **kwds):
     key_id = self.key_id
@@ -410,7 +283,7 @@ class Catalog(orm.BaseExpando):
     return not account._is_guest and entity._original.key_root == account.key \
         and entity._original.state == "draft" \
         and action.key_id_str \
-        in ("read", "catalog_upload_images", "product_upload_images", "product_instance_upload_images", "prepare")
+        in ("read", "catalog_upload_images", "prepare")
 
   def condition_write_state(entity, action, **kwargs):
     return (action.key_id_str == "create" and entity.state == "draft") \
@@ -426,7 +299,7 @@ class Catalog(orm.BaseExpando):
     return action.key_id_str == "sudo" and entity.state in ("published", "indexed")
 
   def condition_duplicate(action, **kwargs):
-    return action.key_id_str in ("catalog_process_duplicate", "catalog_pricetag_process_duplicate")
+    return action.key_id_str in ("catalog_process_duplicate")
 
   def cache_read(context):
     if context.input['key']._root == context.account.key or context.account._root_admin:
@@ -455,13 +328,11 @@ class Catalog(orm.BaseExpando):
       orm.ExecuteActionPermission('search', condition_search),
       orm.ExecuteActionPermission('read', condition_published_or_indexed),
       orm.ExecuteActionPermission('update', condition_update),
-      orm.ExecuteActionPermission(('read', 'publish', 'catalog_upload_images', 'product_upload_images',
-                                   'product_instance_upload_images', 'catalog_pricetag_duplicate'), condition_not_guest_and_owner_and_draft),
+      orm.ExecuteActionPermission(('read', 'publish', 'catalog_upload_images'), condition_not_guest_and_owner_and_draft),
       orm.ExecuteActionPermission(('discontinue', 'catalog_duplicate'), condition_not_guest_and_owner_and_published),
       orm.ExecuteActionPermission(('read', 'sudo'), condition_root),
       orm.ExecuteActionPermission('cron', condition_cron),
-      orm.ExecuteActionPermission(('account_discontinue', 'sudo_discontinue', 'catalog_process_duplicate', 
-                                   'catalog_pricetag_process_duplicate', 'delete'), condition_taskqueue),
+      orm.ExecuteActionPermission(('account_discontinue', 'sudo_discontinue', 'catalog_process_duplicate', 'delete'), condition_taskqueue),
       # field permissions
       orm.ReadFieldPermission(('created', 'updated', 'name', 'published_date', 'discontinued_date',
                                'state', 'cover', '_images'), condition_not_guest_and_owner_or_root),
@@ -469,15 +340,9 @@ class Catalog(orm.BaseExpando):
                                 '_images'), condition_not_guest_and_owner_and_draft),
       orm.DenyWriteFieldPermission(('_images.image', '_images.content_type',
                                     '_images.size', '_images.gs_object_name',
-                                    '_images.serving_url',
-                                    '_images.pricetags._product.images.image', '_images.pricetags._product.images.content_type',
-                                    '_images.pricetags._product.images.size', '_images.pricetags._product.images.gs_object_name',
-                                    '_images.pricetags._product.images.serving_url',
-                                    '_images.pricetags._product._instances.images.image', '_images.pricetags._product._instances.images.content_type',
-                                    '_images.pricetags._product._instances.images.size', '_images.pricetags._product._instances.images.gs_object_name',
-                                    '_images.pricetags._product._instances.images.serving_url'), condition_deny_write_field_permission),
+                                    '_images.serving_url'), condition_deny_write_field_permission),
       orm.WriteFieldPermission(('_images'), condition_write_images),
-      orm.WriteFieldPermission(('_images.pricetags._product._stock',), condition_not_guest_and_owner_and_published),
+      orm.WriteFieldPermission(('_images.products.availability',), condition_not_guest_and_owner_and_published),
       orm.WriteFieldPermission('state', condition_write_state),
       orm.WriteFieldPermission('discontinued_date', condition_write_discontinued_date),
       orm.WriteFieldPermission('published_date', condition_write_published_date),
@@ -570,7 +435,7 @@ class Catalog(orm.BaseExpando):
                                      'catalog_original_state': '_catalog._original.state',
                                      '_catalog._images': 'input._images'}}),
                       CatalogProcessCoverSet(),
-                      CatalogProcessPricetags(),
+                      CatalogProcessProducts(),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -600,62 +465,6 @@ class Catalog(orm.BaseExpando):
                       UploadImages(cfg={'path': '_catalog._images',
                                         'images_path': 'input._images'}),
                       CatalogProcessCoverSet(),
-                      RulePrepare(),
-                      RuleExec()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write(),
-                      DeleteCache(cfg=DELETE_CACHE_POLICY),
-                      Set(cfg={'d': {'output.entity': '_catalog'}})
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='product_upload_images',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='31', required=True),
-              'images': orm.SuperImageLocalStructuredProperty(orm.Image, upload=True, repeated=True),
-              'read_arguments': orm.SuperJsonProperty()
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      UploadImages(cfg={'path': '_catalog._images.value.0.pricetags.read_value.0._product.value.images',
-                                        'images_path': 'input.images'}),
-                      RulePrepare(),
-                      RuleExec()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Write(),
-                      DeleteCache(cfg=DELETE_CACHE_POLICY),
-                      Set(cfg={'d': {'output.entity': '_catalog'}})
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='product_instance_upload_images',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='31', required=True),
-              'images': orm.SuperImageLocalStructuredProperty(orm.Image, upload=True, repeated=True),
-              'read_arguments': orm.SuperJsonProperty()
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      UploadImages(cfg={'path': '_catalog._images.value.0.pricetags.read_value.0._product.value._instances.value.0.images',
-                                        'images_path': 'input.images'}),
                       RulePrepare(),
                       RuleExec()
                   ]
@@ -870,7 +679,7 @@ class Catalog(orm.BaseExpando):
                   plugins=[
                       Context(),
                       Read(),
-                      Set(cfg={'d': {'_catalog.state': 'input.state', 
+                      Set(cfg={'d': {'_catalog.state': 'input.state',
                                      'catalog_original_state': '_catalog._original.state'},
                                'f': {'_catalog.published_date': lambda: datetime.datetime.now(),
                                      '_catalog.discontinued_date': lambda: datetime.datetime.now()}}), # ATM permissions handle if this field is writable.
@@ -958,65 +767,6 @@ class Catalog(orm.BaseExpando):
                       # notify duplication process complete via channel
                       Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL},
                                   'd': {'recipient': 'input.channel', 'catalog_key': '_catalog.key_urlsafe'},
-                                  'method': 'channel'}),
-                      DeleteCache(cfg=DELETE_CACHE_POLICY)
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='catalog_pricetag_duplicate',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='31', required=True),
-              'channel': orm.SuperStringProperty(required=True),
-              'read_arguments': orm.SuperJsonProperty()
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      RulePrepare(),
-                      RuleExec(),
-                      Set(cfg={'d': {'output.entity': '_catalog'}}),
-                      CallbackExec(cfg=[('callback',
-                                         {'action_id': 'catalog_pricetag_process_duplicate', 'action_model': '31'},
-                                         {'key': '_catalog.key_urlsafe',
-                                          'channel': 'input.channel',
-                                          'read_arguments': 'input.read_arguments'},
-                                         None)])
-                  ]
-              )
-          ]
-      ),
-      orm.Action(
-          id='catalog_pricetag_process_duplicate',
-          arguments={
-              'key': orm.SuperKeyProperty(kind='31', required=True),
-              'channel': orm.SuperStringProperty(required=True),
-              'read_arguments': orm.SuperJsonProperty()
-          },
-          _plugin_groups=[
-              orm.PluginGroup(
-                  plugins=[
-                      Context(),
-                      Read(),
-                      RulePrepare(),
-                      RuleExec()
-                  ]
-              ),
-              orm.PluginGroup(
-                  transactional=True,
-                  plugins=[
-                      Duplicate(cfg={'duplicate_path': '_images.value.0.pricetags.read_value.0'}),
-                      CatalogPricetagSetDuplicatedPosition(),
-                      Write(),
-                      # notify duplication process complete via channel
-                      Notify(cfg={'s': {'sender': settings.NOTIFY_EMAIL},
-                                  'd': {'recipient': 'input.channel',
-                                        'catalog_key': '_catalog.key_urlsafe',
-                                        'pricetag_key': 'duplicated_entity.key_urlsafe',
-                                        'image_key': '_catalog._images.value.0.key_urlsafe'},
                                   'method': 'channel'}),
                       DeleteCache(cfg=DELETE_CACHE_POLICY)
                   ]
