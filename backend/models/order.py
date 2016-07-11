@@ -50,38 +50,19 @@ class OrderProduct(orm.BaseExpando):
 
   _use_rule_engine = False
 
-  reference = orm.SuperVirtualKeyProperty('1', kind='28', required=True, indexed=False)  # the reference now has catalog->image->pricetag->product key-path
-  category = orm.SuperLocalStructuredProperty('24', '2', required=True)
-  name = orm.SuperStringProperty('3', required=True, indexed=False)
-  uom = orm.SuperLocalStructuredProperty('17', '4', required=True)
-  code = orm.SuperStringProperty('5', required=True, indexed=False)
-  unit_price = orm.SuperDecimalProperty('6', required=True, indexed=False)
-  variant_signature = orm.SuperJsonProperty('7', required=True, default={}, indexed=False)
-  quantity = orm.SuperDecimalProperty('8', required=True, indexed=False)
+  reference = orm.SuperVirtualKeyProperty('1', kind='28', required=True, indexed=False)  # the reference now has catalog->product key-path
+  name = orm.SuperStringProperty('2', required=True, indexed=False)
+  code = orm.SuperStringProperty('3', required=True, indexed=False)
+  description = orm.SuperTextProperty('4', required=True)  # Soft limit 64kb.
+  unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
+  quantity = orm.SuperDecimalProperty('6', required=True, indexed=False)
 
   _default_indexed = False
 
   _expando_fields = {
-      'weight': orm.SuperDecimalProperty('9'),
-      'volume': orm.SuperDecimalProperty('10')
+      'mass': orm.SuperDecimalProperty('7'),
+      'volume': orm.SuperDecimalProperty('8')
   }
-
-  _virtual_fields = {
-      '_reference': orm.SuperComputedProperty(lambda self: self.get_reference_information() if self.reference else None)
-  }
-
-  def get_reference_information(self):
-    key_structure = self.reference._structure
-    key_flat = list(self.reference.parent().pairs())
-    key_flat.pop(3)
-    key_structure['pricetag'] = orm.Key(pairs=key_flat)._structure
-    return key_structure
-
-  @classmethod
-  def get_partial_reference_key_path(cls, reference_key):
-    product_key = list(reference_key.pairs())
-    product_key.pop(3)
-    return orm.Key(pairs=product_key)
 
 
 class OrderCarrier(orm.BaseExpando):
@@ -123,13 +104,12 @@ class OrderLine(orm.BaseExpando):
     parent = kwargs.get('parent')
     product = input.get('product')
     reference = product.get('reference')
-    reference_key_path = OrderProduct.get_partial_reference_key_path(reference)
-    return cls.build_key(hashlib.md5('%s-%s' % (reference_key_path.urlsafe(), json.dumps(product.get('variant_signature')))).hexdigest(), parent=parent)
+    return cls.build_key(reference.urlsafe(), parent=parent)
 
   def prepare(self, **kwargs):
     parent = kwargs.get('parent')
     product = self.product.value
-    self.key = self.prepare_key({'product': {'reference': product.reference, 'variant_signature': product.variant_signature}}, parent=parent)
+    self.key = self.prepare_key({'product': {'reference': product.reference}}, parent=parent)
 
 
 class OrderMessage(orm.BaseExpando):
@@ -317,9 +297,9 @@ class Order(orm.BaseExpando):
       orm.WriteFieldPermission(('date', 'shipping_address', 'billing_address', '_lines', 'carrier',
                                 'untaxed_amount', 'tax_amount', 'total_amount', 'payment_method'), condition_update_and_view_order),
       orm.DenyWriteFieldPermission(('_lines.taxes', '_lines.product.reference',
-                                    '_lines.product.category', '_lines.product.name', '_lines.product.uom',
-                                    '_lines.product.code', '_lines.product.unit_price', '_lines.product.variant_signature',
-                                    '_lines.product.weight', '_lines.product.volume'), condition_update_and_view_order)
+                                    '_lines.product.name', '_lines.product.code',
+                                    '_lines.product.description', '_lines.product.unit_price',
+                                    '_lines.product.mass', '_lines.product.volume'), condition_update_and_view_order)
   ]
 
   _actions = [
@@ -328,9 +308,7 @@ class Order(orm.BaseExpando):
           arguments={
               'buyer': orm.SuperKeyProperty(kind='19', required=True),
               'quantity': orm.SuperDecimalProperty(required=True),
-              'product': orm.SuperKeyProperty(kind='28', required=True),
-              'image': orm.SuperKeyProperty(kind='30', required=True),
-              'variant_signature': orm.SuperJsonProperty()
+              'product': orm.SuperKeyProperty(kind='28', required=True)
           },
           _plugin_groups=[
               orm.PluginGroup(
