@@ -272,7 +272,7 @@ class OrderUpdateLine(orm.BaseModel):
       product = line.product.value
       if product and product.reference == product_key:
         line._state = 'modified'
-        product.quantity = tools.format_value(quantity, product.uom.value)
+        product.quantity = tools.format_value(quantity, Unit.build_key('unit').get())
         line_exists = True
         break
     if not line_exists:
@@ -287,14 +287,13 @@ class OrderUpdateLine(orm.BaseModel):
         order_product.code = product.code
         order_product.description = product.description
         order_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
-        order_product.uom = copy.deepcopy(product.uom.get())
         order_product.mass = None
         order_product.volume = None
         if product.mass is not None:
           order_product.mass = product.mass
         if product.volume is not None:
           order_product.volume = product.volume
-        order_product.quantity = tools.format_value(quantity, order_product.uom.value)
+        order_product.quantity = tools.format_value(quantity, Unit.build_key('unit').get())
         new_line.product = order_product
         new_line.discount = tools.format_value('0', Unit(digits=2))
         lines = order._lines.value
@@ -727,7 +726,7 @@ class OrderPayPalPaymentPlugin(OrderPaymentMethodPlugin):
         if product.name != ipn['item_name%s' % line.sequence]:
           new_mismatch(('item #%s name' % line.sequence, product.name), ('item #%s name' % line.sequence, ipn['item_name%s' % line.sequence]))
         
-        ipn_line_quantity = tools.format_value(ipn['quantity%s' % line.sequence], product.uom.value)
+        ipn_line_quantity = tools.format_value(ipn['quantity%s' % line.sequence], Unit.build_key('unit').get())
         if product.quantity != ipn_line_quantity:
           new_mismatch(('item #%s quantity' % line.sequence, product.quantity), ('item #%s quantity' % line.sequence, ipn_line_quantity))
         
