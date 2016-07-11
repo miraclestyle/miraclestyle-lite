@@ -111,26 +111,21 @@ class CatalogProduct(orm.BaseExpando):
 
   _use_rule_engine = False
 
-  uom = orm.SuperKeyProperty('1', kind='17', required=True, indexed=False)  # default=Unit.build_key('unit')
-  name = orm.SuperStringProperty('2', required=True, indexed=False)
-  code = orm.SuperStringProperty('3', required=True, indexed=False)
-  description = orm.SuperTextProperty('4', required=True)  # Soft limit 64kb.
-  unit_price = orm.SuperDecimalProperty('5', required=True, indexed=False)
-  availability = orm.SuperStringProperty('6', required=True, indexed=False, choices=('in stock', 'available for order', 'out of stock', 'preorder'))
-  image_width = orm.SuperIntegerProperty('7', required=True, indexed=False)  # This could be removed if we stick to percentage possitioning, though that setup has not been tested!
-  image_height = orm.SuperIntegerProperty('8', required=True, indexed=False)  # This could be removed if we stick to percentage possitioning, though that setup has not been tested!
-  position_top = orm.SuperFloatProperty('9', required=True, indexed=False)  # This can represent percentage possition with three decimal precision (e.g. 99.999$)!
-  position_left = orm.SuperFloatProperty('10', required=True, indexed=False)  # This can represent percentage possition with three decimal precision (e.g. 99.999$)!
+  name = orm.SuperStringProperty('1', required=True, indexed=False)
+  code = orm.SuperStringProperty('2', required=True, indexed=False)
+  description = orm.SuperTextProperty('3', required=True)  # Soft limit 64kb.
+  unit_price = orm.SuperDecimalProperty('4', required=True, indexed=False)
+  availability = orm.SuperStringProperty('5', required=True, indexed=False, choices=('in stock', 'available for order', 'out of stock', 'preorder'))
+  image_width = orm.SuperIntegerProperty('6', required=True, indexed=False)  # This could be removed if we stick to percentage possitioning, though that setup has not been tested!
+  image_height = orm.SuperIntegerProperty('7', required=True, indexed=False)  # This could be removed if we stick to percentage possitioning, though that setup has not been tested!
+  position_top = orm.SuperFloatProperty('8', required=True, indexed=False)  # This can represent percentage possition with three decimal precision (e.g. 99.999$)!
+  position_left = orm.SuperFloatProperty('9', required=True, indexed=False)  # This can represent percentage possition with three decimal precision (e.g. 99.999$)!
 
   _default_indexed = False
 
   _expando_fields = {
-      'mass': orm.SuperDecimalProperty('11'),
-      'volume': orm.SuperDecimalProperty('12')
-  }
-
-  _virtual_fields = {  # sorting must be done by code?
-      '_uom': orm.SuperReferenceStructuredProperty('17', target_field='uom', autoload=True)
+      'mass': orm.SuperDecimalProperty('10'),
+      'volume': orm.SuperDecimalProperty('11')
   }
 
   def prepare(self, **kwargs):
