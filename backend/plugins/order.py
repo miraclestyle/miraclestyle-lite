@@ -279,28 +279,29 @@ class OrderUpdateLine(orm.BaseModel):
       OrderProduct = context.models['125']
       Line = context.models['33']
       product = product_key.get()
-      new_line = Line()
-      order_product = OrderProduct()
-      order_product.reference = product_key
-      order_product.name = product.name
-      order_product.code = product.code
-      order_product.description = product.description
-      order_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
-      order_product.uom = copy.deepcopy(product.uom.get())
-      order_product.mass = None
-      order_product.volume = None
-      if product.mass is not None:
-        order_product.mass = product.mass
-      if product.volume is not None:
-        order_product.volume = product.volume
-      order_product.quantity = tools.format_value(quantity, order_product.uom.value)
-      new_line.product = order_product
-      new_line.discount = tools.format_value('0', Unit(digits=2))
-      lines = order._lines.value
-      if lines is None:
-        lines = []
-      lines.append(new_line)
-      order._lines = lines
+      if product is not None:
+        new_line = Line()
+        order_product = OrderProduct()
+        order_product.reference = product_key
+        order_product.name = product.name
+        order_product.code = product.code
+        order_product.description = product.description
+        order_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
+        order_product.uom = copy.deepcopy(product.uom.get())
+        order_product.mass = None
+        order_product.volume = None
+        if product.mass is not None:
+          order_product.mass = product.mass
+        if product.volume is not None:
+          order_product.volume = product.volume
+        order_product.quantity = tools.format_value(quantity, order_product.uom.value)
+        new_line.product = order_product
+        new_line.discount = tools.format_value('0', Unit(digits=2))
+        lines = order._lines.value
+        if lines is None:
+          lines = []
+        lines.append(new_line)
+        order._lines = lines
 
 
 # This is system plugin, which means end user can not use it!
@@ -317,10 +318,10 @@ class OrderStockManagement(orm.BaseModel):
     @orm.tasklet
     def get_products():
       for line in context._order._lines.value:
-        line_product = line.product.value
-        if line._state == 'deleted' or not line_product:
+        product = line.product.value
+        if line._state == 'deleted' or not product:
           continue
-        line._product = yield line_product.reference.get_async()
+        line._product = yield product.reference.get_async()
     get_products().get_result()
 
     for line in context._order._lines.value:
