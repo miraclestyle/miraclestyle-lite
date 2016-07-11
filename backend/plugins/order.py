@@ -20,6 +20,7 @@ from models.unit import *
 
 import stripe
 
+
 def find_payment_plugin(order):
   payment_plugin = None
   seller = order.seller_reference.get()
@@ -261,70 +262,37 @@ class OrderPluginExec(orm.BaseModel):
 class OrderUpdateLine(orm.BaseModel):
 
   def run(self, context):
-    OrderProduct = context.models['125']
-    CatalogProduct = context.models['28']
     order = context._order
     product_key = context.input.get('product')
-    variant_signature = context.input.get('variant_signature')
-    plucked_variant_signature = None
-    image_key = context.input.get('image')
     quantity = context.input.get('quantity')
     if order.state != 'cart':
       raise PluginError('order_not_in_cart_state')
     line_exists = False
     for line in order._lines.value:
       product = line.product.value
-      real_product_key = OrderProduct.get_partial_reference_key_path(product.reference)
-      if product and real_product_key == product_key \
-              and product.variant_signature == variant_signature:
+      if product and product.reference == product_key:
         line._state = 'modified'
         product.quantity = tools.format_value(quantity, product.uom.value)
         line_exists = True
         break
     if not line_exists:
-      ProductInstance = context.models['27']
+      OrderProduct = context.models['125']
       Line = context.models['33']
       product = product_key.get()
-      product_instance = None
-      product.read({'_category': {}})  # more fields probably need to be specified
-      if variant_signature:
-        plucked_variant_signature = variant_signature[:]
-        plucked_variant_signature_map = dict((i, v) for i, v in enumerate(plucked_variant_signature))
-        # remove all allow_custom_value's from spec
-        for i, variant in enumerate(product.variants.value):
-          if variant.allow_custom_value and i in plucked_variant_signature_map:
-            plucked_variant_signature.remove(plucked_variant_signature_map[i])
-        q = ProductInstance.query(ancestor=product.key)
-        for variant in plucked_variant_signature:
-          item = variant.iteritems().next()
-          q = q.filter(ProductInstance.variant_options == '%s: %s' % (item[0], item[1]))
-        product_instance = q.get()
       new_line = Line()
       order_product = OrderProduct()
+      order_product.reference = product_key
       order_product.name = product.name
-      modified_product_key = CatalogProduct.get_complete_key_path(image_key, product_key)
-      order_product.reference = modified_product_key
-      order_product.variant_signature = variant_signature
-      order_product.category = copy.deepcopy(product._category.value)
       order_product.code = product.code
+      order_product.description = product.description
       order_product.unit_price = tools.format_value(product.unit_price, order.currency.value)
       order_product.uom = copy.deepcopy(product.uom.get())
-      if product_instance is not None:
-        if hasattr(product_instance, 'unit_price') and product_instance.unit_price is not None:
-          order_product.unit_price = product_instance.unit_price
-        if hasattr(product_instance, 'code') and product_instance.code is not None:
-          order_product.code = product_instance.code
-      order_product.weight = None
+      order_product.mass = None
       order_product.volume = None
-      if product.weight is not None:
-        order_product.weight = product.weight
+      if product.mass is not None:
+        order_product.mass = product.mass
       if product.volume is not None:
         order_product.volume = product.volume
-      if product_instance is not None:
-        if hasattr(product_instance, 'weight') and product_instance.weight is not None:
-          order_product.weight = product_instance.weight
-        if hasattr(product_instance, 'volume') and product_instance.volume is not None:
-          order_product.volume = product_instance.volume
       order_product.quantity = tools.format_value(quantity, order_product.uom.value)
       new_line.product = order_product
       new_line.discount = tools.format_value('0', Unit(digits=2))
@@ -352,67 +320,14 @@ class OrderStockManagement(orm.BaseModel):
         line_product = line.product.value
         if line._state == 'deleted' or not line_product:
           continue
-        real_product_key = OrderProduct.get_partial_reference_key_path(line_product.reference)
-        line._product = yield real_product_key.get_async()
+        line._product = yield line_product.reference.get_async()
     get_products().get_result()
 
     for line in context._order._lines.value:
       if not hasattr(line, '_product'):
         line._state = 'deleted'
         continue
-      line_product = line.product.value
-      product = line._product
-      if not product:
-        delete_line(line)
-        continue
-      variant_signature = line_product.variant_signature
-      stocks = None
-      out_of_stock = False
-      product._stock.read()
-      product.variants.read()
-      if product._stock.value and product._stock.value.stocks.value:  # if user defined any stocks
-        stocks = product._stock.value.stocks.value
-      if variant_signature:
-        plucked_variant_signature = variant_signature[:]
-        plucked_variant_signature_map = dict((i, v) for i, v in enumerate(plucked_variant_signature))
-        # remove all allow_custom_value's from spec
-        for i, variant in enumerate(product.variants.value):
-          if variant.allow_custom_value and i in plucked_variant_signature_map:
-            plucked_variant_signature.remove(plucked_variant_signature_map[i])
-        if stocks:
-          skip_additional_stock_checks = False
-          for stock in stocks:
-            if stock.variant_signature == plucked_variant_signature:
-              out_of_stock = stock.availability == 'out of stock'
-              skip_additional_stock_checks = True
-              break  # we found complete match, this product combination is definitely out of stock
-          if not skip_additional_stock_checks:  # no matches for out of stock found
-            # try to find those with ***Any*** because they might match out of stock
-            for stock in stocks:
-              maybe = []
-              for i, part in enumerate(plucked_variant_signature):  # [{'Color': 'Red'}, {'Size': 'XL'}]
-                part = part.iteritems().next()  # ('Color', 'Red')
-                try:
-                  item = stock.variant_signature[i].iteritems().next()  # ('Color', 'Red')
-                  passes = item == part or item[1] == '***Any***'
-                except IndexError as e:
-                  # this is when user did not configure stock improperly
-                  passes = False
-                if passes:
-                  maybe.append(True)
-                else:
-                  maybe.append(False)
-              if all(maybe) and stock.availability == 'out of stock':
-                out_of_stock = True
-                break
-        if out_of_stock:
-          delete_line(line)
-      else:  # if the product did not specify any product signature, find stock without variant_signature and see if there's any that has no stock
-        if stocks:
-          for stock in stocks:
-            if not stock.variant_signature and stock.availability == 'out of stock':
-              out_of_stock = True
-      if out_of_stock:
+      if not line._product or (line._product.availability == 'out of stock'):
         delete_line(line)
 
 
@@ -420,23 +335,22 @@ class OrderStockManagement(orm.BaseModel):
 class OrderProductSpecsFormat(orm.BaseModel):
 
   def run(self, context):
-    ProductInstance = context.models['27']
     order = context._order
-    weight_uom = Unit.build_key('kilogram').get()
+    mass_uom = Unit.build_key('kilogram').get()
     volume_uom = Unit.build_key('liter').get()
-    total_weight = tools.format_value('0', weight_uom)
+    total_mass = tools.format_value('0', mass_uom)
     total_volume = tools.format_value('0', volume_uom)
     for line in order._lines.value:
       if line._state == 'deleted':
         continue
       product = line.product.value
-      if product.weight is not None:
-        product_total_weight = tools.format_value((product.weight * product.quantity), weight_uom)
-        total_weight = tools.format_value((total_weight + product_total_weight), weight_uom)
+      if product.mass is not None:
+        product_total_mass = tools.format_value((product.mass * product.quantity), mass_uom)
+        total_mass = tools.format_value((total_mass + product_total_mass), mass_uom)
       if product.volume is not None:
         product_total_volume = tools.format_value((product.volume * product.quantity), volume_uom)
         total_volume = tools.format_value((total_volume + product_total_volume), volume_uom)
-    order._total_weight = total_weight
+    order._total_mass = total_mass
     order._total_volume = total_volume
 
 
@@ -1164,11 +1078,10 @@ class OrderTaxPlugin(orm.BaseModel):
   type = orm.SuperStringProperty('3', required=True, default='proportional', choices=('proportional', 'fixed'), indexed=False)
   amount = orm.SuperDecimalProperty('4', required=True, indexed=False)
   carriers = orm.SuperVirtualKeyProperty('5', kind='113', repeated=True, indexed=False)
-  product_categories = orm.SuperKeyProperty('6', kind='24', repeated=True, indexed=False)
-  address_type = orm.SuperStringProperty('7', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
-  exclusion = orm.SuperBooleanProperty('8', required=True, default=False, indexed=False)
-  product_codes = orm.SuperStringProperty('9', repeated=True, indexed=False)
-  locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '10', repeated=True)
+  address_type = orm.SuperStringProperty('6', required=True, default='billing', choices=('billing', 'shipping'), indexed=False)
+  exclusion = orm.SuperBooleanProperty('7', required=True, default=False, indexed=False)
+  product_codes = orm.SuperStringProperty('8', repeated=True, indexed=False)
+  locations = orm.SuperLocalStructuredProperty(OrderAddressLocation, '9', repeated=True)
 
   def run(self, context):
     if not self.active:
@@ -1204,9 +1117,7 @@ class OrderTaxPlugin(orm.BaseModel):
         continue
       product = line.product.value
       taxes = reset_taxes(line.taxes.value)
-      if (self.product_categories and self.product_categories.count(product.category.value.key)) \
-              or (self.product_codes and self.product_codes.count(product.code)) \
-              or (not self.product_categories and not self.product_codes):  # If user wants to bypass product taxes and apply only carrier he can do so by specifying rogue code
+      if (self.product_codes and self.product_codes.count(product.code)) or not self.product_codes # If user wants to bypass product taxes and apply only carrier he can do so by specifying rogue code
         if allowed:
           add_taxes(taxes)
           line.taxes = taxes
@@ -1245,16 +1156,13 @@ class OrderTaxPlugin(orm.BaseModel):
         allowed = False
         if order.carrier.value and order.carrier.value.reference and order.carrier.value.reference in self.carriers:
           allowed = True
-      # If tax is configured for product categories, then check if the order contains a line which has product category to which the tax applies.
-      elif self.product_categories or self.product_codes:
+      # If tax is configured for product codes, then check if the order contains a line which has product code to which the tax applies.
+      elif self.product_codes:
         allowed = False
         for line in order._lines.value:
           if line._state == 'deleted':
             continue
           product = line.product.value
-          if self.product_categories.count(product.category.value.key):
-            allowed = True
-            break
           if self.product_codes.count(product.code):
             allowed = True
             break
@@ -1268,18 +1176,18 @@ class OrderCarrierLinePrice(orm.BaseModel):
 
   _use_rule_engine = False
 
-  condition_type = orm.SuperStringProperty('1', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price'), indexed=False)
+  condition_type = orm.SuperStringProperty('1', required=True, default='mass', choices=('mass', 'volume', 'mass*volume', 'price'), indexed=False)
   condition_operator = orm.SuperStringProperty('2', required=True, default='==', choices=('==', '!=', '>', '<', '>=', '<='), indexed=False)
   condition_value = orm.SuperDecimalProperty('3', required=True, indexed=False)
   price_type = orm.SuperStringProperty('4', required=True, default='fixed', choices=('fixed', 'variable'), indexed=False)
-  price_operator = orm.SuperStringProperty('5', required=True, default='weight', choices=('weight', 'volume', 'weight*volume', 'price'), indexed=False)
+  price_operator = orm.SuperStringProperty('5', required=True, default='mass', choices=('mass', 'volume', 'mass*volume', 'price'), indexed=False)
   price_value = orm.SuperDecimalProperty('6', required=True, indexed=False)
 
   def evaluate_condition(self, data):
     value = None
     op = self.condition_operator
-    if self.condition_type == 'weight*volume':
-      value = data['weight'] * data['volume']
+    if self.condition_type == 'mass*volume':
+      value = data['mass'] * data['volume']
     else:
       value = data[self.condition_type]
     if op == '==':
@@ -1300,8 +1208,8 @@ class OrderCarrierLinePrice(orm.BaseModel):
       return self.price_value
     if self.price_type == 'variable':
       value = None
-      if self.price_operator == 'weight*volume':
-        value = data['weight'] * data['volume']
+      if self.price_operator == 'mass*volume':
+        value = data['mass'] * data['volume']
       else:
         value = data[self.price_operator]
       return value * self.price_value
@@ -1360,7 +1268,7 @@ class OrderCarrierPlugin(orm.BaseModel):
     if not order._lines.value:
       return zero  # if no lines are present return 0
     data = {
-        'weight': order._total_weight,
+        'mass': order._total_mass,
         'volume': order._total_volume,
         'price': order.untaxed_amount  # Using order.total_amount is causing specific cases issue. The most reasonable option is to use pre-tax & pre-carrier amount.
     }
@@ -1400,7 +1308,7 @@ class OrderCarrierPlugin(orm.BaseModel):
       allowed = False
       if carrier_line.prices.value:
         data = {
-            'weight': order._total_weight,
+            'mass': order._total_mass,
             'volume': order._total_volume,
             'price': order.untaxed_amount  # Using order.total_amount is causing specific cases issue. The most reasonable option is to use pre-tax & pre-carrier amount.
         }
@@ -1423,11 +1331,10 @@ class OrderDiscountLine(orm.BaseModel):
   name = orm.SuperStringProperty('1', required=True, indexed=False)
   active = orm.SuperBooleanProperty('2', required=True, default=True)
   discount_value = orm.SuperDecimalProperty('3', required=True, indexed=False)
-  product_categories = orm.SuperKeyProperty('4', kind='24', repeated=True, indexed=False)
-  condition_type = orm.SuperStringProperty('5', required=True, default='quantity', choices=('price', 'quantity'), indexed=False)
-  condition_operator = orm.SuperStringProperty('6', required=True, default='==', choices=('==', '!=', '>', '<', '>=', '<='), indexed=False)
-  condition_value = orm.SuperDecimalProperty('7', required=True, indexed=False)
-  product_codes = orm.SuperStringProperty('8', repeated=True, indexed=False)
+  condition_type = orm.SuperStringProperty('4', required=True, default='quantity', choices=('price', 'quantity'), indexed=False)
+  condition_operator = orm.SuperStringProperty('5', required=True, default='==', choices=('==', '!=', '>', '<', '>=', '<='), indexed=False)
+  condition_value = orm.SuperDecimalProperty('6', required=True, indexed=False)
+  product_codes = orm.SuperStringProperty('7', repeated=True, indexed=False)
 
   def evaluate_condition(self, data):
     value = data[self.condition_type]
@@ -1469,11 +1376,7 @@ class OrderDiscountPlugin(orm.BaseModel):
         for discount_line in self.lines.value:
           if not discount_line.active:
             continue  # inactive discount line
-          validate = not discount_line.product_codes and not discount_line.product_categories
-          if not validate:
-            validate = product.category.value.key in discount_line.product_categories
-          if not validate:
-            validate = product.code in discount_line.product_codes
+          validate = not discount_line.product_codes or (product.code in discount_line.product_codes)
           if validate:
             price_data = {
                 'quantity': product.quantity,
@@ -1482,6 +1385,7 @@ class OrderDiscountPlugin(orm.BaseModel):
             if discount_line.evaluate_condition(price_data):
               line.discount = tools.format_value(discount_line.discount_value, Unit(digits=2))
               break
+
 
 class FailTransaction(orm.BaseModel):
   
