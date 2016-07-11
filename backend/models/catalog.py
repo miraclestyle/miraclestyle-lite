@@ -125,7 +125,7 @@ class CatalogProduct(orm.BaseExpando):
   _default_indexed = False
 
   _expando_fields = {
-      'weight': orm.SuperDecimalProperty('11'),
+      'mass': orm.SuperDecimalProperty('11'),
       'volume': orm.SuperDecimalProperty('12')
   }
 
