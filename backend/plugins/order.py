@@ -216,10 +216,10 @@ class OrderInit(orm.BaseModel):
     Order = context.models['34']
     seller_key = context.input.get('seller')
     if not seller_key:
-      product = context.input.get('product')
-      if not product:
+      product_key = context.input.get('product')
+      if not product_key:
         raise PluginError('seller_missing')
-      seller_key = product.parent().parent().parent()  # go 3 levels up, account->seller->catalog->pricetag->product
+      seller_key = product_key.parent().parent()  # go 3 levels up, account->seller->catalog->product
     order = Order.query(Order.seller_reference == seller_key,
                         Order.state == 'cart',
                         ancestor=context.input.get('buyer')).get()  # we will need composite index for this
